@@ -1,0 +1,57 @@
+import { AssessmentCategoryEntity } from 'src/app/assessment.category/entities/assessment.category.entity';
+import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { QuestionEntity } from './question.entity';
+import { ExamDetailEntity } from 'src/app/exam/entities/exam.detail.entity';
+
+@Entity('questionCategory')
+export class QuestionCategoryEntity {
+  @PrimaryGeneratedColumn('increment', {})
+  id?: number;
+
+  @Column()
+  name: string;
+  @Column()
+  type: number;
+  @Column()
+  status: number;
+  @Column()
+  minValue: number;
+  @Column()
+  maxValue: number;
+  @Column()
+  point: number;
+  @Column()
+  orderNumber: number;
+  @Column({ nullable: true })
+  file: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
+  @Column()
+  createdUser: number;
+  @Column({ nullable: true })
+  updatedUser: number;
+  @ManyToOne(
+    () => AssessmentEntity,
+    (assessment) => assessment.questionCategories,
+  )
+  assessment: AssessmentEntity;
+  @OneToMany(() => QuestionEntity, (question) => question.category, {
+    nullable: true,
+  })
+  questions: QuestionEntity[];
+
+  @OneToMany(() => ExamDetailEntity, (detail) => detail.questionCategory)
+  examDetails: ExamDetailEntity[];
+}
