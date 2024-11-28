@@ -23,12 +23,15 @@ export class QuestionAnswerEntity {
   orderNumber: number;
   @Column({ nullable: true })
   file: string;
+  @Column({ default: false })
+  correct: boolean;
 
   @ManyToOne(() => QuestionEntity, (question) => question.answers)
   question: QuestionEntity;
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,
     (category) => category.questionAnswers,
+    { nullable: true },
   )
   category: QuestionAnswerCategoryEntity;
   @OneToMany(() => QuestionAnswerMatrixEntity, (matrix) => matrix.answer)

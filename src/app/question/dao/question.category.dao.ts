@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { QuestionCategoryEntity } from '../entities/question.category.entity';
 import { CreateQuestionCategoryDto } from '../dto/create-question.category.dto';
 import { UpdateQuestionCategoryDto } from '../dto/create-question.dto';
+import { QuestionStatus } from 'src/base/constants';
 
 @Injectable()
 export class QuestionCategoryDao {
@@ -17,6 +18,7 @@ export class QuestionCategoryDao {
       assessment: {
         id: dto.assessment,
       },
+      status: dto.status ?? QuestionStatus.ACTIVE,
     });
     await this.db.save(res);
     return res.id;
@@ -33,7 +35,29 @@ export class QuestionCategoryDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
     });
+  };
+  findByAssessment = async (id: number) => {
+    return await this.db.find({
+      where: {
+        status: QuestionStatus.ACTIVE,
+        assessment: { id: id },
+      },
+      order: {
+        orderNumber: 'ASC',
+      },
+    });
+  };
+
+  findByName = async (name: string) => {
+    const res = await this.db.findOne({
+      where: {
+        name: name,
+      },
+    });
+    return res?.id;
+  };
+  clear = async () => {
+    return await this.db.createQueryBuilder().delete().execute();
   };
 }

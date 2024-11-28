@@ -11,14 +11,18 @@ export class UserAnswerDao {
   }
 
   create = async (dto: CreateUserAnswerDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({
+      ...dto,
+      exam: { id: dto.exam },
+      answer: { id: dto.answer },
+      matrix: { id: dto.matrix },
+      question: { id: dto.question },
+    });
     await this.db.save(res);
   };
 
   findAll = async () => {
-    return await this.db.find({
-      //   relations: [''],
-    });
+    return await this.db.find({});
   };
 
   findOne = async (id: number) => {
@@ -26,7 +30,12 @@ export class UserAnswerDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
     });
   };
+
+  // dynamic = async () => {
+  //   await this.db.createQueryBuilder('', {
+
+  //   }).addGroupBy()
+  // }
 }

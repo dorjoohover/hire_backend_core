@@ -27,11 +27,11 @@ export class AssessmentCategoryController {
   ) {}
   @Roles(Role.admin)
   @Post()
-  create(
+  async create(
     @Body() createAssessmentCategoryDto: CreateAssessmentCategoryDto,
     @Request() { user },
   ) {
-    return this.assessmentCategoryService.create(createAssessmentCategoryDto, user['id']);
+    return await this.assessmentCategoryService.create(createAssessmentCategoryDto, user['id']);
   }
   @Get()
   findAll(@Request() req) {
@@ -58,5 +58,10 @@ export class AssessmentCategoryController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assessmentCategoryService.remove(+id);
+  }
+  @Roles(Role.admin)
+  @Delete()
+  delete() {
+    return this.assessmentCategoryService.delete()
   }
 }

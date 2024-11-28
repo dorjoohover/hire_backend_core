@@ -1,25 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ParentProperty } from 'src/base/base.dto';
 
 export class CreateQuestionCategoryDto {
   @ApiProperty()
   name: string;
   @ApiProperty()
-  type: number;
+  duration?: number;
   @ApiProperty()
-  status: number;
+  totalPoint?: number;
   @ApiProperty()
-  minValue: number;
+  questionCount?: number;
+  status?: number;
   @ApiProperty()
-  maxValue: number;
-  @ApiProperty()
-  point: number;
-  @ApiProperty()
-  orderNumber: number;
-  @ApiProperty()
-  file: string;
+  orderNumber?: number;
 
   @ApiProperty()
   assessment: number;
-  createdUser: number;
+  createdUser?: number;
 }

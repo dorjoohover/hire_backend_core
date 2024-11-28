@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { ExamDetailEntity } from './exam.detail.entity';
 import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
+import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 
 @Entity('exam')
 export class ExamEntity {
@@ -19,7 +20,7 @@ export class ExamEntity {
   code: number;
   // assessment name
   @Column()
-  assessment: string;
+  assessmentName: string;
 
   @Column({ nullable: true })
   startDate: Date;
@@ -33,6 +34,8 @@ export class ExamEntity {
 
   @ManyToOne(() => UserServiceEntity, (service) => service.exams)
   service: UserServiceEntity;
+  @ManyToOne(() => AssessmentEntity, (service) => service.exams)
+  assessment: AssessmentEntity;
   @OneToMany(() => ExamDetailEntity, (detail) => detail.exam, {
     nullable: true,
   })

@@ -21,13 +21,21 @@ export class PostInterceptor implements NestInterceptor {
         context.switchToHttp().getResponse().status(HttpStatus.OK);
       }
     }
-    
+
     return next.handle().pipe(
       map((responseBody) => {
-        return {
-          succeed: true,
-          payload: responseBody,
-        };
+        return responseBody && responseBody?.success == false
+          ? {
+              succeed: false,
+              payload: {
+                message: responseBody.message,
+                status: responseBody.status,
+              },
+            }
+          : {
+              succeed: true,
+              payload: responseBody,
+            };
       }),
     );
     // return next.handle();

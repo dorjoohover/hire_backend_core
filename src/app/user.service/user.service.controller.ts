@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Request,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
@@ -8,8 +19,16 @@ export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
   @Post()
-  create(@Body() createUserServiceDto: CreateUserServiceDto) {
-    return this.userServiceService.create(createUserServiceDto);
+  create(
+    @Body() createUserServiceDto: CreateUserServiceDto,
+    @Request() { user },
+  ) {
+    if (parseFloat(user['wallet']) - createUserServiceDto.price < 0)
+      throw new HttpException(
+        'Үлдэгдэл хүрэлцэхгүй байна.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    return this.userServiceService.create(createUserServiceDto, user['id']);
   }
 
   @Get()
@@ -23,7 +42,10 @@ export class UserServiceController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserServiceDto: UpdateUserServiceDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateUserServiceDto: UpdateUserServiceDto,
+  ) {
     return this.userServiceService.update(+id, updateUserServiceDto);
   }
 

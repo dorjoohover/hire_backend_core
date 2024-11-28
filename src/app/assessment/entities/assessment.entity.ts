@@ -14,6 +14,7 @@ import { LevelEntity } from './assessment.level.entity';
 import { QuestionCategoryEntity } from 'src/app/question/entities/question.category.entity';
 import { UserService } from 'src/app/user/user.service';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
+import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -39,7 +40,15 @@ export class AssessmentEntity {
   @Column({ nullable: true })
   function: string;
   @Column({ nullable: true })
+  advice: string;
+  @Column()
   questionCount: number;
+  @Column({ default: false })
+  questionShuffle: boolean;
+  @Column({ default: false })
+  answerShuffle: boolean;
+  @Column({ nullable: true })
+  page: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -60,6 +69,10 @@ export class AssessmentEntity {
     nullable: true,
   })
   questionCategories: QuestionCategoryEntity[];
+  @OneToMany(() => ExamEntity, (question) => question.assessment, {
+    nullable: true,
+  })
+  exams: ExamEntity[];
   @OneToMany(() => UserServiceEntity, (service) => service.assessment, {
     nullable: true,
   })

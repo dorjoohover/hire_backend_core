@@ -7,7 +7,7 @@ export const SUPER_ADMIN = 10;
 // ORGANIZATION
 export const CLIENT = 20;
 // ZOCHIN
-export const VISITOR = 30;
+export const ORGANIZATION = 30;
 // BURTGELGUI HEREGLECH
 export const ANONYMOUS = 40;
 

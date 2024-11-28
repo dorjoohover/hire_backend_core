@@ -18,14 +18,15 @@ export class UserDao {
       ...user,
     });
     await this._db.save(res);
-    console.log(res);
+    return true;
   };
 
   update = async (user: UpdateUserDto) => {
-    // await this._db.save({
-    //   id: user.id,
-    //   ...user,
-    // });
+    const res = await this._db.save({
+      id: user.id,
+      ...user,
+    });
+    return res.id;
   };
 
   changePassword = async (id: string, password: string, merchantId: string) => {
@@ -42,7 +43,6 @@ export class UserDao {
   };
   getAll = async () => {
     const res = await this._db.find();
-    console.log(res);
     return res;
   };
   get = async (id: any) => {
@@ -58,9 +58,14 @@ export class UserDao {
   getByEmail = async (email: string) => {
     if (!email) return null;
     const res = await this._db.findOne({
-      where: {
-        email: email,
-      },
+      where: [
+        {
+          email: email,
+        },
+        {
+          organizationRegisterNumber: email,
+        },
+      ],
     });
     return res;
   };

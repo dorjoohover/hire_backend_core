@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ParentProperty } from 'src/base/base.dto';
 
 export class CreateExamDetailDto {
   @ApiProperty()
@@ -7,21 +6,13 @@ export class CreateExamDetailDto {
   @ApiProperty()
   questionCategoryName: string;
 
-  @ApiProperty({ type: ParentProperty })
-  exam: {
-    id: number;
-  };
-  @ApiProperty({ type: ParentProperty })
-  question: {
-    id: number;
-  };
-  @ApiProperty({ type: ParentProperty })
-  questionCategory: {
-    id: number;
-  };
+  @ApiProperty()
+  exam: number;
+  @ApiProperty()
+  question: number;
+  @ApiProperty()
+  questionCategory: number;
 
-  @ApiProperty({ type: ParentProperty })
-  service: {
-    id: number;
-  };
+  @ApiProperty()
+  service: number;
 }

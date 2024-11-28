@@ -16,10 +16,11 @@ export class CreateAssessmentDto {
   @ApiProperty()
   function?: string;
   @ApiProperty()
+  advice?: string;
+  @ApiProperty()
   author?: string;
   @ApiProperty()
   questionCount?: number;
-  @ApiProperty()
   createdUser: number;
   @ApiProperty()
   level: number;

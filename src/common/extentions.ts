@@ -3,8 +3,13 @@ import { Request } from 'express';
 export class Client {
   id: number;
   role: number;
-  name: string;
+  firstname: string;
+  lastname?: string;
+  phone?: string;
   email: string;
+  organizationRegisterNumber?: string;
+  organizationName?: string;
+  organizationPhone?: string;
   app: string;
 }
 

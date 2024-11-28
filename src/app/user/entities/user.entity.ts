@@ -9,15 +9,31 @@ export class UserEntity {
 
   @Column({ unique: true })
   email: string;
-  @Column()
-  name: string;
+  @Column({ nullable: true })
+  lastname: string;
+  @Column({ nullable: true })
+  firstname: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
+  @Column({ nullable: true })
+  profile?: string;
   @Column()
   role: number;
   @Column({ nullable: true })
-  wallet?: number;
+  phone?: string;
+  @Column({ nullable: true })
+  organizationPhone?: string;
+  @Column({ nullable: true })
+  organizationName?: string;
+  @Column({ nullable: true })
+  organizationRegisterNumber?: string;
+  @Column({ nullable: true })
+  position?: string;
+  @Column({ default: 0 })
+  wallet: number;
+  @Column({ default: false })
+  emailVerified?: boolean;
   @OneToMany(() => PaymentEntity, (payment) => payment.user, {
     nullable: true,
   })

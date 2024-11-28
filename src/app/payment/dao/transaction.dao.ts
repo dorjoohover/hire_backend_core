@@ -11,7 +11,11 @@ export class TransactionDao {
   }
 
   create = async (dto: CreateTransactionDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({
+      ...dto,
+      service: dto.service ? { id: dto.service } : null,
+      payment: dto.payment ? { id: dto.payment } : null,
+    });
     await this.db.save(res);
   };
 

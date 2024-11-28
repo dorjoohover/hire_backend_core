@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ParentProperty } from 'src/base/base.dto';
 
 export class CreateUserServiceDto {
   @ApiProperty()
@@ -10,16 +9,20 @@ export class CreateUserServiceDto {
   @ApiProperty()
   usedUserCount: number;
 
-  @ApiProperty({
-    type: ParentProperty,
-  })
-  user: {
-    id: number;
-  };
-  @ApiProperty({
-    type: ParentProperty,
-  })
-  assessment: {
-    id: number;
-  };
+  @ApiProperty()
+  user: number;
+
+  @ApiProperty()
+  assessment: number;
+}
+
+export class CreateExamServiceDto {
+  @ApiProperty()
+  service: number;
+  @ApiProperty()
+  count: number;
+  @ApiProperty()
+  startDate?: Date;
+  @ApiProperty()
+  endDate?: Date;
 }

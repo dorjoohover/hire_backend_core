@@ -16,7 +16,10 @@ export class QuestionAnswerCategoryDao {
       parent: dto.parent ? { id: dto.parent } : null,
     });
     await this.db.save(res);
-    return res.id;
+    return {
+      name: res.name,
+      id: res.id,
+    };
   };
 
   findAll = async () => {
@@ -30,7 +33,20 @@ export class QuestionAnswerCategoryDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
     });
+  };
+  findByName = async (name: string) => {
+    const res = await this.db.findOne({
+      where: {
+        name: name,
+      },
+    });
+    return {
+      id: res?.id,
+      name: res?.name,
+    };
+  };
+  clear = async () => {
+    return await this.db.createQueryBuilder().delete().execute();
   };
 }

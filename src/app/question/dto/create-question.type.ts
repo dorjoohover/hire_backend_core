@@ -4,9 +4,6 @@ export class CreateQuestionTypeDto {
   @ApiProperty()
   name: string;
   @ApiProperty()
-  guide: string;
-  @ApiProperty()
-  createdUser: number;
-  @ApiProperty()
-  parent: number;
+  description: string;
+  createdUser?: number;
 }

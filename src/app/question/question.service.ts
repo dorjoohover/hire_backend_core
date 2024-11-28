@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   CreateQuestionAllDto,
   CreateQuestionDto,
@@ -30,71 +30,87 @@ export class QuestionService {
     return await this.questionDao.create(dto);
   }
   public async createAll(dto: CreateQuestionAllDto, user: number) {
-    let questionCategoryId = dto.category.id;
-    if (!questionCategoryId) {
-      const { id: id, ...categoryBody } = dto.category;
-      questionCategoryId = await this.questionCategoryDao.create(
-        categoryBody as CreateQuestionCategoryDto,
-      );
+    let questionCategory = await this.questionCategoryDao.findOne(dto.category);
+    if (!questionCategory) {
+      throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
     }
-    let typeId = dto.type.id;
+    let questionType = await this.questionTypeDao.findOne(dto.type);
+    let typeId = questionType?.id;
     if (!typeId) {
-      const { id: id, ...typeBody } = dto.type;
-      typeId = await this.questionTypeDao.create(
-        typeBody as CreateQuestionTypeDto,
-      );
+      throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
     }
-    let type = await (await this.questionTypeDao.findOne(typeId)).name;
-
     let questionId = await this.questionDao.create({
       ...dto.question,
       type: typeId,
       status: QuestionStatus.ACTIVE,
-      category: questionCategoryId,
+      category: questionCategory.id,
       createdUser: user,
     });
 
-    dto.answers.map(async (answer) => {
-      let answerCategoryId = answer.category.id;
-      if (!answerCategoryId) {
-        answerCategoryId = await this.questionAnswerCategoryDao.create({
-          name: answer.category.name,
-          parent: answer.category.parent,
-          description: answer.category.description,
+    dto.answers.category.map(async (category) => {
+      let answerCategory = await this.questionAnswerCategoryDao.findByName(
+        category.name,
+      );
+      if (answerCategory?.id == undefined) {
+        answerCategory = await this.questionAnswerCategoryDao.create({
+          name: category.name,
+          parent: category.parent,
+          description: category.description,
         });
       }
-      let answerId = answer.answer.value.id;
-      const { id, ...answerBody } = answer.answer.value;
-      if (!answerId)
-        answerId = await this.questionAnswerDao.create({
-          ...(answerBody as CreateQuestionAnswerDto),
-          question: questionId,
-        });
+    });
+    dto.answers.answer.map(async (answer) => {
+      const { category, ...answerBody } = answer.value;
 
-      if (type == 'matrix') {
-        answer.answer.matrix.map(async (matrix) => {
-          let { id, ...body } = matrix;
-          if (!id) {
-            await this.questionAnswerMatrixDao.create({
-              ...(body as CreateQuestionAnswerMatrixDto),
-              answer: answerId,
-              question: questionId,
-              category: answerCategoryId,
-            });
-          }
+      const cate =
+        category == null
+          ? null
+          : typeof category === 'number'
+            ? category
+            : (await this.questionAnswerCategoryDao.findByName(category)).id;
+      const answerId = await this.questionAnswerDao.create({
+        question: questionId,
+        category: cate,
+        ...answerBody,
+      } as CreateQuestionAnswerDto);
+
+      if (questionType.name == 'matrix') {
+        answer.matrix.map(async (matrix) => {
+          let { category, ...body } = matrix;
+          const cate =
+            category == null
+              ? null
+              : typeof category === 'number'
+                ? category
+                : (await this.questionAnswerCategoryDao.findByName(category))
+                    .id;
+
+          await this.questionAnswerMatrixDao.create({
+            ...(body as CreateQuestionAnswerMatrixDto),
+            answer: answerId,
+            question: questionId,
+            category: cate,
+          });
         });
       }
     });
   }
 
   public async findAll() {
-    return await this.questionDao.findAll();
+    // return await this.questionDao.findAll();
   }
 
   public async findOne(id: number) {
     return await this.questionDao.findOne(id);
   }
 
+  public async deleteAll() {
+    await this.questionAnswerMatrixDao.clear();
+    await this.questionAnswerDao.clear();
+    await this.questionAnswerCategoryDao.clear();
+    await this.questionDao.clear();
+    await this.questionCategoryDao.clear();
+  }
   update(id: number, updateQuestionDto: UpdateQuestionDto) {
     return `This action updates a #${id} question`;
   }

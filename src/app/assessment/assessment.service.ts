@@ -12,7 +12,7 @@ export class AssessmentService {
     private levelDao: AssessmentLevelDao,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
-    this.dao.create({
+    return await this.dao.create({
       ...dto,
       createdUser: user,
     });
@@ -29,6 +29,7 @@ export class AssessmentService {
       level,
     };
   }
+
   public async findAllLevel() {}
 
   findOne(id: number) {
@@ -41,5 +42,10 @@ export class AssessmentService {
 
   remove(id: number) {
     return `This action removes a #${id} assessment`;
+  }
+
+  public async clear() {
+    await this.dao.clear();
+    await this.levelDao.clear();
   }
 }

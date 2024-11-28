@@ -29,6 +29,7 @@ export class AssessmentCategoryService extends BaseService {
     res = await this.db.save(res);
     res.index = res.id;
     await this.db.save(res);
+    return res.id;
   }
 
   public async findAll() {
@@ -52,5 +53,9 @@ export class AssessmentCategoryService extends BaseService {
 
   remove(id: number) {
     return `This action removes a #${id} assessmentCategory`;
+  }
+
+  public async delete() {
+    await this.db.createQueryBuilder().delete().execute();
   }
 }

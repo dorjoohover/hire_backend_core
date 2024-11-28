@@ -11,8 +11,20 @@ export class ExamDao {
   }
 
   create = async (dto: CreateExamDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({
+      ...dto,
+      service: {
+        id: dto.service,
+      },
+      assessmentName: dto.assessment.name,
+      assessment: { id: dto.assessment.id },
+    });
     await this.db.save(res);
+    return res.id;
+  };
+
+  update = async (id: number, dto: any) => {
+    const res = await this.db.save({ id: id, ...dto });
   };
 
   findAll = async () => {
@@ -26,7 +38,15 @@ export class ExamDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
     });
+  };
+  findByCode = async (code: number) => {
+    const res = await this.db.findOne({
+      where: {
+        code: code,
+      },
+      relations: ['assessment'],
+    });
+    return res;
   };
 }

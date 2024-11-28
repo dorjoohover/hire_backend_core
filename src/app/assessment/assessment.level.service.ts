@@ -19,4 +19,8 @@ export class AssessmentLevelService extends BaseService {
   public async findOne(id: number) {
     return await this.dao.findOne(id);
   }
+
+  public async clear() {
+    return await this.dao.clear();
+  }
 }

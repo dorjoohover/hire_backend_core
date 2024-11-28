@@ -11,8 +11,9 @@ export class PaymentDao {
   }
 
   create = async (dto: CreatePaymentDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({ ...dto, user: { id: dto.user } });
     await this.db.save(res);
+    return res.id;
   };
 
   findAll = async () => {

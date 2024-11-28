@@ -17,7 +17,7 @@ export class QuestionAnswerMatrixDao {
         id: dto.question,
       },
       category: {
-        id: dto.category,
+        id: dto.category as number,
       },
       answer: {
         id: dto.answer,
@@ -39,5 +39,10 @@ export class QuestionAnswerMatrixDao {
       },
       //   relations: ['level'],
     });
+  };
+
+  clear = async () => {
+    const res = await this.db.createQueryBuilder().delete().execute();
+    return res;
   };
 }

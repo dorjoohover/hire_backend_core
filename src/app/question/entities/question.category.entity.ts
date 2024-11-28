@@ -19,20 +19,17 @@ export class QuestionCategoryEntity {
 
   @Column()
   name: string;
+  @Column({ nullable: true })
+  totalPoint: number;
+  @Column({ nullable: true })
+  duration: number;
+  @Column({ nullable: true })
+  orderNumber: number;
+  // ene category heden asuult avch baigag haruulna
   @Column()
-  type: number;
+  questionCount: number;
   @Column()
   status: number;
-  @Column()
-  minValue: number;
-  @Column()
-  maxValue: number;
-  @Column()
-  point: number;
-  @Column()
-  orderNumber: number;
-  @Column({ nullable: true })
-  file: string;
 
   @CreateDateColumn()
   createdAt: Date;

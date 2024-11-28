@@ -23,6 +23,7 @@ export class AssessmentDao {
         : null,
     });
     await this.db.save(res);
+    return res.id;
   };
 
   findAll = async () => {
@@ -38,5 +39,9 @@ export class AssessmentDao {
       },
       relations: ['level'],
     });
+  };
+
+  clear = async () => {
+    await this.db.createQueryBuilder().delete().execute();
   };
 }

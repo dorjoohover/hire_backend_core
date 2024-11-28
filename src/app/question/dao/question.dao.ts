@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, DBRef, Repository } from 'typeorm';
 import { QuestionEntity } from '../entities/question.entity';
 import { CreateQuestionDto } from '../dto/create-question.dto';
+import { QuestionStatus } from 'src/base/constants';
 
 @Injectable()
 export class QuestionDao {
@@ -24,10 +25,22 @@ export class QuestionDao {
     return res.id;
   };
 
-  findAll = async () => {
-    return await this.db.find({
-      //   relations: [''],
-    });
+  findByCategory = async (
+    limit: number,
+    shuffle: boolean,
+    category: number,
+  ) => {
+    return await this.db
+      .createQueryBuilder('entity')
+      .where('entity.status = :status and entity."categoryId = :category', {
+        status: QuestionStatus.ACTIVE,
+        category: category,
+      })
+      .leftJoinAndSelect('entity.answers', 'answers')
+      .leftJoinAndSelect('answers.matrix', 'matrix')
+      .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
+      .limit(limit)
+      .getMany();
   };
 
   findOne = async (id: number) => {
@@ -35,7 +48,9 @@ export class QuestionDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
     });
+  };
+  clear = async () => {
+    return await this.db.createQueryBuilder().delete().execute();
   };
 }

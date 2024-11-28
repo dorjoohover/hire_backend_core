@@ -19,7 +19,6 @@ export class AssessmentLevelDao {
     const res = await this.db.find({
       relations: ['assessments'],
     });
-    console.log(res);
     return res;
   };
 
@@ -29,5 +28,9 @@ export class AssessmentLevelDao {
         id: id,
       },
     });
+  };
+
+  clear = async () => {
+    return await this.db.createQueryBuilder().delete().execute();
   };
 }

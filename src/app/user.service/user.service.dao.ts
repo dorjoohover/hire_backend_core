@@ -11,8 +11,13 @@ export class UserServiceDao {
   }
 
   create = async (dto: CreateUserServiceDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({
+      ...dto,
+      user: { id: dto.user },
+      assessment: { id: dto.assessment },
+    });
     await this.db.save(res);
+    return res.id;
   };
 
   findAll = async () => {

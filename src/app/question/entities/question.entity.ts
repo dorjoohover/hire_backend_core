@@ -27,7 +27,7 @@ export class QuestionEntity {
   minValue: number;
   @Column()
   maxValue: number;
-  @Column()
+  @Column({nullable: true})
   point: number;
   @Column()
   orderNumber: number;

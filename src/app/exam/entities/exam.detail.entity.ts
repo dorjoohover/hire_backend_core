@@ -9,8 +9,6 @@ export class ExamDetailEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
 
-  @Column()
-  pageNumber: number;
   @Column({ nullable: true })
   questionCategoryName: string;
 

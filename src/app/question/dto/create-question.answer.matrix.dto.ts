@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ParentProperty } from 'src/base/base.dto';
 
 export class CreateQuestionAnswerMatrixDto {
   @ApiProperty()
@@ -11,8 +10,7 @@ export class CreateQuestionAnswerMatrixDto {
   @ApiProperty()
   question: number;
 
-  @ApiProperty()
-  category: number;
+  category: number | string;
 
   @ApiProperty()
   answer: number;

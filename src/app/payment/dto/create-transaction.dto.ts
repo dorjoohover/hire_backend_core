@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ParentProperty } from 'src/base/base.dto';
 
 export class CreateTransactionDto {
   @ApiProperty()
@@ -7,12 +6,9 @@ export class CreateTransactionDto {
 
   @ApiProperty()
   count: number;
-  @ApiProperty({ type: ParentProperty })
-  payment: {
-    id: number;
-  };
-  @ApiProperty({ type: ParentProperty })
-  service: {
-    id: number;
-  };
+  @ApiProperty()
+  payment?: number;
+
+  @ApiProperty()
+  service?: number;
 }

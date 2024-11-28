@@ -11,7 +11,13 @@ export class ExamDetailDao {
   }
 
   create = async (dto: CreateExamDetailDto) => {
-    const res = this.db.create(dto);
+    const res = this.db.create({
+      ...dto,
+      exam: { id: dto.exam },
+      question: { id: dto.question },
+      questionCategory: { id: dto.questionCategory },
+      service: { id: dto.service },
+    });
     await this.db.save(res);
   };
 

@@ -14,7 +14,7 @@ export class QuestionAnswerDao {
     const res = this.db.create({
       ...dto,
       category: {
-        id: dto.category,
+        id: dto.category as number,
       },
       question: {
         id: dto.question,
@@ -37,5 +37,8 @@ export class QuestionAnswerDao {
       },
       //   relations: ['level'],
     });
+  };
+  clear = async () => {
+    return await this.db.createQueryBuilder().delete().execute();
   };
 }

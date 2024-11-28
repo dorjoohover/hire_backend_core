@@ -24,7 +24,7 @@ export class AssessmentController {
   @Roles(Role.admin)
   @Post()
   create(@Body() dto: CreateAssessmentDto, @Request() { user }) {
-    this.assessmentService.create(dto, user['id']);
+    return this.assessmentService.create(dto, user['id']);
   }
   @Post('/level')
   levelCreate(@Body() dto: CreateAssessmentLevelDto) {
@@ -52,5 +52,10 @@ export class AssessmentController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assessmentService.remove(+id);
+  }
+
+  @Delete()
+  clear() {
+    return this.assessmentService.clear();
   }
 }
