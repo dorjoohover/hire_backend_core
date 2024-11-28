@@ -97,7 +97,7 @@ export class QuestionService {
   }
 
   public async findAll() {
-    // return await this.questionDao.findAll();
+    return await this.questionDao.findAll();
   }
 
   public async findOne(id: number) {

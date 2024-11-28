@@ -12,9 +12,10 @@ import { QuestionService } from './question.service';
 import {
   CreateQuestionAllDto,
   CreateQuestionDto,
+  ExampleDISCAllDto,
 } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { CreateQuestionTypeDto } from './dto/create-question.type';
@@ -22,6 +23,7 @@ import { QuestionTypeService } from './question.type.service';
 import { QuestionTypeDao } from './dao/question.type';
 import { CreateQuestionCategoryDto } from './dto/create-question.category.dto';
 import { QuestionCategoryDao } from './dao/question.category.dao';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @Controller('question')
 @ApiBearerAuth('access-token')
@@ -36,8 +38,20 @@ export class QuestionController {
   create(@Body() createQuestionDto: CreateQuestionDto) {
     return this.questionService.create(createQuestionDto);
   }
-
   @Post('all')
+  @ApiOperation({
+    summary:
+      'question-g asuulttain tsug uusgene. asuultad dotor matrix asuulagdana',
+  })
+  @ApiBody({
+    type: CreateQuestionAllDto,
+    examples: {
+      a: {
+        summary: 'All',
+        value: ExampleDISCAllDto,
+      },
+    },
+  })
   @Roles(Role.admin)
   createAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
@@ -50,7 +64,9 @@ export class QuestionController {
       };
     }
   }
-
+  @ApiOperation({
+    summary: 'question type uusgene butsaahdaa payload der type',
+  })
   @Post('type')
   @Roles(Role.admin)
   async createType(@Body() dto: CreateQuestionTypeDto, @Request() { user }) {
@@ -59,6 +75,10 @@ export class QuestionController {
       createdUser: user['id'],
     });
   }
+  @ApiOperation({
+    summary:
+      'question category uusgene (wrapper) butsaah utga ni payload der zowhon id',
+  })
   @Post('category')
   @Roles(Role.admin)
   async createCategory(
@@ -70,6 +90,9 @@ export class QuestionController {
       createdUser: user['id'],
     });
   }
+
+  
+  @Public()
   @Get()
   findAll() {
     return this.questionService.findAll();
@@ -95,6 +118,6 @@ export class QuestionController {
   @Roles(Role.admin)
   @Delete('all')
   deleteMatrix() {
-    return this.questionService.deleteAll()
+    return this.questionService.deleteAll();
   }
 }

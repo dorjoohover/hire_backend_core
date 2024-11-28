@@ -30,7 +30,7 @@ export class AppController extends BaseService {
   ) {
     super();
   }
-
+  @Public()
   @Get()
   getHello(): string {
     return this.appService.getHello();

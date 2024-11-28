@@ -43,6 +43,12 @@ export class QuestionDao {
       .getMany();
   };
 
+  findAll = async () => {
+    return await this.db.find({
+      relations: ['answers', 'matrixs'],
+    });
+  };
+
   findOne = async (id: number) => {
     return await this.db.findOne({
       where: {

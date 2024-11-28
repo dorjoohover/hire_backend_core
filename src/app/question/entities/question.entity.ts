@@ -12,6 +12,7 @@ import { QuestionAnswerEntity } from './question.answer.entity';
 import { ExamDetailEntity } from 'src/app/exam/entities/exam.detail.entity';
 import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
 import { QuestionTypeEntity } from './question.type.entity';
+import { QuestionAnswerMatrixEntity } from './question.answer.matrix.entity';
 @Entity('question')
 export class QuestionEntity {
   @PrimaryGeneratedColumn('increment', {})
@@ -45,6 +46,8 @@ export class QuestionEntity {
   category: QuestionCategoryEntity;
   @OneToMany(() => QuestionAnswerEntity, (answer) => answer.question)
   answers: QuestionAnswerEntity[];
+  @OneToMany(() => QuestionAnswerMatrixEntity, (answer) => answer.question)
+  matrixs: QuestionAnswerMatrixEntity[];
   @OneToMany(() => ExamDetailEntity, (detail) => detail.question)
   examDetails: ExamDetailEntity[];
   @OneToMany(() => UserAnswerEntity, (userAns) => userAns.answer)
