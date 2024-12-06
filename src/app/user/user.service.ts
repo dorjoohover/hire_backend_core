@@ -33,7 +33,8 @@ export class UserService {
     const res = await this.dao.add({
       ...dto,
       password: password,
-      role: dto.organizationRegisterNumber ? ORGANIZATION : CLIENT,
+      role:
+        dto.role ?? (dto.organizationRegisterNumber ? ORGANIZATION : CLIENT),
       wallet: 0,
       lastname: dto.lastname ?? '',
       firstname: dto.firstname ?? '',
