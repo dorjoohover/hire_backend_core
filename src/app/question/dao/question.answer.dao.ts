@@ -26,6 +26,10 @@ export class QuestionAnswerDao {
 
   findByQuestion = async (id: number, shuffle: boolean) => {
     const res = await this.db.find({
+      select: {
+        point: false,
+        correct: false,
+      },
       where: {
         question: { id: id },
       },
@@ -36,8 +40,9 @@ export class QuestionAnswerDao {
     });
     if (res?.[0]?.matrix)
       return res.map((result) => {
+        const { point, correct, ...res } = result;
         return {
-          ...result,
+          ...res,
           matrix: shuffle
             ? this.shuffle(result.matrix)
             : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
@@ -57,7 +62,7 @@ export class QuestionAnswerDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
+        relations: ['category'],
     });
   };
   clear = async () => {

@@ -16,9 +16,9 @@ export class UserAnswerDao {
         ...dto,
         exam: { id: dto.exam },
         answer: { id: dto.answer },
-        matrix: { id: dto.matrix },
+        matrix: dto.matrix ? { id: dto.matrix } : null,
         question: { id: dto.question },
-        answerCategory: { id: dto.answerCategory },
+        answerCategory: dto.answerCategory ? { id: dto.answerCategory } : null,
         questionCategory: { id: dto.questionCategory },
       });
       await this.db.save(res);

@@ -32,6 +32,12 @@ export class QuestionCategoryDao {
 
   findOne = async (id: number) => {
     return await this.db.findOne({
+      select: {
+        updatedAt: false,
+        createdAt: false,
+        createdUser: false,
+        status: false,
+      },
       where: {
         id: id,
       },

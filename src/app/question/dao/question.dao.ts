@@ -35,6 +35,15 @@ export class QuestionDao {
       prevQuestions.length > 0
         ? await this.db
             .createQueryBuilder('entity')
+            .select([
+              'entity.id',
+              'entity.name',
+              'entity.level',
+              'entity.minValue',
+              'entity.maxValue',
+              'entity.orderNumber',
+              'entity.file',
+            ])
             .where(
               'entity.status = :status AND entity."categoryId" = :category AND entity."id" NOT IN (:prevQuestions)',
               {
@@ -48,6 +57,15 @@ export class QuestionDao {
             .getMany()
         : await this.db
             .createQueryBuilder('entity')
+            .select([
+              'entity.id',
+              'entity.name',
+              'entity.level',
+              'entity.minValue',
+              'entity.maxValue',
+              'entity.orderNumber',
+              'entity.file',
+            ])
             .where(
               'entity.status = :status AND entity."categoryId" = :category',
               {

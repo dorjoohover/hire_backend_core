@@ -1,9 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserAnswerDto {
-  @ApiProperty()
   ip: string;
-  @ApiProperty()
   device: string;
   @ApiProperty()
   point?: number;
@@ -11,6 +9,8 @@ export class CreateUserAnswerDto {
   minPoint: number;
   @ApiProperty()
   flag: boolean;
+  @ApiProperty()
+  code: number;
   @ApiProperty()
   exam: number;
   @ApiProperty()
@@ -25,6 +25,10 @@ export class CreateUserAnswerDto {
   questionCategory: number;
 }
 
+export class UserAnswerDtoList {
+  @ApiProperty({ isArray: true, type: CreateUserAnswerDto })
+  data: CreateUserAnswerDto[];
+}
 export class CalculateUserAnswerDto {
   question: number;
   matrix: number;

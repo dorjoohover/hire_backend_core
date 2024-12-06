@@ -23,18 +23,24 @@ export class UserAnswerEntity {
 
   @ManyToOne(() => ExamEntity, (exam) => exam.userAnswers)
   exam: ExamEntity;
+  @Column({ type: 'bigint' })
+  code: number;
   @ManyToOne(() => QuestionEntity, (exam) => exam.userAnswers)
   question: QuestionEntity;
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,
     (category) => category.userAnswers,
+    {
+      nullable: true,
+    },
   )
   answerCategory: QuestionAnswerCategoryEntity;
   @ManyToOne(() => QuestionCategoryEntity, (category) => category.userAnswers)
   questionCategory: QuestionCategoryEntity;
   @ManyToOne(() => QuestionAnswerEntity, (exam) => exam.userAnswers)
   answer: QuestionAnswerEntity;
-  @ManyToOne(() => QuestionAnswerMatrixEntity, (exam) => exam.userAnswers)
+  @ManyToOne(() => QuestionAnswerMatrixEntity, (exam) => exam.userAnswers, {
+    nullable: true,
+  })
   matrix: QuestionAnswerMatrixEntity;
-  res: { id: number; };
 }

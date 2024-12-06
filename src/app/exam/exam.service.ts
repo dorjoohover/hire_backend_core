@@ -130,7 +130,6 @@ export class ExamService extends BaseService {
     questions: number[] = [],
   ) {
     const category = await this.questionCategoryDao.findOne(id);
-    console.log('category:', category, shuffle, id, answerShuffle, questions);
     const q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,

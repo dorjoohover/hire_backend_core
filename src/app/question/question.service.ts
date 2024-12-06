@@ -115,21 +115,18 @@ export class QuestionService {
     answerShuffle: boolean,
     prevQuestions: number[],
   ) {
-    console.log('prev', prevQuestions);
     const questions = await this.questionDao.findByCategory(
       limit,
       shuffle,
       category,
       prevQuestions,
     );
-    console.log('question', questions);
     return Promise.all(
       questions.map(async (question) => {
         const answers = await this.questionAnswerDao.findByQuestion(
           question.id,
           answerShuffle,
         );
-        console.log('answers:', answers);
         return {
           question: question,
           answers: answers,

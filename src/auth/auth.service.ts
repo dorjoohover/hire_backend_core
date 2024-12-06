@@ -33,7 +33,8 @@ export class AuthService {
     let result;
     const res = await this.usersService.getUser(user.email);
     if (!user.password) {
-      if (!user.name && !user.profile) throw new UnauthorizedException("Хэрэглэгч олдсонгүй.");
+      if (!user.name && !user.profile)
+        throw new UnauthorizedException('Хэрэглэгч олдсонгүй.');
       if (!res) {
         const newUser = await this.usersService.addUser({
           lastname: '',
@@ -50,7 +51,10 @@ export class AuthService {
             emailVerified: true,
           };
         } else {
-          throw new HttpException('Нууц үг олдсонгүй.' , HttpStatus.UNAUTHORIZED);
+          throw new HttpException(
+            'Нууц үг олдсонгүй.',
+            HttpStatus.UNAUTHORIZED,
+          );
         }
       } else {
         result = {
@@ -70,7 +74,7 @@ export class AuthService {
     } else {
       result = await this.validateUser(user.email, user.password);
       if (!result) {
-        throw new UnauthorizedException("Нууц үг буруу байна.");
+        throw new UnauthorizedException('Нууц үг буруу байна.');
       }
     }
     return {

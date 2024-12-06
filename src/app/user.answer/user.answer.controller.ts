@@ -11,7 +11,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { UserAnswerService } from './user.answer.service';
-import { CreateUserAnswerDto } from './dto/create-user.answer.dto';
+import { CreateUserAnswerDto, UserAnswerDtoList } from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
@@ -21,7 +21,7 @@ export class UserAnswerController {
   @Public()
   @Post()
   create(
-    @Body() dto: CreateUserAnswerDto[],
+    @Body() dto: UserAnswerDtoList,
     @Ip() ip: string,
     @Headers() headers,
   ) {

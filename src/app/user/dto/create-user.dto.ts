@@ -10,7 +10,9 @@ export class CreateUserDto {
   })
   email: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty()
+  role?: number;
+  @ApiProperty()
   phone?: string;
   @ApiProperty()
   organizationPhone?: string;

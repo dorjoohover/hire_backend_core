@@ -1,5 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CalculateUserAnswerDto, CreateUserAnswerDto } from './dto/create-user.answer.dto';
+import {
+  CalculateUserAnswerDto,
+  CreateUserAnswerDto,
+  UserAnswerDtoList,
+} from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
 import { UserAnswerDao } from './user.answer.dao';
 import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
@@ -8,6 +12,7 @@ import { QuestionDao } from '../question/dao/question.dao';
 import { BaseService } from 'src/base/base.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
+import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -17,15 +22,15 @@ export class UserAnswerService extends BaseService {
     private examDao: ExamDao,
     private questionAnswerDao: QuestionAnswerDao,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
-    private assessmentDao: AssessmentDao
+    private assessmentDao: AssessmentDao,
   ) {
     super();
   }
-  public async create(dto: CreateUserAnswerDto[], ip: string, device: string) {
+  public async create(dto: UserAnswerDtoList, ip: string, device: string) {
     let message = '';
     let status = HttpStatus.BAD_REQUEST;
     const res = [];
-    for (const d of dto) {
+    for (const d of dto.data) {
       if (!d.question) {
         message = 'Асуулт байхгүй';
         status = HttpStatus.BAD_REQUEST;
@@ -36,23 +41,22 @@ export class UserAnswerService extends BaseService {
         status = HttpStatus.BAD_REQUEST;
         break;
       }
-      if (!d.answerCategory) {
-        message = 'Хариултын ангилал байхгүй';
-        status = HttpStatus.BAD_REQUEST;
-        break;
-      }
       if (!d.answer) {
         message = 'Хариулт байхгүй';
         status = HttpStatus.BAD_REQUEST;
         break;
       }
+      if (!d.answerCategory) {
+        const category = await this.questionAnswerDao.findOne(d.answer);
+        d.answerCategory = category.category?.id;
+      }
+
       const point =
         d.point ??
         (d.matrix
           ? (await this.questionAnswerMatrixDao.findOne(d.matrix)).point
           : (await this.questionAnswerDao.findOne(d.answer)).point);
       const question = await this.questionDao.findOne(d.question);
-
       if (!d || d == null) {
         message = 'Оноогүй байна.';
         status = HttpStatus.BAD_REQUEST;
@@ -69,19 +73,18 @@ export class UserAnswerService extends BaseService {
       const r = await this.dao.create(body);
       res.push(r);
     }
-
     if (res.includes(undefined)) {
       res.map(async (r) => {
         if (r != undefined) await this.dao.deleteOne(r);
       });
       throw new HttpException(message, status);
     }
+    return res;
   }
 
   public async calculate(dto: CalculateUserAnswerDto) {
     // const exam = await this.examDao.findOne(id)
     // const dto = JSON.parse(exam.assessment.function) as CalculateUserAnswerDto
-    
     // tests der hj bga
     // if(dto.answerCategory)
   }
