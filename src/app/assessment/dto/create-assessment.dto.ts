@@ -20,6 +20,14 @@ export class CreateAssessmentDto {
   @ApiProperty()
   author?: string;
   @ApiProperty()
+  type?: number;
+  @ApiProperty()
+  questionShuffle?: boolean;
+  @ApiProperty()
+  answerShuffle?: boolean;
+  @ApiProperty()
+  categoryShuffle?: boolean;
+  @ApiProperty()
   questionCount?: number;
   createdUser: number;
   @ApiProperty()

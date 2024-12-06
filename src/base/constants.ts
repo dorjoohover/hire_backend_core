@@ -17,11 +17,26 @@ export const QuestionType = {
   RADIO: 30,
 };
 
+export const QuestionLevel = {
+  HARD: 10,
+  MEDIUM: 20,
+  EASY: 30,
+};
+
+export const QuestionCategoryType = {
+  QUESTION: 10,
+  CATEGORY: 20,
+};
 
 export const QuestionStatus = {
   ACTIVE: 10,
   DELETED: 20,
   PASSIVE: 30,
+};
+
+export const AssessmentType = {
+  TEST: 10,
+  UNELGEE: 20,
 };
 
 export const PaymentTypeDict = {
@@ -39,7 +54,6 @@ export const PaymentType = {
   LOAN: 4,
   SOCIAL: 5,
 };
-
 
 export const ProductMeasureUnit = {
   LITER: 10,
@@ -63,7 +77,6 @@ export const ProductVatType = {
   VAT_FREE: 20,
   VAT_ZERO: 30,
 };
-
 
 export const ProductMeasureUnitDict = {
   10: 'л',

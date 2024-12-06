@@ -10,9 +10,10 @@ export class UserServiceDao {
     this.db = this.dataSource.getRepository(UserServiceEntity);
   }
 
-  create = async (dto: CreateUserServiceDto) => {
+  create = async (dto: CreateUserServiceDto, price: number) => {
     const res = this.db.create({
       ...dto,
+      price: price,
       user: { id: dto.user },
       assessment: { id: dto.assessment },
     });
@@ -31,7 +32,14 @@ export class UserServiceDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
+        relations: ['assessment'],
     });
+  };
+
+  updateCount = async (id: number, count: number, used: number) => {
+    const res = await this.db.findOne({ where: { id: id } });
+    res.count += count;
+    res.usedUserCount += used;
+    await this.db.save(res);
   };
 }

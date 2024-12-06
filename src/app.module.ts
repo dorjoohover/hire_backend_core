@@ -16,6 +16,8 @@ import { ExamModule } from './app/exam/exam.module';
 import { PaymentModule } from './app/payment/payment.module';
 import { UserAnswerModule } from './app/user.answer/user.answer.module';
 import { BaseModule } from './base/base.module';
+import { UserModule } from './app/user/user.module';
+import { UserServiceModule } from './app/user.service/user.service.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { BaseModule } from './base/base.module';
     ExamModule,
     PaymentModule,
     UserAnswerModule,
+    UserModule,
+    UserServiceModule,
   ],
   controllers: [AppController],
   providers: [

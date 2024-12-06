@@ -9,7 +9,7 @@ export class AssessmentLevelService extends BaseService {
     super();
   }
   public async create(dto: CreateAssessmentLevelDto) {
-    await this.dao.create(dto);
+    return await this.dao.create(dto);
   }
 
   public async findAll() {

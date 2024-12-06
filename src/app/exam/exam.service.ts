@@ -9,51 +9,90 @@ import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { waitForDebugger } from 'inspector';
+import { QuestionEntity } from '../question/entities/question.entity';
+import { QuestionCategoryEntity } from '../question/entities/question.category.entity';
+import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
+import { ExamEntity } from './entities/exam.entity';
 
 @Injectable()
 export class ExamService extends BaseService {
   constructor(
     private dao: ExamDao,
     private detailDao: ExamDetailDao,
-    private questionDao: QuestionDao,
+    private questionService: QuestionService,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
   }
   public async create(createExamDto: CreateExamDto) {
+    const created = createExamDto.created ?? Math.round(Math.random() * 100);
     const code: number = Number(
-      BigInt(`${Math.round(Math.random() * 10000)}${Date.now()}`),
+      BigInt(
+        `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
+      ),
     );
     await this.dao.create({ ...createExamDto, code: code });
+    return code;
   }
+  // category questioncount der asuudaltai bga
+  public async updateByCode(code: number, category?: number) {
+    const res = await this.dao.findByCode(code);
 
-  public async updateByCode(code: number, date: boolean, category?: number) {
+    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
+    if (res.endDate < new Date())
+      throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
+    if (res.userEndDate != null)
+      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
-    const res = await this.dao.findByCode(code);
-    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    if (res.endDate != null)
-      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     const shuffle = res.assessment.questionShuffle;
-    if (!date) {
+    const answerShuffle = res.assessment.answerShuffle;
+    let prevQuestions = [];
+    let currentCategory = category;
+    let allCategories = [];
+    if (res.userStartDate == null && category === undefined) {
       const categories = await this.questionCategoryDao.findByAssessment(
         res.assessment.id,
       );
-      const category = categories[0];
-      const questions = await this.getQuestions(shuffle, category.id);
+      currentCategory = categories[0].id;
+      allCategories =
+        categories.length <= 1
+          ? []
+          : categories
+              .map((cate, i) => {
+                if (i > 0) return cate.id;
+              })
+              .filter((f) => f != undefined);
       await this.dao.update(res.id, {
         ...res,
         userStartDate: new Date(),
       });
-      return {
-        questions: questions,
-        categories: categories.map((cate) => cate.id),
-      };
     }
-    if (category) {
-      const questions = await this.getQuestions(shuffle, category);
+    if (currentCategory) {
+      prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+        (a) => a.id,
+      );
+      if (allCategories.length == 0)
+        allCategories = await this.questionCategoryDao.findByAssessment(
+          res.assessment.id,
+          currentCategory,
+        );
+      const result = await this.getQuestions(
+        shuffle,
+        currentCategory,
+        answerShuffle,
+        prevQuestions,
+      );
+      await this.createDetail(
+        result.questions,
+        res.id,
+        result.category,
+        res.service.id,
+      );
       return {
-        questions: questions,
+        questions: result.questions,
+        category: result.category,
+        categories: allCategories,
       };
     } else {
       await this.dao.update(res.id, {
@@ -62,15 +101,53 @@ export class ExamService extends BaseService {
       });
     }
   }
-
-  public async getQuestions(shuffle: boolean, id: number) {
+  createDetail = async (
+    questions: {
+      question: QuestionEntity;
+      answers: QuestionAnswerEntity[];
+    }[],
+    exam: number,
+    category: QuestionCategoryEntity,
+    service: number,
+  ) => {
+    return Promise.all(
+      questions.map(async (question) => {
+        await this.detailDao.create({
+          exam: exam,
+          pageNumber: 0,
+          question: question.question.id,
+          questionCategory: category.id,
+          questionCategoryName: category.name,
+          service: service,
+        });
+      }),
+    );
+  };
+  public async getQuestions(
+    shuffle: boolean,
+    id: number,
+    answerShuffle: boolean,
+    questions: number[] = [],
+  ) {
     const category = await this.questionCategoryDao.findOne(id);
-
-    return await this.questionDao.findByCategory(
+    console.log('category:', category, shuffle, id, answerShuffle, questions);
+    const q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,
-      category.id,
+      id,
+      answerShuffle,
+      questions,
     );
+    const res = {
+      questions: q,
+      category: category,
+    };
+    console.log('getQuestion Res:', res);
+    return res;
+  }
+
+  public async findExamByService(service: number) {
+    return await this.dao.findByService(service);
   }
 
   remove(id: number) {

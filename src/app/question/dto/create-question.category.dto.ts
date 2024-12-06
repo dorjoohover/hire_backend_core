@@ -10,6 +10,7 @@ export class CreateQuestionCategoryDto {
   @ApiProperty()
   questionCount?: number;
   status?: number;
+  url?: string;
   @ApiProperty()
   orderNumber?: number;
 

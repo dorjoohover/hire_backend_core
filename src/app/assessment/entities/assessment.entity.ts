@@ -46,9 +46,14 @@ export class AssessmentEntity {
   @Column({ default: false })
   questionShuffle: boolean;
   @Column({ default: false })
+  categoryShuffle: boolean;
+  @Column({ default: false })
   answerShuffle: boolean;
   @Column({ nullable: true })
   page: number;
+
+  @Column()
+  type: number;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -24,12 +24,34 @@ export class QuestionAnswerDao {
     return res.id;
   };
 
-  findAll = async () => {
-    return await this.db.find({
-      //   relations: [''],
+  findByQuestion = async (id: number, shuffle: boolean) => {
+    const res = await this.db.find({
+      where: {
+        question: { id: id },
+      },
+      order: {
+        orderNumber: 'ASC',
+      },
+      relations: ['matrix'],
     });
+    if (res?.[0]?.matrix)
+      return res.map((result) => {
+        return {
+          ...result,
+          matrix: shuffle
+            ? this.shuffle(result.matrix)
+            : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+        };
+      });
+    return shuffle ? this.shuffle(res) : res;
   };
 
+  shuffle = (list: any[]) => {
+    return list
+      .map((value) => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
+  };
   findOne = async (id: number) => {
     return await this.db.findOne({
       where: {

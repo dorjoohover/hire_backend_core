@@ -5,8 +5,11 @@ import { ExamDao } from './dao/exam.dao';
 import { ExamDetailDao } from './dao/exam.detail.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
-import { UserService } from '../user/user.service';
-import { UserDao } from '../user/user.dao';
+import { QuestionService } from '../question/question.service';
+import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
+import { QuestionTypeDao } from '../question/dao/question.type';
+import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.dao';
+import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 
 @Module({
   controllers: [ExamController],
@@ -16,6 +19,12 @@ import { UserDao } from '../user/user.dao';
     ExamDetailDao,
     QuestionDao,
     QuestionCategoryDao,
+    QuestionService,
+    QuestionAnswerDao,
+    QuestionTypeDao,
+    QuestionAnswerMatrixDao,
+    QuestionAnswerCategoryDao,
   ],
+  exports: [ExamService, ExamDao],
 })
 export class ExamModule {}

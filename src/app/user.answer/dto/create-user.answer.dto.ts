@@ -6,7 +6,9 @@ export class CreateUserAnswerDto {
   @ApiProperty()
   device: string;
   @ApiProperty()
-  point: number;
+  point?: number;
+  maxPoint: number;
+  minPoint: number;
   @ApiProperty()
   flag: boolean;
   @ApiProperty()
@@ -17,4 +19,17 @@ export class CreateUserAnswerDto {
   answer: number;
   @ApiProperty()
   matrix: number;
+  @ApiProperty()
+  answerCategory: number;
+  @ApiProperty()
+  questionCategory: number;
+}
+
+export class CalculateUserAnswerDto {
+  question: number;
+  matrix: number;
+  answerCategory: boolean;
+  questionCategory: boolean;
+  point: number;
+  answer: number;
 }

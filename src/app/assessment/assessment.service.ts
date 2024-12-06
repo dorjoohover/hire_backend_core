@@ -18,7 +18,7 @@ export class AssessmentService {
     });
   }
   public async createLevel(dto: CreateAssessmentLevelDto) {
-    this.levelDao.create(dto);
+    return await this.levelDao.create(dto);
   }
 
   public async findAll() {
@@ -32,8 +32,8 @@ export class AssessmentService {
 
   public async findAllLevel() {}
 
-  findOne(id: number) {
-    return `This action returns a #${id} assessment`;
+  public async findOne(id: number) {
+    return await this.dao.findOne(id);
   }
 
   update(id: number, updateAssessmentDto: UpdateAssessmentDto) {

@@ -29,23 +29,42 @@ export class QuestionDao {
     limit: number,
     shuffle: boolean,
     category: number,
+    prevQuestions: number[],
   ) => {
-    return await this.db
-      .createQueryBuilder('entity')
-      .where('entity.status = :status and entity."categoryId = :category', {
-        status: QuestionStatus.ACTIVE,
-        category: category,
-      })
-      .leftJoinAndSelect('entity.answers', 'answers')
-      .leftJoinAndSelect('answers.matrix', 'matrix')
-      .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-      .limit(limit)
-      .getMany();
+    const res =
+      prevQuestions.length > 0
+        ? await this.db
+            .createQueryBuilder('entity')
+            .where(
+              'entity.status = :status AND entity."categoryId" = :category AND entity."id" NOT IN (:prevQuestions)',
+              {
+                status: QuestionStatus.ACTIVE,
+                category: category,
+                prevQuestions: prevQuestions.join(','),
+              },
+            )
+            .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
+            .limit(limit)
+            .getMany()
+        : await this.db
+            .createQueryBuilder('entity')
+            .where(
+              'entity.status = :status AND entity."categoryId" = :category',
+              {
+                status: QuestionStatus.ACTIVE,
+                category: category,
+              },
+            )
+            .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
+            .limit(limit)
+            .getMany();
+
+    return res;
   };
 
   findAll = async () => {
     return await this.db.find({
-      relations: ['answers', 'matrixs'],
+      relations: ['answers', 'matrix'],
     });
   };
 
@@ -54,6 +73,7 @@ export class QuestionDao {
       where: {
         id: id,
       },
+      relations: ['matrix', 'answers'],
     });
   };
   clear = async () => {

@@ -5,10 +5,11 @@ export class CreateTransactionDto {
   price: number;
 
   @ApiProperty()
-  count: number;
+  count?: number;
   @ApiProperty()
   payment?: number;
 
   @ApiProperty()
   service?: number;
+  user?: number;
 }

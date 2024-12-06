@@ -11,8 +11,10 @@ import {
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('payment')
+@ApiBearerAuth('access-token')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 

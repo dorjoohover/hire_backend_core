@@ -13,6 +13,7 @@ export class AssessmentLevelDao {
   create = async (dto: CreateAssessmentLevelDto) => {
     const res = this.db.create(dto);
     await this.db.save(res);
+    return res.id;
   };
 
   findAll = async () => {

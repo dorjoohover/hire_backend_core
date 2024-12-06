@@ -16,7 +16,13 @@ import {
   CreateAssessmentCategoryDto,
 } from './dto/create-assessment.category.dto';
 import { UpdateAssessmentCategoryDto } from './dto/update-assessment.category.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -62,8 +68,9 @@ export class AssessmentCategoryController {
     // console.log(req);
     return this.assessmentCategoryService.findAll();
   }
-
+  @Public()
   @Get(':id')
+  @ApiParam({ name: 'id' })
   findOne(@Param('id') id: string) {
     return this.assessmentCategoryService.findOne(+id);
   }

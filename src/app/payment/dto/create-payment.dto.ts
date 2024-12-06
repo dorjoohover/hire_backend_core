@@ -8,6 +8,5 @@ export class CreatePaymentDto {
   @ApiProperty()
   method: number;
 
-  @ApiProperty()
   user: number;
 }

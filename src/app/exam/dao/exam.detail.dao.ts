@@ -26,7 +26,15 @@ export class ExamDetailDao {
       //   relations: [''],
     });
   };
-
+  findByExam = async (exam: number) => {
+    return await this.db.find({
+      where: {
+        exam: {
+          id: exam,
+        },
+      },
+    });
+  };
   findOne = async (id: number) => {
     return await this.db.findOne({
       where: {

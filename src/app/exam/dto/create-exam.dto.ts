@@ -4,6 +4,7 @@ import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity'
 
 export class CreateExamDto {
   code?: number;
+  created?: number;
   assessment?: AssessmentEntity;
   @ApiProperty({ type: Date })
   startDate: Date;
@@ -12,4 +13,11 @@ export class CreateExamDto {
   @ApiProperty()
   @IsNotEmpty()
   service: number;
+}
+
+export class FindExamByCodeDto {
+  @ApiProperty()
+  code: number;
+  @ApiProperty()
+  category?: number;
 }

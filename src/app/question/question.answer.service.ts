@@ -22,7 +22,7 @@ export class QuestionAnswerService extends BaseService {
   }
 
   public async findAll() {
-    return await this.dao.findAll();
+    // return await this.dao.findAll();
   }
 
   public async findOne(id: number) {

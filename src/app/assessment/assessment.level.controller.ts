@@ -8,7 +8,7 @@ export class AssessmentLevelController {
   constructor(private readonly service: AssessmentLevelService) {}
   @Post()
   create(@Body() dto: CreateAssessmentLevelDto) {
-    this.service.create(dto);
+    return this.service.create(dto);
   }
 
   @Get()

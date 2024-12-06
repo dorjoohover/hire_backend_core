@@ -15,6 +15,7 @@ export class TransactionDao {
       ...dto,
       service: dto.service ? { id: dto.service } : null,
       payment: dto.payment ? { id: dto.payment } : null,
+      createdUser: dto.user
     });
     await this.db.save(res);
   };

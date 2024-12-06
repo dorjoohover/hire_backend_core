@@ -29,6 +29,13 @@ export class UserDao {
     return res.id;
   };
 
+  updateWallet = async (id: number, point: number) => {
+    const user = await this._db.findOne({ where: { id: id } });
+    user.wallet += point;
+    const res = await this._db.save(user);
+    return res;
+  };
+
   changePassword = async (id: string, password: string, merchantId: string) => {
     // const builder = new SqlBuilder({ password }, ['password']);
     // const { cols, indexes } = builder.create();

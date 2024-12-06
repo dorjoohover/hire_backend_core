@@ -11,10 +11,15 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
-import { CreateUserServiceDto } from './dto/create-user.service.dto';
+import {
+  CreateExamServiceDto,
+  CreateUserServiceDto,
+} from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@Controller('user.service')
+@Controller('userService')
+@ApiBearerAuth('access-token')
 export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
@@ -23,14 +28,29 @@ export class UserServiceController {
     @Body() createUserServiceDto: CreateUserServiceDto,
     @Request() { user },
   ) {
-    if (parseFloat(user['wallet']) - createUserServiceDto.price < 0)
-      throw new HttpException(
-        'Үлдэгдэл хүрэлцэхгүй байна.',
-        HttpStatus.PAYMENT_REQUIRED,
-      );
-    return this.userServiceService.create(createUserServiceDto, user['id']);
+    try {
+      return this.userServiceService.create(createUserServiceDto, user);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        status: error.status,
+      };
+    }
   }
 
+  @Post('exam')
+  createExam(@Body() dto: CreateExamServiceDto, @Request() { user }) {
+    try {
+      return this.userServiceService.createExam(dto, user['id']);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        status: error.status,
+      };
+    }
+  }
   @Get()
   findAll() {
     return this.userServiceService.findAll();

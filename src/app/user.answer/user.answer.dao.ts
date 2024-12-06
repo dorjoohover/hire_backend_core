@@ -11,14 +11,21 @@ export class UserAnswerDao {
   }
 
   create = async (dto: CreateUserAnswerDto) => {
-    const res = this.db.create({
-      ...dto,
-      exam: { id: dto.exam },
-      answer: { id: dto.answer },
-      matrix: { id: dto.matrix },
-      question: { id: dto.question },
-    });
-    await this.db.save(res);
+    try {
+      const res = this.db.create({
+        ...dto,
+        exam: { id: dto.exam },
+        answer: { id: dto.answer },
+        matrix: { id: dto.matrix },
+        question: { id: dto.question },
+        answerCategory: { id: dto.answerCategory },
+        questionCategory: { id: dto.questionCategory },
+      });
+      await this.db.save(res);
+      return res.id;
+    } catch (error) {
+      return undefined;
+    }
   };
 
   findAll = async () => {
@@ -33,9 +40,44 @@ export class UserAnswerDao {
     });
   };
 
+  findByExam = async (exam: number) => {
+    return await this.db.find({
+      where: {
+        exam: {
+          id: exam,
+        },
+      },
+    });
+  };
+
+  updateOne = async (id: number, dto: CreateUserAnswerDto) => {
+    let res = await this.findOne(id);
+
+    res = await this.db.save({
+      id: res.id,
+      answer: { id: dto.answer },
+      matrix: { id: dto.matrix },
+      flag: dto.flag,
+      device: dto.device,
+      ip: dto.ip,
+      point: dto.point,
+    });
+    return res.id;
+  };
+
   // dynamic = async () => {
   //   await this.db.createQueryBuilder('', {
 
   //   }).addGroupBy()
   // }
+
+  deleteOne = async (id: number) => {
+    return await this.db
+      .createQueryBuilder()
+      .where({
+        id: id,
+      })
+      .delete()
+      .execute();
+  };
 }

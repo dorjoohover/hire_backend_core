@@ -1,15 +1,40 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Ip,
+  Request,
+  Headers,
+} from '@nestjs/common';
 import { UserAnswerService } from './user.answer.service';
 import { CreateUserAnswerDto } from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
-@Controller('user.answer')
+@Controller('userAnswer')
 export class UserAnswerController {
   constructor(private readonly userAnswerService: UserAnswerService) {}
-
+  @Public()
   @Post()
-  create(@Body() createUserAnswerDto: CreateUserAnswerDto) {
-    return this.userAnswerService.create(createUserAnswerDto);
+  create(
+    @Body() dto: CreateUserAnswerDto[],
+    @Ip() ip: string,
+    @Headers() headers,
+  ) {
+    try {
+      const device = headers['user-agent'] ?? '';
+      return this.userAnswerService.create(dto, ip, device);
+    } catch (error) {
+      return {
+        success: false,
+        status: error.status,
+        message: error.message,
+      };
+    }
   }
 
   @Get()
@@ -23,12 +48,10 @@ export class UserAnswerController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserAnswerDto: UpdateUserAnswerDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateUserAnswerDto: UpdateUserAnswerDto,
+  ) {
     return this.userAnswerService.update(+id, updateUserAnswerDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userAnswerService.remove(+id);
   }
 }

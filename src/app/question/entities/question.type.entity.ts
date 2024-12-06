@@ -12,8 +12,7 @@ import { QuestionEntity } from './question.entity';
 export class QuestionTypeEntity {
   @PrimaryGeneratedColumn('increment', {})
   id?: number;
-
-  @Column()
+  @Column({ unique: true })
   name: string;
   @Column()
   description: string;

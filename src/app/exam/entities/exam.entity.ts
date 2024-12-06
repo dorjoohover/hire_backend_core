@@ -16,7 +16,7 @@ export class ExamEntity {
   id?: number;
 
   //   token|code|url|sequence
-  @Column()
+  @Column({type: 'bigint'})
   code: number;
   // assessment name
   @Column()

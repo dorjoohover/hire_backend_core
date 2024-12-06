@@ -18,12 +18,13 @@ export class PaymentService extends BaseService {
   }
   public async create(createPaymentDto: CreatePaymentDto, user: number) {
     const payment = await this.dao.create({ ...createPaymentDto, user: user });
-
+    await this.userDao.updateWallet(user, createPaymentDto.totalPrice);
     await this.transactionDao.create({
-      count: 0,
       price: createPaymentDto.totalPrice,
       payment: payment,
+      user: user,
     });
+    return payment;
   }
 
   findAll() {

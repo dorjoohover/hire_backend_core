@@ -11,6 +11,8 @@ import {
 } from 'typeorm';
 import { QuestionEntity } from './question.entity';
 import { ExamDetailEntity } from 'src/app/exam/entities/exam.detail.entity';
+import { QuestionCategoryType } from 'src/base/constants';
+import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
 
 @Entity('questionCategory')
 export class QuestionCategoryEntity {
@@ -28,6 +30,10 @@ export class QuestionCategoryEntity {
   // ene category heden asuult avch baigag haruulna
   @Column()
   questionCount: number;
+  @Column({ default: QuestionCategoryType.CATEGORY })
+  type: number;
+  @Column({ nullable: true })
+  url?: string;
   @Column()
   status: number;
 
@@ -51,4 +57,6 @@ export class QuestionCategoryEntity {
 
   @OneToMany(() => ExamDetailEntity, (detail) => detail.questionCategory)
   examDetails: ExamDetailEntity[];
+  @OneToMany(() => UserAnswerEntity, (user) => user.questionCategory)
+  userAnswers: UserAnswerEntity[];
 }

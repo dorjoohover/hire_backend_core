@@ -8,10 +8,13 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
-import { CreateExamDto } from './dto/create-exam.dto';
+import { CreateExamDto, FindExamByCodeDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @Controller('exam')
+@ApiBearerAuth('access-token')
 export class ExamController {
   constructor(private readonly examService: ExamService) {}
 
@@ -20,11 +23,26 @@ export class ExamController {
     return this.examService.create(createExamDto);
   }
 
-  @Get()
-  findAll() {}
+  @Public()
+  @Post('code')
+  findByCode(@Body() dto: FindExamByCodeDto) {
+    try {
+      return this.examService.updateByCode(dto.code, dto.category);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        status: error.status,
+      };
+    }
+  }
 
-  @Get(':id')
+  @Get('exam/:id')
   findOne(@Param('id') id: string) {}
+  @Get('service/:id')
+  findByService(@Param('id') id: string) {
+    return this.examService.findExamByService(+id);
+  }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateExamDto: UpdateExamDto) {}

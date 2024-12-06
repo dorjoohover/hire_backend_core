@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, MoreThan, Not, Repository } from 'typeorm';
 import { QuestionCategoryEntity } from '../entities/question.category.entity';
 import { CreateQuestionCategoryDto } from '../dto/create-question.category.dto';
 import { UpdateQuestionCategoryDto } from '../dto/create-question.dto';
@@ -37,16 +37,29 @@ export class QuestionCategoryDao {
       },
     });
   };
-  findByAssessment = async (id: number) => {
-    return await this.db.find({
-      where: {
-        status: QuestionStatus.ACTIVE,
-        assessment: { id: id },
-      },
-      order: {
-        orderNumber: 'ASC',
-      },
-    });
+  findByAssessment = async (assessment: number, id?: number) => {
+    const category =
+      id == undefined ? null : await this.db.findOne({ where: { id: id } });
+    return category == null
+      ? await this.db.find({
+          where: {
+            status: QuestionStatus.ACTIVE,
+            assessment: { id: assessment },
+          },
+          order: {
+            orderNumber: 'ASC',
+          },
+        })
+      : await this.db.find({
+          where: {
+            status: QuestionStatus.ACTIVE,
+            assessment: { id: assessment },
+            orderNumber: MoreThan(category.orderNumber),
+          },
+          order: {
+            orderNumber: 'ASC',
+          },
+        });
   };
 
   findByName = async (name: string) => {

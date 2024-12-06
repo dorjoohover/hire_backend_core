@@ -2,14 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateUserServiceDto {
   @ApiProperty()
-  price: number;
-
-  @ApiProperty()
   count: number;
-  @ApiProperty()
   usedUserCount: number;
-
-  @ApiProperty()
   user: number;
 
   @ApiProperty()

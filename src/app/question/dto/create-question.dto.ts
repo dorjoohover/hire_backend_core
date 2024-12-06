@@ -10,6 +10,8 @@ export class CreateQuestionDto {
   name: string;
   @ApiProperty()
   type?: number;
+  @ApiProperty()
+  level?: number;
   status?: number;
   @ApiProperty()
   minValue: number;

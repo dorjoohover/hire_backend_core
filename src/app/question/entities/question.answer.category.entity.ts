@@ -6,6 +6,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { QuestionAnswerEntity } from './question.answer.entity';
+import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
 
 @Entity('questionAnswerCategory')
 export class QuestionAnswerCategoryEntity {
@@ -31,4 +32,6 @@ export class QuestionAnswerCategoryEntity {
 
   @OneToMany(() => QuestionAnswerEntity, (category) => category.category)
   questionAnswers: QuestionAnswerEntity[];
+  @OneToMany(() => UserAnswerEntity, (user) => user.answerCategory)
+  userAnswers: UserAnswerEntity[];
 }

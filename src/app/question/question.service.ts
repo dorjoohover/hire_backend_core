@@ -15,6 +15,7 @@ import { CreateQuestionTypeDto } from './dto/create-question.type';
 import { CreateQuestionAnswerDto } from './dto/create-question.answer.dto';
 import { CreateQuestionAnswerMatrixDto } from './dto/create-question.answer.matrix.dto';
 import { QuestionStatus } from 'src/base/constants';
+import { QuestionAnswerEntity } from './entities/question.answer.entity';
 
 @Injectable()
 export class QuestionService {
@@ -47,7 +48,7 @@ export class QuestionService {
       createdUser: user,
     });
 
-    dto.answers.category.map(async (category) => {
+    dto.answers.category?.map(async (category) => {
       let answerCategory = await this.questionAnswerCategoryDao.findByName(
         category.name,
       );
@@ -96,8 +97,45 @@ export class QuestionService {
     });
   }
 
+  answerShuffle(dto: QuestionAnswerEntity[]) {
+    return dto
+      .map((value) => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
+  }
+
   public async findAll() {
     return await this.questionDao.findAll();
+  }
+
+  public async findForExam(
+    limit: number,
+    shuffle: boolean,
+    category: number,
+    answerShuffle: boolean,
+    prevQuestions: number[],
+  ) {
+    console.log('prev', prevQuestions);
+    const questions = await this.questionDao.findByCategory(
+      limit,
+      shuffle,
+      category,
+      prevQuestions,
+    );
+    console.log('question', questions);
+    return Promise.all(
+      questions.map(async (question) => {
+        const answers = await this.questionAnswerDao.findByQuestion(
+          question.id,
+          answerShuffle,
+        );
+        console.log('answers:', answers);
+        return {
+          question: question,
+          answers: answers,
+        };
+      }),
+    );
   }
 
   public async findOne(id: number) {

@@ -23,7 +23,15 @@ export class RolesGuard extends AuthGuard('jwt') {
 
       const { user } = context.switchToHttp().getRequest();
       const userRole = user.role;
-      if (user.app === 'app' && userRole === Role.admin) {
+      if (
+        user.app === 'app' &&
+        (userRole === Role.admin ||
+          userRole === Role.client ||
+          userRole == Role.organization)
+      ) {
+        return true;
+      }
+      if (user.app === 'admin' && userRole === Role.admin) {
         return true;
       }
 

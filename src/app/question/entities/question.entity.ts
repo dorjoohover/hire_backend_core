@@ -24,11 +24,14 @@ export class QuestionEntity {
   type: QuestionTypeEntity;
   @Column()
   status: number;
+  @Column({ nullable: true })
+  level: number;
+
   @Column()
   minValue: number;
   @Column()
   maxValue: number;
-  @Column({nullable: true})
+  @Column({ nullable: true })
   point: number;
   @Column()
   orderNumber: number;
@@ -47,7 +50,7 @@ export class QuestionEntity {
   @OneToMany(() => QuestionAnswerEntity, (answer) => answer.question)
   answers: QuestionAnswerEntity[];
   @OneToMany(() => QuestionAnswerMatrixEntity, (answer) => answer.question)
-  matrixs: QuestionAnswerMatrixEntity[];
+  matrix: QuestionAnswerMatrixEntity[];
   @OneToMany(() => ExamDetailEntity, (detail) => detail.question)
   examDetails: ExamDetailEntity[];
   @OneToMany(() => UserAnswerEntity, (userAns) => userAns.answer)

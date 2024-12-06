@@ -16,16 +16,22 @@ export class TransactionEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
 
-  @Column()
+  @Column({ nullable: true })
   price: number;
 
-  @Column()
+  @Column({ nullable: true })
   count: number;
 
   @CreateDateColumn()
   createdAt: Date;
-  @ManyToOne(() => PaymentEntity, (exam) => exam.transactions)
+  @ManyToOne(() => PaymentEntity, (exam) => exam.transactions, {
+    nullable: true,
+  })
   payment: PaymentEntity;
-  @ManyToOne(() => UserServiceEntity, (service) => service.transactions)
+  @ManyToOne(() => UserServiceEntity, (service) => service.transactions, {
+    nullable: true,
+  })
   service: UserServiceEntity;
+  @Column()
+  createdUser: number;
 }
