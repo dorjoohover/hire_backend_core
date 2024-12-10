@@ -40,12 +40,13 @@ export class AssessmentCategoryService extends BaseService {
   }
 
   public async findOne(id: number) {
-    return await this.db.findOne({
+    const res = await this.db.findOne({
       where: {
         id: id,
       },
       relations: ['subcategories', 'parent'],
     });
+    return res;
   }
 
   update(id: number, updateAssessmentCategoryDto: UpdateAssessmentCategoryDto) {

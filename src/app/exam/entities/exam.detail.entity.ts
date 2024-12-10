@@ -12,13 +12,19 @@ export class ExamDetailEntity {
   @Column({ nullable: true })
   questionCategoryName: string;
 
-  @ManyToOne(() => ExamEntity, (exam) => exam.details)
+  @ManyToOne(() => ExamEntity, (exam) => exam.details, { onDelete: 'CASCADE' })
   exam: ExamEntity;
-  @ManyToOne(() => QuestionEntity, (question) => question.examDetails)
+  @ManyToOne(() => QuestionEntity, (question) => question.examDetails, {
+    onDelete: 'CASCADE',
+  })
   question: QuestionEntity;
-  @ManyToOne(() => QuestionCategoryEntity, (category) => category.examDetails)
+  @ManyToOne(() => QuestionCategoryEntity, (category) => category.examDetails, {
+    onDelete: 'CASCADE',
+  })
   questionCategory: QuestionCategoryEntity;
 
-  @ManyToOne(() => UserServiceEntity, (service) => service.exams)
+  @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
+    onDelete: 'CASCADE',
+  })
   service: UserServiceEntity;
 }

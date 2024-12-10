@@ -30,7 +30,9 @@ export class QuestionAnswerMatrixEntity {
   )
   category: QuestionAnswerCategoryEntity;
 
-  @ManyToOne(() => QuestionAnswerEntity, (answer) => answer.matrix)
+  @ManyToOne(() => QuestionAnswerEntity, (answer) => answer.matrix, {
+    onDelete: 'CASCADE',
+  })
   answer: QuestionAnswerEntity;
   @OneToMany(() => UserAnswerEntity, (userAns) => userAns.matrix)
   userAnswers: UserAnswerEntity[];

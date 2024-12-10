@@ -11,8 +11,10 @@ export class AssessmentDao {
   }
 
   create = async (dto: CreateAssessmentDto) => {
+    const { answerCategories, ...body } = dto;
     const res = this.db.create({
-      ...dto,
+      ...body,
+
       category: {
         id: dto.category,
       },
@@ -33,14 +35,34 @@ export class AssessmentDao {
   };
 
   findOne = async (id: number) => {
-    return await this.db.findOne({
+    const res = await this.db.findOne({
       where: {
         id: id,
       },
-      relations: ['level'],
+      relations: ['level', 'answerCategories', 'category'],
     });
+    return res;
   };
+  deleteOne = async (id: number) => {
+    return await this.db.delete(id);
+  };
+  update = async (id: number, dto: CreateAssessmentDto, user: number) => {
+    const res = await this.db.findOne({
+      where: { id },
+    });
+    const { answerCategories, ...d } = dto;
+    const body = {
+      ...d,
+      category: {
+        id: dto.category,
+      },
+      level: {
+        id: dto.level,
+      },
+    };
 
+    await this.db.save({ ...res, ...body, updatedUser: user });
+  };
   clear = async () => {
     await this.db.createQueryBuilder().delete().execute();
   };

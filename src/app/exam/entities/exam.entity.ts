@@ -16,7 +16,7 @@ export class ExamEntity {
   id?: number;
 
   //   token|code|url|sequence
-  @Column({type: 'bigint'})
+  @Column({ type: 'bigint' })
   code: number;
   // assessment name
   @Column()
@@ -34,7 +34,9 @@ export class ExamEntity {
 
   @ManyToOne(() => UserServiceEntity, (service) => service.exams)
   service: UserServiceEntity;
-  @ManyToOne(() => AssessmentEntity, (service) => service.exams)
+  @ManyToOne(() => AssessmentEntity, (service) => service.exams, {
+    onDelete: 'CASCADE',
+  })
   assessment: AssessmentEntity;
   @OneToMany(() => ExamDetailEntity, (detail) => detail.exam, {
     nullable: true,

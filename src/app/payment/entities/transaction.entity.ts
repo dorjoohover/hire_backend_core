@@ -30,6 +30,7 @@ export class TransactionEntity {
   payment: PaymentEntity;
   @ManyToOne(() => UserServiceEntity, (service) => service.transactions, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   service: UserServiceEntity;
   @Column()

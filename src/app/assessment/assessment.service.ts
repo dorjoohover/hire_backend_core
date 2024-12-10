@@ -4,18 +4,36 @@ import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { AssessmentDao } from './dao/assessment.dao';
 import { AssessmentLevelDao } from './dao/assessment.level.dao';
 import { CreateAssessmentLevelDto } from './dto/create.assessment.level.dto';
+import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
 
 @Injectable()
 export class AssessmentService {
   constructor(
     private dao: AssessmentDao,
     private levelDao: AssessmentLevelDao,
+    private categoryDao: AssessmentCategoryService,
+    private answerCategory: QuestionAnswerCategoryDao,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
-    return await this.dao.create({
+    const res = await this.dao.create({
       ...dto,
       createdUser: user,
     });
+
+    const answer = await Promise.all(
+      dto.answerCategories.map(async (answer) => {
+        const cate = await this.answerCategory.create({
+          ...answer,
+          assessment: res,
+        });
+        return cate;
+      }),
+    );
+    return {
+      id: res,
+      categories: answer,
+    };
   }
   public async createLevel(dto: CreateAssessmentLevelDto) {
     return await this.levelDao.create(dto);
@@ -33,15 +51,20 @@ export class AssessmentService {
   public async findAllLevel() {}
 
   public async findOne(id: number) {
-    return await this.dao.findOne(id);
+    const res = await this.dao.findOne(id);
+    const category = await this.categoryDao.findOne(res.category.id);
+    return {
+      data: res,
+      category: category,
+    };
   }
 
-  update(id: number, updateAssessmentDto: UpdateAssessmentDto) {
-    return `This action updates a #${id} assessment`;
+  public async update(id: number, dto: CreateAssessmentDto, user: number) {
+    return await this.dao.update(id, dto, user);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} assessment`;
+  public async remove(id: number) {
+    return await this.dao.deleteOne(id);
   }
 
   public async clear() {

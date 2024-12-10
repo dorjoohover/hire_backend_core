@@ -7,4 +7,6 @@ export class CreateQuestionAnswerCategoryDto {
   description?: string;
   @ApiProperty()
   parent: number;
+  @ApiProperty()
+  assessment?: number;
 }

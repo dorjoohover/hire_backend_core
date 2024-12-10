@@ -26,7 +26,9 @@ export class QuestionAnswerEntity {
   @Column({ default: false })
   correct: boolean;
 
-  @ManyToOne(() => QuestionEntity, (question) => question.answers)
+  @ManyToOne(() => QuestionEntity, (question) => question.answers, {
+    onDelete: 'CASCADE',
+  })
   question: QuestionEntity;
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,

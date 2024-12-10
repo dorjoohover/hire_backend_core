@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateQuestionAnswerCategoryDto } from 'src/app/question/dto/create-question.answer.category.dto';
 
 export class CreateAssessmentDto {
   @ApiProperty()
@@ -37,4 +38,6 @@ export class CreateAssessmentDto {
 
   @ApiProperty()
   icons?: string;
+  @ApiProperty({ isArray: true, type: CreateQuestionAnswerCategoryDto })
+  answerCategories?: CreateQuestionAnswerCategoryDto[];
 }

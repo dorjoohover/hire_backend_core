@@ -15,6 +15,7 @@ import { QuestionCategoryEntity } from 'src/app/question/entities/question.categ
 import { UserService } from 'src/app/user/user.service';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
+import { QuestionAnswerCategoryEntity } from 'src/app/question/entities/question.answer.category.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -74,6 +75,14 @@ export class AssessmentEntity {
     nullable: true,
   })
   questionCategories: QuestionCategoryEntity[];
+  @OneToMany(
+    () => QuestionAnswerCategoryEntity,
+    (question) => question.assessment,
+    {
+      nullable: true,
+    },
+  )
+  answerCategories: QuestionAnswerCategoryEntity[];
   @OneToMany(() => ExamEntity, (question) => question.assessment, {
     nullable: true,
   })

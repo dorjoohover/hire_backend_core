@@ -7,6 +7,10 @@ import { AssessmentLevelService } from './assessment.level.service';
 import { AssessmentLevelController } from './assessment.level.controller';
 import { AssessmentCalculatorService } from './assessment.calculator.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
+import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
+import { UserService } from '../user/user.service';
+import { UserDao } from '../user/user.dao';
 
 @Module({
   controllers: [AssessmentController, AssessmentLevelController],
@@ -14,9 +18,13 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     AssessmentService,
     AssessmentDao,
     AssessmentLevelService,
+    AssessmentCategoryService,
+    UserService,
+    UserDao,
     AssessmentLevelDao,
     AssessmentCalculatorService,
     UserAnswerDao,
+    QuestionAnswerCategoryDao,
   ],
   exports: [AssessmentService, AssessmentLevelService],
 })

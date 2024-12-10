@@ -25,7 +25,9 @@ export class UserServiceEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.services)
   user: UserEntity;
-  @ManyToOne(() => AssessmentEntity, (assessment) => assessment.services)
+  @ManyToOne(() => AssessmentEntity, (assessment) => assessment.services, {
+    onDelete: 'CASCADE',
+  })
   assessment: AssessmentEntity;
   @OneToMany(() => ExamEntity, (exam) => exam.service, {
     nullable: true,

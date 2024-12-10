@@ -48,6 +48,7 @@ export class QuestionCategoryEntity {
   @ManyToOne(
     () => AssessmentEntity,
     (assessment) => assessment.questionCategories,
+    { onDelete: 'CASCADE' },
   )
   assessment: AssessmentEntity;
   @OneToMany(() => QuestionEntity, (question) => question.category, {

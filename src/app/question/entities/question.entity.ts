@@ -45,7 +45,9 @@ export class QuestionEntity {
   updatedUser: number;
   @Column({ nullable: true })
   file: string;
-  @ManyToOne(() => QuestionCategoryEntity, (category) => category.questions)
+  @ManyToOne(() => QuestionCategoryEntity, (category) => category.questions, {
+    onDelete: 'CASCADE',
+  })
   category: QuestionCategoryEntity;
   @OneToMany(() => QuestionAnswerEntity, (answer) => answer.question)
   answers: QuestionAnswerEntity[];

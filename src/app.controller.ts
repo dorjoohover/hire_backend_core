@@ -31,11 +31,6 @@ export class AppController extends BaseService {
     super();
   }
   @Public()
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-  @Public()
   @Post('login')
   @ApiOperation({
     summary: 'basic login , google login, google authaar burguulne',

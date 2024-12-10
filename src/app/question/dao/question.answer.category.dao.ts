@@ -14,6 +14,7 @@ export class QuestionAnswerCategoryDao {
     const res = this.db.create({
       ...dto,
       parent: dto.parent ? { id: dto.parent } : null,
+      assessment: dto.assessment ? { id: dto.assessment } : null,
     });
     await this.db.save(res);
     return {

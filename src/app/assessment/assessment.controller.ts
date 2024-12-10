@@ -42,12 +42,14 @@ export class AssessmentController {
     return this.assessmentService.findOne(+id);
   }
 
+  @Roles(Role.admin)
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() updateAssessmentDto: UpdateAssessmentDto,
+    @Body() dto: CreateAssessmentDto,
+    @Request() { user },
   ) {
-    return this.assessmentService.update(+id, updateAssessmentDto);
+    return this.assessmentService.update(+id, dto, user['id']);
   }
 
   @Delete(':id')
