@@ -41,9 +41,19 @@ export class AssessmentService {
 
   public async findAll() {
     const ass = await this.dao.findAll();
+
+    const res = await Promise.all(
+      ass.map(async (as) => {
+        const res = await this.categoryDao.findOne(as.category?.id);
+        return {
+          data: as,
+          category: res,
+        };
+      }),
+    );
     const level = await this.levelDao.findAll();
     return {
-      ass,
+      res,
       level,
     };
   }

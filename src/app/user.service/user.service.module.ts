@@ -11,7 +11,6 @@ import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
-import { QuestionTypeDao } from '../question/dao/question.type';
 import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
@@ -29,7 +28,6 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
     QuestionCategoryDao,
     QuestionDao,
     QuestionAnswerDao,
-    QuestionTypeDao,
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
     AssessmentDao,

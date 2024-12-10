@@ -11,12 +11,6 @@ export const ORGANIZATION = 30;
 // BURTGELGUI HEREGLECH
 export const ANONYMOUS = 40;
 
-export const QuestionType = {
-  MARTIX: 10,
-  MULTIPLE: 20,
-  RADIO: 30,
-};
-
 export const QuestionLevel = {
   HARD: 10,
   MEDIUM: 20,
@@ -32,6 +26,14 @@ export const QuestionStatus = {
   ACTIVE: 10,
   DELETED: 20,
   PASSIVE: 30,
+};
+
+export const QuestionType = {
+  SINGLE: 10,
+  MULTIPLE: 20,
+  TRUEFALSE: 30,
+  MATRIX: 40,
+  CONSTANTSUM: 50,
 };
 
 export const AssessmentType = {

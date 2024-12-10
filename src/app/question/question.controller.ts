@@ -12,15 +12,16 @@ import { QuestionService } from './question.service';
 import {
   CreateQuestionAllDto,
   CreateQuestionDto,
+  ExampleConstantSumAllDto,
   ExampleDISCAllDto,
+  ExampleMultipleAllDto,
+  ExampleSingleAllDto,
+  ExampleTrueFalseAllDto,
 } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
-import { CreateQuestionTypeDto } from './dto/create-question.type';
-import { QuestionTypeService } from './question.type.service';
-import { QuestionTypeDao } from './dao/question.type';
 import { CreateQuestionCategoryDto } from './dto/create-question.category.dto';
 import { QuestionCategoryDao } from './dao/question.category.dao';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
@@ -30,7 +31,6 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 export class QuestionController {
   constructor(
     private readonly questionService: QuestionService,
-    private readonly questionTypeDao: QuestionTypeDao,
     private readonly quesitonCategoryDao: QuestionCategoryDao,
   ) {}
 
@@ -47,8 +47,24 @@ export class QuestionController {
     type: CreateQuestionAllDto,
     examples: {
       a: {
-        summary: 'All',
+        summary: 'Matrix',
         value: ExampleDISCAllDto,
+      },
+      b: {
+        summary: 'Multiple',
+        value: ExampleMultipleAllDto,
+      },
+      c: {
+        summary: 'Single',
+        value: ExampleSingleAllDto,
+      },
+      d: {
+        summary: 'TrueFalse',
+        value: ExampleTrueFalseAllDto,
+      },
+      f: {
+        summary: 'ConstantSum',
+        value: ExampleConstantSumAllDto,
       },
     },
   })
@@ -67,14 +83,6 @@ export class QuestionController {
   @ApiOperation({
     summary: 'question type uusgene butsaahdaa payload der type',
   })
-  @Post('type')
-  @Roles(Role.admin)
-  async createType(@Body() dto: CreateQuestionTypeDto, @Request() { user }) {
-    return await this.questionTypeDao.create({
-      ...dto,
-      createdUser: user['id'],
-    });
-  }
   @ApiOperation({
     summary:
       'question category uusgene (wrapper) butsaah utga ni payload der zowhon id',
@@ -91,7 +99,6 @@ export class QuestionController {
     });
   }
 
-  
   @Public()
   @Get()
   findAll() {

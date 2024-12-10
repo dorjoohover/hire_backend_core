@@ -3,7 +3,7 @@ import { CreateQuestionAnswerDto } from './create-question.answer.dto';
 import { CreateQuestionAnswerMatrixDto } from './create-question.answer.matrix.dto';
 import { CreateQuestionAnswerCategoryDto } from './create-question.answer.category.dto';
 import { CreateQuestionCategoryDto } from './create-question.category.dto';
-import { CreateQuestionTypeDto } from './create-question.type';
+import { QuestionType } from 'src/base/constants';
 
 export class CreateQuestionDto {
   @ApiProperty()
@@ -47,29 +47,20 @@ export class UpdateQuestionAnswerMatrixDto extends PartialType(
 ) {
   id?: number;
 }
-export class UpdateQuestionTypeDto extends PartialType(CreateQuestionTypeDto) {
-  id?: number;
-}
+
 class CreateQuestionAllAnswerDto {
   @ApiProperty({ type: UpdateQuestionAnswerDto })
-  value: UpdateQuestionAnswerDto;
+  answer: UpdateQuestionAnswerDto;
 
   @ApiProperty({ type: UpdateQuestionAnswerDto, isArray: true })
   matrix?: UpdateQuestionAnswerMatrixDto[];
 }
 
-class CreateQuestionAllAnswersDto {
-  @ApiProperty({ type: CreateQuestionAllAnswerDto, isArray: true })
-  answer: CreateQuestionAllAnswerDto[];
-  @ApiProperty({ type: UpdateQuestionAnswerCategoryDto, isArray: true })
-  category: UpdateQuestionAnswerCategoryDto[];
-}
-
 export class CreateQuestionAllDto {
   @ApiProperty({ type: CreateQuestionDto })
   question: CreateQuestionDto;
-  @ApiProperty({ type: CreateQuestionAllAnswersDto })
-  answers: CreateQuestionAllAnswersDto;
+  @ApiProperty({ type: CreateQuestionAllAnswerDto, isArray: true })
+  answers: CreateQuestionAllAnswerDto[];
   @ApiProperty()
   category: number;
   @ApiProperty()
@@ -78,91 +69,211 @@ export class CreateQuestionAllDto {
 
 export const ExampleDISCAllDto = {
   category: 0,
-  type: 0,
+  type: QuestionType.MATRIX,
   question: {
     name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
     minValue: -1,
     maxValue: 1,
     orderNumber: 0,
   },
-  answers: {
-    answer: [
-      {
-        value: {
-          value: 'Байнга',
-          point: 1,
+  answers: [
+    {
+      answer: {
+        value: 'Байнга',
+        point: 1,
+        orderNumber: 0,
+        category: 0,
+      },
+      matrix: [
+        {
+          value: 'Урам зоригтой /Enthusiastic/',
+          category: 0,
           orderNumber: 0,
         },
-        matrix: [
-          {
-            value: 'Урам зоригтой /Enthusiastic/',
-            category: 'D',
-            orderNumber: 0,
-          },
-          {
-            value: 'Зоримог /Daring/',
-            category: 'I',
-            orderNumber: 1,
-          },
-          {
-            value: 'Дипломат /Diplomatic/',
-            category: 'S',
-            orderNumber: 2,
-          },
-          {
-            value: 'Сэтгэл ханамжтай /Satisfied/',
-            category: 'C',
-            orderNumber: 3,
-          },
-        ],
-      },
-      {
-        value: {
-          value: 'Бараг үгүй',
-          point: -1,
+        {
+          value: 'Зоримог /Daring/',
+          category: 1,
           orderNumber: 1,
         },
-        matrix: [
-          {
-            value: 'Урам зоригтой /Enthusiastic/',
-            category: 'D',
-            orderNumber: 0,
-          },
-          {
-            value: 'Зоримог /Daring/',
-            category: 'I',
-            orderNumber: 1,
-          },
-          {
-            value: 'Дипломат /Diplomatic/',
-            category: 'S',
-            orderNumber: 2,
-          },
-          {
-            value: 'Сэтгэл ханамжтай /Satisfied/',
-            category: 'C',
-            orderNumber: 3,
-          },
-        ],
+        {
+          value: 'Дипломат /Diplomatic/',
+          category: 2,
+          orderNumber: 2,
+        },
+        {
+          value: 'Сэтгэл ханамжтай /Satisfied/',
+          category: 3,
+          orderNumber: 3,
+        },
+      ],
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй',
+        point: -1,
+        orderNumber: 1,
+        category: 0,
       },
-    ],
-    category: [
-      {
-        name: 'D',
-        description: 'test',
-      },
-      {
-        name: 'I',
-        description: 'test',
-      },
-      {
-        name: 'S',
-        description: 'test',
-      },
-      {
-        name: 'C',
-        description: 'test',
-      },
-    ],
+      matrix: [
+        {
+          value: 'Урам зоригтой /Enthusiastic/',
+          category: 0,
+          orderNumber: 0,
+        },
+        {
+          value: 'Зоримог /Daring/',
+          category: 1,
+          orderNumber: 1,
+        },
+        {
+          value: 'Дипломат /Diplomatic/',
+          category: 2,
+          orderNumber: 2,
+        },
+        {
+          value: 'Сэтгэл ханамжтай /Satisfied/',
+          category: 3,
+          orderNumber: 3,
+        },
+      ],
+    },
+  ],
+};
+export const ExampleMultipleAllDto = {
+  category: 0,
+  type: QuestionType.MULTIPLE,
+  question: {
+    name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
+    minValue: 0,
+    maxValue: 1,
+    orderNumber: 0,
   },
+  answers: [
+    {
+      answer: {
+        value: 'Байнга',
+        point: 1,
+        orderNumber: 0,
+        category: 0,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй',
+        point: 0,
+        orderNumber: 1,
+        category: 0,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй 1',
+        point: 0.5,
+        orderNumber: 2,
+        category: 0,
+      },
+    },
+  ],
+};
+export const ExampleSingleAllDto = {
+  category: 0,
+  type: QuestionType.SINGLE,
+  question: {
+    name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
+    minValue: 0,
+    maxValue: 1,
+    orderNumber: 0,
+  },
+  answers: [
+    {
+      answer: {
+        value: 'Байнга',
+        point: 1,
+        orderNumber: 0,
+        category: 0,
+        correct: true,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй',
+        point: 0,
+        orderNumber: 1,
+        category: 0,
+        correct: false,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй 1',
+        point: 0,
+        orderNumber: 2,
+        category: 0,
+        correct: false,
+      },
+    },
+  ],
+};
+export const ExampleTrueFalseAllDto = {
+  category: 0,
+  type: QuestionType.TRUEFALSE,
+  question: {
+    name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
+    minValue: 0,
+    maxValue: 1,
+    orderNumber: 0,
+  },
+  answers: [
+    {
+      answer: {
+        value: 'Тийм',
+        point: 1,
+        orderNumber: 0,
+        category: 0,
+        correct: true,
+      },
+    },
+    {
+      answer: {
+        value: 'Үгүй',
+        point: 0,
+        orderNumber: 1,
+        category: 0,
+        correct: false,
+      },
+    },
+  ],
+};
+export const ExampleConstantSumAllDto = {
+  category: 0,
+  type: QuestionType.CONSTANTSUM,
+  question: {
+    name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
+    minValue: 0,
+    maxValue: 10,
+    orderNumber: 0,
+  },
+  answers: [
+    {
+      answer: {
+        value: 'Байнга',
+        orderNumber: 0,
+        category: 0,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй',
+        orderNumber: 1,
+        category: 0,
+      },
+    },
+    {
+      answer: {
+        value: 'Бараг үгүй 1',
+        orderNumber: 2,
+        category: 0,
+      },
+    },
+  ],
 };

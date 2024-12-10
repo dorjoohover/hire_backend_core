@@ -10,7 +10,6 @@ import { QuestionAnswerController } from './quetion.answer.controller';
 import { QuestionAnswerCategoryController } from './question.answer.category.controller';
 import { QuestionAnswerCategoryService } from './question.answer.category.service';
 import { QuestionAnswerService } from './question.answer.service';
-import { QuestionTypeDao } from './dao/question.type';
 
 @Module({
   controllers: [
@@ -28,7 +27,6 @@ import { QuestionTypeDao } from './dao/question.type';
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
     QuestionAnswerDao,
-    QuestionTypeDao,
   ],
   exports: [
     QuestionService,

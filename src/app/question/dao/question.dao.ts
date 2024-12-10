@@ -17,9 +17,6 @@ export class QuestionDao {
       category: {
         id: dto.category,
       },
-      type: {
-        id: dto.type,
-      },
     });
     await this.db.save(res);
     return res.id;

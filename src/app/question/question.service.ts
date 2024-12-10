@@ -9,12 +9,9 @@ import { QuestionAnswerDao } from './dao/question.answer.dao';
 import { QuestionAnswerMatrixDao } from './dao/question.answer.matrix.dao';
 import { QuestionAnswerCategoryDao } from './dao/question.answer.category.dao';
 import { QuestionCategoryDao } from './dao/question.category.dao';
-import { CreateQuestionCategoryDto } from './dto/create-question.category.dto';
-import { QuestionTypeDao } from './dao/question.type';
-import { CreateQuestionTypeDto } from './dto/create-question.type';
 import { CreateQuestionAnswerDto } from './dto/create-question.answer.dto';
 import { CreateQuestionAnswerMatrixDto } from './dto/create-question.answer.matrix.dto';
-import { QuestionStatus } from 'src/base/constants';
+import { QuestionStatus, QuestionType } from 'src/base/constants';
 import { QuestionAnswerEntity } from './entities/question.answer.entity';
 
 @Injectable()
@@ -22,7 +19,6 @@ export class QuestionService {
   constructor(
     private questionDao: QuestionDao,
     private questionAnswerDao: QuestionAnswerDao,
-    private questionTypeDao: QuestionTypeDao,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private questionAnswerCategoryDao: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
@@ -35,33 +31,19 @@ export class QuestionService {
     if (!questionCategory) {
       throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
     }
-    let questionType = await this.questionTypeDao.findOne(dto.type);
-    let typeId = questionType?.id;
-    if (!typeId) {
+    if (!dto.type) {
       throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
     }
     let questionId = await this.questionDao.create({
       ...dto.question,
-      type: typeId,
+      type: dto.type,
       status: QuestionStatus.ACTIVE,
       category: questionCategory.id,
       createdUser: user,
     });
 
-    dto.answers.category?.map(async (category) => {
-      let answerCategory = await this.questionAnswerCategoryDao.findByName(
-        category.name,
-      );
-      if (answerCategory?.id == undefined) {
-        answerCategory = await this.questionAnswerCategoryDao.create({
-          name: category.name,
-          parent: category.parent,
-          description: category.description,
-        });
-      }
-    });
-    dto.answers.answer.map(async (answer) => {
-      const { category, ...answerBody } = answer.value;
+    dto.answers.map(async (answer) => {
+      const { category, ...answerBody } = answer.answer;
 
       const cate =
         category == null
@@ -75,7 +57,7 @@ export class QuestionService {
         ...answerBody,
       } as CreateQuestionAnswerDto);
 
-      if (questionType.name == 'matrix') {
+      if (dto.type == QuestionType.MATRIX) {
         answer.matrix.map(async (matrix) => {
           let { category, ...body } = matrix;
           const cate =

@@ -11,7 +11,6 @@ import { QuestionCategoryEntity } from './question.category.entity';
 import { QuestionAnswerEntity } from './question.answer.entity';
 import { ExamDetailEntity } from 'src/app/exam/entities/exam.detail.entity';
 import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
-import { QuestionTypeEntity } from './question.type.entity';
 import { QuestionAnswerMatrixEntity } from './question.answer.matrix.entity';
 @Entity('question')
 export class QuestionEntity {
@@ -20,8 +19,8 @@ export class QuestionEntity {
 
   @Column()
   name: string;
-  @ManyToOne(() => QuestionTypeEntity, (type) => type.questions)
-  type: QuestionTypeEntity;
+  @Column()
+  type: number;
   @Column()
   status: number;
   @Column({ nullable: true })

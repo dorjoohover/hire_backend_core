@@ -17,7 +17,7 @@ export class QuestionAnswerEntity {
 
   @Column()
   value: string;
-  @Column()
+  @Column({ nullable: true })
   point: number;
   @Column()
   orderNumber: number;

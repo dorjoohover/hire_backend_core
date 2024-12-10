@@ -44,7 +44,7 @@ export class AssessmentCategoryService extends BaseService {
       where: {
         id: id,
       },
-      relations: ['subcategories', 'parent'],
+      relations: ['subcategories', 'parent',],
     });
     return res;
   }

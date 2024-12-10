@@ -30,7 +30,7 @@ export class AssessmentDao {
 
   findAll = async () => {
     return await this.db.find({
-      relations: ['level'],
+      relations: ['level', 'category'],
     });
   };
 
