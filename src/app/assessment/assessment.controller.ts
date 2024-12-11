@@ -35,7 +35,7 @@ export class AssessmentController {
   findAll() {
     return this.assessmentService.findAll();
   }
-
+  @Public()
   @Get(':id')
   @ApiParam({ name: 'id' })
   findOne(@Param('id') id: string) {

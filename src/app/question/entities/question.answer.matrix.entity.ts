@@ -17,7 +17,7 @@ export class QuestionAnswerMatrixEntity {
 
   @Column()
   value: string;
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'numeric' })
   point: number;
   @Column({ nullable: true })
   orderNumber: number;

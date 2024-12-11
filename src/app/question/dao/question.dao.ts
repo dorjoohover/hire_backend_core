@@ -49,6 +49,7 @@ export class QuestionDao {
                 prevQuestions: prevQuestions.join(','),
               },
             )
+
             .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
             .limit(limit)
             .getMany()
@@ -63,6 +64,7 @@ export class QuestionDao {
               'entity.orderNumber',
               'entity.file',
             ])
+            .leftJoinAndSelect('entity.answers', 'answers')
             .where(
               'entity.status = :status AND entity."categoryId" = :category',
               {
@@ -91,6 +93,7 @@ export class QuestionDao {
       relations: ['matrix', 'answers'],
     });
   };
+
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };

@@ -105,9 +105,14 @@ export class QuestionController {
     return this.questionService.findAll();
   }
 
-  @Get(':id')
+  @Get('get/:id')
   findOne(@Param('id') id: string) {
     return this.questionService.findOne(+id);
+  }
+  @Public()
+  @Get('assessment/:id')
+  findOneByAssessment(@Param('id') id: string) {
+    return this.questionService.findOneByAssessment(+id);
   }
 
   @Patch(':id')

@@ -6,6 +6,8 @@ import { AssessmentLevelDao } from './dao/assessment.level.dao';
 import { CreateAssessmentLevelDto } from './dto/create.assessment.level.dto';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
+import { UserDao } from '../user/user.dao';
+import { AssessmentEntity } from './entities/assessment.entity';
 
 @Injectable()
 export class AssessmentService {
@@ -14,6 +16,7 @@ export class AssessmentService {
     private levelDao: AssessmentLevelDao,
     private categoryDao: AssessmentCategoryService,
     private answerCategory: QuestionAnswerCategoryDao,
+    private userDao: UserDao,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
     const res = await this.dao.create({
@@ -44,10 +47,13 @@ export class AssessmentService {
 
     const res = await Promise.all(
       ass.map(async (as) => {
-        const res = await this.categoryDao.findOne(as.category?.id);
+        const user = await this.getUser(as);
+        const category = await this.categoryDao.findOne(as.category.id);
+
         return {
           data: as,
-          category: res,
+          user: user,
+          category: category,
         };
       }),
     );
@@ -63,9 +69,23 @@ export class AssessmentService {
   public async findOne(id: number) {
     const res = await this.dao.findOne(id);
     const category = await this.categoryDao.findOne(res.category.id);
+    const user = await this.getUser(res);
     return {
       data: res,
       category: category,
+      user,
+    };
+  }
+
+  public async getUser(dto: AssessmentEntity) {
+    const createdUser = await this.userDao.get(dto.createdUser);
+    const updatedUser =
+      createdUser.id == dto.updatedUser
+        ? createdUser
+        : await this.userDao.get(dto.updatedUser);
+    return {
+      createdUser: createdUser,
+      updatedUser: updatedUser,
     };
   }
 

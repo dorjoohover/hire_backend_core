@@ -120,6 +120,24 @@ export class QuestionService {
   public async findOne(id: number) {
     return await this.questionDao.findOne(id);
   }
+  public async findOneByAssessment(id: number) {
+    const categories = await this.questionCategoryDao.findByAssessment(id);
+    return await Promise.all(
+      categories.map(async (category) => {
+        const questions = await this.questionDao.findByCategory(
+          20,
+          false,
+          category.id,
+          [],
+        );
+        console.log(questions);
+        return {
+          category: category,
+          questions: questions,
+        };
+      }),
+    );
+  }
 
   public async deleteAll() {
     await this.questionAnswerMatrixDao.clear();

@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { QuestionAnswerCategoryService } from './question.answer.category.service';
-import { ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
-
+@ApiBearerAuth('access-token')
 @Controller('answer/category')
 export class QuestionAnswerCategoryController {
   constructor(private readonly service: QuestionAnswerCategoryService) {}

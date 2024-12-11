@@ -26,11 +26,11 @@ export class QuestionEntity {
   @Column({ nullable: true })
   level: number;
 
-  @Column()
+  @Column({ nullable: true, type: 'numeric' })
   minValue: number;
-  @Column()
+  @Column({ nullable: true, type: 'numeric' })
   maxValue: number;
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'numeric' })
   point: number;
   @Column()
   orderNumber: number;

@@ -16,7 +16,7 @@ export class UserAnswerEntity {
   ip: string;
   @Column({ nullable: true })
   device: string;
-  @Column()
+  @Column({ nullable: true, type: 'numeric' })
   point: number;
   @Column({ nullable: true })
   flag: boolean;

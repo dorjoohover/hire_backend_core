@@ -46,26 +46,29 @@ export class QuestionCategoryDao {
   findByAssessment = async (assessment: number, id?: number) => {
     const category =
       id == undefined ? null : await this.db.findOne({ where: { id: id } });
-    return category == null
-      ? await this.db.find({
-          where: {
-            status: QuestionStatus.ACTIVE,
-            assessment: { id: assessment },
-          },
-          order: {
-            orderNumber: 'ASC',
-          },
-        })
-      : await this.db.find({
-          where: {
-            status: QuestionStatus.ACTIVE,
-            assessment: { id: assessment },
-            orderNumber: MoreThan(category.orderNumber),
-          },
-          order: {
-            orderNumber: 'ASC',
-          },
-        });
+    const res =
+      category == null
+        ? await this.db.find({
+            where: {
+              status: QuestionStatus.ACTIVE,
+              assessment: { id: assessment },
+            },
+            order: {
+              orderNumber: 'ASC',
+            },
+          })
+        : await this.db.find({
+            where: {
+              status: QuestionStatus.ACTIVE,
+              assessment: { id: assessment },
+              orderNumber: MoreThan(category.orderNumber),
+            },
+            order: {
+              orderNumber: 'ASC',
+            },
+          });
+
+    return res;
   };
 
   findByName = async (name: string) => {
