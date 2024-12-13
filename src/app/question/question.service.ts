@@ -46,17 +46,18 @@ export class QuestionService {
       });
 
       dto.answers.map(async (answer) => {
+        console.log(answer);
         const answerBody = {
           value: answer.answer?.value,
           point: answer.answer?.point,
           orderNumber: answer.answer?.orderNumber,
           file: answer.answer?.file,
-          question: answer.answer?.question,
+          question: questionId,
           correct: answer.answer?.correct,
         };
         const category = answer.answer.category;
         const cate =
-          category == null
+          category == null || !category
             ? null
             : typeof category === 'number'
               ? category
@@ -68,7 +69,7 @@ export class QuestionService {
         } as CreateQuestionAnswerDto);
 
         if (dto.type == QuestionType.MATRIX) {
-          answer.matrix.map(async (matrix) => {
+          answer.matrix?.map(async (matrix) => {
             let { category, ...body } = matrix;
             const cate =
               category == null
@@ -137,15 +138,28 @@ export class QuestionService {
     const categories = await this.questionCategoryDao.findByAssessment(id);
     return await Promise.all(
       categories.map(async (category) => {
-        const questions = await this.questionDao.findByCategory(
+        let questions = await this.questionDao.findByCategory(
           20,
           false,
           category.id,
           [],
         );
+
+        let res = await Promise.all(
+          questions.map(async (question) => {
+            let answers = await this.questionAnswerDao.findByQuestion(
+              question.id,
+              category.assessment.answerShuffle,
+            );
+            return {
+              ...question,
+              answers: answers,
+            };
+          }),
+        );
         return {
           category: category,
-          questions: questions,
+          questions: res,
         };
       }),
     );
@@ -162,8 +176,9 @@ export class QuestionService {
   public async deleteQuestionCategory(id: number) {
     return await this.questionCategoryDao.deleteOne(id);
   }
-  update(id: number, updateQuestionDto: UpdateQuestionDto) {
-    return `This action updates a #${id} question`;
+
+  public async deleteQuestion(id: number) {
+    return await this.questionDao.deleteOne(id);
   }
 
   remove(id: number) {

@@ -13,9 +13,11 @@ export class QuestionAnswerDao {
   create = async (dto: CreateQuestionAnswerDto) => {
     const res = this.db.create({
       ...dto,
-      category: {
-        id: dto.category as number,
-      },
+      category: dto.category
+        ? {
+            id: dto.category as number,
+          }
+        : null,
       question: {
         id: dto.question,
       },
@@ -36,7 +38,7 @@ export class QuestionAnswerDao {
       order: {
         orderNumber: 'ASC',
       },
-      relations: ['matrix'],
+      relations: ['matrix', 'category'],
     });
     if (res?.[0]?.matrix)
       return res.map((result) => {
@@ -62,7 +64,7 @@ export class QuestionAnswerDao {
       where: {
         id: id,
       },
-        relations: ['category'],
+      relations: ['category'],
     });
   };
   clear = async () => {

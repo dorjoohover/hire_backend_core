@@ -115,16 +115,18 @@ export class QuestionController {
     return this.questionService.findOneByAssessment(+id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateQuestionDto: UpdateQuestionDto,
-  ) {
-    return this.questionService.update(+id, updateQuestionDto);
+  @Roles(Role.admin)
+  @Delete('question/:id')
+  deleteQuestion(@Param('id') id: string) {
+    return this.questionService.deleteQuestion(+id);
   }
 
+  @Roles(Role.admin)
   @Delete('category/:id')
-  remove(@Param('id') id: string) {
+  @ApiOperation({
+    summary: 'question category/block/ ustgana',
+  })
+  deleteQuestionCategory(@Param('id') id: string) {
     return this.questionService.deleteQuestionCategory(+id);
   }
   @Roles(Role.admin)

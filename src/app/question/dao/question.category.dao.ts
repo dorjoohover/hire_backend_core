@@ -56,6 +56,7 @@ export class QuestionCategoryDao {
             order: {
               orderNumber: 'ASC',
             },
+            relations: ['assessment'],
           })
         : await this.db.find({
             where: {
@@ -66,6 +67,7 @@ export class QuestionCategoryDao {
             order: {
               orderNumber: 'ASC',
             },
+            relations: ['assessment'],
           });
 
     return res;

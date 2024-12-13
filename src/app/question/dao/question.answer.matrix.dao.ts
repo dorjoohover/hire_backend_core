@@ -41,6 +41,19 @@ export class QuestionAnswerMatrixDao {
     });
   };
 
+  findByAnswer = async (id: number) => {
+    return await this.db.find({
+      where: {
+        answer: {
+          id: id,
+        },
+      },
+      order: {
+        orderNumber: 'ASC',
+      },
+    });
+  };
+
   clear = async () => {
     const res = await this.db.createQueryBuilder().delete().execute();
     return res;

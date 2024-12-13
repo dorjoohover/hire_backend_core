@@ -35,6 +35,7 @@ export class QuestionDao {
             .select([
               'entity.id',
               'entity.name',
+              'entity.type',
               'entity.level',
               'entity.minValue',
               'entity.maxValue',
@@ -57,14 +58,14 @@ export class QuestionDao {
             .createQueryBuilder('entity')
             .select([
               'entity.id',
-              'entity.name',
               'entity.level',
+              'entity.name',
+              'entity.type',
               'entity.minValue',
               'entity.maxValue',
               'entity.orderNumber',
               'entity.file',
             ])
-            .leftJoinAndSelect('entity.answers', 'answers')
             .where(
               'entity.status = :status AND entity."categoryId" = :category',
               {
@@ -83,6 +84,14 @@ export class QuestionDao {
     return await this.db.find({
       relations: ['answers', 'matrix'],
     });
+  };
+
+  deleteOne = async (id: number) => {
+    return await this.db
+      .createQueryBuilder()
+      .delete()
+      .where({ id: id })
+      .execute();
   };
 
   findOne = async (id: number) => {
