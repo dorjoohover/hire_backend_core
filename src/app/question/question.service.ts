@@ -43,8 +43,15 @@ export class QuestionService {
     });
 
     dto.answers.map(async (answer) => {
-      const { category, ...answerBody } = answer.answer;
-
+      const answerBody = {
+        value: answer.answer.value,
+        point: answer.answer.point,
+        orderNumber: answer.answer.orderNumber,
+        file: answer.answer.file,
+        question: answer.answer.question,
+        correct: answer.answer.correct,
+      };
+      const category = answer.answer.category;
       const cate =
         category == null
           ? null
@@ -130,7 +137,6 @@ export class QuestionService {
           category.id,
           [],
         );
-        console.log(questions);
         return {
           category: category,
           questions: questions,
