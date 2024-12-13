@@ -46,14 +46,13 @@ export class QuestionService {
       });
 
       dto.answers.map(async (answer) => {
-        console.log(answer);
         const answerBody = {
-          value: answer.answer.value,
-          point: answer.answer.point,
-          orderNumber: answer.answer.orderNumber,
-          file: answer.answer.file,
-          question: answer.answer.question,
-          correct: answer.answer.correct,
+          value: answer.answer?.value,
+          point: answer.answer?.point,
+          orderNumber: answer.answer?.orderNumber,
+          file: answer.answer?.file,
+          question: answer.answer?.question,
+          correct: answer.answer?.correct,
         };
         const category = answer.answer.category;
         const cate =
@@ -158,6 +157,10 @@ export class QuestionService {
     await this.questionAnswerCategoryDao.clear();
     await this.questionDao.clear();
     await this.questionCategoryDao.clear();
+  }
+
+  public async deleteQuestionCategory(id: number) {
+    return await this.questionCategoryDao.deleteOne(id);
   }
   update(id: number, updateQuestionDto: UpdateQuestionDto) {
     return `This action updates a #${id} question`;

@@ -82,4 +82,12 @@ export class QuestionCategoryDao {
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };
+
+  deleteOne = async (id: number) => {
+    return await this.db
+      .createQueryBuilder()
+      .delete()
+      .where({ id: id })
+      .execute();
+  };
 }

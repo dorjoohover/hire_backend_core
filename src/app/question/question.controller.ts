@@ -123,10 +123,10 @@ export class QuestionController {
     return this.questionService.update(+id, updateQuestionDto);
   }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.questionService.remove(+id);
-  // }
+  @Delete('category/:id')
+  remove(@Param('id') id: string) {
+    return this.questionService.deleteQuestionCategory(+id);
+  }
   @Roles(Role.admin)
   @Delete('all')
   deleteMatrix() {

@@ -27,11 +27,6 @@ export class CreateQuestionDto {
   createdUser?: number;
 }
 
-export class UpdateQuestionAnswerDto extends PartialType(
-  CreateQuestionAnswerDto,
-) {
-  id?: number;
-}
 export class UpdateQuestionCategoryDto extends PartialType(
   CreateQuestionCategoryDto,
 ) {
@@ -42,18 +37,13 @@ export class UpdateQuestionAnswerCategoryDto extends PartialType(
 ) {
   id?: number;
 }
-export class UpdateQuestionAnswerMatrixDto extends PartialType(
-  CreateQuestionAnswerMatrixDto,
-) {
-  id?: number;
-}
 
 class CreateQuestionAllAnswerDto {
-  @ApiProperty({ type: UpdateQuestionAnswerDto })
-  answer: UpdateQuestionAnswerDto;
+  @ApiProperty({ type: CreateQuestionAnswerDto })
+  answer: CreateQuestionAnswerDto;
 
-  @ApiProperty({ type: UpdateQuestionAnswerDto, isArray: true })
-  matrix?: UpdateQuestionAnswerMatrixDto[];
+  @ApiProperty({ type: CreateQuestionAnswerMatrixDto, isArray: true })
+  matrix?: CreateQuestionAnswerMatrixDto[];
 }
 
 export class CreateQuestionAllDto {
