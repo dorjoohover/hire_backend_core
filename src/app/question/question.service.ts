@@ -27,63 +27,70 @@ export class QuestionService {
     return await this.questionDao.create(dto);
   }
   public async createAll(dto: CreateQuestionAllDto, user: number) {
-    let questionCategory = await this.questionCategoryDao.findOne(dto.category);
-    if (!questionCategory) {
-      throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
-    }
-    if (!dto.type) {
-      throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
-    }
-    let questionId = await this.questionDao.create({
-      ...dto.question,
-      type: dto.type,
-      status: QuestionStatus.ACTIVE,
-      category: questionCategory.id,
-      createdUser: user,
-    });
-
-    dto.answers.map(async (answer) => {
-      const answerBody = {
-        value: answer.answer.value,
-        point: answer.answer.point,
-        orderNumber: answer.answer.orderNumber,
-        file: answer.answer.file,
-        question: answer.answer.question,
-        correct: answer.answer.correct,
-      };
-      const category = answer.answer.category;
-      const cate =
-        category == null
-          ? null
-          : typeof category === 'number'
-            ? category
-            : (await this.questionAnswerCategoryDao.findByName(category)).id;
-      const answerId = await this.questionAnswerDao.create({
-        question: questionId,
-        category: cate,
-        ...answerBody,
-      } as CreateQuestionAnswerDto);
-
-      if (dto.type == QuestionType.MATRIX) {
-        answer.matrix.map(async (matrix) => {
-          let { category, ...body } = matrix;
-          const cate =
-            category == null
-              ? null
-              : typeof category === 'number'
-                ? category
-                : (await this.questionAnswerCategoryDao.findByName(category))
-                    .id;
-
-          await this.questionAnswerMatrixDao.create({
-            ...(body as CreateQuestionAnswerMatrixDto),
-            answer: answerId,
-            question: questionId,
-            category: cate,
-          });
-        });
+    try {
+      let questionCategory = await this.questionCategoryDao.findOne(
+        dto.category,
+      );
+      if (!questionCategory) {
+        throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
       }
-    });
+      if (!dto.type) {
+        throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
+      }
+      let questionId = await this.questionDao.create({
+        ...dto.question,
+        type: dto.type,
+        status: QuestionStatus.ACTIVE,
+        category: questionCategory.id,
+        createdUser: user,
+      });
+
+      dto.answers.map(async (answer) => {
+        console.log(answer);
+        const answerBody = {
+          value: answer.answer.value,
+          point: answer.answer.point,
+          orderNumber: answer.answer.orderNumber,
+          file: answer.answer.file,
+          question: answer.answer.question,
+          correct: answer.answer.correct,
+        };
+        const category = answer.answer.category;
+        const cate =
+          category == null
+            ? null
+            : typeof category === 'number'
+              ? category
+              : (await this.questionAnswerCategoryDao.findByName(category)).id;
+        const answerId = await this.questionAnswerDao.create({
+          question: questionId,
+          category: cate,
+          ...answerBody,
+        } as CreateQuestionAnswerDto);
+
+        if (dto.type == QuestionType.MATRIX) {
+          answer.matrix.map(async (matrix) => {
+            let { category, ...body } = matrix;
+            const cate =
+              category == null
+                ? null
+                : typeof category === 'number'
+                  ? category
+                  : (await this.questionAnswerCategoryDao.findByName(category))
+                      .id;
+
+            await this.questionAnswerMatrixDao.create({
+              ...(body as CreateQuestionAnswerMatrixDto),
+              answer: answerId,
+              question: questionId,
+              category: cate,
+            });
+          });
+        }
+      });
+    } catch (error) {
+      throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
+    }
   }
 
   answerShuffle(dto: QuestionAnswerEntity[]) {
