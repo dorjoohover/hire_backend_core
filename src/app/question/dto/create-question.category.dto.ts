@@ -20,4 +20,6 @@ export class CreateQuestionCategoryDto {
   @ApiProperty()
   assessment: number;
   createdUser?: number;
+  @ApiProperty()
+  id?: number;
 }

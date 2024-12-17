@@ -140,6 +140,14 @@ export class QuestionController {
       createdUser: user['id'],
     });
   }
+  @Patch('category')
+  @Roles(Role.admin)
+  async updateCategory(
+    @Body() dto: CreateQuestionCategoryDto,
+    @Request() { user },
+  ) {
+    return await this.quesitonCategoryDao.updateOne(dto, user['id']);
+  }
 
   @Public()
   @Get()
@@ -151,10 +159,12 @@ export class QuestionController {
   findOne(@Param('id') id: string) {
     return this.questionService.findOne(+id);
   }
-  @Public()
+  // @Public()
+  // @Roles(Role.admin)
   @Get('assessment/:id')
-  findOneByAssessment(@Param('id') id: string) {
-    return this.questionService.findOneByAssessment(+id);
+  findOneByAssessment(@Param('id') id: string, @Request() { user }) {
+    const admin = +user?.['role'] == Role.admin;
+    return this.questionService.findOneByAssessment(+id, admin);
   }
 
   @Roles(Role.admin)

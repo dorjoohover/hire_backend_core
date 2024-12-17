@@ -46,11 +46,15 @@ export class QuestionAnswerDao {
     return res.id;
   };
 
-  findByQuestion = async (id: number, shuffle: boolean) => {
+  findByQuestion = async (id: number, shuffle: boolean, admin: boolean) => {
     const res = await this.db.find({
       select: {
-        point: false,
-        correct: false,
+        point: true,
+        correct: true,
+        id: true,
+        value: true,
+        orderNumber: true,
+        file: true,
       },
       where: {
         question: { id: id },
@@ -60,15 +64,25 @@ export class QuestionAnswerDao {
       },
       relations: ['matrix', 'category'],
     });
+    console.log(res[0]);
     if (res?.[0]?.matrix)
       return res.map((result) => {
         const { point, correct, ...res } = result;
-        return {
-          ...res,
-          matrix: shuffle
-            ? this.shuffle(result.matrix)
-            : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
-        };
+        return admin
+          ? {
+              ...res,
+              point: point,
+              correct: correct,
+              matrix: shuffle
+                ? this.shuffle(result.matrix)
+                : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+            }
+          : {
+              ...res,
+              matrix: shuffle
+                ? this.shuffle(result.matrix)
+                : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+            };
       });
     return shuffle ? this.shuffle(res) : res;
   };

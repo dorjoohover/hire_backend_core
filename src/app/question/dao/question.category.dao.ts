@@ -24,6 +24,22 @@ export class QuestionCategoryDao {
     return res.id;
   };
 
+  updateOne = async (dto: CreateQuestionCategoryDto, user: number) => {
+    const { id, ...d } = dto;
+    const res = await this.db.findOne({
+      where: { id: id },
+    });
+    const body = {
+      ...d,
+      assessment: {
+        id: dto.assessment,
+      },
+    };
+
+    await this.db.save({ ...res, ...body, updatedUser: user });
+    return res.id;
+  };
+
   findAll = async () => {
     return await this.db.find({
       //   relations: [''],

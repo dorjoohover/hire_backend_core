@@ -144,6 +144,7 @@ export class QuestionService {
         const answers = await this.questionAnswerDao.findByQuestion(
           question.id,
           answerShuffle,
+          false,
         );
         return {
           question: question,
@@ -156,7 +157,7 @@ export class QuestionService {
   public async findOne(id: number) {
     return await this.questionDao.findOne(id);
   }
-  public async findOneByAssessment(id: number) {
+  public async findOneByAssessment(id: number, isAdmin: boolean) {
     const categories = await this.questionCategoryDao.findByAssessment(id);
     return await Promise.all(
       categories.map(async (category) => {
@@ -172,7 +173,9 @@ export class QuestionService {
             let answers = await this.questionAnswerDao.findByQuestion(
               question.id,
               category.assessment.answerShuffle,
+              isAdmin,
             );
+            console.log(answers[0]);
             return {
               ...question,
               answers: answers,
