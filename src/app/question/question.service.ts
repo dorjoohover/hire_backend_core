@@ -37,16 +37,31 @@ export class QuestionService {
       if (!dto.type) {
         throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
       }
-      let questionId = await this.questionDao.create({
-        ...dto.question,
-        type: dto.type,
-        status: QuestionStatus.ACTIVE,
-        category: questionCategory.id,
-        createdUser: user,
-      });
+
+      const question =
+        dto.id != null
+          ? await this.questionDao.updateOne(
+              {
+                ...dto.question,
+                category: questionCategory.id,
+              },
+              dto.id,
+              user,
+            )
+          : null;
+
+      let questionId =
+        question != null
+          ? question
+          : await this.questionDao.create({
+              ...dto.question,
+              type: dto.type,
+              status: QuestionStatus.ACTIVE,
+              category: questionCategory.id,
+              createdUser: user,
+            });
 
       dto.answers.map(async (answer) => {
-        console.log(answer);
         const answerBody = {
           value: answer.answer?.value,
           point: answer.answer?.point,
@@ -62,11 +77,18 @@ export class QuestionService {
             : typeof category === 'number'
               ? category
               : (await this.questionAnswerCategoryDao.findByName(category)).id;
-        const answerId = await this.questionAnswerDao.create({
-          question: questionId,
-          category: cate,
-          ...answerBody,
-        } as CreateQuestionAnswerDto);
+        const answerId =
+          answer.answer.id != null
+            ? await this.questionAnswerDao.updateOne(answer.answer.id, {
+                question: questionId,
+                category: cate,
+                ...answerBody,
+              })
+            : await this.questionAnswerDao.create({
+                question: questionId,
+                category: cate,
+                ...answerBody,
+              } as CreateQuestionAnswerDto);
 
         if (dto.type == QuestionType.MATRIX) {
           answer.matrix?.map(async (matrix) => {

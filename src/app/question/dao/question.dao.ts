@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, DBRef, Repository } from 'typeorm';
 import { QuestionEntity } from '../entities/question.entity';
-import { CreateQuestionDto } from '../dto/create-question.dto';
+import {
+  CreateQuestionAllDto,
+  CreateQuestionDto,
+} from '../dto/create-question.dto';
 import { QuestionStatus } from 'src/base/constants';
 
 @Injectable()
@@ -84,6 +87,22 @@ export class QuestionDao {
     return await this.db.find({
       relations: ['answers', 'matrix'],
     });
+  };
+
+  updateOne = async (dto: CreateQuestionDto, id: number, user: number) => {
+    const { ...d } = dto;
+    const res = await this.db.findOne({
+      where: { id: id },
+    });
+    const body = {
+      ...d,
+      category: {
+        id: dto.category,
+      },
+    };
+
+    await this.db.save({ ...res, ...body, updatedUser: user });
+    return res.id;
   };
 
   deleteOne = async (id: number) => {

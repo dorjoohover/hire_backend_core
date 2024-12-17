@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  StreamableFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import {
   ApiBody,
@@ -6,6 +15,7 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -20,6 +30,10 @@ import {
   UserDto,
   UserExampleDto,
 } from './app/user/dto/create-user.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { createReadStream } from 'fs';
+import path from 'path';
 
 @ApiTags('Main')
 @Controller()
@@ -87,5 +101,19 @@ export class AppController extends BaseService {
         status: error.status,
       };
     }
+  }
+  @Post('upload')
+  @UseInterceptors(FilesInterceptor('files', 8, { storage: memoryStorage() }))
+  async multiFileUpload(@UploadedFiles() file: Array<Express.Multer.File>) {
+    const processImage = await this.appService.processMultipleImages(file);
+
+    return { file: processImage };
+  }
+
+  @Get('/file/:file')
+  @ApiParam({ name: 'file' })
+  getFile(@Param('file') filename: string): StreamableFile {
+    const file = createReadStream(path.join('./data/' + filename));
+    return new StreamableFile(file);
   }
 }

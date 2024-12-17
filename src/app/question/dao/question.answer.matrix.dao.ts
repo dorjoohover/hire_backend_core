@@ -24,6 +24,28 @@ export class QuestionAnswerMatrixDao {
       },
     });
     await this.db.save(res);
+    return res.id;
+  };
+
+  updateOne = async (id: number, dto: CreateQuestionAnswerMatrixDto) => {
+    const res = await this.db.findOne({
+      where: { id },
+    });
+    const { ...d } = dto;
+    const body = {
+      ...d,
+      category: {
+        id: dto.category as number,
+      },
+      question: {
+        id: dto.question,
+      },
+      answer: {
+        id: dto.answer,
+      },
+    };
+
+    await this.db.save({ ...res, ...body });
   };
 
   findAll = async () => {

@@ -26,6 +26,26 @@ export class QuestionAnswerDao {
     return res.id;
   };
 
+  updateOne = async (id: number, dto: CreateQuestionAnswerDto) => {
+    const res = await this.db.findOne({
+      where: { id },
+    });
+    const { ...d } = dto;
+    const body = {
+      ...d,
+      category: {
+        id: dto.category as number,
+      },
+      question: {
+        id: dto.question,
+      },
+    };
+
+    await this.db.save({ ...res, ...body });
+    // await this.db.save({ ...res, ...body, updatedUser: user });
+    return res.id;
+  };
+
   findByQuestion = async (id: number, shuffle: boolean) => {
     const res = await this.db.find({
       select: {

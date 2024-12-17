@@ -4,12 +4,15 @@ export class CreateQuestionCategoryDto {
   @ApiProperty()
   name: string;
   @ApiProperty()
+  value?: string;
+  @ApiProperty()
   duration?: number;
   @ApiProperty()
   totalPoint?: number;
   @ApiProperty()
   questionCount?: number;
   status?: number;
+  @ApiProperty()
   url?: string;
   @ApiProperty()
   orderNumber?: number;

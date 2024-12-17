@@ -55,6 +55,8 @@ export class CreateQuestionAllDto {
   category: number;
   @ApiProperty()
   type: number;
+  @ApiProperty()
+  id?: number;
 }
 
 export const ExampleDISCAllDto = {

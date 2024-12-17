@@ -21,6 +21,8 @@ export class QuestionCategoryEntity {
 
   @Column()
   name: string;
+  @Column({ nullable: true })
+  value: string;
   @Column({ nullable: true, type: 'numeric' })
   totalPoint: number;
   @Column({ nullable: true })

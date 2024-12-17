@@ -13,6 +13,8 @@ export class CreateQuestionAnswerDto {
   question: number;
   @ApiProperty()
   correct: boolean;
+  @ApiProperty()
+  id?: number;
 
   category?: number | string;
 }

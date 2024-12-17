@@ -38,6 +38,48 @@ export class QuestionController {
   create(@Body() createQuestionDto: CreateQuestionDto) {
     return this.questionService.create(createQuestionDto);
   }
+  @Patch('all')
+  @ApiOperation({
+    summary:
+      'question-g asuulttain tsug uusgene. asuultad dotor matrix asuulagdana',
+  })
+  @ApiBody({
+    type: CreateQuestionAllDto,
+    examples: {
+      a: {
+        summary: 'Matrix',
+        value: ExampleDISCAllDto,
+      },
+      b: {
+        summary: 'Multiple',
+        value: ExampleMultipleAllDto,
+      },
+      c: {
+        summary: 'Single',
+        value: ExampleSingleAllDto,
+      },
+      d: {
+        summary: 'TrueFalse',
+        value: ExampleTrueFalseAllDto,
+      },
+      f: {
+        summary: 'ConstantSum',
+        value: ExampleConstantSumAllDto,
+      },
+    },
+  })
+  @Roles(Role.admin)
+  updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
+    try {
+      return this.questionService.createAll(dto, user['id']);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        status: error.status,
+      };
+    }
+  }
   @Post('all')
   @ApiOperation({
     summary:
