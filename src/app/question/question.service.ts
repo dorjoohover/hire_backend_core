@@ -37,18 +37,17 @@ export class QuestionService {
       if (!dto.type) {
         throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
       }
-
-      const question =
-        dto.id != null
-          ? await this.questionDao.updateOne(
-              {
-                ...dto.question,
-                category: questionCategory.id,
-              },
-              dto.id,
-              user,
-            )
-          : null;
+      const update = dto.id != null;
+      const question = update
+        ? await this.questionDao.updateOne(
+            {
+              ...dto.question,
+              category: questionCategory.id,
+            },
+            dto.id,
+            user,
+          )
+        : null;
 
       let questionId =
         question != null
@@ -100,13 +99,19 @@ export class QuestionService {
                   ? category
                   : (await this.questionAnswerCategoryDao.findByName(category))
                       .id;
-
-            await this.questionAnswerMatrixDao.create({
-              ...(body as CreateQuestionAnswerMatrixDto),
-              answer: answerId,
-              question: questionId,
-              category: cate,
-            });
+            matrix.id == null
+              ? await this.questionAnswerMatrixDao.create({
+                  ...(body as CreateQuestionAnswerMatrixDto),
+                  answer: answerId,
+                  question: questionId,
+                  category: cate,
+                })
+              : await this.questionAnswerMatrixDao.updateOne(matrix.id, {
+                  ...(body as CreateQuestionAnswerMatrixDto),
+                  answer: answerId,
+                  question: questionId,
+                  category: cate,
+                });
           });
         }
       });
@@ -175,7 +180,6 @@ export class QuestionService {
               category.assessment.answerShuffle,
               isAdmin,
             );
-            console.log(answers[0]);
             return {
               ...question,
               answers: answers,

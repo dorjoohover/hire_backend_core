@@ -68,6 +68,7 @@ export class QuestionController {
       },
     },
   })
+  
   @Roles(Role.admin)
   updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {

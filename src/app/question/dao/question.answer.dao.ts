@@ -27,23 +27,17 @@ export class QuestionAnswerDao {
   };
 
   updateOne = async (id: number, dto: CreateQuestionAnswerDto) => {
-    const res = await this.db.findOne({
-      where: { id },
-    });
-    const { ...d } = dto;
-    const body = {
-      ...d,
+    const res = await this.db.update(id, {
+      ...dto,
       category: {
         id: dto.category as number,
       },
       question: {
-        id: dto.question,
+        id: dto.question as number,
       },
-    };
+    });
 
-    await this.db.save({ ...res, ...body });
-    // await this.db.save({ ...res, ...body, updatedUser: user });
-    return res.id;
+    return id;
   };
 
   findByQuestion = async (id: number, shuffle: boolean, admin: boolean) => {
@@ -64,7 +58,6 @@ export class QuestionAnswerDao {
       },
       relations: ['matrix', 'category'],
     });
-    console.log(res[0]);
     if (res?.[0]?.matrix)
       return res.map((result) => {
         const { point, correct, ...res } = result;

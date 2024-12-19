@@ -14,4 +14,5 @@ export class CreateQuestionAnswerMatrixDto {
 
   @ApiProperty()
   answer: number;
+  id?: number
 }
