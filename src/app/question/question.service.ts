@@ -69,7 +69,7 @@ export class QuestionService {
           question: questionId,
           correct: answer.answer?.correct,
         };
-        const category = answer.answer.category;
+        const category = answer.answer?.category;
         const cate =
           category == null || !category
             ? null
