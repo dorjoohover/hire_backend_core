@@ -22,7 +22,9 @@ export class QuestionAnswerMatrixEntity {
   @Column({ nullable: true })
   orderNumber: number;
 
-  @ManyToOne(() => QuestionEntity, (question) => question.answers)
+  @ManyToOne(() => QuestionEntity, (question) => question.answers, {
+    onDelete: 'CASCADE',
+  })
   question: QuestionEntity;
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,

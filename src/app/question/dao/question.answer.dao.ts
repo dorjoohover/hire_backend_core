@@ -27,7 +27,18 @@ export class QuestionAnswerDao {
   };
 
   updateOne = async (id: number, dto: CreateQuestionAnswerDto) => {
-    const res = await this.db.update(id, {
+    const res = await this.db.findOne({
+      where: { id: id },
+    });
+
+    const update =
+      res.value == dto.value &&
+      res.point == dto.point &&
+      dto.correct == res.correct &&
+      res.orderNumber == dto.orderNumber &&
+      res.file == dto.file;
+    if (update) return id;
+    await this.db.update(id, {
       ...dto,
       category: {
         id: dto.category as number,
