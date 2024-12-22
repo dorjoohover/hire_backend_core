@@ -18,3 +18,10 @@ export class CreateQuestionAnswerDto {
 
   category?: number | string;
 }
+
+export class UpdateQuestionAnswersDto {
+  @ApiProperty()
+  question: number;
+  @ApiProperty({ isArray: true })
+  answers: CreateQuestionAnswerDto[];
+}

@@ -29,6 +29,32 @@ export class QuestionAnswerCategoryDao {
     });
   };
 
+  updateOne = async (dto: CreateQuestionAnswerCategoryDto) => {
+    const { id, ...body } = dto;
+    await this.db.update(id, {
+      ...body,
+      parent:
+        dto.parent == null
+          ? null
+          : {
+              id: dto.parent,
+            },
+      assessment: {
+        id: dto.assessment,
+      },
+    });
+
+    return id;
+  };
+
+  deleteOne = async (id: number) => {
+    return await this.db
+      .createQueryBuilder()
+      .delete()
+      .where({ id: id })
+      .execute();
+  };
+
   findOne = async (id: number) => {
     return await this.db.findOne({
       where: {

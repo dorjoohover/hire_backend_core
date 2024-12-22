@@ -21,6 +21,8 @@ export class QuestionEntity {
   name: string;
   @Column()
   type: number;
+  @Column({ default: true })
+  required: boolean;
   @Column()
   status: number;
   @Column({ nullable: true })

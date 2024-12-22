@@ -9,4 +9,5 @@ export class CreateQuestionAnswerCategoryDto {
   parent: number;
   @ApiProperty()
   assessment?: number;
+  id?: number
 }

@@ -18,13 +18,23 @@ import {
   ExampleSingleAllDto,
   ExampleTrueFalseAllDto,
 } from './dto/create-question.dto';
-import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+} from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { CreateQuestionCategoryDto } from './dto/create-question.category.dto';
 import { QuestionCategoryDao } from './dao/question.category.dao';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { QuestionAnswerDao } from './dao/question.answer.dao';
+import {
+  CreateQuestionAnswerDto,
+  UpdateQuestionAnswersDto,
+} from './dto/create-question.answer.dto';
+import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
 
 @Controller('question')
 @ApiBearerAuth('access-token')
@@ -68,11 +78,10 @@ export class QuestionController {
       },
     },
   })
-  
   @Roles(Role.admin)
   updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
-      return this.questionService.createAll(dto, user['id']);
+      return this.questionService.updateAll(dto, user['id']);
     } catch (error) {
       return {
         success: false,
@@ -81,6 +90,22 @@ export class QuestionController {
       };
     }
   }
+
+  @Delete('answer/:id')
+  @ApiParam({ name: 'id' })
+  @Roles(Role.admin)
+  deleteAnswer(@Param('id') id: number, @Request() { user }) {
+    try {
+      return this.questionService.deleteAnswer(id);
+    } catch (error) {
+      return {
+        message: error.message,
+        status: error.status,
+        success: false,
+      };
+    }
+  }
+
   @Post('all')
   @ApiOperation({
     summary:
@@ -186,5 +211,17 @@ export class QuestionController {
   @Delete('all')
   deleteMatrix() {
     return this.questionService.deleteAll();
+  }
+
+  @Delete('answerCategory/:id')
+  @ApiParam({ name: 'id' })
+  @Roles(Role.admin)
+  deleteAnswerCategory(@Param('id') id: string) {
+    return this.questionService.deleteAnswerCategory(+id);
+  }
+
+  @Patch('answerCategory')
+  setAnswerCategory(@Body() dto: CreateQuestionAnswerCategoryDto) {
+    return this.questionService.updateAnswerCategory(dto);
   }
 }

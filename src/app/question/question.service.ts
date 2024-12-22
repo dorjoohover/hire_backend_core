@@ -9,10 +9,14 @@ import { QuestionAnswerDao } from './dao/question.answer.dao';
 import { QuestionAnswerMatrixDao } from './dao/question.answer.matrix.dao';
 import { QuestionAnswerCategoryDao } from './dao/question.answer.category.dao';
 import { QuestionCategoryDao } from './dao/question.category.dao';
-import { CreateQuestionAnswerDto } from './dto/create-question.answer.dto';
+import {
+  CreateQuestionAnswerDto,
+  UpdateQuestionAnswersDto,
+} from './dto/create-question.answer.dto';
 import { CreateQuestionAnswerMatrixDto } from './dto/create-question.answer.matrix.dto';
 import { QuestionStatus, QuestionType } from 'src/base/constants';
 import { QuestionAnswerEntity } from './entities/question.answer.entity';
+import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
 
 @Injectable()
 export class QuestionService {
@@ -37,28 +41,13 @@ export class QuestionService {
       if (!dto.type) {
         throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
       }
-      const update = dto.id != null;
-      const question = update
-        ? await this.questionDao.updateOne(
-            {
-              ...dto.question,
-              category: questionCategory.id,
-            },
-            dto.id,
-            user,
-          )
-        : null;
-
-      let questionId =
-        question != null
-          ? question
-          : await this.questionDao.create({
-              ...dto.question,
-              type: dto.type,
-              status: QuestionStatus.ACTIVE,
-              category: questionCategory.id,
-              createdUser: user,
-            });
+      let questionId = await this.questionDao.create({
+        ...dto.question,
+        type: dto.type,
+        status: QuestionStatus.ACTIVE,
+        category: questionCategory.id,
+        createdUser: user,
+      });
 
       dto.answers.map(async (answer) => {
         const answerBody = {
@@ -76,19 +65,88 @@ export class QuestionService {
             : typeof category === 'number'
               ? category
               : (await this.questionAnswerCategoryDao.findByName(category)).id;
-        const answerId =
-          answer.answer.id != null
-            ? await this.questionAnswerDao.updateOne(answer.answer.id, {
-                question: questionId,
-                category: cate,
-                ...answerBody,
-              })
-            : await this.questionAnswerDao.create({
-                question: questionId,
-                category: cate,
-                ...answerBody,
-              } as CreateQuestionAnswerDto);
+        const answerId = await this.questionAnswerDao.create({
+          question: questionId,
+          category: cate,
+          ...answerBody,
+        } as CreateQuestionAnswerDto);
 
+        if (dto.type == QuestionType.MATRIX) {
+          answer.matrix?.map(async (matrix) => {
+            let { category, ...body } = matrix;
+            const cate =
+              category == null
+                ? null
+                : typeof category === 'number'
+                  ? category
+                  : (await this.questionAnswerCategoryDao.findByName(category))
+                      .id;
+            await this.questionAnswerMatrixDao.create({
+              ...(body as CreateQuestionAnswerMatrixDto),
+              answer: answerId,
+              question: questionId,
+              category: cate,
+            });
+          });
+        }
+      });
+    } catch (error) {
+      throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  public async updateAnswerCategory(dto: CreateQuestionAnswerCategoryDto) {
+    return await this.questionAnswerCategoryDao.updateOne(dto);
+  }
+
+  public async deleteAnswerCategory(id: number) {
+    return await this.questionAnswerCategoryDao.deleteOne(id)
+  }
+
+  public async updateAll(dto: CreateQuestionAllDto, user: number) {
+    try {
+      let questionCategory = await this.questionCategoryDao.findOne(
+        dto.category,
+      );
+      if (!questionCategory) {
+        throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
+      }
+      if (!dto.type) {
+        throw new HttpException('Type not found', HttpStatus.BAD_REQUEST);
+      }
+      const questionId = await this.questionDao.updateOne(
+        {
+          ...dto.question,
+          category: questionCategory.id,
+        },
+        dto.id,
+        user,
+      );
+
+      dto.answers.map(async (answer) => {
+        const answerBody = {
+          value: answer.answer?.value,
+          point: answer.answer?.point,
+          orderNumber: answer.answer?.orderNumber,
+          file: answer.answer?.file,
+          question: questionId,
+          correct: answer.answer?.correct,
+        };
+        const category = answer.answer?.category;
+        const cate =
+          category == null || !category
+            ? null
+            : typeof category === 'number'
+              ? category
+              : (await this.questionAnswerCategoryDao.findByName(category)).id;
+        const answerId = await this.questionAnswerDao.updateOne(
+          answer.answer.id,
+          {
+            question: questionId,
+            category: cate,
+            ...answerBody,
+          },
+        );
         if (dto.type == QuestionType.MATRIX) {
           answer.matrix?.map(async (matrix) => {
             let { category, ...body } = matrix;
@@ -119,7 +177,17 @@ export class QuestionService {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
   }
-
+  public async deleteAnswer(id: number) {
+    try {
+      await this.questionAnswerDao.deleteOne(id);
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message,
+        status: error.status,
+      };
+    }
+  }
   answerShuffle(dto: QuestionAnswerEntity[]) {
     return dto
       .map((value) => ({ value, sort: Math.random() }))

@@ -32,6 +32,8 @@ export class AssessmentEntity {
   measure: string;
   @Column()
   price: number;
+  @Column({nullable: true})
+  status: number;
   @Column()
   duration: number;
   @Column({ nullable: true })

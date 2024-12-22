@@ -13,6 +13,8 @@ export class CreateAssessmentDto {
   @ApiProperty()
   duration: number;
   @ApiProperty()
+  status: number;
+  @ApiProperty()
   price: number;
   @ApiProperty()
   function?: string;

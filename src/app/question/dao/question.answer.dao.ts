@@ -10,6 +10,10 @@ export class QuestionAnswerDao {
     this.db = this.dataSource.getRepository(QuestionAnswerEntity);
   }
 
+  deleteOne = async (id: number) => {
+    return await this.db.delete(id);
+  };
+
   create = async (dto: CreateQuestionAnswerDto) => {
     const res = this.db.create({
       ...dto,

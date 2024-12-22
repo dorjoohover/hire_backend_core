@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { QuestionEntity } from './question.entity';
 import { QuestionAnswerCategoryEntity } from './question.answer.category.entity';
