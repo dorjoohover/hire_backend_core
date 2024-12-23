@@ -24,13 +24,12 @@ export class AppService {
         })
         .toBuffer();
     }
-    const uploadFolder = path.join(__dirname, '../../uploads');
+    const uploadFolder = path.join(__dirname, '../uploads');
     if (!fs.existsSync(uploadFolder))
       fs.mkdirSync(uploadFolder, { recursive: true });
     const fileName = `${Date.now()}-${file.originalname}`;
     const filePath = path.join(uploadFolder, fileName);
     fs.writeFileSync(filePath, processImage);
-
     return fileName;
   }
   async processMultipleImages(files: Express.Multer.File[]): Promise<string[]> {

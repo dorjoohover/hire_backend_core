@@ -33,8 +33,7 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { createReadStream } from 'fs';
-import path from 'path';
-
+import * as path from 'path';
 @ApiTags('Main')
 @Controller()
 export class AppController extends BaseService {
@@ -109,11 +108,16 @@ export class AppController extends BaseService {
 
     return { file: processImage };
   }
-
+  @Public()
   @Get('/file/:file')
   @ApiParam({ name: 'file' })
   getFile(@Param('file') filename: string): StreamableFile {
-    const file = createReadStream(path.join('./data/' + filename));
-    return new StreamableFile(file);
+    const filePath = path.join('./uploads/', filename);
+    const file = createReadStream(filePath);
+
+    return new StreamableFile(file, {
+      type: 'image/png', // Replace with the correct MIME type of your file
+      disposition: `inline; filename="${filename}"`,
+    });
   }
 }

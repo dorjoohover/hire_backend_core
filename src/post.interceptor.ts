@@ -24,6 +24,7 @@ export class PostInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       map((responseBody) => {
+        if (responseBody?.options) return responseBody;
         return responseBody && responseBody?.success == false
           ? {
               succeed: false,
