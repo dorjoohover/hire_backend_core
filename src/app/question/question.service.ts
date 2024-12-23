@@ -139,14 +139,19 @@ export class QuestionService {
             : typeof category === 'number'
               ? category
               : (await this.questionAnswerCategoryDao.findByName(category)).id;
-        const answerId = await this.questionAnswerDao.updateOne(
-          answer.answer.id,
-          {
-            question: questionId,
-            category: cate,
-            ...answerBody,
-          },
-        );
+        const answerId =
+          answer.answer?.id != null
+            ? await this.questionAnswerDao.updateOne(answer.answer.id, {
+                question: questionId,
+                category: cate,
+                ...answerBody,
+              })
+            : await this.questionAnswerDao.create({
+                question: questionId,
+                category: cate,
+                ...answerBody,
+              } as CreateQuestionAnswerDto);
+
         if (dto.type == QuestionType.MATRIX) {
           answer.matrix?.map(async (matrix) => {
             let { category, ...body } = matrix;
