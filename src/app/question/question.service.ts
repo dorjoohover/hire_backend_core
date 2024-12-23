@@ -100,7 +100,7 @@ export class QuestionService {
   }
 
   public async deleteAnswerCategory(id: number) {
-    return await this.questionAnswerCategoryDao.deleteOne(id)
+    return await this.questionAnswerCategoryDao.deleteOne(id);
   }
 
   public async updateAll(dto: CreateQuestionAllDto, user: number) {
@@ -123,7 +123,7 @@ export class QuestionService {
         user,
       );
 
-      dto.answers.map(async (answer) => {
+      dto.answers.map(async (answer, i) => {
         const answerBody = {
           value: answer.answer?.value,
           point: answer.answer?.point,
