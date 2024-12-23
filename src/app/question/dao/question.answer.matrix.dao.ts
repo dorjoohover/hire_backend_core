@@ -30,11 +30,13 @@ export class QuestionAnswerMatrixDao {
   updateOne = async (id: number, dto: CreateQuestionAnswerMatrixDto) => {
     const res = await this.db.findOne({
       where: { id: id },
+      relations: ['category'],
     });
     const update =
       res.value == dto.value &&
       res.point == dto.point &&
-      res.orderNumber == dto.orderNumber;
+      res.orderNumber == dto.orderNumber &&
+      res.category?.id == dto.category;
     if (update) return id;
     await this.db.update(id, {
       ...dto,
