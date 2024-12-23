@@ -74,7 +74,7 @@ export class QuestionAnswerDao {
       order: {
         orderNumber: 'ASC',
       },
-      relations: ['matrix', 'category'],
+      relations: ['matrix', 'matrix.category', 'category'],
     });
     if (res?.[0]?.matrix)
       return res.map((result) => {
