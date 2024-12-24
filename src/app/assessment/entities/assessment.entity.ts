@@ -32,8 +32,10 @@ export class AssessmentEntity {
   measure: string;
   @Column()
   price: number;
-  @Column({nullable: true})
+  @Column({ nullable: true })
   status: number;
+  @Column({ default: false })
+  timeout: boolean;
   @Column()
   duration: number;
   @Column({ nullable: true })

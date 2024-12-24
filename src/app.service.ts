@@ -7,23 +7,23 @@ export class AppService {
   constructor() {}
 
   async processImage(file: Express.Multer.File): Promise<string> {
-    const imageBuffer = file.buffer;
+    // const imageBuffer = file.buffer;
 
     let processImage = file.buffer;
-    if (file.mimetype.startsWith('image')) {
-      processImage = await sharp(imageBuffer)
-        .jpeg({
-          quality: parseInt(
-            (file.size > 2000000
-              ? (2000000 / file.size) * 100 < 20
-                ? 20
-                : (2000000 / file.size) * 100
-              : 100
-            ).toString(),
-          ),
-        })
-        .toBuffer();
-    }
+    // if (file.mimetype.startsWith('image')) {
+    //   processImage = await sharp(imageBuffer)
+    //     .jpeg({
+    //       quality: parseInt(
+    //         (file.size > 2000000
+    //           ? (2000000 / file.size) * 100 < 20
+    //             ? 20
+    //             : (2000000 / file.size) * 100
+    //           : 100
+    //         ).toString(),
+    //       ),
+    //     })
+    //     .toBuffer();
+    // }
     const uploadFolder = path.join(__dirname, '../uploads');
     if (!fs.existsSync(uploadFolder))
       fs.mkdirSync(uploadFolder, { recursive: true });

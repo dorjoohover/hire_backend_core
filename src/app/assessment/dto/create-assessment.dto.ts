@@ -15,6 +15,8 @@ export class CreateAssessmentDto {
   @ApiProperty()
   status: number;
   @ApiProperty()
+  timeout: boolean;
+  @ApiProperty()
   price: number;
   @ApiProperty()
   function?: string;
