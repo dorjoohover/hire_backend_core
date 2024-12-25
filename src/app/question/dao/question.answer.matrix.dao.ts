@@ -27,6 +27,10 @@ export class QuestionAnswerMatrixDao {
     return res.id;
   };
 
+  deleteOne = async (id: number) => {
+    return await this.db.delete(id);
+  };
+
   updateOne = async (id: number, dto: CreateQuestionAnswerMatrixDto) => {
     const res = await this.db.findOne({
       where: { id: id },

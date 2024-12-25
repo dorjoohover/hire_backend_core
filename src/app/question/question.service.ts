@@ -162,6 +162,8 @@ export class QuestionService {
                   ? category
                   : (await this.questionAnswerCategoryDao.findByName(category))
                       .id;
+            console.log(matrix);
+
             matrix.id == null
               ? await this.questionAnswerMatrixDao.create({
                   ...(body as CreateQuestionAnswerMatrixDto),
@@ -182,9 +184,11 @@ export class QuestionService {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
   }
-  public async deleteAnswer(id: number) {
+  public async deleteAnswer(id: number, matrix) {
     try {
-      await this.questionAnswerDao.deleteOne(id);
+      matrix == 1
+        ? await this.questionAnswerMatrixDao.deleteOne(id)
+        : await this.questionAnswerDao.deleteOne(id);
     } catch (error) {
       return {
         success: false,
