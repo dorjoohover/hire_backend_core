@@ -91,13 +91,16 @@ export class QuestionController {
     }
   }
 
-  @Delete('answer/:id/:matrix')
-  @ApiParam({ name: 'id' })
+  @Post('answer/:matrix')
   @ApiParam({ name: 'matrix' })
   @Roles(Role.admin)
-  deleteAnswer(@Param('id') id: number, @Param('matrix') matrix: number ,@Request() { user }) {
+  deleteAnswer(
+    @Body() dto: { data: number[] },
+    @Param('matrix') matrix: number,
+    @Request() { user },
+  ) {
     try {
-      return this.questionService.deleteAnswer(id, matrix);
+      return this.questionService.deleteAnswer(dto, matrix == 0);
     } catch (error) {
       return {
         message: error.message,

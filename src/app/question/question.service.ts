@@ -184,19 +184,15 @@ export class QuestionService {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
   }
-  public async deleteAnswer(id: number, matrix: number) {
+  public async deleteAnswer(dto: { data: number[] }, matrix: boolean) {
     try {
-      if (matrix > 0) {
-        const matrixs =
-          await this.questionAnswerMatrixDao.findByQuestion(matrix);
-        await Promise.all(
-          matrixs.map(async (mat) => {
-            await this.questionAnswerMatrixDao.deleteOne(mat.id);
-          }),
-        );
-      } else {
-        await this.questionAnswerDao.deleteOne(id);
-      }
+      matrix
+        ? await this.questionAnswerDao.deleteOne(dto.data[0])
+        : await Promise.all(
+            dto.data.map(
+              async (d) => await this.questionAnswerMatrixDao.deleteOne(d),
+            ),
+          );
     } catch (error) {
       return {
         success: false,

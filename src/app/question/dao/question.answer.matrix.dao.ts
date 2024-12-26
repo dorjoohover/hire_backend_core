@@ -84,11 +84,14 @@ export class QuestionAnswerMatrixDao {
       },
     });
   };
-  findByQuestion = async (id: number) => {
+  findByQuestion = async (id: number, answer: number) => {
     return await this.db.find({
       where: {
         question: {
           id: id,
+        },
+        answer: {
+          id: answer,
         },
       },
       order: {
