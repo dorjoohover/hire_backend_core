@@ -68,7 +68,7 @@ export class QuestionAnswerMatrixDao {
       where: {
         id: id,
       },
-      //   relations: ['level'],
+      relations: ['question'],
     });
   };
 
@@ -76,6 +76,18 @@ export class QuestionAnswerMatrixDao {
     return await this.db.find({
       where: {
         answer: {
+          id: id,
+        },
+      },
+      order: {
+        orderNumber: 'ASC',
+      },
+    });
+  };
+  findByQuestion = async (id: number) => {
+    return await this.db.find({
+      where: {
+        question: {
           id: id,
         },
       },
