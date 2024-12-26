@@ -186,11 +186,9 @@ export class QuestionService {
   }
   public async deleteAnswer(id: number, matrix: number) {
     try {
-      if (matrix == 1) {
-        const m = await this.questionAnswerMatrixDao.findOne(id);
-        const matrixs = await this.questionAnswerMatrixDao.findByQuestion(
-          m.question.id,
-        );
+      if (matrix > 0) {
+        const matrixs =
+          await this.questionAnswerMatrixDao.findByQuestion(matrix);
         await Promise.all(
           matrixs.map(async (mat) => {
             await this.questionAnswerMatrixDao.deleteOne(mat.id);
