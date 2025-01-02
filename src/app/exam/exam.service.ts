@@ -13,11 +13,13 @@ import { QuestionEntity } from '../question/entities/question.entity';
 import { QuestionCategoryEntity } from '../question/entities/question.category.entity';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 import { ExamEntity } from './entities/exam.entity';
+import { FormuleService } from '../formule/formule.service';
 
 @Injectable()
 export class ExamService extends BaseService {
   constructor(
     private dao: ExamDao,
+    private formule: FormuleService,
     private detailDao: ExamDetailDao,
     private questionService: QuestionService,
     private questionCategoryDao: QuestionCategoryDao,
@@ -34,6 +36,17 @@ export class ExamService extends BaseService {
     await this.dao.create({ ...createExamDto, code: code });
     return code;
   }
+
+  // onoo bujaats ywuulah
+  public async calculateExamById(id: number) {
+    const exam = await this.dao.findOne(id);
+    const formule = exam.assessment.formule;
+    if (formule) {
+      const calculate = await this.formule.calculate(formule, exam.id);
+      return calculate;
+    }
+  }
+
   // category questioncount der asuudaltai bga
   public async updateByCode(code: number, category?: number) {
     const res = await this.dao.findByCode(code);

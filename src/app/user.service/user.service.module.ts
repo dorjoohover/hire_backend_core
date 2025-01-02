@@ -14,6 +14,8 @@ import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
 import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
+import { FormuleService } from '../formule/formule.service';
+import { UserAnswerDao } from '../user.answer/user.answer.dao';
 
 @Module({
   controllers: [UserServiceController],
@@ -30,6 +32,8 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
+    FormuleService,
+    UserAnswerDao,
     AssessmentDao,
     ExamDao,
   ],

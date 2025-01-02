@@ -37,6 +37,12 @@ export class ExamController {
     }
   }
 
+  @Get('calculation/:id')
+  @ApiParam({name: 'id'})
+  calculateExamById(@Param('id') id: string) {
+    return this.examService.calculateExamById(+id)
+  }
+
   @Get('exam/:id')
   findOne(@Param('id') id: string) {}
   @Get('service/:id')

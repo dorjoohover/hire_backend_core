@@ -19,7 +19,7 @@ export class CreateAssessmentDto {
   @ApiProperty()
   price: number;
   @ApiProperty()
-  function?: string;
+  formule?: number;
   @ApiProperty()
   advice?: string;
   @ApiProperty()

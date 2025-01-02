@@ -160,9 +160,7 @@ export class QuestionService {
                 ? null
                 : typeof category === 'number'
                   ? category
-                  : (await this.questionAnswerCategoryDao.findByName(category))
-                      .id;
-            console.log(matrix);
+                  : (category as any).id;
 
             matrix.id == null
               ? await this.questionAnswerMatrixDao.create({

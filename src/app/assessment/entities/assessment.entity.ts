@@ -43,7 +43,7 @@ export class AssessmentEntity {
   @Column({ nullable: true })
   author: string;
   @Column({ nullable: true })
-  function: string;
+  formule: number;
   @Column({ nullable: true })
   advice: string;
   @Column()

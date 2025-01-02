@@ -9,7 +9,9 @@ export class UserAnswerDao {
   constructor(private dataSource: DataSource) {
     this.db = this.dataSource.getRepository(UserAnswerEntity);
   }
-
+  query = async (q: string) => {
+    return await this.db.query(q);
+  };
   create = async (dto: CreateUserAnswerDto) => {
     try {
       const res = this.db.create({

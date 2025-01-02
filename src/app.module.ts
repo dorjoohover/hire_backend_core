@@ -18,6 +18,7 @@ import { UserAnswerModule } from './app/user.answer/user.answer.module';
 import { BaseModule } from './base/base.module';
 import { UserModule } from './app/user/user.module';
 import { UserServiceModule } from './app/user.service/user.service.module';
+import { FormuleModule } from './app/formule/formule.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UserServiceModule } from './app/user.service/user.service.module';
     QuestionModule,
     ExamModule,
     PaymentModule,
+    FormuleModule,
     UserAnswerModule,
     UserModule,
     UserServiceModule,

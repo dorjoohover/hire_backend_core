@@ -14,6 +14,8 @@ export class UserAnswerEntity {
   //   token|code|url|sequence
   @Column({ nullable: true })
   ip: string;
+  @Column()
+  correct: boolean;
   @Column({ nullable: true })
   device: string;
   @Column({ nullable: true, type: 'numeric' })
@@ -44,6 +46,7 @@ export class UserAnswerEntity {
     onDelete: 'CASCADE',
   })
   questionCategory: QuestionCategoryEntity;
+
   @ManyToOne(() => QuestionAnswerEntity, (exam) => exam.userAnswers, {
     onDelete: 'CASCADE',
   })
