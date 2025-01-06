@@ -14,7 +14,7 @@ import { DataSource } from 'typeorm';
             host: 'localhost',
             port: 5432,
             // username: 'postgres',
-            username: 'hire',
+            username: 'dorjoo',
             password: 'root',
             database: 'hire',
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
