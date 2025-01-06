@@ -13,7 +13,7 @@ import { DataSource } from 'typeorm';
             type: 'postgres',
             host: 'localhost',
             port: 5432,
-            username: 'hire',
+            username: 'postgres',
             // username: 'dorjoo',
             password: 'root',
             database: 'hire',
