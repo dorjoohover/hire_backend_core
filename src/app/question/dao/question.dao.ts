@@ -77,7 +77,7 @@ export class QuestionDao {
               },
             )
             .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-            .limit(limit)
+            // .limit(limit)
             .getMany();
 
     return res;
