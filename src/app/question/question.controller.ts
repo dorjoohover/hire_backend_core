@@ -189,7 +189,7 @@ export class QuestionController {
   findOne(@Param('id') id: string) {
     return this.questionService.findOne(+id);
   }
-  @Public()
+  // @Public()
   // @Roles(Role.admin)
   @Get('assessment/:id')
   findOneByAssessment(@Param('id') id: string, @Request() { user }) {
