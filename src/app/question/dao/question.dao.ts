@@ -55,7 +55,7 @@ export class QuestionDao {
             )
 
             .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-            .limit(limit)
+            // .limit(limit)
             .getMany()
         : await this.db
             .createQueryBuilder('entity')
