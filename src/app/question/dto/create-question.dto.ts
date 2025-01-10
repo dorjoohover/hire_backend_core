@@ -25,6 +25,8 @@ export class CreateQuestionDto {
   file?: string;
   category?: number;
   createdUser?: number;
+  @ApiProperty()
+  required: boolean;
 }
 
 export class UpdateQuestionCategoryDto extends PartialType(
