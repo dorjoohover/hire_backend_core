@@ -12,7 +12,18 @@ export class UserDao {
   constructor(private dataSource: DataSource) {
     this._db = this.dataSource.getRepository(UserEntity);
   }
-
+  verify = async (data: string, isEmail: boolean, email: string) => {
+    const body = !isEmail
+      ? {
+          phoneVerified: true,
+        }
+      : {
+          emailVerified: true,
+        };
+    const b = !isEmail ? { phone: data, email: email } : { email: email };
+    const res = await this._db.findOne({ where: b });
+    if (!res.emailVerified) await this._db.save({ ...res, ...body });
+  };
   add = async (user: UserEntity) => {
     const res = this._db.create({
       ...user,

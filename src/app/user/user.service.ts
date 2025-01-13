@@ -5,9 +5,31 @@ import { BaseService } from 'src/base/base.service';
 import { UserDao } from './user.dao';
 import * as bcrypt from 'bcrypt';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
+import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class UserService {
-  constructor(private dao: UserDao) {}
+  constructor(
+    private dao: UserDao,
+    private mailService: MailerService,
+  ) {}
+  async sendConfirmMail(email: string) {
+    await this.mailService
+      .sendMail({
+        to: email,
+        subject: 'Please confirm your account',
+        html: `<h1>Email Confirmation</h1>
+
+                <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
+                <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}> Click here</a>
+                </div>`,
+      })
+      .catch((err) => console.log(err));
+  }
+
+  public async verifyMail(email: string) {
+    const res = await this.dao.verify(email, true, email);
+    return res;
+  }
   public async addUser(dto: CreateUserDto) {
     const saltOrRounds = 1;
     let password = null;

@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail } from 'class-validator';
 
+export class CreateOtp {
+  @ApiProperty()
+  email: string;
+}
+
 export class CreateUserDto {
   @ApiProperty()
   password?: string;
