@@ -44,6 +44,7 @@ export class QuestionDao {
               'entity.maxValue',
               'entity.orderNumber',
               'entity.file',
+              'entity.point',
             ])
             .where(
               'entity.status = :status AND entity."categoryId" = :category AND entity."id" NOT IN (:prevQuestions)',
@@ -68,6 +69,7 @@ export class QuestionDao {
               'entity.maxValue',
               'entity.orderNumber',
               'entity.file',
+              'entity.point',
             ])
             .where(
               'entity.status = :status AND entity."categoryId" = :category',

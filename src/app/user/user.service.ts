@@ -65,8 +65,8 @@ export class UserService {
   async getUser(dto: string) {
     return await this.dao.getByEmail(dto);
   }
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  public async update(id: number, dto: UpdateUserDto) {
+    return await this.dao.update({ ...dto, id: id });
   }
 
   remove(id: number) {

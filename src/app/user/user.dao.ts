@@ -22,9 +22,14 @@ export class UserDao {
   };
 
   update = async (user: UpdateUserDto) => {
-    const res = await this._db.save({
-      id: user.id,
-      ...user,
+    const { id, ...d } = user;
+    const res = await this._db.findOne({ where: { id: id } });
+    const body = {
+      d,
+    };
+    await this._db.save({
+      ...res,
+      ...body,
     });
     return res.id;
   };
