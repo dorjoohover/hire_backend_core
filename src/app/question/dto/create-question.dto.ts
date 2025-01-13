@@ -69,6 +69,7 @@ export const ExampleDISCAllDto = {
     minValue: -1,
     maxValue: 1,
     orderNumber: 0,
+    required: true,
   },
   answers: [
     {
@@ -140,6 +141,7 @@ export const ExampleMultipleAllDto = {
     name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
     minValue: 0,
     maxValue: 1,
+    required: true,
     orderNumber: 0,
   },
   answers: [
@@ -176,6 +178,7 @@ export const ExampleSingleAllDto = {
     name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
     minValue: 0,
     maxValue: 1,
+    required: true,
     orderNumber: 0,
   },
   answers: [
@@ -215,6 +218,7 @@ export const ExampleTrueFalseAllDto = {
     name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
     minValue: 0,
     maxValue: 1,
+    required: true,
     orderNumber: 0,
   },
   answers: [
@@ -245,6 +249,7 @@ export const ExampleConstantSumAllDto = {
     name: 'Q1 Та ажлын байрандаа БАЙНГА гаргадаг зөвхөн нэг зан төлөв, БАРАГ гаргадаггүй зөвхөн нэг зан төлөвийг тус тус сонгоно уу.',
     minValue: 0,
     maxValue: 10,
+    required: true,
     orderNumber: 0,
   },
   answers: [
