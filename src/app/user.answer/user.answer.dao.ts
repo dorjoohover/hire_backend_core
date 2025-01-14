@@ -26,6 +26,7 @@ export class UserAnswerDao {
       await this.db.save(res);
       return res.id;
     } catch (error) {
+      console.log(error);
       return undefined;
     }
   };

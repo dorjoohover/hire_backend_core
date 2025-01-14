@@ -23,6 +23,8 @@ export class CreateUserAnswerDto {
   answerCategory: number;
   @ApiProperty()
   questionCategory: number;
+  @ApiProperty()
+  correct: boolean;
 }
 
 export class UserAnswerDtoList {

@@ -68,11 +68,17 @@ export class AssessmentService {
 
   public async findOne(id: number) {
     const res = await this.dao.findOne(id);
-    const category = await this.categoryDao.findOne(res.category.id);
+    const { answerCategories, category, questionCategories, ...question } = res;
+    const cate = await this.categoryDao.findOne(res.category.id);
     const user = await this.getUser(res);
+    const count = await this.dao.countQuestionAssessment(
+      questionCategories.map((q) => q.id),
+    );
     return {
-      data: res,
-      category: category,
+      data: question,
+      category: cate,
+      questionCategories: questionCategories,
+      count: count,
       user,
     };
   }

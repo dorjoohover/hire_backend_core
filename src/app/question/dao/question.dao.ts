@@ -25,6 +25,16 @@ export class QuestionDao {
     return res.id;
   };
 
+  countQuestionCategory = async (id: number) => {
+    return await this.db.count({
+      where: {
+        category: {
+          id: id,
+        },
+      },
+    });
+  };
+
   findByCategory = async (
     limit: number,
     shuffle: boolean,

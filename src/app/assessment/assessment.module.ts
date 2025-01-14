@@ -11,6 +11,7 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
 import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
+import { QuestionDao } from '../question/dao/question.dao';
 
 @Module({
   controllers: [AssessmentController, AssessmentLevelController],
@@ -25,6 +26,7 @@ import { UserDao } from '../user/user.dao';
     AssessmentCalculatorService,
     UserAnswerDao,
     QuestionAnswerCategoryDao,
+    QuestionDao,
   ],
   exports: [AssessmentService, AssessmentLevelService],
 })

@@ -36,6 +36,7 @@ export class UserAnswerService extends BaseService {
         status = HttpStatus.BAD_REQUEST;
         break;
       }
+
       if (!d.questionCategory) {
         message = 'Асуултын ангилал байхгүй';
         status = HttpStatus.BAD_REQUEST;
@@ -50,7 +51,6 @@ export class UserAnswerService extends BaseService {
         const category = await this.questionAnswerDao.findOne(d.answer);
         d.answerCategory = category.category?.id;
       }
-
       const point =
         d.point ??
         (d.matrix

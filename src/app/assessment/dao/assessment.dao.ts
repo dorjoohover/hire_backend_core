@@ -2,11 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
+import { QuestionDao } from 'src/app/question/dao/question.dao';
 
 @Injectable()
 export class AssessmentDao {
   private db: Repository<AssessmentEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private question: QuestionDao,
+  ) {
     this.db = this.dataSource.getRepository(AssessmentEntity);
   }
 
@@ -39,9 +43,22 @@ export class AssessmentDao {
       where: {
         id: id,
       },
-      relations: ['level', 'answerCategories', 'category'],
+      relations: [
+        'level',
+        'answerCategories',
+        'category',
+        'questionCategories',
+      ],
     });
     return res;
+  };
+
+  countQuestionAssessment = async (ids: number[]) => {
+    let res = await Promise.all(
+      ids.map(async (id) => await this.question.countQuestionCategory(id)),
+    );
+    const response = res.reduce((a, b) => a + b, 0);
+    return response;
   };
   deleteOne = async (id: number) => {
     return await this.db.delete(id);
