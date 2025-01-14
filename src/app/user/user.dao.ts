@@ -36,7 +36,7 @@ export class UserDao {
     const { id, ...d } = user;
     const res = await this._db.findOne({ where: { id: id } });
     const body = {
-      d,
+      ...d,
     };
     await this._db.save({
       ...res,

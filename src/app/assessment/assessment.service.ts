@@ -75,7 +75,11 @@ export class AssessmentService {
       questionCategories.map((q) => q.id),
     );
     return {
-      data: question,
+      data: {
+        question,
+        answerCategories,
+        category: category,
+      },
       category: cate,
       questionCategories: questionCategories,
       count: count,

@@ -34,7 +34,7 @@ export class CreateUserDto {
   @ApiProperty()
   profile?: string;
   wallet?: number;
-  emailVerified: boolean;
+  emailVerified?: boolean;
 }
 
 export class UserDto {

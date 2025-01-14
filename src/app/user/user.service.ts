@@ -89,7 +89,7 @@ export class UserService {
   async getUser(dto: string) {
     return await this.dao.getByEmail(dto);
   }
-  public async update(id: number, dto: UpdateUserDto) {
+  public async update(id: number, dto: CreateUserDto) {
     return await this.dao.update({ ...dto, id: id });
   }
 
