@@ -73,7 +73,7 @@ export class ExamService extends BaseService {
           ? []
           : categories
               .map((cate, i) => {
-                if (i > 0) return cate.id;
+                if (i > 0) return cate;
               })
               .filter((f) => f != undefined);
       await this.dao.update(res.id, {
