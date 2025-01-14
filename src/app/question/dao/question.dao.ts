@@ -41,56 +41,40 @@ export class QuestionDao {
     category: number,
     prevQuestions: number[],
   ) => {
-    const res =
-      prevQuestions.length > 0
-        ? await this.db
-            .createQueryBuilder('entity')
-            .select([
-              'entity.id',
-              'entity.name',
-              'entity.type',
-              'entity.level',
-              'entity.minValue',
-              'entity.maxValue',
-              'entity.orderNumber',
-              'entity.file',
-              'entity.point',
-            ])
-            .where(
-              'entity.status = :status AND entity."categoryId" = :category AND entity."id" NOT IN (:prevQuestions)',
-              {
-                status: QuestionStatus.ACTIVE,
-                category: category,
-                prevQuestions: prevQuestions.join(','),
-              },
-            )
+    const query = this.db
+      .createQueryBuilder('entity')
+      .select([
+        'entity.id',
+        'entity.name',
+        'entity.type',
+        'entity.level',
+        'entity.minValue',
+        'entity.maxValue',
+        'entity.orderNumber',
+        'entity.file',
+        'entity.point',
+      ])
+      .where('entity.status = :status AND entity."categoryId" = :category', {
+        status: QuestionStatus.ACTIVE,
+        category: category,
+      });
 
-            .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-            // .limit(limit)
-            .getMany()
-        : await this.db
-            .createQueryBuilder('entity')
-            .select([
-              'entity.id',
-              'entity.level',
-              'entity.name',
-              'entity.type',
-              'entity.minValue',
-              'entity.maxValue',
-              'entity.orderNumber',
-              'entity.file',
-              'entity.point',
-            ])
-            .where(
-              'entity.status = :status AND entity."categoryId" = :category',
-              {
-                status: QuestionStatus.ACTIVE,
-                category: category,
-              },
-            )
-            .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-            // .limit(limit)
-            .getMany();
+    // Conditionally exclude IDs if prevQuestions is not empty
+    if (prevQuestions.length > 0) {
+      query.andWhere('entity."id" NOT IN (:...prevQuestions)', {
+        prevQuestions,
+      });
+    }
+
+    // Conditionally add limit only if it's not null
+    if (limit !== null) {
+      query.limit(limit);
+    }
+
+    // Add ordering and execute the query
+    const res = await query
+      .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
+      .getMany();
 
     return res;
   };

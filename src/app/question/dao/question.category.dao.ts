@@ -72,6 +72,7 @@ export class QuestionCategoryDao {
             order: {
               orderNumber: 'ASC',
             },
+
             relations: ['assessment'],
           })
         : await this.db.find({
