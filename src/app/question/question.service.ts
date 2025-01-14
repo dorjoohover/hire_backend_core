@@ -246,7 +246,7 @@ export class QuestionService {
     return await Promise.all(
       categories.map(async (category) => {
         let questions = await this.questionDao.findByCategory(
-          20,
+          null,
           false,
           category.id,
           [],
