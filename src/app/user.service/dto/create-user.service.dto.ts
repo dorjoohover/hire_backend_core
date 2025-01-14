@@ -20,3 +20,10 @@ export class CreateExamServiceDto {
   @ApiProperty()
   endDate?: Date;
 }
+
+export class SendLinkToEmail {
+  @ApiProperty()
+  emails: string[];
+  @ApiProperty()
+  code: number;
+}

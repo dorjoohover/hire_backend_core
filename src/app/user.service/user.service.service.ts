@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  SendLinkToEmail,
 } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
 import { UserServiceDao } from './user.service.dao';
@@ -11,6 +12,7 @@ import { TransactionDao } from '../payment/dao/transaction.dao';
 import { ExamService } from '../exam/exam.service';
 import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -20,6 +22,7 @@ export class UserServiceService extends BaseService {
     private examService: ExamService,
     private userDao: UserDao,
     private assessmentDao: AssessmentDao,
+    private mailer: MailerService,
   ) {
     super();
   }
@@ -62,7 +65,23 @@ export class UserServiceService extends BaseService {
 
     return code;
   }
+  public async sendLinkToMail(dto: SendLinkToEmail) {
+    Promise.all(
+      dto.emails.map(async (email) => {
+        await this.mailer
+          .sendMail({
+            to: email,
+            subject: 'Click link',
+            html: `<h1>Link</h1>
 
+                <p>Линкэн дэр дарна уу</p>
+                <a href=http://172.16.11.145:3000/exam/${dto.code}> Click here</a>
+                </div>`,
+          })
+          .catch((err) => console.log(err));
+      }),
+    );
+  }
   public async updateCount(
     service: number,
     count: number,

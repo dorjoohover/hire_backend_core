@@ -57,6 +57,7 @@ export class UserController {
     return this.userService.getUser(id);
   }
 
+  @Public()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(+id, updateUserDto);

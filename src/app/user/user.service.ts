@@ -6,6 +6,7 @@ import { UserDao } from './user.dao';
 import * as bcrypt from 'bcrypt';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
+import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -66,6 +67,7 @@ export class UserService {
   public async getAll() {
     return await this.dao.getAll();
   }
+
   public async payment(dto: PaymentUserDto) {
     const user = await this.dao.get(dto.id);
     const pay = user.wallet + dto.price;

@@ -14,9 +14,13 @@ import { UserServiceService } from './user.service.service';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  SendLinkToEmail,
 } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @Controller('userService')
 @ApiBearerAuth('access-token')
@@ -37,6 +41,13 @@ export class UserServiceController {
         status: error.status,
       };
     }
+  }
+
+  @Post('send')
+  @Public()
+  // @Roles(Role.organization)
+  sendCodeToEmail(@Body() dto: SendLinkToEmail) {
+    this.userServiceService.sendLinkToMail(dto);
   }
 
   @Post('exam')
