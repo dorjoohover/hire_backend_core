@@ -76,7 +76,7 @@ export class AssessmentService {
     );
     return {
       data: {
-        question,
+        ...question,
         answerCategories,
         category: category,
       },
