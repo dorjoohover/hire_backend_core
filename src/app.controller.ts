@@ -22,7 +22,12 @@ import {
 import { Public } from './auth/guards/jwt/jwt-auth-guard';
 import { BaseService } from './base/base.service';
 import { AuthService } from './auth/auth.service';
-import { LoginBasicDto, LoginGoogleDto, LoginUserDto } from './auth/auth.dto';
+import {
+  LoginBasicDto,
+  LoginGoogleDto,
+  LoginOrgDto,
+  LoginUserDto,
+} from './auth/auth.dto';
 import {
   CreateUserDto,
   OrganizationDto,
@@ -62,6 +67,10 @@ export class AppController extends BaseService {
       b: {
         summary: 'Google',
         value: LoginGoogleDto,
+      },
+      c: {
+        summary: 'Organization',
+        value: LoginOrgDto,
       },
     },
   })

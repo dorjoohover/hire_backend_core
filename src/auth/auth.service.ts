@@ -31,7 +31,8 @@ export class AuthService {
 
   async login(user: LoginUserDto) {
     let result;
-    const res = await this.usersService.getUser(user.email);
+    let res = await this.usersService.getUser(user.email);
+    if (!res) res = await this.usersService.getUser(user.registerNumber);
     if (!user.password) {
       if (!user.name && !user.profile)
         throw new UnauthorizedException('Хэрэглэгч олдсонгүй.');
@@ -73,6 +74,10 @@ export class AuthService {
       }
     } else {
       result = await this.validateUser(user.email, user.password);
+
+      if (!result) {
+        result = await this.validateUser(user.registerNumber, user.password);
+      }
       if (!result) {
         throw new UnauthorizedException('Нууц үг буруу байна.');
       }
