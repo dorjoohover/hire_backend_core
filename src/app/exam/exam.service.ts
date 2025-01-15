@@ -73,7 +73,7 @@ export class ExamService extends BaseService {
           ? []
           : categories
               .map((cate, i) => {
-                if (i > 0) return cate;
+                if (i > 0) return cate.id;
               })
               .filter((f) => f != undefined);
       await this.dao.update(res.id, {
@@ -86,9 +86,13 @@ export class ExamService extends BaseService {
         (a) => a.id,
       );
       if (allCategories.length == 0)
-        allCategories = await this.questionCategoryDao.findByAssessment(
-          res.assessment.id,
-          currentCategory,
+        allCategories = await Promise.all(
+          (
+            await this.questionCategoryDao.findByAssessment(
+              res.assessment.id,
+              currentCategory,
+            )
+          ).map((a) => a.id),
         );
       const result = await this.getQuestions(
         shuffle,
@@ -106,6 +110,7 @@ export class ExamService extends BaseService {
         questions: result.questions,
         category: result.category,
         categories: allCategories,
+        assessment: res.assessment,
       };
     } else {
       await this.dao.update(res.id, {
