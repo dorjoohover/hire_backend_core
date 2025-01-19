@@ -52,6 +52,18 @@ export class ExamDao {
       },
     });
   };
+
+  findByUser = async (user: number) => {
+    return await this.db.find({
+      where: {
+        service: {
+          user: {
+            id: user,
+          },
+        },
+      },
+    });
+  };
   findByCode = async (code: number) => {
     const res = await this.db.findOne({
       where: {

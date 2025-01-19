@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import { CreateExamDto, FindExamByCodeDto } from './dto/create-exam.dto';
@@ -38,9 +39,9 @@ export class ExamController {
   }
 
   @Get('calculation/:id')
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   calculateExamById(@Param('id') id: string) {
-    return this.examService.calculateExamById(+id)
+    return this.examService.calculateExamById(+id);
   }
 
   @Get('exam/:id')
@@ -48,6 +49,11 @@ export class ExamController {
   @Get('service/:id')
   findByService(@Param('id') id: string) {
     return this.examService.findExamByService(+id);
+  }
+
+  @Get('user')
+  findByUser(@Request() { user }) {
+    return this.examService.findByUser(user['id']);
   }
 
   @Patch(':id')

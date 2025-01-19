@@ -167,6 +167,9 @@ export class ExamService extends BaseService {
     return await this.dao.findByService(service);
   }
 
+  public async findByUser(id: number) {
+    return await this.dao.findByUser
+  }
   remove(id: number) {
     return `This action removes a #${id} exam`;
   }
