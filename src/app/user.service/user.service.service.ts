@@ -106,8 +106,8 @@ export class UserServiceService extends BaseService {
     return `This action returns all userService`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userService`;
+  public async findOne(id: number) {
+    return await this.dao.findOne(id);
   }
 
   update(id: number, updateUserServiceDto: UpdateUserServiceDto) {
