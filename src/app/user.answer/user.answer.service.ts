@@ -34,44 +34,50 @@ export class UserAnswerService extends BaseService {
       if (!d.question) {
         message = 'Асуулт байхгүй';
         status = HttpStatus.BAD_REQUEST;
-        break;
+        throw new HttpException(message, status);
       }
 
       if (!d.questionCategory) {
         message = 'Асуултын ангилал байхгүй';
         status = HttpStatus.BAD_REQUEST;
-        break;
+        throw new HttpException(message, status);
       }
       if (!d.answer) {
         message = 'Хариулт байхгүй';
         status = HttpStatus.BAD_REQUEST;
-        break;
+        throw new HttpException(message, status);
       }
-      if (!d.answerCategory) {
-        const category = await this.questionAnswerDao.findOne(d.answer);
-        d.answerCategory = category.category?.id;
-      }
-      const point =
-        d.point ??
-        (d.matrix
-          ? (await this.questionAnswerMatrixDao.findOne(d.matrix)).point
-          : (await this.questionAnswerDao.findOne(d.answer)).point);
       const question = await this.questionDao.findOne(d.question);
       if (!d || d == null) {
         message = 'Оноогүй байна.';
         status = HttpStatus.BAD_REQUEST;
-        break;
+        throw new HttpException(message, status);
       }
-      const body: CreateUserAnswerDto = {
-        ...d,
-        minPoint: question.minValue,
-        maxPoint: question.maxValue,
-        point: point,
-        ip: ip,
-        device: device,
-      };
-      const r = await this.dao.create(body);
-      res.push(r);
+      await Promise.all(
+        d.answers.map(async (answer) => {
+          const answerCategory = await this.questionAnswerDao.findOne(
+            answer.answer,
+          );
+          const point =
+            answer.point ??
+            (answer.matrix
+              ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
+                  .point
+              : (await this.questionAnswerDao.findOne(answer.answer)).point);
+          const body: CreateUserAnswerDto = {
+            ...d,
+            answerCategory: answerCategory.category?.id,
+            minPoint: question.minValue,
+            maxPoint: question.maxValue,
+            point: point,
+            answer: answer.answer,
+            ip: ip,
+            device: device,
+          };
+          const r = await this.dao.create(body);
+          res.push(r);
+        }),
+      );
     }
     if (res.includes(undefined)) {
       res.map(async (r) => {

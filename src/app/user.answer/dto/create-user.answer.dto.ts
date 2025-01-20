@@ -1,12 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class UserAnswer {
+  @ApiProperty()
+  answer: number;
+  @ApiProperty()
+  point?: number;
+  @ApiProperty()
+  matrix?: number;
+}
 export class CreateUserAnswerDto {
   ip: string;
   device: string;
-  @ApiProperty()
-  point?: number;
   maxPoint: number;
   minPoint: number;
+  @ApiProperty({ isArray: true, type: UserAnswer })
+  answers: UserAnswer[];
+  answer?: number;
+  point?: number;
   @ApiProperty()
   flag: boolean;
   @ApiProperty()
@@ -15,10 +25,7 @@ export class CreateUserAnswerDto {
   exam: number;
   @ApiProperty()
   question: number;
-  @ApiProperty()
-  answer: number;
-  @ApiProperty()
-  matrix: number;
+
   @ApiProperty()
   answerCategory: number;
   @ApiProperty()
