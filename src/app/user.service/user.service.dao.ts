@@ -44,6 +44,13 @@ export class UserServiceDao {
   };
 
   findByUser = async (id: number) => {
-    return await this.db.find({ where: { id }, relations: ['assessment'] });
+    return await this.db.find({
+      where: {
+        user: {
+          id: id,
+        },
+      },
+      relations: ['assessment'],
+    });
   };
 }
