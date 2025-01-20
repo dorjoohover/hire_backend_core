@@ -71,6 +71,8 @@ export class UserAnswerService extends BaseService {
             maxPoint: question.maxValue,
             point: point,
             answer: answer.answer,
+            matrix: answer.matrix,
+
             ip: ip,
             device: device,
           };

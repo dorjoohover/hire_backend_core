@@ -21,6 +21,7 @@ export class CreateUserAnswerDto {
   flag: boolean;
   @ApiProperty()
   code: number;
+  matrix?: number;
   @ApiProperty()
   exam: number;
   @ApiProperty()
