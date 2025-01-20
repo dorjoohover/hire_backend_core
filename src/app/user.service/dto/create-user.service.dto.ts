@@ -23,7 +23,12 @@ export class CreateExamServiceDto {
 
 export class SendLinkToEmail {
   @ApiProperty()
-  emails: string[];
+  email: string;
   @ApiProperty()
   code: number;
+}
+
+export class SendLinkToEmails {
+  @ApiProperty({ isArray: true, type: SendLinkToEmail })
+  links: SendLinkToEmail[];
 }

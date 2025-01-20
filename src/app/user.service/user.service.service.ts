@@ -3,6 +3,7 @@ import {
   CreateExamServiceDto,
   CreateUserServiceDto,
   SendLinkToEmail,
+  SendLinkToEmails,
 } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
 import { UserServiceDao } from './user.service.dao';
@@ -69,17 +70,17 @@ export class UserServiceService extends BaseService {
 
     return code;
   }
-  public async sendLinkToMail(dto: SendLinkToEmail) {
+  public async sendLinkToMail(dto: SendLinkToEmails) {
     Promise.all(
-      dto.emails.map(async (email) => {
+      dto.links.map(async (email) => {
         await this.mailer
           .sendMail({
-            to: email,
+            to: email.email,
             subject: 'Click link',
             html: `<h1>Link</h1>
 
                 <p>Линкэн дэр дарна уу</p>
-                <a href=https://hire-main.vercel.app/exam/${dto.code}> Click here</a>
+                <a href=https://hire-main.vercel.app/exam/${email.code}> Click here</a>
                 </div>`,
           })
           .catch((err) => console.log(err));
