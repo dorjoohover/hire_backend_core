@@ -53,10 +53,11 @@ export class ExamDao {
     });
   };
 
-  findByUser = async (user: number) => {
+  findByUser = async (id: number, user: number) => {
     return await this.db.find({
       where: {
         service: {
+          id: id,
           user: {
             id: user,
           },

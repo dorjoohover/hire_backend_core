@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Not, Repository } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 
@@ -43,11 +43,14 @@ export class UserServiceDao {
     await this.db.save(res);
   };
 
-  findByUser = async (id: number) => {
+  findByUser = async (assId: number, id: number) => {
     return await this.db.find({
       where: {
         user: {
           id: id,
+        },
+        assessment: {
+          id: assId == 0 ? Not(assId) : assId,
         },
       },
       relations: ['assessment'],

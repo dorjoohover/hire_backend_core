@@ -17,7 +17,7 @@ import {
   SendLinkToEmail,
 } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
@@ -66,9 +66,10 @@ export class UserServiceController {
   findAll() {
     return this.userServiceService.findAll();
   }
-  @Get('user')
-  findById(@Request() { user }) {
-    return this.userServiceService.findByUser(+user['id']);
+  @Get('user/:id')
+  @ApiParam({ name: 'id' })
+  findById(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.findByUser(+id, +user['id']);
   }
 
   @Get('find/:id')

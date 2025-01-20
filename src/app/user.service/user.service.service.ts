@@ -42,8 +42,8 @@ export class UserServiceService extends BaseService {
     return res;
   }
 
-  public async findByUser(id: number) {
-    return await this.dao.findByUser(id);
+  public async findByUser(assId: number, id: number) {
+    return await this.dao.findByUser(assId, id);
   }
 
   public async createExam(dto: CreateExamServiceDto, user: number) {
@@ -54,7 +54,7 @@ export class UserServiceService extends BaseService {
         HttpStatus.PAYMENT_REQUIRED,
       );
     const code = Promise.all(
-      Array.from({ length: service.count }, (_, i) => i + 1).map(async (i) => {
+      Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
         const res = await this.examService.create({
           endDate: dto.endDate,
           service: dto.service,
@@ -79,7 +79,7 @@ export class UserServiceService extends BaseService {
             html: `<h1>Link</h1>
 
                 <p>Линкэн дэр дарна уу</p>
-                <a href=http://172.16.11.145:3000/exam/${dto.code}> Click here</a>
+                <a href=https://hire-main.vercel.app/exam/${dto.code}> Click here</a>
                 </div>`,
           })
           .catch((err) => console.log(err));

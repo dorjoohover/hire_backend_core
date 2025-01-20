@@ -51,9 +51,10 @@ export class ExamController {
     return this.examService.findExamByService(+id);
   }
 
-  @Get('user')
-  findByUser(@Request() { user }) {
-    return this.examService.findByUser(user['id']);
+  @Get('user/:id')
+  @ApiParam({ name: 'id' })
+  findByUser(@Param('id') id: string, @Request() { user }) {
+    return this.examService.findByUser(+id, user['id']);
   }
 
   @Patch(':id')
