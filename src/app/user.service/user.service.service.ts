@@ -106,8 +106,8 @@ export class UserServiceService extends BaseService {
     return await this.examService.findExamByService(service);
   }
 
-  findAll() {
-    return `This action returns all userService`;
+  public async findAll() {
+    return await this.dao.findAll();
   }
 
   public async findOne(id: number) {
