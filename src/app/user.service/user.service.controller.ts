@@ -15,6 +15,7 @@ import {
   CreateExamServiceDto,
   CreateUserServiceDto,
   SendLinkToEmail,
+  SendLinkToEmails,
 } from './dto/create-user.service.dto';
 import { UpdateUserServiceDto } from './dto/update-user.service.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -46,7 +47,7 @@ export class UserServiceController {
   @Post('send')
   @Public()
   // @Roles(Role.organization)
-  sendCodeToEmail(@Body() dto: SendLinkToEmail) {
+  sendCodeToEmail(@Body() dto: SendLinkToEmails) {
     this.userServiceService.sendLinkToMail(dto);
   }
 
