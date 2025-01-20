@@ -21,3 +21,8 @@ export class FindExamByCodeDto {
   @ApiProperty()
   category?: number;
 }
+
+export class ExamUser {
+  @ApiProperty({ isArray: true })
+  id: number[];
+}

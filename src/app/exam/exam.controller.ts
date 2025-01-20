@@ -9,7 +9,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
-import { CreateExamDto, FindExamByCodeDto } from './dto/create-exam.dto';
+import {
+  CreateExamDto,
+  ExamUser,
+  FindExamByCodeDto,
+} from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
@@ -51,10 +55,9 @@ export class ExamController {
     return this.examService.findExamByService(+id);
   }
 
-  @Get('user/:id')
-  @ApiParam({ name: 'id' })
-  findByUser(@Param('id') id: string, @Request() { user }) {
-    return this.examService.findByUser(+id, user['id']);
+  @Post('user')
+  findByUser(@Body() dto: ExamUser, @Request() { user }) {
+    return this.examService.findByUser(dto.id, user['id']);
   }
 
   @Patch(':id')

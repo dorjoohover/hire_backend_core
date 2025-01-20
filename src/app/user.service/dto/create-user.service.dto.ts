@@ -25,6 +25,12 @@ export class SendLinkToEmail {
   @ApiProperty()
   email: string;
   @ApiProperty()
+  lastname: string;
+  @ApiProperty()
+  firstname: string;
+  @ApiProperty()
+  phone: string;
+  @ApiProperty()
   code: number;
 }
 

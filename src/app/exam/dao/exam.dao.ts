@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
 import { CreateExamDto } from '../dto/create-exam.dto';
 
@@ -53,11 +53,11 @@ export class ExamDao {
     });
   };
 
-  findByUser = async (id: number, user: number) => {
+  findByUser = async (id: number[], user: number) => {
     return await this.db.find({
       where: {
         service: {
-          id: id,
+          id: In(id),
           user: {
             id: user,
           },
