@@ -42,6 +42,10 @@ export class UserServiceService extends BaseService {
     return res;
   }
 
+  public async findByUser(id: number) {
+    return await this.dao.findByUser(id);
+  }
+
   public async createExam(dto: CreateExamServiceDto, user: number) {
     const service = await this.dao.findOne(dto.service);
     if (service.count - service.usedUserCount - dto.count < 0)

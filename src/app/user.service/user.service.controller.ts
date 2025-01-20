@@ -66,8 +66,12 @@ export class UserServiceController {
   findAll() {
     return this.userServiceService.findAll();
   }
+  @Get('user')
+  findById(@Request() { user }) {
+    return this.userServiceService.findByUser(+user['id']);
+  }
 
-  @Get(':id')
+  @Get('find/:id')
   findOne(@Param('id') id: string) {
     return this.userServiceService.findOne(+id);
   }

@@ -32,7 +32,7 @@ export class UserServiceDao {
       where: {
         id: id,
       },
-        relations: ['assessment'],
+      relations: ['assessment'],
     });
   };
 
@@ -41,5 +41,9 @@ export class UserServiceDao {
     res.count += count;
     res.usedUserCount += used;
     await this.db.save(res);
+  };
+
+  findByUser = async (id: number) => {
+    return await this.db.find({ where: { id } });
   };
 }
