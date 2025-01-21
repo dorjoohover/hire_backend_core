@@ -83,6 +83,7 @@ export class UserAnswerService extends BaseService {
             };
             console.log(body);
             const r = await this.dao.create(body);
+            console.log(r);
             res.push(r);
           }),
         );
