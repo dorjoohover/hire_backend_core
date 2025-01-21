@@ -73,6 +73,12 @@ export class UserServiceService extends BaseService {
   public async sendLinkToMail(dto: SendLinkToEmails) {
     Promise.all(
       dto.links.map(async (email) => {
+        await this.examService.updateExamByCode(email.code, {
+          email: email.email,
+          firstname: email.firstname,
+          lastname: email.lastname,
+          phone: email.phone,
+        });
         await this.mailer
           .sendMail({
             to: email.email,

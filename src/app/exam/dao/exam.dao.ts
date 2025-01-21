@@ -28,6 +28,15 @@ export class ExamDao {
     const res = await this.db.save({ id: id, ...dto });
   };
 
+  updateByCode = async (
+    code: number,
+    dto: { email: string; lastname: string; firstname: string; phone: string },
+  ) => {
+    const { email, lastname, firstname, phone } = dto;
+    const res = await this.db.findOne({ where: { code: code } });
+    await this.db.save({ ...res, email, lastname, firstname, phone });
+  };
+
   findAll = async () => {
     return await this.db.find({
       //   relations: [''],

@@ -47,6 +47,13 @@ export class ExamService extends BaseService {
     }
   }
 
+  public async updateExamByCode(
+    code: number,
+    dto: { email: string; firstname: string; lastname: string; phone: string },
+  ) {
+    await this.dao.update(code, dto);
+  }
+
   // category questioncount der asuudaltai bga
   public async updateByCode(code: number, category?: number) {
     const res = await this.dao.findByCode(code);
