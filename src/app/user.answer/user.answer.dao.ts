@@ -16,12 +16,12 @@ export class UserAnswerDao {
     try {
       const res = this.db.create({
         ...dto,
-        exam: { id: dto.exam },
-        answer: dto.answer ? { id: dto.answer } : null,
-        matrix: dto.matrix ? { id: dto.matrix } : null,
-        question: { id: dto.question },
-        answerCategory: dto.answerCategory ? { id: dto.answerCategory } : null,
-        questionCategory: { id: dto.questionCategory },
+        exam: { id: +dto.exam },
+        answer: dto.answer ? { id: +dto.answer } : null,
+        matrix: dto.matrix ? { id: +dto.matrix } : null,
+        question: { id: +dto.question },
+        answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
+        questionCategory: { id: +dto.questionCategory },
       });
       console.log(res);
       await this.db.save(res);
