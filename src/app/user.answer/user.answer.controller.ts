@@ -42,6 +42,7 @@ export class UserAnswerController {
     return this.userAnswerService.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userAnswerService.findOne(+id);
