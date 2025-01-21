@@ -27,67 +27,71 @@ export class UserAnswerService extends BaseService {
     super();
   }
   public async create(dto: UserAnswerDtoList, ip: string, device: string) {
-    let message = '';
-    let status = HttpStatus.BAD_REQUEST;
-    const res = [];
-    for (const d of dto.data) {
-      if (!d.question) {
-        message = 'Асуулт байхгүй';
-        status = HttpStatus.BAD_REQUEST;
-        throw new HttpException(message, status);
-      }
+    try {
+      let message = '';
+      let status = HttpStatus.BAD_REQUEST;
+      const res = [];
+      for (const d of dto.data) {
+        if (!d.question) {
+          message = 'Асуулт байхгүй';
+          status = HttpStatus.BAD_REQUEST;
+          throw new HttpException(message, status);
+        }
 
-      if (!d.questionCategory) {
-        message = 'Асуултын ангилал байхгүй';
-        status = HttpStatus.BAD_REQUEST;
-        throw new HttpException(message, status);
-      }
-      // if (!d.answer) {
-      //   message = 'Хариулт байхгүй';
-      //   status = HttpStatus.BAD_REQUEST;
-      //   throw new HttpException(message, status);
-      // }
-      const question = await this.questionDao.findOne(d.question);
-      if (!d || d == null) {
-        message = 'Оноогүй байна.';
-        status = HttpStatus.BAD_REQUEST;
-        throw new HttpException(message, status);
-      }
-      await Promise.all(
-        d.answers.map(async (answer) => {
-          const answerCategory = await this.questionAnswerDao.findOne(
-            answer.answer,
-          );
-          const point =
-            answer.point ??
-            (answer.matrix
-              ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
-                  .point
-              : (await this.questionAnswerDao.findOne(answer.answer)).point);
-          const body: CreateUserAnswerDto = {
-            ...d,
-            answerCategory: answerCategory.category?.id,
-            minPoint: question.minValue,
-            maxPoint: question.maxValue,
-            point: point,
-            answer: answer.answer,
-            matrix: answer.matrix,
+        if (!d.questionCategory) {
+          message = 'Асуултын ангилал байхгүй';
+          status = HttpStatus.BAD_REQUEST;
+          throw new HttpException(message, status);
+        }
+        // if (!d.answer) {
+        //   message = 'Хариулт байхгүй';
+        //   status = HttpStatus.BAD_REQUEST;
+        //   throw new HttpException(message, status);
+        // }
+        const question = await this.questionDao.findOne(d.question);
+        if (!d || d == null) {
+          message = 'Оноогүй байна.';
+          status = HttpStatus.BAD_REQUEST;
+          throw new HttpException(message, status);
+        }
+        await Promise.all(
+          d.answers.map(async (answer) => {
+            const answerCategory = await this.questionAnswerDao.findOne(
+              answer.answer,
+            );
+            const point =
+              answer.point ??
+              (answer.matrix
+                ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
+                    .point
+                : (await this.questionAnswerDao.findOne(answer.answer)).point);
+            const body: CreateUserAnswerDto = {
+              ...d,
+              answerCategory: answerCategory.category?.id,
+              minPoint: question.minValue,
+              maxPoint: question.maxValue,
+              point: point,
+              answer: answer.answer,
+              matrix: answer.matrix,
 
-            ip: ip,
-            device: device,
-          };
-          const r = await this.dao.create(body);
-          res.push(r);
-        }),
-      );
+              ip: ip,
+              device: device,
+            };
+            const r = await this.dao.create(body);
+            res.push(r);
+          }),
+        );
+      }
+      if (res.includes(undefined)) {
+        res.map(async (r) => {
+          if (r != undefined) await this.dao.deleteOne(r);
+        });
+        throw new HttpException(message, status);
+      }
+      return res;
+    } catch (error) {
+      console.log(error);
     }
-    if (res.includes(undefined)) {
-      res.map(async (r) => {
-        if (r != undefined) await this.dao.deleteOne(r);
-      });
-      throw new HttpException(message, status);
-    }
-    return res;
   }
 
   public async calculate(dto: CalculateUserAnswerDto) {
@@ -99,7 +103,7 @@ export class UserAnswerService extends BaseService {
 
   public async findAll() {
     return await this.dao.findAll();
-  } 
+  }
 
   findOne(id: number) {
     return `This action returns a #${id} userAnswer`;
