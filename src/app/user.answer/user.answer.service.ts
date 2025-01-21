@@ -57,7 +57,8 @@ export class UserAnswerService extends BaseService {
           throw new HttpException(message, status);
         }
         await Promise.all(
-          d.answers.map(async (answer) => {
+          d.answers.map(async (answer, i) => {
+            if (i > 0) return;
             const answerCategory = await this.questionAnswerDao.findOne(
               answer.answer,
             );
