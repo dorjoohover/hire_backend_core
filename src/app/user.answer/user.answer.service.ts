@@ -31,6 +31,8 @@ export class UserAnswerService extends BaseService {
       let message = '';
       let status = HttpStatus.BAD_REQUEST;
       const res = [];
+
+      const exam = await this.examDao.findByCode(dto.data[0].code);
       for (const d of dto.data) {
         if (!d.question) {
           message = 'Асуулт байхгүй';
@@ -74,6 +76,7 @@ export class UserAnswerService extends BaseService {
               answer: answer.answer,
               matrix: answer.matrix,
               ip: ip,
+              exam: exam.id,
               device: device,
             };
             console.log(body);
