@@ -42,11 +42,11 @@ export class UserAnswerService extends BaseService {
         status = HttpStatus.BAD_REQUEST;
         throw new HttpException(message, status);
       }
-      if (!d.answer) {
-        message = 'Хариулт байхгүй';
-        status = HttpStatus.BAD_REQUEST;
-        throw new HttpException(message, status);
-      }
+      // if (!d.answer) {
+      //   message = 'Хариулт байхгүй';
+      //   status = HttpStatus.BAD_REQUEST;
+      //   throw new HttpException(message, status);
+      // }
       const question = await this.questionDao.findOne(d.question);
       if (!d || d == null) {
         message = 'Оноогүй байна.';
@@ -98,8 +98,8 @@ export class UserAnswerService extends BaseService {
   }
 
   public async findAll() {
-    return await this.dao.findAll()
-  }
+    return await this.dao.findAll();
+  } 
 
   findOne(id: number) {
     return `This action returns a #${id} userAnswer`;
