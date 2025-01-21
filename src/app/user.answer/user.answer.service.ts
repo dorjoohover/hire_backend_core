@@ -97,8 +97,8 @@ export class UserAnswerService extends BaseService {
     // if(dto.answerCategory)
   }
 
-  findAll() {
-    return `This action returns all userAnswer`;
+  public async findAll() {
+    return await this.dao.findAll()
   }
 
   findOne(id: number) {

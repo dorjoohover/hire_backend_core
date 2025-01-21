@@ -11,7 +11,10 @@ import {
   Headers,
 } from '@nestjs/common';
 import { UserAnswerService } from './user.answer.service';
-import { CreateUserAnswerDto, UserAnswerDtoList } from './dto/create-user.answer.dto';
+import {
+  CreateUserAnswerDto,
+  UserAnswerDtoList,
+} from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
@@ -20,11 +23,7 @@ export class UserAnswerController {
   constructor(private readonly userAnswerService: UserAnswerService) {}
   @Public()
   @Post()
-  create(
-    @Body() dto: UserAnswerDtoList,
-    @Ip() ip: string,
-    @Headers() headers,
-  ) {
+  create(@Body() dto: UserAnswerDtoList, @Ip() ip: string, @Headers() headers) {
     try {
       const device = headers['user-agent'] ?? '';
       return this.userAnswerService.create(dto, ip, device);
@@ -38,6 +37,7 @@ export class UserAnswerController {
   }
 
   @Get()
+  @Public()
   findAll() {
     return this.userAnswerService.findAll();
   }
