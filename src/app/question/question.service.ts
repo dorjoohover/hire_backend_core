@@ -294,6 +294,6 @@ export class QuestionService {
   }
 
   public async testing(id: number) {
-    return await this.questionAnswerMatrixDao.findOne(id);
+    return await this.questionAnswerMatrixDao.findAll();
   }
 }
