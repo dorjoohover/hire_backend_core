@@ -23,10 +23,11 @@ export class UserAnswerDao {
         answerCategory: dto.answerCategory ? { id: dto.answerCategory } : null,
         questionCategory: { id: dto.questionCategory },
       });
+      console.log(res);
       await this.db.save(res);
       return res.id;
     } catch (error) {
-      console.log(error);
+      console.log('err', error);
       return undefined;
     }
   };
