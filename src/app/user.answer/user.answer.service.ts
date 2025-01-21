@@ -65,9 +65,10 @@ export class UserAnswerService extends BaseService {
                 ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
                     .point
                 : (await this.questionAnswerDao.findOne(answer.answer)).point);
+            console.log(answerCategory);
             const body: CreateUserAnswerDto = {
               ...d,
-              answerCategory: answerCategory.category?.id,
+              answerCategory: answerCategory?.category?.id ?? null,
               minPoint: question.minValue,
               maxPoint: question.maxValue,
               point: point,
