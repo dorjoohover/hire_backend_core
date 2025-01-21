@@ -111,8 +111,8 @@ export class UserAnswerService extends BaseService {
     return await this.dao.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} userAnswer`;
+  public async findOne(id: number) {
+    return await this.dao.findByCode(id);
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
