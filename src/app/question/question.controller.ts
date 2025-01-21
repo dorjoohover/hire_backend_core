@@ -195,9 +195,8 @@ export class QuestionController {
   findOneByAssessment(@Param('id') id: string, @Request() { user }) {
     const admin = +user?.['role'] == Role.admin;
     const res = this.questionService.findOneByAssessment(+id, admin);
-    
-    return res
-    
+
+    return res;
   }
 
   @Roles(Role.admin)
@@ -230,5 +229,11 @@ export class QuestionController {
   @Patch('answerCategory')
   setAnswerCategory(@Body() dto: CreateQuestionAnswerCategoryDto) {
     return this.questionService.updateAnswerCategory(dto);
+  }
+  @Public()
+  @Get('testing/:id')
+  @ApiParam({ name: 'id' })
+  testing(@Param('id') id: string) {
+    return this.questionService.testing(+id);
   }
 }

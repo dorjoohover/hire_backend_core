@@ -292,4 +292,8 @@ export class QuestionService {
   remove(id: number) {
     return `This action removes a #${id} question`;
   }
+
+  public async testing(id: number) {
+    return await this.questionAnswerMatrixDao.findOne(id);
+  }
 }
