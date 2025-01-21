@@ -65,7 +65,6 @@ export class UserAnswerService extends BaseService {
                 ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
                     .point
                 : (await this.questionAnswerDao.findOne(answer.answer)).point);
-            console.log(answerCategory);
             const body: CreateUserAnswerDto = {
               ...d,
               answerCategory: answerCategory?.category?.id ?? null,
@@ -74,10 +73,10 @@ export class UserAnswerService extends BaseService {
               point: point,
               answer: answer.answer,
               matrix: answer.matrix,
-
               ip: ip,
               device: device,
             };
+            console.log(body);
             const r = await this.dao.create(body);
             res.push(r);
           }),

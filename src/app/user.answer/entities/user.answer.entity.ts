@@ -49,6 +49,7 @@ export class UserAnswerEntity {
 
   @ManyToOne(() => QuestionAnswerEntity, (exam) => exam.userAnswers, {
     onDelete: 'CASCADE',
+    nullable: true,
   })
   answer: QuestionAnswerEntity;
   @ManyToOne(() => QuestionAnswerMatrixEntity, (exam) => exam.userAnswers, {
