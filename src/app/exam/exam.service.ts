@@ -72,46 +72,55 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
-    console.log(category);
     if (category == -1)
       return await this.dao.update(res.id, {
         ...res,
         userEndDate: new Date(),
       });
+
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
-    allCategories =
-      categories.length <= 1
-        ? []
-        : categories
-            .map((cate, i) => {
-              if (i > 0) return cate.id;
-            })
-            .filter((f) => f != undefined);
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
         ...res,
         userStartDate: new Date(),
       });
+      allCategories =
+        categories.length <= 1
+          ? []
+          : categories
+              .map((cate, i) => {
+                if (i > 0) return cate.id;
+              })
+              .filter((f) => f != undefined);
     }
     if (
       res.userStartDate != null &&
       category == undefined &&
       res.userEndDate == null
     ) {
+      allCategories =
+        categories.length <= 1
+          ? []
+          : categories
+              .map((cate, i) => {
+                if (i > 0) return cate.id;
+              })
+              .filter((f) => f != undefined);
       currentCategory = categories[0].id;
     }
     if (currentCategory) {
-      allCategories = await Promise.all(
-        (
-          await this.questionCategoryDao.findByAssessment(
-            res.assessment.id,
-            currentCategory,
-          )
-        ).map((a) => a.id),
-      );
+      if (allCategories.length == 0)
+        allCategories = await Promise.all(
+          (
+            await this.questionCategoryDao.findByAssessment(
+              res.assessment.id,
+              currentCategory,
+            )
+          ).map((a) => a.id),
+        );
       const result = await this.getQuestions(
         shuffle,
         currentCategory,
