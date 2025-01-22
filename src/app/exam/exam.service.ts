@@ -98,7 +98,7 @@ export class ExamService extends BaseService {
     }
     if (
       res.userStartDate != null &&
-      category == undefined &&
+      category == -1 &&
       res.userEndDate == null
     ) {
       allCategories =
