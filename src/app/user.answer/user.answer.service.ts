@@ -120,6 +120,7 @@ export class UserAnswerService extends BaseService {
         return {
           answer: key, // Include the key in the object
           matrix: r.matrix != null ? r.matrix.id : null,
+          type: r.question.type,
           flag: r.flag,
           point: r.point,
           question: r.question.id,
