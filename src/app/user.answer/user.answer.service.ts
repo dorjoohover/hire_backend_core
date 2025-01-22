@@ -111,8 +111,8 @@ export class UserAnswerService extends BaseService {
   public async findAll() {
     return await this.dao.findAll();
   }
-  public async findOne(id: number) {
-    let res = await this.dao.findByCode(id);
+  public async findOne(id: number, code: number) {
+    let res = await this.dao.findByCode(code, id);
     const { startDate, endDate } = res[0];
     console.log(startDate);
     console.log(res);

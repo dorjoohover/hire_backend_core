@@ -37,7 +37,18 @@ export class UserAnswerDao {
     return await this.db.find({});
   };
 
-  findByCode = async (code: number) => {
+  findByCode = async (code: number, id?: number) => {
+    if (id) {
+      return await this.db.find({
+        where: {
+          code: code,
+          questionCategory: {
+            id: id,
+          },
+        },
+        relations: ['question', 'answer', 'matrix'],
+      });
+    }
     return await this.db.find({
       where: {
         code: code,

@@ -17,6 +17,7 @@ import {
 } from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { ApiParam } from '@nestjs/swagger';
 
 @Controller('userAnswer')
 export class UserAnswerController {
@@ -43,9 +44,11 @@ export class UserAnswerController {
   }
 
   @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userAnswerService.findOne(+id);
+  @Get(':code/:id')
+  @ApiParam({ name: 'code' })
+  @ApiParam({ name: 'id' })
+  findOne(@Param('id') id: string, @Param('code') code: string) {
+    return this.userAnswerService.findOne(+id, +code);
   }
 
   @Patch(':id')
