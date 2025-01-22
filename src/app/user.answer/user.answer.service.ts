@@ -135,7 +135,7 @@ export class UserAnswerService extends BaseService {
     console.log(res);
     const formatted = await Promise.all(
       res.map((r) => {
-        const key = r.answer.id; // Use answer.id as the key
+        const key = r.answer?.id; // Use answer.id as the key
         return {
           answer: key, // Include the key in the object
           matrix: r.matrix != null ? r.matrix.id : null,
