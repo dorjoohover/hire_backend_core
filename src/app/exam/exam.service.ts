@@ -102,14 +102,6 @@ export class ExamService extends BaseService {
       res.userEndDate == null
     ) {
       currentCategory = categories[0].id;
-      allCategories = await Promise.all(
-        (
-          await this.questionCategoryDao.findByAssessment(
-            res.assessment.id,
-            currentCategory,
-          )
-        ).map((a) => a.id),
-      );
     }
     if (currentCategory) {
       allCategories = await Promise.all(
