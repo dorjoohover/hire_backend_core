@@ -113,7 +113,7 @@ export class UserAnswerService extends BaseService {
   }
   public async findOne(id: number, code: number) {
     let res = await this.dao.findByCode(code, id);
-    const { startDate, endDate } = res[0];
+    const { startDate, endDate } = res?.[0];
     console.log(startDate);
     console.log(res);
     const formatted = await Promise.all(
