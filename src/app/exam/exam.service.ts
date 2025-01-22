@@ -72,6 +72,11 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
+    if (category == -1)
+      return await this.dao.update(res.id, {
+        ...res,
+        userEndDate: new Date(),
+      });
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
@@ -125,11 +130,6 @@ export class ExamService extends BaseService {
         categories: allCategories,
         assessment: res.assessment,
       };
-    } else {
-      await this.dao.update(res.id, {
-        ...res,
-        userEndDate: new Date(),
-      });
     }
   }
   createDetail = async (

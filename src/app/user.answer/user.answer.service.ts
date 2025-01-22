@@ -128,25 +128,24 @@ export class UserAnswerService extends BaseService {
       }),
     );
 
-    // Group the results by `question.id`, then by `key`
     const groupedByQuestionAndKey = formatted.reduce((acc, item) => {
       const questionId = item.question;
 
       if (!acc[questionId]) {
-        acc[questionId] = {}; // Initialize an object for each question
+        acc[questionId] = {};
       }
 
       const key = item.answer;
       if (!acc[questionId][key]) {
-        acc[questionId][key] = []; // Initialize an array for each key
+        acc[questionId][key] = [];
       }
 
-      acc[questionId][key].push(item); // Push the item into the corresponding group
+      acc[questionId][key].push(item);
 
       return acc;
     }, {});
 
-    return groupedByQuestionAndKey; // Return the nested grouped data
+    return groupedByQuestionAndKey;
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
