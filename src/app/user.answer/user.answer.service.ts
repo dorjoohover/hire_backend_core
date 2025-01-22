@@ -111,11 +111,13 @@ export class UserAnswerService extends BaseService {
   public async findAll() {
     return await this.dao.findAll();
   }
-
   public async findOne(id: number) {
     const res = await this.dao.findByCode(id);
-    res.reduce((acc, item) => {
+
+    // Group the results by `question.id`
+    const groupedByQuestion = res.reduce((acc, item) => {
       const questionId = item.question.id;
+
       if (!acc[questionId]) {
         acc[questionId] = [];
       }
@@ -123,7 +125,8 @@ export class UserAnswerService extends BaseService {
 
       return acc;
     }, {});
-    return res;
+
+    return groupedByQuestion; // Return the grouped data
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
