@@ -20,6 +20,8 @@ export class UserAnswerEntity {
   device: string;
   @Column({ nullable: true, type: 'numeric' })
   point: number;
+  @Column({ nullable: true, type: 'numeric' })
+  value: string;
   @Column({ nullable: true })
   flag: boolean;
 

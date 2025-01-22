@@ -7,10 +7,13 @@ class UserAnswer {
   point?: number;
   @ApiProperty()
   matrix?: number;
+  @ApiProperty()
+  value?: string;
 }
 export class CreateUserAnswerDto {
   ip: string;
   device: string;
+  value?: string;
   maxPoint: number;
   minPoint: number;
   @ApiProperty({ isArray: true, type: UserAnswer })

@@ -17,6 +17,7 @@ export class UserAnswerDao {
       const res = this.db.create({
         ...dto,
         exam: { id: +dto.exam },
+
         answer: dto.answer ? { id: +dto.answer } : null,
         matrix: dto.matrix ? { id: +dto.matrix } : null,
         question: { id: +dto.question },

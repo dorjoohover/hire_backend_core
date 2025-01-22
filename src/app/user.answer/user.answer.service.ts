@@ -77,6 +77,7 @@ export class UserAnswerService extends BaseService {
               answer: answer.answer,
               correct: d.correct,
               matrix: answer.matrix,
+              value: answer.value,
               ip: ip,
               exam: exam.id,
               device: device,
