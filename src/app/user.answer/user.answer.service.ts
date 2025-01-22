@@ -118,7 +118,7 @@ export class UserAnswerService extends BaseService {
       res.map((r) => {
         const key = r.answer.id; // Use answer.id as the key
         return {
-          key, // Include the key in the object
+          answer: key, // Include the key in the object
           matrixId: r.matrix != null ? r.matrix.id : null,
           flag: r.flag,
           point: r.point,
@@ -135,7 +135,7 @@ export class UserAnswerService extends BaseService {
         acc[questionId] = {}; // Initialize an object for each question
       }
 
-      const key = item.key;
+      const key = item.answer;
       if (!acc[questionId][key]) {
         acc[questionId][key] = []; // Initialize an array for each key
       }
