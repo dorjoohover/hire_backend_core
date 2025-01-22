@@ -123,7 +123,14 @@ export class ExamService extends BaseService {
       const index = prevQuestions.indexOf(answeredCategory) + 1;
       const predictCategory = prevQuestions[index];
       currentCategory = predictCategory ?? answeredCategory;
-      console.log(index, predictCategory, currentCategory, answeredCategory);
+      console.log(
+        prevQuestions,
+        prevQuestions.indexOf(answeredCategory),
+        index,
+        predictCategory,
+        currentCategory,
+        answeredCategory,
+      );
     }
 
     if (currentCategory) {
