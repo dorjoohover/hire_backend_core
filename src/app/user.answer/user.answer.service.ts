@@ -56,6 +56,24 @@ export class UserAnswerService extends BaseService {
           status = HttpStatus.BAD_REQUEST;
           throw new HttpException(message, status);
         }
+        if (d.answers.length == 0) {
+          const body: CreateUserAnswerDto = {
+            ...d,
+            startDate: dto.startDate,
+            answerCategory: null,
+            minPoint: question.minValue,
+            maxPoint: question.maxValue,
+            point: null,
+            answer: null,
+            correct: false,
+            matrix: null,
+            ip: ip,
+            exam: exam.id,
+            device: device,
+          };
+          const r = await this.dao.create(body);
+          res.push(r);
+        }
         await Promise.all(
           d.answers.map(async (answer, i) => {
             // if (i > 0) return;
