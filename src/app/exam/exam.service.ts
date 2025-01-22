@@ -112,15 +112,14 @@ export class ExamService extends BaseService {
       );
     }
     if (currentCategory) {
-      if (allCategories.length == 0)
-        allCategories = await Promise.all(
-          (
-            await this.questionCategoryDao.findByAssessment(
-              res.assessment.id,
-              currentCategory,
-            )
-          ).map((a) => a.id),
-        );
+      allCategories = await Promise.all(
+        (
+          await this.questionCategoryDao.findByAssessment(
+            res.assessment.id,
+            currentCategory,
+          )
+        ).map((a) => a.id),
+      );
       const result = await this.getQuestions(
         shuffle,
         currentCategory,
