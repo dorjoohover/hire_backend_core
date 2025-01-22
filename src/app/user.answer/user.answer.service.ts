@@ -144,7 +144,7 @@ export class UserAnswerService extends BaseService {
 
       return acc;
     }, {});
-    const last = Object.keys(groupedByQuestionAndKey).forEach((questionId) => {
+    Object.keys(groupedByQuestionAndKey).forEach((questionId) => {
       const answers = groupedByQuestionAndKey[questionId];
 
       Object.keys(answers).forEach((answerId) => {
@@ -156,7 +156,7 @@ export class UserAnswerService extends BaseService {
       });
     });
 
-    return last;
+    return groupedByQuestionAndKey;
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
