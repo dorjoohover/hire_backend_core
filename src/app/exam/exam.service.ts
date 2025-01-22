@@ -120,10 +120,11 @@ export class ExamService extends BaseService {
     }
     if (answers.length > 0) {
       const answeredCategory = answers[answers.length - 1].questionCategory.id;
-      const index = allCategories.indexOf(answeredCategory) + 1;
-      const predictCategory = allCategories[index];
-      currentCategory = predictCategory ?? answeredCategory;
-      console.log(index, predictCategory, currentCategory, answeredCategory);
+      const i = allCategories.indexOf(answeredCategory);
+      const predictCategory = allCategories[i + 1];
+      if (currentCategory < predictCategory) {
+        currentCategory = predictCategory;
+      }
     }
 
     if (currentCategory) {
