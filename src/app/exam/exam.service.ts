@@ -14,6 +14,7 @@ import { QuestionCategoryEntity } from '../question/entities/question.category.e
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 import { ExamEntity } from './entities/exam.entity';
 import { FormuleService } from '../formule/formule.service';
+import { UserAnswerDao } from '../user.answer/user.answer.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -22,6 +23,7 @@ export class ExamService extends BaseService {
     private formule: FormuleService,
     private detailDao: ExamDetailDao,
     private questionService: QuestionService,
+    private userAnswer: UserAnswerDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
@@ -65,6 +67,8 @@ export class ExamService extends BaseService {
       throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
+    const answers = await this.userAnswer.findByCode(code);
+
     if (category == -1) {
       await this.dao.update(res.id, {
         ...res,
@@ -78,6 +82,9 @@ export class ExamService extends BaseService {
       (a) => a.id,
     );
     let currentCategory = category;
+    if (answers.length > 0) {
+      currentCategory = answers[answers.length - 1].questionCategory.id;
+    }
     let allCategories = [];
 
     const categories = await this.questionCategoryDao.findByAssessment(

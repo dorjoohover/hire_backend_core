@@ -53,7 +53,12 @@ export class UserAnswerDao {
       where: {
         code: code,
       },
-      relations: ['question', 'answer', 'matrix'],
+      relations: ['question', 'answer', 'matrix', 'questionCategory'],
+      order: {
+        questionCategory: {
+          id: 'ASC',
+        },
+      },
     });
   };
 
