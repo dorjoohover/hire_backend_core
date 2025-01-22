@@ -50,6 +50,7 @@ export class ExamController {
 
   @Get('exam/:id')
   findOne(@Param('id') id: string) {}
+
   @Get('service/:id')
   findByService(@Param('id') id: string) {
     return this.examService.findExamByService(+id);

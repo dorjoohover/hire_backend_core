@@ -70,6 +70,7 @@ export class UserAnswerService extends BaseService {
                 : (await this.questionAnswerDao.findOne(answer.answer)).point);
             const body: CreateUserAnswerDto = {
               ...d,
+              startDate: dto.startDate,
               answerCategory: answerCategory?.category?.id ?? null,
               minPoint: question.minValue,
               maxPoint: question.maxValue,
@@ -82,9 +83,7 @@ export class UserAnswerService extends BaseService {
               exam: exam.id,
               device: device,
             };
-            console.log(body);
             const r = await this.dao.create(body);
-            console.log(r);
             res.push(r);
           }),
         );
@@ -114,7 +113,7 @@ export class UserAnswerService extends BaseService {
   }
   public async findOne(id: number) {
     let res = await this.dao.findByCode(id);
-
+    const { startDate, endDate } = res[0];
     const formatted = await Promise.all(
       res.map((r) => {
         const key = r.answer.id; // Use answer.id as the key
@@ -157,7 +156,11 @@ export class UserAnswerService extends BaseService {
       });
     });
 
-    return groupedByQuestionAndKey;
+    return {
+      data: groupedByQuestionAndKey,
+      startDate,
+      endDate,
+    };
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {

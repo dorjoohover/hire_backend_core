@@ -25,6 +25,12 @@ export class UserAnswerEntity {
   @Column({ nullable: true })
   flag: boolean;
 
+  @Column({ nullable: true })
+  startDate: Date;
+
+  @Column({ nullable: true })
+  endDate: Date;
+
   @ManyToOne(() => ExamEntity, (exam) => exam.userAnswers, {
     onDelete: 'CASCADE',
   })

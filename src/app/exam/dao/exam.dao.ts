@@ -83,4 +83,14 @@ export class ExamDao {
     });
     return res;
   };
+
+  updateTime = async (code: number) => {
+    const res = await this.db.findOne({
+      where: {
+        code: code,
+      },
+    });
+    res.userDate = new Date();
+    await this.db.save(res);
+  };
 }

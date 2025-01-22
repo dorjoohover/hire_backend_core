@@ -14,6 +14,7 @@ export class CreateUserAnswerDto {
   ip: string;
   device: string;
   value?: string;
+  startDate: Date;
   maxPoint: number;
   minPoint: number;
   @ApiProperty({ isArray: true, type: UserAnswer })
@@ -40,6 +41,8 @@ export class CreateUserAnswerDto {
 export class UserAnswerDtoList {
   @ApiProperty({ isArray: true, type: CreateUserAnswerDto })
   data: CreateUserAnswerDto[];
+  @ApiProperty({ type: Date })
+  startDate: Date;
 }
 export class CalculateUserAnswerDto {
   question: number;
