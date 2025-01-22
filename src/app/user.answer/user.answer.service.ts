@@ -114,6 +114,7 @@ export class UserAnswerService extends BaseService {
   public async findOne(id: number) {
     let res = await this.dao.findByCode(id);
     const { startDate, endDate } = res[0];
+    console.log(startDate);
     const formatted = await Promise.all(
       res.map((r) => {
         const key = r.answer.id; // Use answer.id as the key
