@@ -82,9 +82,6 @@ export class ExamService extends BaseService {
       (a) => a.id,
     );
     let currentCategory = category;
-    if (answers.length > 0) {
-      currentCategory = answers[answers.length - 1].questionCategory.id;
-    }
     let allCategories = [];
 
     const categories = await this.questionCategoryDao.findByAssessment(
@@ -105,6 +102,7 @@ export class ExamService extends BaseService {
               })
               .filter((f) => f != undefined);
     }
+
     if (
       res.userStartDate != null &&
       category == undefined &&
@@ -120,6 +118,10 @@ export class ExamService extends BaseService {
               .filter((f) => f != undefined);
       currentCategory = categories[0].id;
     }
+    if (answers.length > 0) {
+      currentCategory = answers[answers.length - 1].questionCategory.id;
+    }
+
     if (currentCategory) {
       if (allCategories.length == 0)
         allCategories = await Promise.all(
