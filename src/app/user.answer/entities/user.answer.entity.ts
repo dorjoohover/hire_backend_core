@@ -20,7 +20,7 @@ export class UserAnswerEntity {
   device: string;
   @Column({ nullable: true, type: 'numeric' })
   point: number;
-  @Column({ nullable: true, type: 'numeric' })
+  @Column({ nullable: true })
   value: string;
   @Column({ nullable: true })
   flag: boolean;
