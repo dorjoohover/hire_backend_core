@@ -156,7 +156,7 @@ export class UserAnswerService extends BaseService {
 
       const key = item.answer;
       if (key == undefined) {
-        acc[questionId] = null;
+        acc[questionId] = {};
       } else {
         if (!acc[questionId][key]) {
           acc[questionId][key] = [];
