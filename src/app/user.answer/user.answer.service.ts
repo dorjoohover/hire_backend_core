@@ -93,7 +93,7 @@ export class UserAnswerService extends BaseService {
         res.map(async (r) => {
           if (r != undefined) await this.dao.deleteOne(r);
         });
-        throw new HttpException(message, status);
+        // throw new HttpException(message, status);
       }
       return res;
     } catch (error) {
