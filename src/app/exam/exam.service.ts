@@ -67,31 +67,37 @@ export class ExamService extends BaseService {
     // date true ued duusah esvel urgeljluuleh
     const shuffle = res.assessment.questionShuffle;
     const answerShuffle = res.assessment.answerShuffle;
-    let prevQuestions = [];
+    let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+      (a) => a.id,
+    );
     let currentCategory = category;
     let allCategories = [];
+    const categories = await this.questionCategoryDao.findByAssessment(
+      res.assessment.id,
+    );
+    allCategories =
+      categories.length <= 1
+        ? []
+        : categories
+            .map((cate, i) => {
+              if (i > 0) return cate.id;
+            })
+            .filter((f) => f != undefined);
     if (res.userStartDate == null && category === undefined) {
-      const categories = await this.questionCategoryDao.findByAssessment(
-        res.assessment.id,
-      );
       currentCategory = categories[0].id;
-      allCategories =
-        categories.length <= 1
-          ? []
-          : categories
-              .map((cate, i) => {
-                if (i > 0) return cate.id;
-              })
-              .filter((f) => f != undefined);
       await this.dao.update(res.id, {
         ...res,
         userStartDate: new Date(),
       });
     }
+    if (
+      res.userStartDate != null &&
+      category == undefined &&
+      res.userEndDate == null
+    ) {
+      currentCategory = categories[0].id;
+    }
     if (currentCategory) {
-      prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-        (a) => a.id,
-      );
       if (allCategories.length == 0)
         allCategories = await Promise.all(
           (
