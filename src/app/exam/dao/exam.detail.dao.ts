@@ -33,6 +33,9 @@ export class ExamDetailDao {
           id: exam,
         },
       },
+      order: {
+        id: 'ASC',
+      },
     });
   };
   findOne = async (id: number) => {
