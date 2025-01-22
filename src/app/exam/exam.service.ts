@@ -124,6 +124,7 @@ export class ExamService extends BaseService {
       const predictCategory = allCategories[i + 1];
       if (currentCategory < predictCategory) {
         currentCategory = predictCategory;
+        allCategories = allCategories.slice(i + 1);
       }
     }
 
