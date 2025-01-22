@@ -113,8 +113,7 @@ export class UserAnswerService extends BaseService {
   }
   public async findOne(id: number, code: number) {
     let res = await this.dao.findByCode(code, id);
-    const { startDate, endDate } = res?.[0];
-    console.log(startDate);
+
     console.log(res);
     const formatted = await Promise.all(
       res.map((r) => {
@@ -160,8 +159,8 @@ export class UserAnswerService extends BaseService {
 
     return {
       data: groupedByQuestionAndKey,
-      startDate: startDate,
-      endDate: endDate,
+      startDate: res?.[0]?.startDate,
+      endDate: res?.[0]?.endDate,
     };
   }
 
