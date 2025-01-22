@@ -89,14 +89,14 @@ export class UserAnswerService extends BaseService {
           }),
         );
       }
-      if (res.includes(undefined)) {
-        res.map(async (r) => {
-          if (r != undefined) await this.dao.deleteOne(r);
-        });
-        console.log(res)
-        // throw new HttpException(message, status);
-      }
-      return res;
+      // if (res.includes(undefined)) {
+      //   res.map(async (r) => {
+      //     if (r != undefined) await this.dao.deleteOne(r);
+      //   });
+      //   console.log(res)
+      //   // throw new HttpException(message, status);
+      // }
+      // return res;
     } catch (error) {
       console.log(error);
     }
