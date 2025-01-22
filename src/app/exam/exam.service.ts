@@ -72,6 +72,7 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
+    console.log(category);
     if (category == -1)
       return await this.dao.update(res.id, {
         ...res,
