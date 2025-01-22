@@ -144,8 +144,19 @@ export class UserAnswerService extends BaseService {
 
       return acc;
     }, {});
+    const last = Object.keys(groupedByQuestionAndKey).forEach((questionId) => {
+      const answers = groupedByQuestionAndKey[questionId];
 
-    return groupedByQuestionAndKey;
+      Object.keys(answers).forEach((answerId) => {
+        const uniqueAnswers = Array.from(
+          new Set(answers[answerId].map((item) => JSON.stringify(item))),
+        ).map((item) => JSON.parse(`${item}`));
+
+        answers[answerId] = uniqueAnswers; // Replace with unique objects
+      });
+    });
+
+    return last;
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
