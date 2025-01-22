@@ -112,21 +112,40 @@ export class UserAnswerService extends BaseService {
     return await this.dao.findAll();
   }
   public async findOne(id: number) {
-    const res = await this.dao.findByCode(id);
+    let res = await this.dao.findByCode(id);
 
-    // Group the results by `question.id`
-    const groupedByQuestion = res.reduce((acc, item) => {
-      const questionId = item.question.id;
+    const formatted = await Promise.all(
+      res.map((r) => {
+        const key = r.answer.id; // Use answer.id as the key
+        return {
+          key, // Include the key in the object
+          matrixId: r.matrix != null ? r.matrix.id : null,
+          flag: r.flag,
+          point: r.point,
+          question: r.question.id,
+        };
+      }),
+    );
+
+    // Group the results by `question.id`, then by `key`
+    const groupedByQuestionAndKey = formatted.reduce((acc, item) => {
+      const questionId = item.question;
 
       if (!acc[questionId]) {
-        acc[questionId] = [];
+        acc[questionId] = {}; // Initialize an object for each question
       }
-      acc[questionId].push(item);
+
+      const key = item.key;
+      if (!acc[questionId][key]) {
+        acc[questionId][key] = []; // Initialize an array for each key
+      }
+
+      acc[questionId][key].push(item); // Push the item into the corresponding group
 
       return acc;
     }, {});
 
-    return groupedByQuestion; // Return the grouped data
+    return groupedByQuestionAndKey; // Return the nested grouped data
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
