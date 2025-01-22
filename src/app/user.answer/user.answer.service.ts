@@ -158,8 +158,8 @@ export class UserAnswerService extends BaseService {
 
     return {
       data: groupedByQuestionAndKey,
-      startDate,
-      endDate,
+      startDate: startDate,
+      endDate: endDate,
     };
   }
 
