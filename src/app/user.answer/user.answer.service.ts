@@ -155,11 +155,15 @@ export class UserAnswerService extends BaseService {
       }
 
       const key = item.answer;
-      if (!acc[questionId][key]) {
-        acc[questionId][key] = [];
-      }
+      if (key == undefined) {
+        acc[questionId] = null;
+      } else {
+        if (!acc[questionId][key]) {
+          acc[questionId][key] = [];
+        }
 
-      acc[questionId][key].push(item);
+        acc[questionId][key].push(item);
+      }
 
       return acc;
     }, {});
