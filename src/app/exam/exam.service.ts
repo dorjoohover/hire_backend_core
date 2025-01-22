@@ -72,11 +72,13 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
-    if (category == -1)
-      return await this.dao.update(res.id, {
+    if (category == -1) {
+      await this.dao.update(res.id, {
         ...res,
         userEndDate: new Date(),
       });
+      return;
+    }
 
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
@@ -98,7 +100,7 @@ export class ExamService extends BaseService {
     }
     if (
       res.userStartDate != null &&
-      category == -1 &&
+      category == undefined &&
       res.userEndDate == null
     ) {
       allCategories =
