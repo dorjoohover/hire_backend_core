@@ -65,13 +65,6 @@ export class ExamService extends BaseService {
       throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
-    const shuffle = res.assessment.questionShuffle;
-    const answerShuffle = res.assessment.answerShuffle;
-    let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-      (a) => a.id,
-    );
-    let currentCategory = category;
-    let allCategories = [];
     if (category == -1) {
       await this.dao.update(res.id, {
         ...res,
@@ -79,6 +72,13 @@ export class ExamService extends BaseService {
       });
       return;
     }
+    const shuffle = res.assessment.questionShuffle;
+    const answerShuffle = res.assessment.answerShuffle;
+    let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+      (a) => a.id,
+    );
+    let currentCategory = category;
+    let allCategories = [];
 
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
