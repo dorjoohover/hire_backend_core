@@ -119,7 +119,7 @@ export class UserAnswerService extends BaseService {
         const key = r.answer.id; // Use answer.id as the key
         return {
           answer: key, // Include the key in the object
-          matrixId: r.matrix != null ? r.matrix.id : null,
+          matrix: r.matrix != null ? r.matrix.id : null,
           flag: r.flag,
           point: r.point,
           question: r.question.id,
