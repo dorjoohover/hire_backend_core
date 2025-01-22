@@ -38,15 +38,12 @@ export class UserAnswerDao {
   };
 
   findByCode = async (code: number) => {
-    return await this.db
-      .createQueryBuilder('entity')
-      .select('entity.question', 'question')
-      .addSelect('COUNT(entity.id)', 'count') // Example: Count entries for each question
-      .leftJoinAndSelect('entity.answer', 'answer')
-      .leftJoinAndSelect('entity.matrix', 'matrix')
-      .where('entity.code = :code', { code })
-      .groupBy('entity.question')
-      .getRawMany();
+    return await this.db.find({
+      where: {
+        code: code,
+      },
+      relations: ['question', 'answer', 'matrix'],
+    });
   };
 
   findOne = async (id: number) => {

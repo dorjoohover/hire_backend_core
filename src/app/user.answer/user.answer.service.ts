@@ -113,7 +113,17 @@ export class UserAnswerService extends BaseService {
   }
 
   public async findOne(id: number) {
-    return await this.dao.findByCode(id);
+    const res = await this.dao.findByCode(id);
+    res.reduce((acc, item) => {
+      const questionId = item.question.id;
+      if (!acc[questionId]) {
+        acc[questionId] = [];
+      }
+      acc[questionId].push(item);
+
+      return acc;
+    }, {});
+    return res;
   }
 
   update(id: number, updateUserAnswerDto: UpdateUserAnswerDto) {
