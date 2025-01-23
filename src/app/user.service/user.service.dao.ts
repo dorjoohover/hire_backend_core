@@ -53,7 +53,7 @@ export class UserServiceDao {
           id: assId == 0 ? Not(assId) : assId,
         },
       },
-      relations: ['assessment'],
+      relations: ['assessment', 'exams'],
     });
   };
 }

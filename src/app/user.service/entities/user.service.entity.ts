@@ -4,6 +4,7 @@ import { TransactionEntity } from 'src/app/payment/entities/transaction.entity';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -29,6 +30,8 @@ export class UserServiceEntity {
     onDelete: 'CASCADE',
   })
   assessment: AssessmentEntity;
+  @CreateDateColumn()
+  createdAt: Date;
   @OneToMany(() => ExamEntity, (exam) => exam.service, {
     nullable: true,
   })
