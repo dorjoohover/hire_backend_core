@@ -4,6 +4,7 @@ import { FormuleService } from './formule.service';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { FormuleDto } from './formule.dto';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @Controller('formule')
 @ApiTags('Formule')
@@ -16,6 +17,7 @@ export class FormuleController {
     return this.service.create(dto, user['id']);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.service.findAll();
