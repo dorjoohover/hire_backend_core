@@ -14,7 +14,13 @@ export class UserAnswerDao {
   };
   create = async (dto: CreateUserAnswerDto) => {
     try {
-      const res = this.db.create({
+      let res = await this.db.findOne({
+        where: {
+          question: { id: dto.question },
+          code: dto.code,
+        },
+      });
+      const body = {
         ...dto,
         exam: { id: +dto.exam },
         endDate: new Date(),
@@ -23,9 +29,13 @@ export class UserAnswerDao {
         question: { id: +dto.question },
         answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
         questionCategory: { id: +dto.questionCategory },
-      });
-      console.log(res);
-      await this.db.save(res);
+      };
+      if (res) {
+        await this.db.save({ ...res, ...body });
+      } else {
+        res = this.db.create(body);
+        await this.db.save(res);
+      }
       return res.id;
     } catch (error) {
       console.log('err', error);
