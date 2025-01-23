@@ -132,7 +132,6 @@ export class UserAnswerService extends BaseService {
   public async findOne(id: number, code: number) {
     let res = await this.dao.findByCode(code, id);
 
-    console.log(res);
     const formatted = await Promise.all(
       res.map((r) => {
         const key = r.answer?.id; 
