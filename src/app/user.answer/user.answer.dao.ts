@@ -13,7 +13,7 @@ export class UserAnswerDao {
     const res = await this.db.find({
       where: {
         exam: {
-          id: 212,
+          id: 215,
         },
       },
     });
