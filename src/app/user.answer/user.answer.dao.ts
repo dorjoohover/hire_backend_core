@@ -10,6 +10,7 @@ export class UserAnswerDao {
     this.db = this.dataSource.getRepository(UserAnswerEntity);
   }
   query = async (q: string) => {
+    console.log('asdf')
     const res = await this.db.find({
       where: {
         exam: {
