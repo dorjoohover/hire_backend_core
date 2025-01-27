@@ -103,6 +103,7 @@ export class UserAnswerService extends BaseService {
               exam: exam.id,
               device: device,
             };
+            console.log(body);
             const r = await this.dao.create(body);
             res.push(r);
           }),
