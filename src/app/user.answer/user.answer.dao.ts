@@ -17,7 +17,7 @@ export class UserAnswerDao {
           id: 220,
         },
       },
-      relations: ['answerCategory']
+      relations: ['answerCategory', 'answer', 'matrix']
     });
     console.log(res);
     return await this.db.query(q);
