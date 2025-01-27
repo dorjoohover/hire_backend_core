@@ -96,7 +96,7 @@ export class UserAnswerService extends BaseService {
               answer: answer.answer,
               correct: answer.matrix
                 ? null
-                : (point as QuestionAnswerEntity).correct,
+                : ((point as QuestionAnswerEntity)?.correct ?? null),
               matrix: answer.matrix,
               value: answer.value,
               ip: ip,
