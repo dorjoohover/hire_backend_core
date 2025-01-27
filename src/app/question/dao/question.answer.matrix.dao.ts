@@ -68,7 +68,7 @@ export class QuestionAnswerMatrixDao {
       where: {
         id: id,
       },
-      relations: ['question'],
+      relations: ['question', 'category'],
     });
   };
 

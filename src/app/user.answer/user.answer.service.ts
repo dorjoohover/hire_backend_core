@@ -78,9 +78,10 @@ export class UserAnswerService extends BaseService {
         await Promise.all(
           d.answers.map(async (answer, i) => {
             // if (i > 0) return;
-            const answerCategory = await this.questionAnswerDao.findOne(
-              answer.answer,
-            );
+            let answerCategory = answer.matrix
+              ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
+              : await this.questionAnswerDao.findOne(answer.answer);
+
             const point =
               answer.point ??
               (answer.matrix
