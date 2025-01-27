@@ -14,7 +14,7 @@ export class UserAnswerEntity {
   //   token|code|url|sequence
   @Column({ nullable: true })
   ip: string;
-  @Column()
+  @Column({ nullable: true })
   correct: boolean;
   @Column({ nullable: true })
   device: string;
