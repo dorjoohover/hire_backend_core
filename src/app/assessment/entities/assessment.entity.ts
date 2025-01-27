@@ -57,7 +57,7 @@ export class AssessmentEntity {
   @Column({ nullable: true })
   page: number;
 
-  @Column({ default: 0 })
+  @Column({ default: 0, nullable: true })
   totalPoint: number;
 
   @Column()
@@ -100,7 +100,7 @@ export class AssessmentEntity {
   services: QuestionCategoryEntity[];
 
   setTotalPoint(value: number) {
-    const point = parseFloat(`${this.totalPoint}`);
+    const point = parseFloat(`${this.totalPoint ?? 0}`);
     this.totalPoint = point + value;
   }
 }

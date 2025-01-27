@@ -23,7 +23,7 @@ export class QuestionCategoryEntity {
   name: string;
   @Column({ nullable: true })
   value: string;
-  @Column({ default: 0, type: 'numeric' })
+  @Column({ default: 0, type: 'numeric', nullable: true })
   totalPoint: number;
   @Column({ nullable: true })
   duration: number;
@@ -65,7 +65,7 @@ export class QuestionCategoryEntity {
   userAnswers: UserAnswerEntity[];
 
   setTotalPoint(value: number) {
-    const point = parseFloat(`${this.totalPoint}`);
+    const point = parseFloat(`${this.totalPoint ?? 0}`);
     this.totalPoint = point + value;
   }
 }
