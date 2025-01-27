@@ -11,7 +11,6 @@ export class ExamDao {
   }
 
   create = async (dto: CreateExamDto) => {
-    console.log(dto);
     const res = this.db.create({
       ...dto,
       service: {
@@ -25,7 +24,7 @@ export class ExamDao {
   };
 
   update = async (code: number, dto: any) => {
-    const res = await this.db.findOne({ where: { code } });
+    const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ id: res.id, ...dto });
   };
 
