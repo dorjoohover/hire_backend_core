@@ -23,7 +23,7 @@ export class QuestionCategoryEntity {
   name: string;
   @Column({ nullable: true })
   value: string;
-  @Column({ default: 0, type: 'numeric', nullable: true })
+  @Column({ type: 'numeric', nullable: true })
   totalPoint: number;
   @Column({ nullable: true })
   duration: number;
