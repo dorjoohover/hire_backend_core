@@ -99,6 +99,7 @@ export class FormuleService extends BaseService {
         };
       }),
     );
+    console.log(response);
     return response.sort((a, b) => b.point - a.point);
     if (!formula) {
       throw new Error('Formula not found');
