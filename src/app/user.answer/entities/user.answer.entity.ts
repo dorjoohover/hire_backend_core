@@ -44,6 +44,7 @@ export class UserAnswerEntity {
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,
     (category) => category.userAnswers,
+
     {
       nullable: true,
       onDelete: 'CASCADE',

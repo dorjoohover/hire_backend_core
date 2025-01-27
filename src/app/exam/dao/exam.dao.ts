@@ -24,8 +24,9 @@ export class ExamDao {
     return res.id;
   };
 
-  update = async (id: number, dto: any) => {
-    const res = await this.db.save({ id: id, ...dto });
+  update = async (code: number, dto: any) => {
+    const res = await this.db.findOne({ where: { code } });
+    await this.db.save({ id: res.id, ...dto });
   };
 
   updateByCode = async (
