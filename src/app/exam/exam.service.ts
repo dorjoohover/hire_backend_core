@@ -47,7 +47,10 @@ export class ExamService extends BaseService {
     if (formule) {
       const calculate = await this.formule.calculate(formule, exam.id);
       const value = calculate[0].point / exam.assessment.totalPoint;
-      return value;
+      return {
+        calculate,
+        value,
+      };
     }
   }
 
