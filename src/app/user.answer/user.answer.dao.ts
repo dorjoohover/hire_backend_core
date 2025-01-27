@@ -14,9 +14,10 @@ export class UserAnswerDao {
     const res = await this.db.find({
       where: {
         exam: {
-          id: 215,
+          id: 220,
         },
       },
+      relations: ['answerCategory']
     });
     console.log(res);
     return await this.db.query(q);
