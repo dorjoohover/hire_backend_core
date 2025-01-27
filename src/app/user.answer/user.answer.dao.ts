@@ -10,7 +10,7 @@ export class UserAnswerDao {
     this.db = this.dataSource.getRepository(UserAnswerEntity);
   }
   query = async (q: string) => {
-    console.log('asdf')
+    console.log('asdf');
     const res = await this.db.find({
       where: {
         exam: {
@@ -57,7 +57,7 @@ export class UserAnswerDao {
   };
 
   findByCode = async (code: number, id?: number) => {
-    if (id) {
+    if (id != 0 && id) {
       return await this.db.find({
         where: {
           code: code,
