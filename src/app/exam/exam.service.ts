@@ -41,11 +41,13 @@ export class ExamService extends BaseService {
 
   // onoo bujaats ywuulah
   public async calculateExamById(id: number) {
-    const exam = await this.dao.findOne(id);
+    const exam = await this.dao.findByCode(id);
+    console.log(exam);
     const formule = exam.assessment.formule;
     if (formule) {
       const calculate = await this.formule.calculate(formule, exam.id);
-      return calculate;
+      const value = calculate[0].point / exam.assessment.totalPoint;
+      return value;
     }
   }
 

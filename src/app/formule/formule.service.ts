@@ -81,7 +81,7 @@ export class FormuleService extends BaseService {
     const formula = await this.db.findOne({
       where: { id: formulaId },
     });
-    let w = `examId = ${where}`;
+    let w = `"examId" = ${where}`;
     const res = await this.aggregate(formula, w);
     if (res.length <= 1) return res;
     const response = await Promise.all(

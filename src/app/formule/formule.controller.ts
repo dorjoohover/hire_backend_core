@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
-import { ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { FormuleService } from './formule.service';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { Roles } from 'src/auth/guards/role/role.decorator';
@@ -8,6 +8,7 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @Controller('formule')
 @ApiTags('Formule')
+@ApiBearerAuth("access-token")
 export class FormuleController {
   constructor(private readonly service: FormuleService) {}
 

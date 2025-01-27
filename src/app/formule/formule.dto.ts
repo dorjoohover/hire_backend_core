@@ -53,8 +53,11 @@ export class FormuleDto {
     [key: string]: any;
   };
 
+  @ApiProperty()
   limit?: number;
+  @ApiProperty()
   order?: string;
+  @ApiProperty()
   sort: boolean;
 
 }

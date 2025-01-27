@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('formule')
 export class FormulaEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;

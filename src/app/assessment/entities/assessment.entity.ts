@@ -57,6 +57,9 @@ export class AssessmentEntity {
   @Column({ nullable: true })
   page: number;
 
+  @Column({ nullable: true })
+  totalPoint: number;
+
   @Column()
   type: number;
 
