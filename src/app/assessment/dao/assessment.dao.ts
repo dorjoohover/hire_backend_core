@@ -53,6 +53,10 @@ export class AssessmentDao {
     return res;
   };
 
+  save = async (value: AssessmentEntity) => {
+    await this.db.save(value);
+  };
+
   countQuestionAssessment = async (ids: number[]) => {
     let res = await Promise.all(
       ids.map(async (id) => await this.question.countQuestionCategory(id)),

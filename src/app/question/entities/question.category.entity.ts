@@ -23,10 +23,11 @@ export class QuestionCategoryEntity {
   name: string;
   @Column({ nullable: true })
   value: string;
-  @Column({ nullable: true, type: 'numeric' })
+  @Column({ default: 0, type: 'numeric' })
   totalPoint: number;
   @Column({ nullable: true })
   duration: number;
+
   @Column({ nullable: true })
   orderNumber: number;
   // ene category heden asuult avch baigag haruulna
@@ -62,4 +63,9 @@ export class QuestionCategoryEntity {
   examDetails: ExamDetailEntity[];
   @OneToMany(() => UserAnswerEntity, (user) => user.questionCategory)
   userAnswers: UserAnswerEntity[];
+
+  setTotalPoint(value: number) {
+    const point = parseFloat(`${this.totalPoint}`);
+    this.totalPoint = point + value;
+  }
 }

@@ -13,6 +13,7 @@ import { BaseService } from 'src/base/base.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -80,21 +81,20 @@ export class UserAnswerService extends BaseService {
             const answerCategory = await this.questionAnswerDao.findOne(
               answer.answer,
             );
-            const point =
-              answer.point ??
-              (answer.matrix
-                ? (await this.questionAnswerMatrixDao.findOne(answer.matrix))
-                    .point
-                : (await this.questionAnswerDao.findOne(answer.answer)).point);
+            const point = answer.matrix
+              ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
+              : await this.questionAnswerDao.findOne(answer.answer);
             const body: CreateUserAnswerDto = {
               ...d,
               startDate: dto.startDate,
               answerCategory: answerCategory?.category?.id ?? null,
               minPoint: question.minValue,
               maxPoint: question.maxValue,
-              point: point,
+              point: point.point,
               answer: answer.answer,
-              correct: d.correct,
+              correct: answer.matrix
+                ? null
+                : (point as QuestionAnswerEntity).correct,
               matrix: answer.matrix,
               value: answer.value,
               ip: ip,
@@ -134,9 +134,9 @@ export class UserAnswerService extends BaseService {
 
     const formatted = await Promise.all(
       res.map((r) => {
-        const key = r.answer?.id; 
+        const key = r.answer?.id;
         return {
-          answer: key, 
+          answer: key,
           matrix: r.matrix != null ? r.matrix.id : null,
           type: r.question.type,
           flag: r.flag,

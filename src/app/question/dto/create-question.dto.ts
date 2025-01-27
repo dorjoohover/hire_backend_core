@@ -40,7 +40,7 @@ export class UpdateQuestionAnswerCategoryDto extends PartialType(
   id?: number;
 }
 
-class CreateQuestionAllAnswerDto {
+export class CreateQuestionAllAnswerDto {
   @ApiProperty({ type: CreateQuestionAnswerDto })
   answer: CreateQuestionAnswerDto;
 

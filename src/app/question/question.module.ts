@@ -10,6 +10,7 @@ import { QuestionAnswerController } from './quetion.answer.controller';
 import { QuestionAnswerCategoryController } from './question.answer.category.controller';
 import { QuestionAnswerCategoryService } from './question.answer.category.service';
 import { QuestionAnswerService } from './question.answer.service';
+import { AssessmentDao } from '../assessment/dao/assessment.dao';
 
 @Module({
   controllers: [
@@ -22,6 +23,7 @@ import { QuestionAnswerService } from './question.answer.service';
     QuestionAnswerCategoryService,
     QuestionAnswerService,
     QuestionDao,
+    AssessmentDao,
     QuestionAnswerDao,
     QuestionCategoryDao,
     QuestionAnswerMatrixDao,

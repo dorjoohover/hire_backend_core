@@ -98,7 +98,10 @@ export class QuestionDao {
     };
 
     await this.db.save({ ...res, ...body, updatedUser: user });
-    return res.id;
+    return {
+      id: res.id,
+      point: dto.point - res.point,
+    };
   };
 
   deleteOne = async (id: number) => {

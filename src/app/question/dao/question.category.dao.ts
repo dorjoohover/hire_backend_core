@@ -45,7 +45,13 @@ export class QuestionCategoryDao {
       //   relations: [''],
     });
   };
-
+  save = async (value: QuestionCategoryEntity) => {
+    // this.db.merge(value, {
+    //   totalPoint: value.totalPoint,
+    // });
+    await this.db.save(value);
+    console.log(value);
+  };
   findOne = async (id: number) => {
     return await this.db.findOne({
       select: {
@@ -57,8 +63,10 @@ export class QuestionCategoryDao {
       where: {
         id: id,
       },
+      relations: ['assessment'],
     });
   };
+
   findByAssessment = async (assessment: number, id?: number) => {
     const category =
       id == undefined ? null : await this.db.findOne({ where: { id: id } });

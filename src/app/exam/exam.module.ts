@@ -11,6 +11,7 @@ import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
+import { AssessmentDao } from '../assessment/dao/assessment.dao';
 
 @Module({
   controllers: [ExamController],
@@ -20,6 +21,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     ExamDetailDao,
     QuestionDao,
     QuestionCategoryDao,
+    AssessmentDao,
     QuestionService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
