@@ -10,6 +10,14 @@ export class UserAnswerDao {
     this.db = this.dataSource.getRepository(UserAnswerEntity);
   }
   query = async (q: string) => {
+    const res = await this.db.find({
+      where: {
+        exam: {
+          id: 212,
+        },
+      },
+    });
+    console.log(res);
     return await this.db.query(q);
   };
   create = async (dto: CreateUserAnswerDto) => {
