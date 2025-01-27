@@ -55,6 +55,7 @@ export class ExamService extends BaseService {
     code: number,
     dto: { email: string; firstname: string; lastname: string; phone: string },
   ) {
+    console.log(code);
     await this.dao.update(code, dto);
   }
 
