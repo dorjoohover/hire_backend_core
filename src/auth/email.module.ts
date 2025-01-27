@@ -8,16 +8,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: 'smtp.ethereal.email',
+          host: 'smtp.hire.mn',
           port: 587,
           service: 'gmail',
           auth: {
-            user: 'dorjoohover@gmail.com',
-            pass: 'qwrn ysyk prkg iuls',
+            user: 'info@hire.mn',
+            pass: 'jgig fpup gisr obii',
           },
         },
         defaults: {
-          from: 'dorjoohover@gmail.com',
+          from: 'info@hire.mn',
         },
       }),
     }),
