@@ -14,6 +14,7 @@ import { ExamService } from '../exam/exam.service';
 import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
+import { QpayService } from '../payment/qpay.service';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -24,6 +25,7 @@ export class UserServiceService extends BaseService {
     private userDao: UserDao,
     private assessmentDao: AssessmentDao,
     private mailer: MailerService,
+    private qpay: QpayService,
   ) {
     super();
   }
@@ -39,9 +41,22 @@ export class UserServiceService extends BaseService {
       { ...dto, usedUserCount: 0, user: user['id'] },
       price,
     );
+    let invoice = null;
+    if (price > 0) {
+      invoice = await this.qpay.createPayment(
+        price,
+        res.id.toString(),
+        user['id'],
+      );
+    }
     await this.userDao.updateWallet(user['id'], -price);
-    return res;
+    return {
+      data: res,
+      invoice,
+    };
   }
+
+  // public async 
 
   public async findByUser(assId: number, id: number) {
     return await this.dao.findByUser(assId, id);

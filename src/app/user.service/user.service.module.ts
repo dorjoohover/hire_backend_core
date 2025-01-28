@@ -16,8 +16,11 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
+import { QpayService } from '../payment/qpay.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
+  imports: [HttpModule],
   controllers: [UserServiceController],
   providers: [
     UserServiceService,
@@ -36,6 +39,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     UserAnswerDao,
     AssessmentDao,
     ExamDao,
+    QpayService,
   ],
 })
 export class UserServiceModule {}

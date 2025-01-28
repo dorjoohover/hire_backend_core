@@ -24,6 +24,9 @@ export class UserServiceEntity {
   @Column()
   usedUserCount: number;
 
+  @Column({ nullable: true })
+  status: number;
+
   @ManyToOne(() => UserEntity, (user) => user.services)
   user: UserEntity;
   @ManyToOne(() => AssessmentEntity, (assessment) => assessment.services, {

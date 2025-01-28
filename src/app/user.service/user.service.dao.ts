@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Not, Repository } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
+import { PaymentStatus } from 'src/base/constants';
 
 @Injectable()
 export class UserServiceDao {
@@ -16,9 +17,20 @@ export class UserServiceDao {
       price: price,
       user: { id: dto.user },
       assessment: { id: dto.assessment },
+      status: PaymentStatus.PENDING,
     });
     await this.db.save(res);
-    return res.id;
+    return res
+  };
+
+  updateStatus = async (id: number, status: number) => {
+    const res = await this.db.findOne({
+      where: {
+        id,
+      },
+    });
+    res.status = status;
+    await this.db.save(res);
   };
 
   findAll = async () => {

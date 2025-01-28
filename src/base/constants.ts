@@ -41,6 +41,13 @@ export const AssessmentType = {
   UNELGEE: 20,
 };
 
+export const PaymentStatus = {
+  PENDING: 10,
+  SUCCESS: 20,
+  FAILED: 30,
+  ERROR: 40,
+};
+
 export const PaymentTypeDict = {
   1: 'Карт',
   2: 'Бэлэн',

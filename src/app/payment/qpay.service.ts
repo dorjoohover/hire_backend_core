@@ -25,7 +25,7 @@ export class QpayService {
     return response.data.access_token;
   }
 
-  async createPayment(amount: number, invoiceId: string) {
+  async createPayment(amount: number, invoiceId: string, userId: number) {
     const accessToken = await this.getAccessToken();
 
     const response = await this.httpService
@@ -33,11 +33,11 @@ export class QpayService {
         `${this.baseUrl}/invoice`,
         {
           invoice_code: 'AXIOM_INC_INVOICE',
-          sender_invoice_no: '9329873948',
+          sender_invoice_no: invoiceId,
           sender_branch_code: 'hire',
-          invoice_receiver_code: 'user_id_1',
+          invoice_receiver_code: userId,
           amount,
-          invoice_description: 'Invoice description',
+          invoice_description: 'Тест худалдан авлаа.',
           invoice_due_date: null,
           allow_partial: false,
           minimum_amount: null,
