@@ -1,5 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class QpayService {
@@ -35,12 +36,6 @@ export class QpayService {
           sender_invoice_no: '9329873948',
           sender_branch_code: 'hire',
           invoice_receiver_code: 'user_id_1',
-          invoice_receiver_data: {
-            register: 'TA89102712',
-            name: 'Бат',
-            email: 'info@info.mn',
-            phone: '99887766',
-          },
           amount,
           invoice_description: 'Invoice description',
           invoice_due_date: null,
@@ -64,22 +59,21 @@ export class QpayService {
 
   async checkPayment(id: string) {
     const accessToken = await this.getAccessToken();
-
-    const response = await this.httpService
-      .post(
+    const response = await lastValueFrom(
+      this.httpService.post(
         `${this.baseUrl}/payment/check`,
-        JSON.stringify({
+        {
           object_type: 'INVOICE',
           object_id: id,
-        }),
+        },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            // Authorization: `Bearer ${'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnRfaWQiOiI3MWYxYWQ1MC02Y2M3LTQ2NGEtYWU5ZC03M2ZkYjFkMDc0OWIiLCJzZXNzaW9uX2lkIjoiVVphYlZXcnJMdTZRSmotWjRCbjR3dHpYdkhxTTVGTUoiLCJpYXQiOjE3MzgwNDEwOTIsImV4cCI6MzQ3NjE2ODU4NH0.vHJ2AWTg9LotpZM_N_yE05s3gSi7Ua3Fxk2DHLdGTTk'}`,
+            'Content-Type': 'application/json',
           },
         },
-      )
-      .toPromise();
-    return response;
+      ),
+    );
+    return response.data;
   }
 }
