@@ -63,9 +63,4 @@ export class QuestionCategoryEntity {
   examDetails: ExamDetailEntity[];
   @OneToMany(() => UserAnswerEntity, (user) => user.questionCategory)
   userAnswers: UserAnswerEntity[];
-
-  setTotalPoint(value: number) {
-    const point = parseFloat(`${this.totalPoint ?? 0}`);
-    this.totalPoint = point + value;
-  }
 }

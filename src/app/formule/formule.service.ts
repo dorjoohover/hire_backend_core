@@ -83,7 +83,6 @@ export class FormuleService extends BaseService {
     });
     let w = `"examId" = ${where}`;
     const res = await this.aggregate(formula, w);
-    console.log(res)
     if (res.length <= 1) return res;
     const response = await Promise.all(
       res.map(async (r) => {
@@ -100,7 +99,6 @@ export class FormuleService extends BaseService {
         };
       }),
     );
-    console.log(response);
     return response.sort((a, b) => b.point - a.point);
     if (!formula) {
       throw new Error('Formula not found');
@@ -112,7 +110,6 @@ export class FormuleService extends BaseService {
     // Map input data to variables
     const inputVariables = variables.map((v) => formula.variables[v]);
 
-    console.log(inputVariables);
     // Check for missing inputs
     if (inputVariables.some((v) => v === undefined)) {
       throw new Error(

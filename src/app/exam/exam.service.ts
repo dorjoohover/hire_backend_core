@@ -42,7 +42,6 @@ export class ExamService extends BaseService {
   // onoo bujaats ywuulah
   public async calculateExamById(id: number) {
     const exam = await this.dao.findByCode(id);
-    console.log(exam);
     const formule = exam.assessment.formule;
     if (formule) {
       const calculate = await this.formule.calculate(formule, exam.id);
@@ -58,7 +57,6 @@ export class ExamService extends BaseService {
     code: number,
     dto: { email: string; firstname: string; lastname: string; phone: string },
   ) {
-    console.log(code);
     await this.dao.update(code, dto);
   }
 
@@ -193,7 +191,6 @@ export class ExamService extends BaseService {
     questions: number[] = [],
   ) {
     const category = await this.questionCategoryDao.findOne(id);
-    console.log(category);
     const q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,
@@ -205,7 +202,7 @@ export class ExamService extends BaseService {
       questions: q,
       category: category,
     };
-    console.log('getQuestion Res:', res);
+    // console.log('getQuestion Res:', res);
     return res;
   }
 

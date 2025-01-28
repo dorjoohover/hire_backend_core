@@ -6,6 +6,8 @@ import {
   CreateQuestionDto,
 } from '../dto/create-question.dto';
 import { QuestionStatus } from 'src/base/constants';
+import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
+import { QuestionCategoryDao } from './question.category.dao';
 
 @Injectable()
 export class QuestionDao {
@@ -85,6 +87,16 @@ export class QuestionDao {
     });
   };
 
+  findQuestions = async (id: number) => {
+    return await this.db.find({
+      where: {
+        category: {
+          id: id,
+        },
+      },
+    });
+  };
+
   updateOne = async (dto: CreateQuestionDto, id: number, user: number) => {
     const { ...d } = dto;
     const res = await this.db.findOne({
@@ -105,11 +117,7 @@ export class QuestionDao {
   };
 
   deleteOne = async (id: number) => {
-    return await this.db
-      .createQueryBuilder()
-      .delete()
-      .where({ id: id })
-      .execute();
+    await this.db.createQueryBuilder().delete().where({ id: id }).execute();
   };
 
   findOne = async (id: number) => {
@@ -117,7 +125,7 @@ export class QuestionDao {
       where: {
         id: id,
       },
-      relations: ['matrix', 'answers'],
+      relations: ['matrix', 'answers', 'category'],
     });
   };
 

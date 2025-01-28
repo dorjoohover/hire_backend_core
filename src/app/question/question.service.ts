@@ -49,7 +49,6 @@ export class QuestionService {
 
   public async updateChecker(category: number, type: number) {
     let questionCategory = await this.questionCategoryDao.findOne(category);
-    console.log(questionCategory);
     if (!questionCategory) {
       throw new HttpException('Category not found', HttpStatus.BAD_REQUEST);
     }
@@ -59,12 +58,10 @@ export class QuestionService {
     return questionCategory;
   }
 
-  public async update(point: number, questionCategory: QuestionCategoryEntity) {
-    questionCategory.setTotalPoint(point);
-    await this.questionCategoryDao.save(questionCategory);
-    const assessment = questionCategory.assessment;
-    assessment.setTotalPoint(point);
-    await this.assessmentDao.save(assessment);
+  public async update(questionCategory: number, assessment: number) {
+    await this.questionCategoryDao.updatePoint(questionCategory);
+
+    await this.assessmentDao.updatePoint(assessment);
   }
 
   public async updateAnswer(
@@ -81,7 +78,6 @@ export class QuestionService {
         question: questionId,
         correct: answer.answer?.correct,
       };
-      console.log(answerBody);
       const category = answer.answer?.category;
       const cate =
         category == null || !category
@@ -158,7 +154,7 @@ export class QuestionService {
         point: point,
       });
       await this.updateAnswer(dto.answers, questionId, dto.type);
-      this.update(+point, questionCategory);
+      this.update(questionCategory.id, questionCategory.assessment.id);
     } catch (error) {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
@@ -180,9 +176,8 @@ export class QuestionService {
         dto.id,
         user,
       );
-      console.log(questionId);
       await this.updateAnswer(dto.answers, questionId.id, dto.type);
-      this.update(+questionId.point, questionCategory);
+      this.update(questionCategory.id, questionCategory.assessment.id);
     } catch (error) {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
@@ -291,7 +286,12 @@ export class QuestionService {
   }
 
   public async deleteQuestion(id: number) {
-    return await this.questionDao.deleteOne(id);
+    const res = await this.questionDao.findOne(id);
+    const assessment = await this.questionCategoryDao.findOne(res.category.id);
+
+    await this.questionDao.deleteOne(id);
+    await this.questionCategoryDao.updatePoint(res.category.id);
+    await this.assessmentDao.updatePoint(assessment.id);
   }
 
   remove(id: number) {

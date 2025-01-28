@@ -38,6 +38,18 @@ export class AssessmentDao {
     });
   };
 
+  updatePoint = async (id: number) => {
+    const res = await this.db.findOne({
+      where: { id: id },
+      relations: ['questionCategories'],
+    });
+    const point = res.questionCategories.reduce(
+      (prev, r) => +prev + +r.totalPoint,
+      0,
+    );
+    await this.db.save({ ...res, totalPoint: point });
+  };
+
   findOne = async (id: number) => {
     const res = await this.db.findOne({
       where: {

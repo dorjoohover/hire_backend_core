@@ -32,7 +32,6 @@ export class UserAnswerService extends BaseService {
       let message = '';
       let status = HttpStatus.BAD_REQUEST;
       const res = [];
-      console.log(dto.data);
       const exam = await this.examDao.findByCode(dto.data[0].code);
       for (const d of dto.data) {
         if (!d.question) {
@@ -104,9 +103,7 @@ export class UserAnswerService extends BaseService {
               exam: exam.id,
               device: device,
             };
-            console.log(body);
             const r = await this.dao.create(body);
-            console.log(r);
             res.push(r);
           }),
         );

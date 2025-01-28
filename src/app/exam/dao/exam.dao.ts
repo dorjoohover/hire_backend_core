@@ -11,7 +11,6 @@ export class ExamDao {
   }
 
   create = async (dto: CreateExamDto) => {
-    console.log(dto);
     const res = this.db.create({
       ...dto,
       service: {

@@ -105,7 +105,6 @@ export class UserServiceService extends BaseService {
       price: 0,
       service: service,
     });
-    console.log(service, count, used);
     await this.dao.updateCount(service, count, used);
   }
 

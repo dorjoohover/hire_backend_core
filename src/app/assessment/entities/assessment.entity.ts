@@ -99,8 +99,4 @@ export class AssessmentEntity {
   })
   services: QuestionCategoryEntity[];
 
-  setTotalPoint(value: number) {
-    const point = parseFloat(`${this.totalPoint ?? 0}`);
-    this.totalPoint = point + value;
-  }
 }

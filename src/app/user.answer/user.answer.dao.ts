@@ -10,7 +10,6 @@ export class UserAnswerDao {
     this.db = this.dataSource.getRepository(UserAnswerEntity);
   }
   query = async (q: string) => {
-    console.log('asdf');
     const res = await this.db.find({
       where: {
         exam: {
@@ -19,7 +18,6 @@ export class UserAnswerDao {
       },
       relations: ['answerCategory', 'answer', 'matrix'],
     });
-    console.log(res);
     return await this.db.query(q);
   };
   create = async (dto: CreateUserAnswerDto) => {

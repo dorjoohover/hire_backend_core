@@ -20,6 +20,7 @@ import { UserModule } from './app/user/user.module';
 import { UserServiceModule } from './app/user.service/user.service.module';
 import { FormuleModule } from './app/formule/formule.module';
 import { EmailModule } from './auth/email.module';
+import { ReferenceModule } from './app/reference/reference.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { EmailModule } from './auth/email.module';
     UserAnswerModule,
     UserModule,
     UserServiceModule,
+    ReferenceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -7,8 +7,8 @@ export class CreateQuestionCategoryDto {
   value?: string;
   @ApiProperty()
   duration?: number;
-  @ApiProperty()
-  totalPoint?: number;
+  // @ApiProperty()
+  // totalPoint?: number;
   @ApiProperty()
   questionCount?: number;
   status?: number;
