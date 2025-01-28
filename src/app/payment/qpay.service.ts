@@ -33,9 +33,9 @@ export class QpayService {
         `${this.baseUrl}/invoice`,
         {
           invoice_code: 'AXIOM_INC_INVOICE',
-          sender_invoice_no: invoiceId,
+          sender_invoice_no: `${invoiceId}`,
           sender_branch_code: 'hire',
-          invoice_receiver_code: userId,
+          invoice_receiver_code: `${userId}`,
           amount,
           invoice_description: 'Тест худалдан авлаа.',
           invoice_due_date: null,
@@ -53,6 +53,7 @@ export class QpayService {
         },
       )
       .toPromise();
+
 
     return response.data;
   }

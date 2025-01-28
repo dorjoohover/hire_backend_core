@@ -10,7 +10,7 @@ export class QpayController {
   constructor(private service: QpayService) {}
   @Post()
   create(@Body() dto: string) {
-    return this.service.createPayment(100, '', 0);
+    return this.service.createPayment(100, `1`, 0);
   }
 
   @Get('check/:id')
