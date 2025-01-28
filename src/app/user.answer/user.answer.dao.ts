@@ -17,7 +17,7 @@ export class UserAnswerDao {
           id: 220,
         },
       },
-      relations: ['answerCategory', 'answer', 'matrix']
+      relations: ['answerCategory', 'answer', 'matrix'],
     });
     console.log(res);
     return await this.db.query(q);
@@ -29,6 +29,7 @@ export class UserAnswerDao {
           question: { id: dto.question },
           code: dto.code,
         },
+        relations: ['answer'],
       });
       const body = {
         ...dto,
@@ -40,7 +41,7 @@ export class UserAnswerDao {
         answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
         questionCategory: { id: +dto.questionCategory },
       };
-      if (res) {
+      if (res && dto.answer == res.answer.id) {
         await this.db.save({ ...res, ...body });
       } else {
         res = this.db.create(body);
