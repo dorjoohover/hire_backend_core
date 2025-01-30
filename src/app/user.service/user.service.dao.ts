@@ -17,10 +17,10 @@ export class UserServiceDao {
       price: price,
       user: { id: dto.user },
       assessment: { id: dto.assessment },
-      status: PaymentStatus.PENDING,
+      status: price == 0 ? PaymentStatus.SUCCESS : PaymentStatus.PENDING,
     });
     await this.db.save(res);
-    return res
+    return res;
   };
 
   updateStatus = async (id: number, status: number) => {
