@@ -92,7 +92,7 @@ export class UserAnswerService extends BaseService {
               answerCategory: answerCategory?.category?.id ?? null,
               minPoint: question.minValue,
               maxPoint: question.maxValue,
-              point: typeof point === 'number' ? point : point.point,
+              point: typeof point === 'number' ? +point : +point.point,
               answer: answer.answer,
               correct: answer.matrix
                 ? null

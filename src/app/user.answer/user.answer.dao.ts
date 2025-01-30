@@ -13,11 +13,12 @@ export class UserAnswerDao {
     const res = await this.db.find({
       where: {
         exam: {
-          id: 220,
+          id: 225,
         },
       },
       relations: ['answerCategory', 'answer', 'matrix'],
     });
+    console.log(res)
     return await this.db.query(q);
   };
   create = async (dto: CreateUserAnswerDto) => {
