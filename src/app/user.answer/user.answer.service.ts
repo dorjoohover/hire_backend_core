@@ -131,6 +131,10 @@ export class UserAnswerService extends BaseService {
   public async findAll() {
     return await this.dao.findAll();
   }
+
+  public async findByCode(code: number) {
+    return await this.dao.findByCode(code, 0);
+  }
   public async findOne(id: number, code: number) {
     let res = await this.dao.findByCode(code, id);
 

@@ -50,6 +50,12 @@ export class UserAnswerController {
   findOne(@Param('id') id: string, @Param('code') code: string) {
     return this.userAnswerService.findOne(+id, +code);
   }
+  @Public()
+  @Get('code/:code')
+  @ApiParam({ name: 'code' })
+  findByCode(@Param('code') code: string) {
+    return this.userAnswerService.findByCode(+code);
+  }
 
   @Patch(':id')
   update(
