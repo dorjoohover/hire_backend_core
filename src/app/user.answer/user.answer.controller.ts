@@ -51,7 +51,7 @@ export class UserAnswerController {
     return this.userAnswerService.findOne(+id, +code);
   }
   @Public()
-  @Get('code/:code')
+  @Get('code/code/:code')
   @ApiParam({ name: 'code' })
   findByCode(@Param('code') code: string) {
     return this.userAnswerService.findByCode(+code);
