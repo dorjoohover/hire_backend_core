@@ -34,7 +34,10 @@ export class UserServiceService extends BaseService {
   public async create(dto: CreateUserServiceDto, user: any) {
     const assessment = await this.assessmentDao.findOne(dto.assessment);
     const price = assessment.price * dto.count;
-    if (parseFloat(user['wallet']) - price < 0)
+    if (
+      +user['role'] == Role.organization &&
+      parseFloat(user['wallet']) - price < 0
+    )
       throw new HttpException(
         'Үлдэгдэл хүрэлцэхгүй байна.',
         HttpStatus.PAYMENT_REQUIRED,
