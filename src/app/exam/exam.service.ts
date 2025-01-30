@@ -15,15 +15,15 @@ import { QuestionAnswerEntity } from '../question/entities/question.answer.entit
 import { ExamEntity } from './entities/exam.entity';
 import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
-import { RequestReport } from './reports/exam.pdf';
+import { ImageReport } from './reports/exam.pdf';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import PdfPrinter from 'pdfmake';
 const fonts = {
-  Roboto: {
-    normal: 'src/assets/fonts/Roboto-Regular.ttf',
-    bold: 'src/assets/fonts/Roboto-Medium.ttf',
-    italics: 'src/assets/fonts/Roboto-Italic.ttf',
-    bolditalics: 'src/assets/fonts/Roboto-MediumItalic.ttf',
+  CIP: {
+    bold: 'src/assets/fonts/GIP-ExtraBold.woff',
+    boldItalics: 'src/assets/fonts/GIP-ExtraBoldItalic.woff',
+    normal: 'src/assets/fonts/GIP-Medium.woff',
+    italics: 'src/assets/fonts/GIP-MediumItalic.woff',
   },
 };
 @Injectable()
@@ -46,22 +46,14 @@ export class ExamService extends BaseService {
   }
 
   async getPdf(id: number): Promise<PDFKit.PDFDocument> {
-    const docDefinition = RequestReport({
-      location: 'location',
-      text: 'text',
-      town: 'town',
-      type: 'Орон сууц',
-      user: {
-        email: 'email',
-        name: 'dorjo',
-        phone: 'phone',
-      },
-      value: {
-        area: 10000,
-        avg: 10000,
-        max: 10000,
-        min: 10000,
-      },
+    const docDefinition = ImageReport({
+      name: 'Адъяа Өсөхбаяр',
+      date: '2025.01.27',
+      percent: 89,
+      max: 40,
+      point: 37,
+      duration: 25,
+      maxDuration: 30,
     });
 
     return this.createPdf(docDefinition);
@@ -110,7 +102,7 @@ export class ExamService extends BaseService {
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
     const answers = await this.userAnswer.findByCode(code);
-
+    console.log(res);
     if (category == -1) {
       await this.dao.update(res.id, {
         ...res,
@@ -125,7 +117,7 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
-
+    
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
