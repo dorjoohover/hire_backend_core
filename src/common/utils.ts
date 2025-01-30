@@ -2,8 +2,8 @@ import * as _ from 'lodash';
 import * as numeral from 'numeral';
 import * as jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
-import * as moment from 'moment-timezone';
+import crypto from 'crypto';
+import moment from 'moment-timezone';
 
 export class TokenInfo {
   token: string;

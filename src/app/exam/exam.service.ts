@@ -15,7 +15,17 @@ import { QuestionAnswerEntity } from '../question/entities/question.answer.entit
 import { ExamEntity } from './entities/exam.entity';
 import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
-
+import { RequestReport } from './reports/exam.pdf';
+import { TDocumentDefinitions } from 'pdfmake/interfaces';
+import PdfPrinter from 'pdfmake';
+const fonts = {
+  Roboto: {
+    normal: 'src/assets/fonts/Roboto-Regular.ttf',
+    bold: 'src/assets/fonts/Roboto-Medium.ttf',
+    italics: 'src/assets/fonts/Roboto-Italic.ttf',
+    bolditalics: 'src/assets/fonts/Roboto-MediumItalic.ttf',
+  },
+};
 @Injectable()
 export class ExamService extends BaseService {
   constructor(
@@ -27,6 +37,34 @@ export class ExamService extends BaseService {
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
+  }
+
+  private printer = new PdfPrinter(fonts);
+
+  createPdf(docDefinition: TDocumentDefinitions) {
+    return this.printer.createPdfKitDocument(docDefinition);
+  }
+
+  async getPdf(id: number): Promise<PDFKit.PDFDocument> {
+    const docDefinition = RequestReport({
+      location: 'location',
+      text: 'text',
+      town: 'town',
+      type: 'Орон сууц',
+      user: {
+        email: 'email',
+        name: 'dorjo',
+        phone: 'phone',
+      },
+      value: {
+        area: 10000,
+        avg: 10000,
+        max: 10000,
+        min: 10000,
+      },
+    });
+
+    return this.createPdf(docDefinition);
   }
   public async create(createExamDto: CreateExamDto) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);

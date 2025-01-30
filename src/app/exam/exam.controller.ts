@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Request,
+  Res,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import {
@@ -17,6 +18,7 @@ import {
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { Response } from 'express';
 
 @Controller('exam')
 @ApiBearerAuth('access-token')
@@ -42,6 +44,17 @@ export class ExamController {
     }
   }
 
+  @Public()
+  @Get('/pdf/:id')
+  @ApiParam({ name: 'id' })
+  async requestPdf(@Res() response: Response, @Param('id') id: string) {
+    const pdfDoc = await this.examService.getPdf(+id);
+
+    response.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.info.Title = 'Report';
+    pdfDoc.pipe(response);
+    pdfDoc.end();
+  }
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })
   calculateExamById(@Param('id') id: string) {

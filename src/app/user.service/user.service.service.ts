@@ -16,6 +16,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
 import { PaymentStatus } from 'src/base/constants';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -72,9 +73,13 @@ export class UserServiceService extends BaseService {
     return await this.dao.findByUser(assId, id);
   }
 
-  public async createExam(dto: CreateExamServiceDto, user: number) {
+  public async createExam(dto: CreateExamServiceDto, id: number, role: number) {
     const service = await this.dao.findOne(dto.service);
-    if (service.count - service.usedUserCount - dto.count < 0)
+
+    if (
+      role == Role.organization &&
+      service.count - service.usedUserCount - dto.count < 0
+    )
       throw new HttpException(
         'Үлдэгдэл хүрэлцэхгүй байна.',
         HttpStatus.PAYMENT_REQUIRED,
@@ -91,7 +96,7 @@ export class UserServiceService extends BaseService {
         return res;
       }),
     );
-    await this.updateCount(dto.service, 0, dto.count, user);
+    await this.updateCount(dto.service, 0, dto.count, id);
 
     return code;
   }

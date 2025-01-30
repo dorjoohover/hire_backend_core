@@ -54,7 +54,7 @@ export class UserServiceController {
   @Post('exam')
   createExam(@Body() dto: CreateExamServiceDto, @Request() { user }) {
     try {
-      return this.userServiceService.createExam(dto, user['id']);
+      return this.userServiceService.createExam(dto, user['id'], user['role']);
     } catch (error) {
       return {
         success: false,
