@@ -63,6 +63,12 @@ export class UserServiceController {
       };
     }
   }
+  @Get('checkPayment/:id/:code')
+  @ApiParam({ name: 'code' })
+  @ApiParam({ name: 'id' })
+  checkPayment(@Param('id') id: string, @Param('code') code: string) {
+    return this.userServiceService.checkPayment(+id, code);
+  }
   @Get()
   findAll() {
     return this.userServiceService.findAll();

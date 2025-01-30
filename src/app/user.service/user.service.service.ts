@@ -15,6 +15,7 @@ import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
+import { PaymentStatus } from 'src/base/constants';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -56,7 +57,16 @@ export class UserServiceService extends BaseService {
     };
   }
 
-  // public async 
+  public async checkPayment(id: number, code: string) {
+    const payment = await this.qpay.checkPayment(code);
+    if (payment.paid_amount) {
+      await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
+      return true;
+    }
+    return false;
+  }
+
+  // public async
 
   public async findByUser(assId: number, id: number) {
     return await this.dao.findByUser(assId, id);
