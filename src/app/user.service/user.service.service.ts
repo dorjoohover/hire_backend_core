@@ -79,7 +79,7 @@ export class UserServiceService extends BaseService {
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {
     const service = await this.dao.findOne(dto.service);
-
+    if(!service) throw new HttpException('Худалдан авалт олдсонгүй', HttpStatus.BAD_REQUEST) 
     if (
       role == Role.organization &&
       service.count - service.usedUserCount - dto.count < 0
