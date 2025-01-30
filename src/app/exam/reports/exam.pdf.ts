@@ -56,7 +56,7 @@ const heregleeniiUniinIndex = 8;
 const styles: StyleDictionary = {
   h1: {
     fontSize: 20,
-    
+
     bold: true,
     margin: [0, 5],
   },
@@ -114,6 +114,21 @@ export const RequestReport = ({
             color: '#141E49',
           },
         ],
+      },
+      { text: 'Gradient Text', fontSize: 40, color: '#ff0000', opacity: 0.7 },
+      {
+        text: 'Gradient Text',
+        fontSize: 40,
+        color: '#ff9900',
+        opacity: 0.5,
+        margin: [-2, -2, 0, 0],
+      },
+      {
+        text: 'Gradient Text',
+        fontSize: 40,
+        color: '#ffff00',
+        opacity: 0.3,
+        margin: [-4, -4, 0, 0],
       },
       {
         alignment: 'justify',

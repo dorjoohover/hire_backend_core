@@ -54,7 +54,8 @@ export class UserServiceService extends BaseService {
         user['id'],
       );
     }
-    await this.userDao.updateWallet(user['id'], -price);
+    if (+user['role'] == Role.organization)
+      await this.userDao.updateWallet(user['id'], -price);
     return {
       data: res,
       invoice,
