@@ -18,18 +18,31 @@ export class UserAnswerDao {
       },
       relations: ['answerCategory', 'answer', 'matrix'],
     });
-    console.log(res)
+    console.log(res);
     return await this.db.query(q);
   };
   create = async (dto: CreateUserAnswerDto) => {
     try {
-      let res = await this.db.findOne({
-        where: {
-          question: { id: dto.question },
-          code: dto.code,
-        },
-        relations: ['answer'],
-      });
+      let res = dto.matrix
+        ? await this.db.findOne({
+            where: {
+              question: { id: dto.question },
+              code: dto.code,
+              matrix: {
+                id: dto.matrix,
+              },
+            },
+            relations: ['answer'],
+          })
+        : await this.db.findOne({
+            where: {
+              question: { id: dto.question },
+              code: dto.code,
+              answer: {
+                id: dto.answer,
+              },
+            },
+          });
       const body = {
         ...dto,
         exam: { id: +dto.exam },
@@ -40,8 +53,8 @@ export class UserAnswerDao {
         answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
         questionCategory: { id: +dto.questionCategory },
       };
-      if (res && dto.answer == res.answer.id) {
-        await this.db.save({ ...res, ...body });
+      if (res) {
+        await this.db.save({ ...res, point: dto.point });
       } else {
         res = this.db.create(body);
         await this.db.save(res);
