@@ -5,10 +5,12 @@ import { lastValueFrom } from 'rxjs';
 @Injectable()
 export class QpayService {
   private readonly baseUrl = 'https://merchant.qpay.mn/v2'; // Update to the correct QPay API base URL
-
+  private token = null;
   constructor(private readonly httpService: HttpService) {}
 
   async getAccessToken() {
+    // console.log(this.token);
+    if (this.token != null) return this.token;
     const response = await this.httpService
       .post(
         `${this.baseUrl}/auth/token`,
@@ -21,7 +23,7 @@ export class QpayService {
         },
       )
       .toPromise();
-    console.log(response.data.access_token);
+    this.token = response.data.access_token;
     return response.data.access_token;
   }
 
@@ -53,7 +55,6 @@ export class QpayService {
         },
       )
       .toPromise();
-
 
     return response.data;
   }
