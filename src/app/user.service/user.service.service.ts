@@ -90,6 +90,7 @@ export class UserServiceService extends BaseService {
       );
     const code = Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
+        console.log(dto.service);
         const res = await this.examService.create({
           endDate: dto.endDate,
           service: dto.service,
@@ -100,6 +101,7 @@ export class UserServiceService extends BaseService {
         return res;
       }),
     );
+    console.log(code);
     await this.updateCount(dto.service, 0, dto.count, id);
 
     return code;
