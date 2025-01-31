@@ -25,6 +25,8 @@ export class PaymentEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.payments)
   user: UserEntity;
+  @ManyToOne(() => UserEntity, (user) => user.charges)
+  charger: UserEntity;
   @OneToMany(() => TransactionEntity, (transaction) => transaction.payment, {
     nullable: true,
   })

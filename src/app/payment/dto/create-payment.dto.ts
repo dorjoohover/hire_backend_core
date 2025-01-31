@@ -9,4 +9,5 @@ export class CreatePaymentDto {
   method: number;
 
   user: number;
+  charger?: number;
 }

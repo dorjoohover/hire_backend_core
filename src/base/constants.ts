@@ -58,8 +58,8 @@ export const PaymentTypeDict = {
 
 export const PaymentType = {
   CARD: 1,
-  CASH: 2,
-  MOBILE: 3,
+  QPAY: 2,
+  BANK: 3,
   LOAN: 4,
   SOCIAL: 5,
 };

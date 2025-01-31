@@ -6,6 +6,7 @@ import { TransactionDao } from './dao/transaction.dao';
 import { BaseService } from 'src/base/base.service';
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
+import { PaymentType } from 'src/base/constants';
 
 @Injectable()
 export class PaymentService extends BaseService {
@@ -25,6 +26,18 @@ export class PaymentService extends BaseService {
       user: user,
     });
     return payment;
+  }
+
+  public async charge(id: number, amount: number, user: number) {
+    const payment = await this.dao.create({
+      method: PaymentType.BANK,
+      totalPrice: amount,
+      user: id,
+      charger: user,
+    });
+    if (payment) {
+      await this.userDao.updateWallet(id, amount);
+    }
   }
 
   findAll() {

@@ -47,6 +47,10 @@ export class UserEntity {
     nullable: true,
   })
   payments?: PaymentEntity[];
+  @OneToMany(() => PaymentEntity, (payment) => payment.user, {
+    nullable: true,
+  })
+  charges?: PaymentEntity[];
   @OneToMany(() => UserServiceEntity, (service) => service.user, {
     nullable: true,
   })

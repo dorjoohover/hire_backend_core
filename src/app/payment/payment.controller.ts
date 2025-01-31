@@ -11,7 +11,9 @@ import {
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Controller('payment')
 @ApiBearerAuth('access-token')
@@ -28,9 +30,20 @@ export class PaymentController {
     return this.paymentService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.paymentService.findOne(+id);
+  @Roles(Role.admin)
+  @Get('/charge/:id/:amount')
+  @ApiParam({
+    name: 'id',
+  })
+  @ApiParam({
+    name: 'amount',
+  })
+  findOne(
+    @Param('id') id: string,
+    @Param('amount') amount: string,
+    @Request() { user },
+  ) {
+    return this.paymentService.charge(+id, +amount, +user['id']);
   }
 
   @Patch(':id')

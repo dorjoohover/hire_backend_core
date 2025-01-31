@@ -66,8 +66,8 @@ export class UserServiceController {
   @Get('checkPayment/:id/:code')
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'id' })
-  checkPayment(@Param('id') id: string, @Param('code') code: string) {
-    return this.userServiceService.checkPayment(+id, code);
+  checkPayment(@Param('id') id: string, @Param('code') code: string,  @Request() { user }) {
+    return this.userServiceService.checkPayment(+id, code, +user['id']);
   }
   @Get()
   findAll() {

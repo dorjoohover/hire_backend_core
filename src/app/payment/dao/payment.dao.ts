@@ -11,14 +11,23 @@ export class PaymentDao {
   }
 
   create = async (dto: CreatePaymentDto) => {
-    const res = this.db.create({ ...dto, user: { id: dto.user } });
+    const res = this.db.create({
+      ...dto,
+      user: { id: dto.user },
+      charger: dto.charger ? { id: dto.charger } : null,
+    });
     await this.db.save(res);
     return res.id;
   };
 
-  findAll = async () => {
+  findAll = async (method: number, page: number, limit: number) => {
     return await this.db.find({
-      //   relations: [''],
+      where: {
+        method: method,
+      },
+      relations: ['charger'],
+      take: limit,
+      skip: (page - 1) * limit,
     });
   };
 

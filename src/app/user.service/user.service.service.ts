@@ -15,14 +15,16 @@ import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
-import { PaymentStatus } from 'src/base/constants';
+import { PaymentStatus, PaymentType } from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { PaymentDao } from '../payment/dao/payment.dao';
 
 @Injectable()
 export class UserServiceService extends BaseService {
   constructor(
     private dao: UserServiceDao,
     private transactionDao: TransactionDao,
+    private paymentDao: PaymentDao,
     private examService: ExamService,
     private userDao: UserDao,
     private assessmentDao: AssessmentDao,
@@ -62,10 +64,15 @@ export class UserServiceService extends BaseService {
     };
   }
 
-  public async checkPayment(id: number, code: string) {
+  public async checkPayment(id: number, code: string, user: number) {
     const payment = await this.qpay.checkPayment(code);
     if (payment.paid_amount) {
       await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
+      await this.paymentDao.create({
+        method: PaymentType.QPAY,
+        totalPrice: payment.paid_amount,
+        user: user,
+      });
       return true;
     }
     return false;
