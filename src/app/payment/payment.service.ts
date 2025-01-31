@@ -40,8 +40,8 @@ export class PaymentService extends BaseService {
     }
   }
 
-  findAll() {
-    return `This action returns all payment`;
+  public async findAll(method: number, page: number, limit: number) {
+    return await this.dao.findAll(method, page, limit)
   }
 
   findOne(id: number) {
