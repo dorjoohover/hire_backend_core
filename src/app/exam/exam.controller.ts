@@ -19,7 +19,7 @@ import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Response } from 'express';
-
+import fs from 'fs';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -47,13 +47,24 @@ export class ExamController {
   @Public()
   @Get('/pdf/:id')
   @ApiParam({ name: 'id' })
-  async requestPdf(@Res() response: Response, @Param('id') id: string) {
-    const pdfDoc = await this.examService.getPdf(+id);
+  async requestPdf(@Res() res: Response, @Param('id') id: string) {
+    let filePath: any;
+    try {
+      filePath = await this.examService.getPdf(+id);
 
-    response.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.info.Title = 'Report';
-    pdfDoc.pipe(response);
-    pdfDoc.end();
+      res.setHeader('Content-disposition', 'attachment; filename=output.pdf');
+      res.setHeader('Content-type', 'application/pdf');
+
+      res.sendFile(filePath, { root: process.cwd() }, (err) => {
+        if (err) {
+          console.error(err);
+        }
+        fs.unlinkSync(filePath); // Remove the temporary PDF file
+      });
+    } catch (err) {
+      console.log('Error generating PDF:', err);
+      throw err;
+    }
   }
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })

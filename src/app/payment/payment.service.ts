@@ -28,12 +28,18 @@ export class PaymentService extends BaseService {
     return payment;
   }
 
-  public async charge(id: number, amount: number, user: number) {
+  public async charge(
+    id: number,
+    amount: number,
+    message: string,
+    user: number,
+  ) {
     const payment = await this.dao.create({
       method: PaymentType.BANK,
       totalPrice: amount,
       user: id,
       charger: user,
+      message: message,
     });
     if (payment) {
       await this.userDao.updateWallet(id, amount);
@@ -41,7 +47,7 @@ export class PaymentService extends BaseService {
   }
 
   public async findAll(method: number, page: number, limit: number) {
-    return await this.dao.findAll(method, page, limit)
+    return await this.dao.findAll(method, page, limit);
   }
 
   findOne(id: number) {

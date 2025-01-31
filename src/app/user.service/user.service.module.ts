@@ -19,6 +19,8 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QpayService } from '../payment/qpay.service';
 import { HttpModule } from '@nestjs/axios';
 import { PaymentDao } from '../payment/dao/payment.dao';
+import { PdfService } from '../exam/pdf.service';
+import { VisualizationService } from '../exam/visualization.service';
 
 @Module({
   imports: [HttpModule],
@@ -34,6 +36,8 @@ import { PaymentDao } from '../payment/dao/payment.dao';
     QuestionService,
     QuestionCategoryDao,
     QuestionDao,
+    PdfService,
+    VisualizationService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,

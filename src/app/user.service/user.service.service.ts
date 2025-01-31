@@ -72,6 +72,7 @@ export class UserServiceService extends BaseService {
         method: PaymentType.QPAY,
         totalPrice: payment.paid_amount,
         user: user,
+        message: 'Худалдан авалт хийсэн.',
       });
       return true;
     }

@@ -22,6 +22,8 @@ export class PaymentEntity {
   createdAt: Date;
   @Column()
   method: number;
+  @Column({ nullable: true })
+  message: string;
 
   @ManyToOne(() => UserEntity, (user) => user.payments)
   user: UserEntity;

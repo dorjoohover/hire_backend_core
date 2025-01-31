@@ -51,7 +51,7 @@ export class PaymentController {
     @Param('amount') amount: string,
     @Request() { user },
   ) {
-    return this.paymentService.charge(+id, +amount, +user['id']);
+    return this.paymentService.charge(+id, +amount, '', +user['id']);
   }
 
   @Patch(':id')

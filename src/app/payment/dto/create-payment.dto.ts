@@ -7,6 +7,8 @@ export class CreatePaymentDto {
 
   @ApiProperty()
   method: number;
+  @ApiProperty()
+  message: string;
 
   user: number;
   charger?: number;

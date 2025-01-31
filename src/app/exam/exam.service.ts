@@ -18,13 +18,15 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { ImageReport } from './reports/exam.pdf';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import PdfPrinter from 'pdfmake';
-const fonts = {
-  CIP: {
-    bold: 'src/assets/fonts/GIP-ExtraBold.woff',
-    boldItalics: 'src/assets/fonts/GIP-ExtraBoldItalic.woff',
-    normal: 'src/assets/fonts/GIP-Medium.woff',
-    italics: 'src/assets/fonts/GIP-MediumItalic.woff',
-  },
+import { PdfService } from './pdf.service';
+import { VisualizationService } from './visualization.service';
+import path from 'path';
+import fs from 'fs';
+
+const colors = {
+  black: '#231F20',
+  orange: '#F36421',
+  red: '#ED1C45',
 };
 @Injectable()
 export class ExamService extends BaseService {
@@ -32,31 +34,72 @@ export class ExamService extends BaseService {
     private dao: ExamDao,
     private formule: FormuleService,
     private detailDao: ExamDetailDao,
+    private pdfService: PdfService,
     private questionService: QuestionService,
     private userAnswer: UserAnswerDao,
+    private visualizationService: VisualizationService,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
   }
-
-  private printer = new PdfPrinter(fonts);
-
-  createPdf(docDefinition: TDocumentDefinitions) {
-    return this.printer.createPdfKitDocument(docDefinition);
+  path(p: string) {
+    const imagePath = path.join(__dirname, `../../../src/assets/${p}.png`);
+    return fs.readFileSync(imagePath);
   }
+  async getPdf(id: number) {
+    // const usersData = await this.findAllUsersOfOrg(orgId);
 
-  async getPdf(id: number): Promise<PDFKit.PDFDocument> {
-    const docDefinition = ImageReport({
-      name: 'Адъяа Өсөхбаяр',
-      date: '2025.01.27',
-      percent: 89,
-      max: 40,
-      point: 37,
-      duration: 25,
-      maxDuration: 30,
+    await this.pdfService.addFont();
+    const { width, height, xMargin } = await this.pdfService.getFullSize();
+    const chart = await this.visualizationService.createChart();
+
+    await this.pdfService.addImage(this.path('logo'), {
+      x: 0,
+      y: 30,
+      width: 70,
+      height: 20,
     });
+    await this.pdfService.addImage(this.path('top'), {
+      width: width + 3 * xMargin,
+      height: 100,
+      y: -20,
+      x: -xMargin,
+    });
+    // await this.pdfService.addNewLine(); // Leave an empty Line
+    this.pdfService.addText(`Шалгуулагч`);
+    await this.pdfService.addText(`SubHeading`);
+    await this.pdfService.addNewLine();
 
-    return this.createPdf(docDefinition);
+    //one page left empty for TOC
+    // await this.pdfService.addNewPage();
+    // await this.pdfService.addNewPage();
+    // await this.pdfService.addGenericTable(usersData, {
+    //   ignoreFields: ['password', 'otp', 'otpCreatedAt', 'lastPasswordUpdateAt'],
+    //   tableName: 'Users Table',
+    //   addToIndex: true, //add to TOC
+    //   theme: 'grid',
+    // });
+
+    // //changed ignoreFields.Table resizes automatically. Look in pdf images
+    // await this.pdfService.addGenericTable(usersData, {
+    //   ignoreFields: [
+    //     'password',
+    //     'otp',
+    //     'otpCreatedAt',
+    //     'lastPasswordUpdateAt',
+    //     'createdAt',
+    //   ],
+    //   tableName: 'Users2 Table',
+    //   addToIndex: true, // add to TOC
+    //   theme: 'grid',
+    // });
+
+    // await this.pdfService.addNewPage();
+    await this.pdfService.addText(`TRAILING PAGE`, {
+      align: 'center',
+    });
+    this.pdfService.addImage(chart, { width: width, height: 300 });
+    return await this.pdfService.render();
   }
   public async create(createExamDto: CreateExamDto) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
@@ -117,7 +160,7 @@ export class ExamService extends BaseService {
     );
     let currentCategory = category;
     let allCategories = [];
-    
+
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
