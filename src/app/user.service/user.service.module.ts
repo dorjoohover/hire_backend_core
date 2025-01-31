@@ -18,6 +18,7 @@ import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QpayService } from '../payment/qpay.service';
 import { HttpModule } from '@nestjs/axios';
+import { PaymentDao } from '../payment/dao/payment.dao';
 
 @Module({
   imports: [HttpModule],
@@ -29,6 +30,7 @@ import { HttpModule } from '@nestjs/axios';
     ExamService,
     UserDao,
     ExamDetailDao,
+    PaymentDao,
     QuestionService,
     QuestionCategoryDao,
     QuestionDao,
