@@ -46,8 +46,13 @@ export class PaymentService extends BaseService {
     }
   }
 
-  public async findAll(method: number, page: number, limit: number) {
-    return await this.dao.findAll(method, page, limit);
+  public async findAll(
+    method: number,
+    role: number,
+    page: number,
+    limit: number,
+  ) {
+    return await this.dao.findAll(method, role, page, limit);
   }
 
   findOne(id: number) {

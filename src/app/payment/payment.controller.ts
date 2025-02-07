@@ -26,16 +26,18 @@ export class PaymentController {
   }
 
   @Roles(Role.admin)
-  @Get('/view/:method/:page/:limit')
+  @Get('/view/:method/:role/:page/:limit')
   @ApiParam({ name: 'method' })
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })
+  @ApiParam({ name: 'role' })
   findAll(
     @Param('method') method: string,
     @Param('page') page: string,
     @Param('limit') limit: string,
+    @Param('role') role: string,
   ) {
-    return this.paymentService.findAll(+method, +page, +limit);
+    return this.paymentService.findAll(+method, +role, +page, +limit);
   }
 
   @Roles(Role.admin)

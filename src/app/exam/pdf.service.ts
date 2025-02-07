@@ -9,9 +9,14 @@ import fs from 'fs';
 import nodeHtmlToImage from 'node-html-to-image';
 import PDFDocument from 'pdfkit';
 import {
+  assetPath,
   colors,
+  dateFormatter,
   fontBold,
   fontNormal,
+  footer,
+  header,
+  home,
   marginX,
   marginY,
 } from './reports/formatter';
@@ -38,10 +43,6 @@ export class PdfService {
     private vis: VisualizationService,
     private single: SinglePdf,
   ) {}
-  path(p: string) {
-    const imagePath = path.join(__dirname, `../../../src/assets/${p}.png`);
-    return fs.readFileSync(imagePath);
-  }
 
   async generateImage(html: string) {
     const image = await nodeHtmlToImage({
@@ -79,12 +80,8 @@ export class PdfService {
     );
     doc.registerFont(fontNormal, normal);
     doc.registerFont(fontBold, bold);
-    doc.image(this.path('logo'), marginX, marginY, {
-      width: 70,
-    });
-    doc.image(this.path('top'), 0, 0, {
-      width: doc.page.width,
-    });
+    home(doc, 'Адъяа', 'Өсөхбаяр');
+    doc.addPage();
     return doc;
   }
 
@@ -96,6 +93,7 @@ export class PdfService {
     const filePath = './chart.pdf';
     const out = fs.createWriteStream(filePath);
     const doc = await this.createDefaultPdf();
+    header(doc);
     doc.moveDown(5);
 
     doc.font(fontNormal).fontSize(14).text('Шалгуулагч', {
@@ -110,14 +108,21 @@ export class PdfService {
     });
     doc.moveUp(1);
     const date = new Date();
-    doc
-      .fontSize(14)
-      .text(`${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`, {
-        align: 'right',
-      });
-    doc.moveDown(2);
-
+    doc.fontSize(14).text(`${dateFormatter(date)}`, {
+      align: 'right',
+    });
     doc.moveDown(1);
+    doc
+      .font(fontBold)
+      .fontSize(20)
+      .fillColor(colors.orange)
+      .text('Багийн дүрийг тодорхойлох тест');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(230, doc.y)
+      .stroke()
+      .moveDown();
     doc
       .font(fontNormal)
       .fillColor(colors.black)
@@ -167,13 +172,13 @@ export class PdfService {
       .fontSize(14)
       .text('минут)', doc.x, doc.y + 2, { continued: false });
 
-    doc.image(this.path('icons/time'), doc.x + 150, y + 15);
+    doc.image(assetPath('icons/time'), doc.x + 150, y + 15);
 
     // pie chart
     const pie = await this.vis.doughnut(colors.grey, colors.orange);
     const center = doc.page.width / 2;
-    doc.image(pie, center + center - 168, y - 10, { width: 60 });
-    doc.text('Нийт оноо', center, y, { align: 'right' });
+    doc.image(pie, center + center - 168, y - 10, { width: 50 });
+    doc.text('Нийт оноо', center, y - 10, { align: 'right' });
     doc
       .moveTo(center, doc.y)
       .font(fontBold)
@@ -186,10 +191,51 @@ export class PdfService {
       .fontSize(24)
       .fillColor(colors.black)
       .text('/50', doc.x, doc.y + 4, { continued: false });
-    doc.moveDown(2);
+    doc.moveDown(1);
     [8, 5, 10, 8, 0].map((v, i) => {
       this.single.section(doc, `${i + 1}-р хэсэг`, 10, v);
     });
+
+    y = doc.y;
+    doc
+      .font(fontBold)
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Давуу талууд', marginX, y);
+    doc.text('Анхаарах нь', doc.x, y, {
+      align: 'right',
+    });
+    y = doc.y;
+
+    doc
+      .moveTo(marginX, y)
+      .strokeColor(colors.orange)
+      .lineTo(84, doc.y)
+      .stroke();
+    doc
+      .moveTo(doc.page.width - marginX, y)
+      .strokeColor(colors.orange)
+      .lineTo(doc.page.width - marginX - 84, y)
+      .stroke();
+    doc.moveDown();
+    [
+      {
+        title: 'Давуу тал 1',
+        value: 'Хөгжүүлэх шаардлагатай чадвар 1',
+      },
+      {
+        title: 'Давуу тал 2',
+        value: 'Хөгжүүлэх шаардлагатай чадвар 2',
+      },
+      {
+        title: 'Давуу тал 3',
+        value: 'Хөгжүүлэх шаардлагатай чадвар 3',
+      },
+    ].map((e) => {
+      this.single.list(doc, e.title, e.value);
+    });
+
+    footer(doc);
     doc.pipe(out);
 
     // doc.image(buffer, { width: 260 });
