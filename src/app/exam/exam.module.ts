@@ -14,6 +14,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { VisualizationService } from './visualization.service';
 import { PdfService } from './pdf.service';
+import { SinglePdf } from './reports/single.pdf';
 
 @Module({
   controllers: [ExamController],
@@ -31,6 +32,7 @@ import { PdfService } from './pdf.service';
     QuestionAnswerMatrixDao,
     FormuleService,
     UserAnswerDao,
+    SinglePdf,
     QuestionAnswerCategoryDao,
   ],
   exports: [ExamService, ExamDao],

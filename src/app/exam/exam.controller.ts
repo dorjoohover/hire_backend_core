@@ -50,7 +50,7 @@ export class ExamController {
   async requestPdf(@Res() res: Response, @Param('id') id: string) {
     let filePath: any;
     try {
-      filePath = await this.examService.getPdf(+id);
+      filePath = await this.examService.getPdf();
 
       res.setHeader('Content-disposition', 'attachment; filename=output.pdf');
       res.setHeader('Content-type', 'application/pdf');

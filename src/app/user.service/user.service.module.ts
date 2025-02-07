@@ -21,6 +21,7 @@ import { HttpModule } from '@nestjs/axios';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { PdfService } from '../exam/pdf.service';
 import { VisualizationService } from '../exam/visualization.service';
+import { SinglePdf } from '../exam/reports/single.pdf';
 
 @Module({
   imports: [HttpModule],
@@ -46,6 +47,7 @@ import { VisualizationService } from '../exam/visualization.service';
     AssessmentDao,
     ExamDao,
     QpayService,
+    SinglePdf,
   ],
 })
 export class UserServiceModule {}
