@@ -141,10 +141,10 @@ export class QuestionService {
   public async createAll(dto: CreateQuestionAllDto, user: number) {
     try {
       const questionCategory = await this.updateChecker(dto.category, dto.type);
-      const point = await this.getPoint(
-        questionCategory.assessment.type,
-        dto.answers,
-      );
+      const point =
+        dto.question.point != 0 || dto.question.point
+          ? dto.question.point
+          : await this.getPoint(questionCategory.assessment.type, dto.answers);
       let questionId = await this.questionDao.create({
         ...dto.question,
         type: dto.type,
