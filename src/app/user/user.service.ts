@@ -62,7 +62,7 @@ export class UserService {
       lastname: dto.lastname ?? '',
       firstname: dto.firstname ?? '',
     });
-    new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN)
+    new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
     // return res;
   }
   public async getAll() {

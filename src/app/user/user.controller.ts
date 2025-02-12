@@ -37,7 +37,7 @@ export class UserController {
   @ApiParam({ name: 'email' })
   verifyEmail(@Param('email') email: string, @Res() res) {
     this.userService.verifyMail(email);
-    return res.redirect('http://localhost:3000/docs');
+    return res.redirect('http://hire.mn/auth/signin');
   }
 
   @Public()
