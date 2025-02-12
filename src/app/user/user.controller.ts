@@ -38,9 +38,9 @@ export class UserController {
   verifyEmail(@Param('email') email: string, @Res() res) {
     try {
       this.userService.verifyMail(email);
-      return res.redirect('http://hire.mn/auth/signin');
+      return res.redirect('https://hire.mn/auth/signin');
     } catch (error) {
-      return res.redirect('http://hire.mn/auth/signin');
+      return res.redirect('https://hire.mn/auth/signin');
     }
   }
 
