@@ -53,7 +53,7 @@ export class UserService {
         );
       }
     }
-    const res = await this.dao.add({
+    await this.dao.add({
       ...dto,
       password: password,
       role:
@@ -62,7 +62,7 @@ export class UserService {
       lastname: dto.lastname ?? '',
       firstname: dto.firstname ?? '',
     });
-    throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
+    // throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
     // return res;
   }
   public async getAll() {
