@@ -24,7 +24,10 @@ import { FeedbackModule } from './app/feedback/feedback.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
     DatabaseModule,
     BaseModule,
     EmailModule,
