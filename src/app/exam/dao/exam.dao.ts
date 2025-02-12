@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
 import { CreateExamDto } from '../dto/create-exam.dto';
+import { UserEntity } from 'src/app/user/entities/user.entity';
 
 @Injectable()
 export class ExamDao {
@@ -10,12 +11,16 @@ export class ExamDao {
     this.db = this.dataSource.getRepository(ExamEntity);
   }
 
-  create = async (dto: CreateExamDto) => {
+  create = async (dto: CreateExamDto, user?: UserEntity) => {
     const res = this.db.create({
       ...dto,
       service: {
         id: dto.service,
       },
+      firstname: user ? user.firstname : null,
+      lastname: user ? user.lastname : null,
+      email: user ? user.email : null,
+      phone: user ? user.phone : null,
       assessmentName: dto.assessment.name,
       assessment: { id: dto.assessment.id },
     });

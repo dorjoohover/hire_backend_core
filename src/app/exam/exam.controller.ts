@@ -20,14 +20,18 @@ import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Response } from 'express';
 import fs from 'fs';
+import { UserEntity } from '../user/entities/user.entity';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
   constructor(private readonly examService: ExamService) {}
 
   @Post()
-  create(@Body() createExamDto: CreateExamDto) {
-    return this.examService.create(createExamDto);
+  create(
+    @Body() createExamDto: CreateExamDto,
+    @Request() { user }: { user: UserEntity },
+  ) {
+    return this.examService.create(createExamDto, user);
   }
 
   @Public()

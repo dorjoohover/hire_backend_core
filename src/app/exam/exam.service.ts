@@ -18,6 +18,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { ImageReport } from './reports/exam.pdf';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfService } from './pdf.service';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -40,14 +41,14 @@ export class ExamService extends BaseService {
     return await this.pdfService.createPdfInOneFile(assessment, res);
   }
 
-  public async create(createExamDto: CreateExamDto) {
+  public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
     const code: number = Number(
       BigInt(
         `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
       ),
     );
-    await this.dao.create({ ...createExamDto, code: code });
+    await this.dao.create({ ...createExamDto, code: code }, user);
     return code;
   }
 

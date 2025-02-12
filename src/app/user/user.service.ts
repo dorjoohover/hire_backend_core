@@ -62,7 +62,8 @@ export class UserService {
       lastname: dto.lastname ?? '',
       firstname: dto.firstname ?? '',
     });
-    return res;
+    new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN)
+    // return res;
   }
   public async getAll() {
     return await this.dao.getAll();

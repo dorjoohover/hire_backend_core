@@ -20,7 +20,6 @@ export class AuthService {
 
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.getUser(username);
-    console.log(user);
     if (user == null || !user) return -1;
     const isMatch = await bcrypt.compare(pass, user.password);
     if (user && isMatch == true) {
@@ -38,23 +37,13 @@ export class AuthService {
       if (!user.name && !user.profile)
         throw new UnauthorizedException('Хэрэглэгч олдсонгүй.');
       if (!res) {
-        const newUser = await this.usersService.addUser({
+        await this.usersService.addUser({
           lastname: '',
           firstname: user.name,
           email: user.email,
           profile: user.profile,
           emailVerified: true,
         });
-        if (newUser) {
-          result = {
-            firstname: user.name,
-            email: user.email,
-            profile: user.profile,
-            emailVerified: true,
-          };
-        } else {
-          throw new HttpException('Алдаа гарлаа.', HttpStatus.BAD_REQUEST);
-        }
       } else {
         result = {
           firstname: res?.firstname,
@@ -100,11 +89,8 @@ export class AuthService {
         HttpStatus.CONFLICT,
       );
     }
-    const newUser = await this.usersService.addUser({
+    await this.usersService.addUser({
       ...user,
     });
-    if (newUser) {
-      return await this.login({ email: user.email, password: user.password });
-    }
   }
 }
