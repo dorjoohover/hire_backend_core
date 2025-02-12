@@ -1,0 +1,25 @@
+import { UserEntity } from 'src/app/user/entities/user.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+@Entity('Feedback')
+export class FeedbackEntity {
+  @PrimaryGeneratedColumn('increment')
+  id?: number;
+  @CreateDateColumn()
+  createdAt?: Date;
+  @Column()
+  type: number;
+  @Column({ nullable: true })
+  message: string;
+  @Column({ nullable: true })
+  status: number;
+  @ManyToOne(() => UserEntity, (service) => service.feedbacks)
+  user: UserEntity;
+}

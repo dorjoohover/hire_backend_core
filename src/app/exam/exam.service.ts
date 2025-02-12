@@ -33,8 +33,11 @@ export class ExamService extends BaseService {
     super();
   }
 
-  public async getPdf() {
-    return await this.pdfService.createPdfInOneFile();
+  public async getPdf(id: number) {
+    const res = await this.dao.findOne(id);
+    const assessment = res.assessment;
+
+    return await this.pdfService.createPdfInOneFile(assessment, res);
   }
 
   public async create(createExamDto: CreateExamDto) {

@@ -66,6 +66,32 @@ export class UserAnswerDao {
     }
   };
 
+  partialCalculator = async (
+    id: number,
+  ): Promise<
+    {
+      categoryName: string;
+      point: number;
+      totalPoint: number;
+    }[]
+  > => {
+    const res = await this.db
+      .createQueryBuilder('userAnswer')
+      .select('category.name', 'categoryName')
+      .addSelect('SUM(userAnswer.point)', 'point')
+      .addSelect('SUM(category.totalPoint)', 'totalPoint')
+      .innerJoin(
+        'question_category',
+        'category',
+        'category.id = userAnswer.questionCategory',
+      )
+      .where('userAnswer.id = :id', { id })
+      .groupBy('category.name')
+      .getRawMany();
+
+    return res;
+  };
+
   findAll = async () => {
     return await this.db.find({});
   };

@@ -20,13 +20,13 @@ export class AuthService {
 
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.getUser(username);
-    if (user == null || !user) return false;
+    if (user == null || !user) return -1;
     const isMatch = await bcrypt.compare(pass, user.password);
     if (user && isMatch == true) {
       const { password, ...result } = user;
       return result;
     }
-    return false;
+    return 0;
   }
 
   async login(user: LoginUserDto) {
@@ -52,10 +52,7 @@ export class AuthService {
             emailVerified: true,
           };
         } else {
-          throw new HttpException(
-            'Нууц үг олдсонгүй.',
-            HttpStatus.UNAUTHORIZED,
-          );
+          throw new HttpException('Алдаа гарлаа.', HttpStatus.BAD_REQUEST);
         }
       } else {
         result = {
@@ -75,12 +72,16 @@ export class AuthService {
     } else {
       result = await this.validateUser(user.email, user.password);
 
-      if (!result) {
+      if (result < 1) {
         result = await this.validateUser(user.registerNumber, user.password);
       }
-      if (!result) {
-        throw new UnauthorizedException('Нууц үг буруу байна.');
-      }
+      if (result == 0)
+        throw new HttpException('Нууц үг буруу байна.', HttpStatus.BAD_REQUEST);
+      if (result == -1)
+        throw new HttpException(
+          'Бүртгэлгүй хэрэглэгч байна.',
+          HttpStatus.UNAUTHORIZED,
+        );
     }
     return {
       accessToken: this.jwtService.sign({

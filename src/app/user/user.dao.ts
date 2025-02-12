@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -22,6 +22,11 @@ export class UserDao {
         };
     const b = !isEmail ? { phone: data, email: email } : { email: email };
     const res = await this._db.findOne({ where: b });
+    if (!res)
+      throw new HttpException(
+        'Бүртгэлгүй хэрэглэгч байна',
+        HttpStatus.UNAUTHORIZED,
+      );
     if (!res.emailVerified) await this._db.save({ ...res, ...body });
   };
   add = async (user: UserEntity) => {

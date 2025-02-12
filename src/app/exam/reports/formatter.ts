@@ -26,6 +26,7 @@ export const home = (
   doc: PDFKit.PDFDocument,
   lastname: string,
   firstname: string,
+  title: string,
 ) => {
   const y = doc.y;
   let grad = doc.linearGradient(0, 0, doc.page.height, doc.page.height);
@@ -66,7 +67,8 @@ export const home = (
   doc
     .font(fontBold)
     .fontSize(44)
-    .text('Багийн дүрийг тодорхойлох тест', doc.x, doc.y, {
+    .lineGap(0.1)
+    .text(title, doc.x, doc.y, {
       width: doc.page.width * 0.7,
     });
   doc.moveDown(2);

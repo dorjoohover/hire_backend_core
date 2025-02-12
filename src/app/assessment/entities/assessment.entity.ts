@@ -63,6 +63,8 @@ export class AssessmentEntity {
   @Column()
   type: number;
 
+  @Column({ nullable: true, default: false })
+  partialScore: boolean;
   @CreateDateColumn()
   createdAt: Date;
   @UpdateDateColumn()
@@ -98,5 +100,4 @@ export class AssessmentEntity {
     nullable: true,
   })
   services: QuestionCategoryEntity[];
-
 }

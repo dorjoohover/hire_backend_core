@@ -22,6 +22,8 @@ export class ExamEntity {
   @Column()
   assessmentName: string;
   @Column({ nullable: true })
+  result: string;
+  @Column({ nullable: true })
   email: string;
   @Column({ nullable: true })
   firstname: string;

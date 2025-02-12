@@ -21,6 +21,8 @@ import {
   marginY,
 } from './reports/formatter';
 import { SinglePdf } from './reports/single.pdf';
+import { AssessmentEntity } from '../assessment/entities/assessment.entity';
+import { ExamEntity } from './entities/exam.entity';
 
 const fonts = {
   CIP: {
@@ -80,13 +82,13 @@ export class PdfService {
     );
     doc.registerFont(fontNormal, normal);
     doc.registerFont(fontBold, bold);
-    home(doc, 'Адъяа', 'Өсөхбаяр');
+    home(doc, 'Адъяа', 'Өсөхбаяр', 'Багийн дүрийг тодорхойлох тест');
     doc.addPage();
     return doc;
   }
 
-  async createPdfInOneFile() {
-    const name = 'Адъяа Өсөхбаяр';
+  async createPdfInOneFile(assessment: AssessmentEntity, exam: ExamEntity) {
+    const name = `${exam.lastname} ${exam.firstname}`;
     const buffer = await this.vis.createChart();
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
@@ -107,7 +109,8 @@ export class PdfService {
       align: 'left',
     });
     doc.moveUp(1);
-    const date = new Date();
+    const date = new Date(exam.userStartDate);
+
     doc.fontSize(14).text(`${dateFormatter(date)}`, {
       align: 'right',
     });
@@ -116,7 +119,7 @@ export class PdfService {
       .font(fontBold)
       .fontSize(20)
       .fillColor(colors.orange)
-      .text('Багийн дүрийг тодорхойлох тест');
+      .text(assessment.name);
     doc
       .moveTo(30, doc.y)
       .strokeColor(colors.orange)
@@ -147,94 +150,7 @@ export class PdfService {
       .stroke()
       .moveDown();
 
-    let y = doc.y;
-
-    doc
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(14)
-      .text('Тестийг ', doc.x, y, { continued: true })
-      .font(fontBold)
-      .fillColor(colors.orange)
-      .fontSize(18)
-      .text('25 ', doc.x, y - 2, { continued: true })
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(14)
-      .text('минутад гүйцэтгэсэн', doc.x, y + 2)
-      .fontSize(14)
-      .text('(Боломжит ', { continued: true })
-      .font(fontBold)
-      .fontSize(18)
-      .text('30 ', doc.x, doc.y - 2, { continued: true })
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(14)
-      .text('минут)', doc.x, doc.y + 2, { continued: false });
-
-    doc.image(assetPath('icons/time'), doc.x + 150, y + 15);
-
-    // pie chart
-    const pie = await this.vis.doughnut(colors.grey, colors.orange);
-    const center = doc.page.width / 2;
-    doc.image(pie, center + center - 168, y - 10, { width: 50 });
-    doc.text('Нийт оноо', center, y - 10, { align: 'right' });
-    doc
-      .moveTo(center, doc.y)
-      .font(fontBold)
-      .fontSize(32)
-      .fillColor(colors.orange)
-      .text('31', center + center - 100, doc.y, {
-        // align: 'right',
-        continued: true,
-      })
-      .fontSize(24)
-      .fillColor(colors.black)
-      .text('/50', doc.x, doc.y + 4, { continued: false });
-    doc.moveDown(1);
-    [8, 5, 10, 8, 0].map((v, i) => {
-      this.single.section(doc, `${i + 1}-р хэсэг`, 10, v);
-    });
-
-    y = doc.y;
-    doc
-      .font(fontBold)
-      .fontSize(16)
-      .fillColor(colors.orange)
-      .text('Давуу талууд', marginX, y);
-    doc.text('Анхаарах нь', doc.x, y, {
-      align: 'right',
-    });
-    y = doc.y;
-
-    doc
-      .moveTo(marginX, y)
-      .strokeColor(colors.orange)
-      .lineTo(84, doc.y)
-      .stroke();
-    doc
-      .moveTo(doc.page.width - marginX, y)
-      .strokeColor(colors.orange)
-      .lineTo(doc.page.width - marginX - 84, y)
-      .stroke();
-    doc.moveDown();
-    [
-      {
-        title: 'Давуу тал 1',
-        value: 'Хөгжүүлэх шаардлагатай чадвар 1',
-      },
-      {
-        title: 'Давуу тал 2',
-        value: 'Хөгжүүлэх шаардлагатай чадвар 2',
-      },
-      {
-        title: 'Давуу тал 3',
-        value: 'Хөгжүүлэх шаардлагатай чадвар 3',
-      },
-    ].map((e) => {
-      this.single.list(doc, e.title, e.value);
-    });
-
+    this.single.default(doc, assessment, exam);
     footer(doc);
     doc.pipe(out);
 

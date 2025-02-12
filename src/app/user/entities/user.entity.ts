@@ -1,3 +1,4 @@
+import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
 import { TransactionEntity } from 'src/app/payment/entities/transaction.entity';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
@@ -55,4 +56,8 @@ export class UserEntity {
     nullable: true,
   })
   services?: UserServiceEntity[];
+  @OneToMany(() => FeedbackEntity, (feedback) => feedback.user, {
+    nullable: true,
+  })
+  feedbacks?: FeedbackEntity[];
 }

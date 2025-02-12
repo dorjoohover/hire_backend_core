@@ -3,13 +3,18 @@ export const DEFAULT_SIZE = 20;
 export const DEFAULT_LIMIT = 20;
 export const DEFAULT_OFFSET = 0;
 
+// admin nemeh bolomjtoi
 export const SUPER_ADMIN = 10;
+// baiguullagiin mongo nemeh bolomjtoi
+export const ADMIN = 40;
+// zowhon test nemeh bolomjtoi
+export const TESTER = 50;
 // ORGANIZATION
 export const CLIENT = 20;
 // ZOCHIN
 export const ORGANIZATION = 30;
 // BURTGELGUI HEREGLECH
-export const ANONYMOUS = 40;
+// export const ANONYMOUS = 40;
 
 export const QuestionLevel = {
   HARD: 10,
@@ -46,6 +51,19 @@ export const PaymentStatus = {
   SUCCESS: 20,
   FAILED: 30,
   ERROR: 40,
+};
+
+export const FeedbackType = {
+  // dunduur awah
+  SERVICE: 10,
+  // togsgold awah
+  RESULT: 20,
+};
+
+export const FeedbackStatus = {
+  GOOD: 10,
+  NORMAL: 20,
+  BAD: 30,
 };
 
 export const PaymentTypeDict = {

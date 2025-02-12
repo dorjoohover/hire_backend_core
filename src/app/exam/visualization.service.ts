@@ -102,7 +102,7 @@ export class VisualizationService {
     return canvas.toBuffer('image/png');
   }
 
-  async doughnut(bg: string, color: string): Promise<Buffer> {
+  async doughnut(bg: string, color: string, total: number, point: number): Promise<Buffer> {
     const option = {
       series: [
         // Gray background (full circle)
@@ -113,7 +113,7 @@ export class VisualizationService {
           silent: true,
           data: [
             {
-              value: 100,
+              value: total,
               itemStyle: {
                 color: bg,
               },
@@ -131,14 +131,14 @@ export class VisualizationService {
           silent: true,
           data: [
             {
-              value: 75,
+              value: point,
               itemStyle: {
                 color: color,
                 borderRadius: 24,
               },
             },
             {
-              value: 25,
+              value: total - point,
               itemStyle: {
                 color: 'transparent',
               },

@@ -1,13 +1,15 @@
 import {
-  ANONYMOUS,
+  ADMIN,
   CLIENT,
   ORGANIZATION,
   SUPER_ADMIN,
+  TESTER,
 } from 'src/base/constants';
 
 export enum Role {
-  admin = SUPER_ADMIN,
+  super_admin = SUPER_ADMIN,
   client = CLIENT,
-  anonynomous = ANONYMOUS,
+  admin = ADMIN,
+  tester = TESTER,
   organization = ORGANIZATION,
 }
