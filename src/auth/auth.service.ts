@@ -73,7 +73,7 @@ export class AuthService {
     } else {
       result = await this.validateUser(user.email, user.password);
 
-      if (result < 1) {
+      if (result == -1) {
         result = await this.validateUser(user.registerNumber, user.password);
       }
       if (result == 0)
