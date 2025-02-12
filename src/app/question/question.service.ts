@@ -162,10 +162,10 @@ export class QuestionService {
   public async updateAll(dto: CreateQuestionAllDto, user: number) {
     try {
       const questionCategory = await this.updateChecker(dto.category, dto.type);
-      const point = await this.getPoint(
-        questionCategory.assessment.type,
-        dto.answers,
-      );
+      const point =
+        dto.question.point != 0 || dto.question.point
+          ? dto.question.point
+          : await this.getPoint(questionCategory.assessment.type, dto.answers);
 
       const questionId = await this.questionDao.updateOne(
         {
