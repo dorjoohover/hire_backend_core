@@ -102,60 +102,69 @@ export class VisualizationService {
     return canvas.toBuffer('image/png');
   }
 
-  async doughnut(bg: string, color: string, total: number, point: number): Promise<Buffer> {
-    const option = {
-      series: [
-        // Gray background (full circle)
-        {
-          type: 'pie',
-          radius: ['50%', '100%'],
-          startAngle: 90,
-          silent: true,
-          data: [
-            {
-              value: total,
-              itemStyle: {
-                color: bg,
+  async doughnut(
+    bg: string,
+    color: string,
+    total: number,
+    point: number,
+  ): Promise<Buffer> {
+    try {
+      const option = {
+        series: [
+          // Gray background (full circle)
+          {
+            type: 'pie',
+            radius: ['50%', '100%'],
+            startAngle: 90,
+            silent: true,
+            data: [
+              {
+                value: total,
+                itemStyle: {
+                  color: bg,
+                },
               },
-            },
-          ],
-          label: { show: false },
-          emphasis: { disabled: true },
-          animation: false,
-        },
-        // Orange progress (75% with rounded ends)
-        {
-          type: 'pie',
-          radius: ['50%', '100%'],
-          startAngle: 90,
-          silent: true,
-          data: [
-            {
-              value: point,
-              itemStyle: {
-                color: color,
-                borderRadius: 24,
+            ],
+            label: { show: false },
+            emphasis: { disabled: true },
+            animation: false,
+          },
+          // Orange progress (75% with rounded ends)
+          {
+            type: 'pie',
+            radius: ['50%', '100%'],
+            startAngle: 90,
+            silent: true,
+            data: [
+              {
+                value: point,
+                itemStyle: {
+                  color: color,
+                  borderRadius: 24,
+                },
               },
-            },
-            {
-              value: total - point,
-              itemStyle: {
-                color: 'transparent',
+              {
+                value: total - point,
+                itemStyle: {
+                  color: 'transparent',
+                },
               },
-            },
-          ],
-          roundCap: true,
-          label: { show: false },
-          emphasis: { disabled: true },
-        },
-      ],
-    };
+            ],
+            roundCap: true,
+            label: { show: false },
+            emphasis: { disabled: true },
+          },
+        ],
+      };
 
-    const canvas = createCanvas(520, 520);
-    const chart = echarts.init(canvas as any);
+      const canvas = createCanvas(520, 520);
+      const chart = echarts.init(canvas as any);
 
-    chart.setOption(option);
+      chart.setOption(option);
 
-    return canvas.toBuffer('image/png');
+      return canvas.toBuffer('image/png');
+    } catch (error) {
+      console.log(error);
+    }
   }
 }

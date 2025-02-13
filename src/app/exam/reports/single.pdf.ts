@@ -91,20 +91,21 @@ export class SinglePdf {
 
     let y = doc.y;
 
-    doc
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(14)
-      .text('Тестийг ', doc.x, y, { continued: true })
-      .font(fontBold)
-      .fillColor(colors.orange)
-      .fontSize(18)
-      .text(`${diff} `, doc.x, y - 2, { continued: true })
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(14)
-      .text('минутад гүйцэтгэсэн', doc.x, y + 2)
-      .fontSize(14);
+    if (diff != 0)
+      doc
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(14)
+        .text('Тестийг ', doc.x, y, { continued: true })
+        .font(fontBold)
+        .fillColor(colors.orange)
+        .fontSize(18)
+        .text(`${diff} `, doc.x, y - 2, { continued: true })
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(14)
+        .text('минутад гүйцэтгэсэн', doc.x, y + 2)
+        .fontSize(14);
     if (duration && duration != 0)
       doc
         .text('(Боломжит ', { continued: true })

@@ -90,7 +90,7 @@ export const home = (
 
 export const dateFormatter = (date: Date): string => {
   const year = date.getFullYear();
-  let month = `${date.getDate() + 1}`;
+  let month = `${date.getMonth() + 1}`;
   parseInt(month) < 10 ? (month = `0${month}`) : null;
   let day = `${date.getDate()}`;
   parseInt(day) < 10 ? `0${day}` : null;
