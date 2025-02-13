@@ -92,7 +92,7 @@ export class SinglePdf {
 
       let y = doc.y;
 
-      if (diff != 0)
+      if (diff != 0) {
         doc
           .font(fontNormal)
           .fillColor(colors.black)
@@ -107,7 +107,8 @@ export class SinglePdf {
           .fontSize(14)
           .text('минутад гүйцэтгэсэн', doc.x, y + 2)
           .fontSize(14);
-      if (duration && duration != 0)
+      }
+      if (duration && duration != 0) {
         doc
           .text('(Боломжит ', { continued: true })
           .font(fontBold)
@@ -118,6 +119,7 @@ export class SinglePdf {
           .fontSize(14)
           .text('минут)', doc.x, doc.y + 2, { continued: false })
           .image(assetPath('icons/time'), doc.x + 150, y + 15, { width: 18 });
+      }
       // pie chart
       const pie = await this.vis.doughnut(
         colors.grey,
