@@ -77,7 +77,8 @@ export class QuestionController {
         value: ExampleConstantSumAllDto,
       },
     },
-  })@Roles(Role.super_admin, Role.tester, Role.admin)
+  })
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
       return this.questionService.updateAll(dto, user['id']);
@@ -91,7 +92,8 @@ export class QuestionController {
   }
 
   @Post('answer/:matrix')
-  @ApiParam({ name: 'matrix' })@Roles(Role.super_admin, Role.tester, Role.admin)
+  @ApiParam({ name: 'matrix' })
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   deleteAnswer(
     @Body() dto: { data: number[] },
     @Param('matrix') matrix: number,
@@ -137,7 +139,8 @@ export class QuestionController {
         value: ExampleConstantSumAllDto,
       },
     },
-  })@Roles(Role.super_admin, Role.tester, Role.admin)
+  })
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   createAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
       return this.questionService.createAll(dto, user['id']);
@@ -156,7 +159,8 @@ export class QuestionController {
     summary:
       'question category uusgene (wrapper) butsaah utga ni payload der zowhon id',
   })
-  @Post('category')@Roles(Role.super_admin, Role.tester, Role.admin)
+  @Post('category')
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   async createCategory(
     @Body() dto: CreateQuestionCategoryDto,
     @Request() { user },
@@ -166,7 +170,8 @@ export class QuestionController {
       createdUser: user['id'],
     });
   }
-  @Patch('category')@Roles(Role.super_admin, Role.tester, Role.admin)
+  @Patch('category')
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   async updateCategory(
     @Body() dto: CreateQuestionCategoryDto,
     @Request() { user },
@@ -187,34 +192,36 @@ export class QuestionController {
   // @Public()
   // @Roles(Role.admin)
   @Get('assessment/:id')
-  findOneByAssessment(@Param('id') id: string, @Request() { user }) {
+  async findOneByAssessment(@Param('id') id: string, @Request() { user }) {
     const role = +user?.['role'];
     const admin =
       role == Role.admin || role == Role.super_admin || role == Role.tester;
-    const res = this.questionService.findOneByAssessment(+id, admin);
+    const res = await this.questionService.findOneByAssessment(+id, admin);
 
     return res;
   }
-@Roles(Role.super_admin, Role.tester, Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('question/:id')
   deleteQuestion(@Param('id') id: string) {
     return this.questionService.deleteQuestion(+id);
   }
-@Roles(Role.super_admin, Role.tester, Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('category/:id')
   @ApiOperation({
     summary: 'question category/block/ ustgana',
   })
   deleteQuestionCategory(@Param('id') id: string) {
     return this.questionService.deleteQuestionCategory(+id);
-  }@Roles(Role.super_admin, Role.tester, Role.admin)
+  }
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('all')
   deleteMatrix() {
     return this.questionService.deleteAll();
   }
 
   @Delete('answerCategory/:id')
-  @ApiParam({ name: 'id' })@Roles(Role.super_admin, Role.tester, Role.admin)
+  @ApiParam({ name: 'id' })
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   deleteAnswerCategory(@Param('id') id: string) {
     return this.questionService.deleteAnswerCategory(+id);
   }
