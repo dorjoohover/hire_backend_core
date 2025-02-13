@@ -31,32 +31,36 @@ export class QuestionAnswerDao {
   };
 
   updateOne = async (id: number, dto: CreateQuestionAnswerDto) => {
-    const res = await this.db.findOne({
-      where: { id: id },
-      relations: ['category'],
-    });
-    console.log(dto, id);
-    const update =
-      res.value == dto.value &&
-      res.point == dto.point &&
-      dto.correct == res.correct &&
-      res.orderNumber == dto.orderNumber &&
-      res.file == dto.file &&
-      dto.category == res.category?.id;
-    console.log('update', update);
-    if (update) return id;
+    try {
+      const res = await this.db.findOne({
+        where: { id: id },
+        relations: ['category'],
+      });
+      console.log(dto, id);
+      const update =
+        res.value == dto.value &&
+        res.point == dto.point &&
+        dto.correct == res.correct &&
+        res.orderNumber == dto.orderNumber &&
+        res.file == dto.file &&
+        dto.category == res.category?.id;
+      console.log('update', update);
+      if (update) return id;
 
-    await this.db.update(id, {
-      ...dto,
-      category: {
-        id: dto.category as number,
-      },
-      question: {
-        id: dto.question as number,
-      },
-    });
+      await this.db.update(id, {
+        ...dto,
+        category: {
+          id: dto.category as number,
+        },
+        question: {
+          id: dto.question as number,
+        },
+      });
 
-    return id;
+      return id;
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   findByQuestion = async (id: number, shuffle: boolean, admin: boolean) => {
