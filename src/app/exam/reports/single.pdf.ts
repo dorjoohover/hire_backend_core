@@ -142,7 +142,7 @@ export class SinglePdf {
         })
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${exam.result}`, doc.x, doc.y + 8, { continued: false });
+        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 8, { continued: false });
       doc.moveDown(1);
       if (assessment.partialScore) {
         const res = await this.answer.partialCalculator(exam.id);
