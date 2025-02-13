@@ -78,7 +78,7 @@ export class ExamService extends BaseService {
     const res = await this.dao.findByCode(code);
 
     if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    if (res.endDate < new Date())
+    if (res.endDate && res.startDate && res.endDate < new Date())
       throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
     if (res.userEndDate != null)
       throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
