@@ -22,12 +22,17 @@ import { ApiParam } from '@nestjs/swagger';
 @Controller('userAnswer')
 export class UserAnswerController {
   constructor(private readonly userAnswerService: UserAnswerService) {}
-  @Public()
+  // @Public()
   @Post()
-  create(@Body() dto: UserAnswerDtoList, @Ip() ip: string, @Headers() headers) {
+  create(
+    @Body() dto: UserAnswerDtoList,
+    @Ip() ip: string,
+    @Headers() headers,
+    @Request() { user },
+  ) {
     try {
       const device = headers['user-agent'] ?? '';
-      return this.userAnswerService.create(dto, ip, device);
+      return this.userAnswerService.create(dto, ip, device, user);
     } catch (error) {
       return {
         success: false,

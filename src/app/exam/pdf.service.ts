@@ -63,7 +63,11 @@ export class PdfService {
     return await image;
   }
 
-  async createDefaultPdf(): Promise<PDFKit.PDFDocument> {
+  async createDefaultPdf(
+    lastname: string,
+    firstname: string,
+    title: string,
+  ): Promise<PDFKit.PDFDocument> {
     const doc = new PDFDocument({
       margins: {
         left: marginX,
@@ -82,7 +86,7 @@ export class PdfService {
     );
     doc.registerFont(fontNormal, normal);
     doc.registerFont(fontBold, bold);
-    home(doc, 'Адъяа', 'Өсөхбаяр', 'Багийн дүрийг тодорхойлох тест');
+    home(doc, lastname, firstname, title);
     doc.addPage();
     return doc;
   }
@@ -94,7 +98,11 @@ export class PdfService {
     // console.log(buffer2);
     const filePath = './chart.pdf';
     const out = fs.createWriteStream(filePath);
-    const doc = await this.createDefaultPdf();
+    const doc = await this.createDefaultPdf(
+      exam.lastname,
+      exam.firstname,
+      assessment.name,
+    );
     header(doc);
     doc.moveDown(5);
 
@@ -110,7 +118,7 @@ export class PdfService {
     });
     doc.moveUp(1);
     const date = new Date(exam.userStartDate);
-
+    console.log(date, exam);
     doc.fontSize(14).text(`${dateFormatter(date)}`, {
       align: 'right',
     });
