@@ -42,6 +42,8 @@ export class UserAnswerDtoList {
   data: CreateUserAnswerDto[];
   @ApiProperty({ type: Date })
   startDate: Date;
+  @ApiProperty()
+  end: boolean;
 }
 export class CalculateUserAnswerDto {
   question: number;

@@ -47,7 +47,7 @@ export class UserAnswerDao {
         ...dto,
         exam: { id: +dto.exam },
         endDate: new Date(),
-        answer: dto.answer ? { id: +dto.answer } : null,
+        answer: !dto.matrix ? { id: +dto.answer } : null,
         matrix: dto.matrix ? { id: +dto.matrix } : null,
         question: { id: +dto.question },
         answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,

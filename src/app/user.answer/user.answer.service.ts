@@ -108,7 +108,9 @@ export class UserAnswerService extends BaseService {
             res.push(r);
           }),
         );
+        if (dto.end) await this.examDao.endExam(dto.data[0].code);
       }
+
       // if (res.includes(undefined)) {
       //   res.map(async (r) => {
       //     if (r != undefined) await this.dao.deleteOne(r);

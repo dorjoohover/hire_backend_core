@@ -42,6 +42,11 @@ export class ExamDao {
     await this.db.save({ ...res, email, lastname, firstname, phone });
   };
 
+  endExam = async (code: number) => {
+    const res = await this.db.findOne({ where: { code } });
+    await this.db.save({ ...res, userEndDate: new Date() });
+  };
+
   findAll = async () => {
     return await this.db.find({
       //   relations: [''],
