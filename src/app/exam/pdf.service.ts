@@ -158,7 +158,7 @@ export class PdfService {
       .stroke()
       .moveDown();
 
-    this.single.default(doc, assessment, exam);
+    await this.single.default(doc, assessment, exam);
     footer(doc);
     doc.pipe(out);
 
