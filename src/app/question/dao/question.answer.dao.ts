@@ -35,7 +35,7 @@ export class QuestionAnswerDao {
       where: { id: id },
       relations: ['category'],
     });
-
+    console.log(dto, id);
     const update =
       res.value == dto.value &&
       res.point == dto.point &&
@@ -43,6 +43,7 @@ export class QuestionAnswerDao {
       res.orderNumber == dto.orderNumber &&
       res.file == dto.file &&
       dto.category == res.category?.id;
+    console.log('update', update);
     if (update) return id;
 
     await this.db.update(id, {
