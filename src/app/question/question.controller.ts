@@ -77,8 +77,7 @@ export class QuestionController {
         value: ExampleConstantSumAllDto,
       },
     },
-  })
-  @Roles(Role.admin)
+  })@Roles(Role.super_admin, Role.tester, Role.admin)
   updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
       return this.questionService.updateAll(dto, user['id']);
@@ -92,8 +91,7 @@ export class QuestionController {
   }
 
   @Post('answer/:matrix')
-  @ApiParam({ name: 'matrix' })
-  @Roles(Role.admin)
+  @ApiParam({ name: 'matrix' })@Roles(Role.super_admin, Role.tester, Role.admin)
   deleteAnswer(
     @Body() dto: { data: number[] },
     @Param('matrix') matrix: number,
@@ -139,8 +137,7 @@ export class QuestionController {
         value: ExampleConstantSumAllDto,
       },
     },
-  })
-  @Roles(Role.admin)
+  })@Roles(Role.super_admin, Role.tester, Role.admin)
   createAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
       return this.questionService.createAll(dto, user['id']);
@@ -159,8 +156,7 @@ export class QuestionController {
     summary:
       'question category uusgene (wrapper) butsaah utga ni payload der zowhon id',
   })
-  @Post('category')
-  @Roles(Role.admin)
+  @Post('category')@Roles(Role.super_admin, Role.tester, Role.admin)
   async createCategory(
     @Body() dto: CreateQuestionCategoryDto,
     @Request() { user },
@@ -170,8 +166,7 @@ export class QuestionController {
       createdUser: user['id'],
     });
   }
-  @Patch('category')
-  @Roles(Role.admin)
+  @Patch('category')@Roles(Role.super_admin, Role.tester, Role.admin)
   async updateCategory(
     @Body() dto: CreateQuestionCategoryDto,
     @Request() { user },
@@ -200,30 +195,26 @@ export class QuestionController {
 
     return res;
   }
-
-  @Roles(Role.admin)
+@Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('question/:id')
   deleteQuestion(@Param('id') id: string) {
     return this.questionService.deleteQuestion(+id);
   }
-
-  @Roles(Role.admin)
+@Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('category/:id')
   @ApiOperation({
     summary: 'question category/block/ ustgana',
   })
   deleteQuestionCategory(@Param('id') id: string) {
     return this.questionService.deleteQuestionCategory(+id);
-  }
-  @Roles(Role.admin)
+  }@Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('all')
   deleteMatrix() {
     return this.questionService.deleteAll();
   }
 
   @Delete('answerCategory/:id')
-  @ApiParam({ name: 'id' })
-  @Roles(Role.admin)
+  @ApiParam({ name: 'id' })@Roles(Role.super_admin, Role.tester, Role.admin)
   deleteAnswerCategory(@Param('id') id: string) {
     return this.questionService.deleteAnswerCategory(+id);
   }

@@ -13,7 +13,7 @@ export class FormuleController {
   constructor(private readonly service: FormuleService) {}
 
   @Post()
-  @Roles(Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   create(@Body() dto: FormuleDto, @Request() { user }) {
     return this.service.create(dto, user['id']);
   }

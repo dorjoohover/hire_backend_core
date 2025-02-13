@@ -21,7 +21,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 @ApiBearerAuth('access-token')
 export class AssessmentController {
   constructor(private readonly assessmentService: AssessmentService) {}
-  @Roles(Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @ApiOperation({
     summary: 'assessment uusgene',
   })
@@ -41,8 +41,7 @@ export class AssessmentController {
   findOne(@Param('id') id: string) {
     return this.assessmentService.findOne(+id);
   }
-
-  @Roles(Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Patch(':id')
   update(
     @Param('id') id: string,

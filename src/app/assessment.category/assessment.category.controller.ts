@@ -35,7 +35,7 @@ export class AssessmentCategoryController {
   constructor(
     private readonly assessmentCategoryService: AssessmentCategoryService,
   ) {}
-  @Roles(Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @ApiOperation({
     summary: 'assessment-n category bolon ded category uusgene',
   })
@@ -91,7 +91,7 @@ export class AssessmentCategoryController {
   remove(@Param('id') id: string) {
     return this.assessmentCategoryService.remove(+id);
   }
-  @Roles(Role.admin)
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete()
   delete() {
     return this.assessmentCategoryService.delete();
