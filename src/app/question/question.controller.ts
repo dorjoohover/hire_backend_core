@@ -193,7 +193,9 @@ export class QuestionController {
   // @Roles(Role.admin)
   @Get('assessment/:id')
   findOneByAssessment(@Param('id') id: string, @Request() { user }) {
-    const admin = +user?.['role'] == Role.admin;
+    const role = +user?.['role'];
+    const admin =
+      role == Role.admin || role == Role.super_admin || role == Role.tester;
     const res = this.questionService.findOneByAssessment(+id, admin);
 
     return res;
