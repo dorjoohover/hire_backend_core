@@ -33,48 +33,52 @@ export class FormuleService extends BaseService {
   }
 
   async aggregate(dto: FormuleDto, w: string): Promise<any[]> {
-    const { groupBy, aggregations, filters, limit, order, sort } = dto;
+    try {
+      const { groupBy, aggregations, filters, limit, order, sort } = dto;
 
-    let select = '';
-    let where = w;
-    let group = '';
-    let l = limit;
-    let o = order;
+      let select = '';
+      let where = w;
+      let group = '';
+      let l = limit;
+      let o = order;
 
-    // Apply JOINs
-    // queryBuilder.leftJoinAndSelect('sales.productDetails', 'product');
+      // Apply JOINs
+      // queryBuilder.leftJoinAndSelect('sales.productDetails', 'product');
 
-    // Apply filters
-    if (filters) {
-      Object.keys(filters).forEach((key) => {
-        if (where != '') where += ' and ';
-        where += `${key} = ${filters[key]}`;
+      // Apply filters
+      if (filters) {
+        Object.keys(filters).forEach((key) => {
+          if (where != '') where += ' and ';
+          where += `${key} = ${filters[key]}`;
+        });
+      }
+
+      if (groupBy && groupBy.length > 0) {
+        group = groupBy.map((g) => `"${g}"`).join(', ');
+      }
+
+      if (groupBy && groupBy.length > 0) {
+        let g = groupBy.map((g) => `"${g}"`).join(', ');
+        if (g) select += g;
+      }
+
+      // Apply aggregations
+      aggregations.forEach((agg) => {
+        const alias = `${agg.operation.toLowerCase()}_${agg.field.replace('.', '_')}`;
+        if (select != '') select += ', ';
+        select += `${agg.operation}(${agg.field}) as "${agg.field}"`;
       });
+      let query = `select ${select} from "userAnswer"`;
+      if (where) query += ` where ${where}`;
+      if (group) query += ` group by ${group}`;
+      if (o) query += ` order by "${o}" ${sort ? 'desc' : 'asc'}`;
+      if (l) query += ` limit  ${l}`;
+      console.log(query);
+      const res = await this.userAnswerDao.query(query);
+      return res;
+    } catch (error) {
+      console.log(error);
     }
-
-    if (groupBy && groupBy.length > 0) {
-      group = groupBy.map((g) => `"${g}"`).join(', ');
-    }
-
-    if (groupBy && groupBy.length > 0) {
-      let g = groupBy.map((g) => `"${g}"`).join(', ');
-      if (g) select += g;
-    }
-
-    // Apply aggregations
-    aggregations.forEach((agg) => {
-      const alias = `${agg.operation.toLowerCase()}_${agg.field.replace('.', '_')}`;
-      if (select != '') select += ', ';
-      select += `${agg.operation}(${agg.field}) as "${agg.field}"`;
-    });
-    let query = `select ${select} from "userAnswer"`;
-    if (where) query += ` where ${where}`;
-    if (group) query += ` group by ${group}`;
-    if (o) query += ` order by "${o}" ${sort ? 'desc' : 'asc'}`;
-    if (l) query += ` limit  ${l}`;
-    console.log(query);
-    const res = await this.userAnswerDao.query(query);
-    return res;
   }
 
   async calculate(formulaId: number, where: number) {
@@ -83,7 +87,7 @@ export class FormuleService extends BaseService {
     });
     let w = `"examId" = ${where}`;
     const res = await this.aggregate(formula, w);
-    console.log(res)
+    console.log(res);
     if (res.length <= 1) return res;
     const response = await Promise.all(
       res.map(async (r) => {
