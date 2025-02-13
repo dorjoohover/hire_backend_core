@@ -109,6 +109,8 @@ export class VisualizationService {
     point: number,
   ): Promise<Buffer> {
     try {
+      console.log(total, point);
+
       const option = {
         series: [
           // Gray background (full circle)
