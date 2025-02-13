@@ -94,7 +94,7 @@ export class UserService {
     return await this.dao.update({ ...dto, id: id });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  public async remove(id: number) {
+    return await this.dao.delete(id);
   }
 }

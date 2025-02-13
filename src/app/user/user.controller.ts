@@ -14,13 +14,15 @@ import { CreateOtp, CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Public()
+  @Roles(Role.super_admin)
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.userService.addUser(dto);
@@ -68,6 +70,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @Public()
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
   }

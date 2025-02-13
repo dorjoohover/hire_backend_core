@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Db, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -48,6 +48,11 @@ export class UserDao {
       ...body,
     });
     return res.id;
+  };
+
+  delete = async (id: number) => {
+    const res = await this._db.delete(id);
+    return res;
   };
 
   updateWallet = async (id: number, point: number) => {
