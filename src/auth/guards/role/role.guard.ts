@@ -30,7 +30,8 @@ export class RolesGuard extends AuthGuard('jwt') {
         (userRole === Role.admin ||
           userRole === Role.client ||
           userRole === Role.super_admin ||
-          userRole == Role.organization)
+          userRole == Role.organization ||
+          Role.tester)
       ) {
         return true;
       }
