@@ -9,6 +9,13 @@ import { ExamDao } from '../exam/dao/exam.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { FormuleService } from '../formule/formule.service';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { ExamService } from '../exam/exam.service';
+import { ExamDetailDao } from '../exam/dao/exam.detail.dao';
+import { PdfService } from '../exam/pdf.service';
+import { QuestionService } from '../question/question.service';
+import { QuestionCategoryDao } from '../question/dao/question.category.dao';
+import { VisualizationService } from '../exam/visualization.service';
+import { SinglePdf } from '../exam/reports/single.pdf';
 
 @Module({
   controllers: [UserAnswerController],
@@ -21,6 +28,13 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
     ExamDao,
     AssessmentDao,
     FormuleService,
+    ExamService,
+    ExamDetailDao,
+    PdfService,
+    QuestionService,
+    QuestionCategoryDao,
+    VisualizationService,
+    SinglePdf,
     QuestionAnswerCategoryDao,
   ],
 })

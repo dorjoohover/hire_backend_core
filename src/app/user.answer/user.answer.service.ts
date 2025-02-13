@@ -14,6 +14,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
+import { ExamService } from '../exam/exam.service';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -21,6 +22,7 @@ export class UserAnswerService extends BaseService {
     private dao: UserAnswerDao,
     private questionDao: QuestionDao,
     private examDao: ExamDao,
+    private examService: ExamService,
     private questionAnswerDao: QuestionAnswerDao,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private assessmentDao: AssessmentDao,
@@ -108,7 +110,13 @@ export class UserAnswerService extends BaseService {
             res.push(r);
           }),
         );
-        if (dto.end) await this.examDao.endExam(dto.data[0].code);
+        if (dto.end) {
+          await this.examDao.endExam(dto.data[0].code);
+          const res = await this.examService.calculateExamById(
+            dto.data[0].code,
+          );
+          console.log(res);
+        }
       }
 
       // if (res.includes(undefined)) {

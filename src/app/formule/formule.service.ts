@@ -93,6 +93,7 @@ export class FormuleService extends BaseService {
         aCate = await this.answerCategoryDao.findOne(+aCate);
 
         let sum = parseInt(r.point);
+        console.log(res);
         return {
           point: sum,
           aCate: aCate.name,

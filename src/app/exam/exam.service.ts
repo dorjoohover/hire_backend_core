@@ -37,7 +37,7 @@ export class ExamService extends BaseService {
   public async getPdf(id: number) {
     const res = await this.dao.findOne(id);
     const assessment = res.assessment;
-
+    
     return await this.pdfService.createPdfInOneFile(assessment, res);
   }
 
@@ -58,6 +58,7 @@ export class ExamService extends BaseService {
     const formule = exam.assessment.formule;
     if (formule) {
       const calculate = await this.formule.calculate(formule, exam.id);
+      console.log(calculate)
       const value = calculate[0].point / exam.assessment.totalPoint;
       return {
         calculate,
