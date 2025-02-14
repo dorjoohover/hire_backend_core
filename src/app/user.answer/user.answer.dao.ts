@@ -78,8 +78,8 @@ export class UserAnswerDao {
     const res = await this.db
       .createQueryBuilder('userAnswer')
       .select('category.name', 'categoryName')
+      .addSelect('category.totalPoint', 'totalPoint')
       .addSelect('SUM(userAnswer.point)', 'point')
-      .addSelect('SUM(category.totalPoint)', 'totalPoint')
       .innerJoin(
         'questionCategory',
         'category',
@@ -87,6 +87,7 @@ export class UserAnswerDao {
       )
       .where('"userAnswer"."examId" = :id', { id })
       .groupBy('category.name')
+      .groupBy('category.totalPoint')
       .getRawMany();
 
     return res;
