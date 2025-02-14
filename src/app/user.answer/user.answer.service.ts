@@ -119,10 +119,7 @@ export class UserAnswerService extends BaseService {
           await this.examDao.endExam(dto.data[0].code);
           const res = await this.examService.calculateExamById(
             dto.data[0].code,
-            {
-              firstname: user.firstname,
-              lastname: user.lastname,
-            },
+            user,
           );
           console.log(res);
         }

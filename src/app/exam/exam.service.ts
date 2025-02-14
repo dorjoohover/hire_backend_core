@@ -53,8 +53,8 @@ export class ExamService extends BaseService {
   }
 
   // onoo bujaats ywuulah
-  public async calculateExamById(id: string, user?: UserEntity) {
-    const exam = await this.dao.findByCode(+id);
+  public async calculateExamById(id: number, user?: UserEntity) {
+    const exam = await this.dao.findByCode(id);
     const formule = exam.assessment.formule;
     // console.log(formule)
     if (formule) {
