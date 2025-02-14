@@ -5,7 +5,10 @@ import {
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
-import { UpdateUserServiceDto } from './dto/update-user.service.dto';
+import {
+  UpdateDateDto,
+  UpdateUserServiceDto,
+} from './dto/update-user.service.dto';
 import { UserServiceDao } from './user.service.dao';
 import { BaseService } from 'src/base/base.service';
 import { PaymentService } from '../payment/payment.service';
@@ -18,6 +21,7 @@ import { QpayService } from '../payment/qpay.service';
 import { PaymentStatus, PaymentType } from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { PaymentDao } from '../payment/dao/payment.dao';
+import { ExamDao } from '../exam/dao/exam.dao';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -26,6 +30,7 @@ export class UserServiceService extends BaseService {
     private transactionDao: TransactionDao,
     private paymentDao: PaymentDao,
     private examService: ExamService,
+    private examDao: ExamDao,
     private userDao: UserDao,
     private assessmentDao: AssessmentDao,
     private mailer: MailerService,
@@ -169,8 +174,12 @@ export class UserServiceService extends BaseService {
     return await this.dao.findOne(id);
   }
 
-  update(id: number, updateUserServiceDto: UpdateUserServiceDto) {
-    return `This action updates a #${id} userService`;
+  public async update(id: number, dto: UpdateDateDto) {
+    const res = await this.dao.findOne(id);
+    const exams = res.exams;
+    for (const exam of exams) {
+      await this.examDao.updateDate(exam.id, dto);
+    }
   }
 
   remove(id: number) {

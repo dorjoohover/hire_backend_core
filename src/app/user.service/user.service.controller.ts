@@ -17,7 +17,10 @@ import {
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
-import { UpdateUserServiceDto } from './dto/update-user.service.dto';
+import {
+  UpdateDateDto,
+  UpdateUserServiceDto,
+} from './dto/update-user.service.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -66,7 +69,11 @@ export class UserServiceController {
   @Get('checkPayment/:id/:code')
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'id' })
-  checkPayment(@Param('id') id: string, @Param('code') code: string,  @Request() { user }) {
+  checkPayment(
+    @Param('id') id: string,
+    @Param('code') code: string,
+    @Request() { user },
+  ) {
     return this.userServiceService.checkPayment(+id, code, +user['id']);
   }
   @Get()
@@ -84,12 +91,10 @@ export class UserServiceController {
     return this.userServiceService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserServiceDto: UpdateUserServiceDto,
-  ) {
-    return this.userServiceService.update(+id, updateUserServiceDto);
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Patch('date/:id')
+  update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
+    return this.userServiceService.update(+id, dto);
   }
 
   @Delete(':id')

@@ -3,6 +3,7 @@ import { DataSource, In, Repository } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
 import { CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
+import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
 
 @Injectable()
 export class ExamDao {
@@ -31,6 +32,13 @@ export class ExamDao {
   update = async (code: number, dto: any) => {
     const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ ...res, ...dto });
+  };
+
+  updateDate = async (id: number, dto: UpdateDateDto) => {
+    await this.db.update(id, {
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+    });
   };
 
   updateByCode = async (
