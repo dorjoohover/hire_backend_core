@@ -126,62 +126,62 @@ export class QuestionService {
     }
   }
 
-  public async getPoint(type: number, answers: CreateQuestionAllAnswerDto[]) {
-    const point =
-      type === AssessmentType.TEST
-        ? (answers.reduce(function (prev, current) {
-            return prev && prev.answer.point > current.answer.point
-              ? prev
-              : current;
-          })?.answer?.point ?? 0)
-        : 0;
+  public async getPoint(
+    question: CreateQuestionDto,
+    answers: CreateQuestionAllAnswerDto[],
+  ) {
+    let point = 0;
+    const type = question.type;
+    if (type == QuestionType.CONSTANTSUM) return question.point ?? 0;
+    if (type == QuestionType.MATRIX)
+      for (const answer of answers) {
+        point += Math.max(
+          ...(answer?.matrix?.map((matrix) => matrix.point) ?? [0]),
+        );
+      }
+    else {
+      point += Math.max(
+        ...(answers.map((answer) => answer.answer.point) ?? [0]),
+      );
+    }
     return point;
   }
 
-  public async createAll(dto: CreateQuestionAllDto, user: number) {
+  public async updateAll(
+    dto: CreateQuestionAllDto,
+    user: number,
+    create: boolean,
+  ) {
     try {
       const questionCategory = await this.updateChecker(dto.category, dto.type);
-      const point =
-        dto.question.point != 0 || dto.question.point
-          ? dto.question.point
-          : await this.getPoint(questionCategory.assessment.type, dto.answers);
-      let questionId = await this.questionDao.create({
-        ...dto.question,
-        type: dto.type,
-        status: QuestionStatus.ACTIVE,
-        category: questionCategory.id,
-        createdUser: user,
-        point: point,
-      });
-      await this.updateAnswer(dto.answers, questionId, dto.type);
-      this.update(questionCategory.id, questionCategory.assessment.id);
-    } catch (error) {
-      throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
-    }
-  }
-  public async updateAll(dto: CreateQuestionAllDto, user: number) {
-    try {
-      const questionCategory = await this.updateChecker(dto.category, dto.type);
-      const point =
-        dto.question.point != 0 || dto.question.point
-          ? dto.question.point
-          : await this.getPoint(questionCategory.assessment.type, dto.answers);
+      const point = await this.getPoint(dto.question, dto.answers);
 
-      const questionId = await this.questionDao.updateOne(
-        {
-          ...dto.question,
-          category: questionCategory.id,
-          point: point,
-        },
-        dto.id,
-        user,
-      );
+      let questionId = create
+        ? await this.questionDao.create({
+            ...dto.question,
+            type: dto.type,
+            status: QuestionStatus.ACTIVE,
+            category: questionCategory.id,
+            createdUser: user,
+            point: point,
+          })
+        : await this.questionDao.updateOne(
+            {
+              ...dto.question,
+              category: questionCategory.id,
+              point: point,
+            },
+            dto.id,
+            user,
+          );
       await this.updateAnswer(dto.answers, questionId.id, dto.type);
+
       this.update(questionCategory.id, questionCategory.assessment.id);
     } catch (error) {
       throw new HttpException(error?.message ?? error, HttpStatus.BAD_REQUEST);
     }
   }
+
   public async deleteAnswer(dto: { data: number[] }, matrix: boolean) {
     try {
       matrix

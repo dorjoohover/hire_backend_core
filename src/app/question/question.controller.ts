@@ -81,7 +81,7 @@ export class QuestionController {
   @Roles(Role.super_admin, Role.tester, Role.admin)
   updateAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
-      return this.questionService.updateAll(dto, user['id']);
+      return this.questionService.updateAll(dto, user['id'], false);
     } catch (error) {
       return {
         success: false,
@@ -143,7 +143,7 @@ export class QuestionController {
   @Roles(Role.super_admin, Role.tester, Role.admin)
   createAll(@Body() dto: CreateQuestionAllDto, @Request() { user }) {
     try {
-      return this.questionService.createAll(dto, user['id']);
+      return this.questionService.updateAll(dto, user['id'], true);
     } catch (error) {
       return {
         success: false,

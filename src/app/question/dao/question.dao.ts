@@ -24,7 +24,7 @@ export class QuestionDao {
       },
     });
     await this.db.save(res);
-    return res.id;
+    return res;
   };
 
   countQuestionCategory = async (id: number) => {
