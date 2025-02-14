@@ -12,7 +12,7 @@ export class SinglePdf {
     private answer: UserAnswerDao,
     private vis: VisualizationService,
   ) {}
-  section(doc: PDFKit.PDFDocument, name: string, max: number, value: number) {
+  async section(doc: PDFKit.PDFDocument, name: string, max: number, value: number) {
     const x = doc.x;
     const y = doc.y;
     const center = doc.page.width / 2;
@@ -148,7 +148,6 @@ export class SinglePdf {
       doc.moveDown(1);
       // if (assessment.partialScore) {
       const res = await this.answer.partialCalculator(exam.id);
-      console.log(res);
       res.map((v, i) => {
         this.section(doc, v.categoryName, v.totalPoint, v.point);
       });

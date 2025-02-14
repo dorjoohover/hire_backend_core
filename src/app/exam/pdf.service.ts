@@ -138,18 +138,11 @@ export class PdfService {
       .font(fontNormal)
       .fillColor(colors.black)
       .fontSize(14)
-      .text(
-        'Багт оруулж буй хувь нэмрээ таньж мэдсэнээр багийн гүйцэтгэлийг нэмэгдүүлэх, сайжруулах, багийн үйл ажиллагааг төгөлдөржүүлэх боломжийг олгоно.',
-      )
+      .text(assessment.description)
       .moveDown();
     doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
 
-    doc
-      .font(fontNormal)
-      .text(
-        'Хамтын ажиллагаа, Харилцаа, Шийдвэр гаргалт, Асуудал шийдвэрлэх, Дасан зохицох, Уян хатан байдал',
-      )
-      .moveDown(1);
+    doc.font(fontNormal).text(assessment.measure).moveDown(1);
     doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
     doc
       .moveTo(30, doc.y)

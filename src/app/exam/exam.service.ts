@@ -67,7 +67,6 @@ export class ExamService extends BaseService {
           email: user.email,
           phone: user.phone,
         });
-        console.log(calculate);
         const value = calculate[0].point / exam.assessment.totalPoint;
         return {
           calculate,
