@@ -81,9 +81,9 @@ export class UserAnswerDao {
       .addSelect('SUM(userAnswer.point)', 'point')
       .addSelect('SUM(category.totalPoint)', 'totalPoint')
       .innerJoin(
-        'question_category',
+        'questionCategory',
         'category',
-        'category.id = userAnswer.questionCategory',
+        'category.id = userAnswer."questionCategoryId"',
       )
       .where('userAnswer.id = :id', { id })
       .groupBy('category.name')
