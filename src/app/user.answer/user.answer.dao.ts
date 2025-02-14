@@ -69,7 +69,7 @@ export class UserAnswerDao {
   partialCalculator = async (
     id: number,
   ): Promise<
-    { 
+    {
       categoryName: string;
       point: number;
       totalPoint: number;
@@ -87,7 +87,7 @@ export class UserAnswerDao {
       )
       .where('"userAnswer"."examId" = :id', { id })
       .groupBy('category.name')
-      .groupBy('category.totalPoint')
+      .addGroupBy('category.totalPoint')
       .getRawMany();
 
     return res;
