@@ -126,7 +126,7 @@ export class UserServiceService extends BaseService {
           firstname: email.firstname,
           lastname: email.lastname,
           phone: email.phone,
-          show: email.show,
+          visible: email.visible,
         });
         await this.mailer
           .sendMail({

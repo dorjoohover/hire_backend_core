@@ -33,7 +33,7 @@ export class SendLinkToEmail {
   @ApiProperty()
   code: number;
   @ApiProperty()
-  show: boolean;
+  visible: boolean;
 }
 
 export class SendLinkToEmails {

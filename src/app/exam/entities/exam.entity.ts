@@ -31,8 +31,8 @@ export class ExamEntity {
   lastname: string;
   @Column({ nullable: true })
   phone: string;
-  @Column({ default: true })
-  show: boolean;
+  @Column({ default: true, nullable: true })
+  visible: boolean;
 
   @Column({ nullable: true })
   startDate: Date;

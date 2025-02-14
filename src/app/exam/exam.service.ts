@@ -37,7 +37,7 @@ export class ExamService extends BaseService {
 
   public async getPdf(id: number, role?: number) {
     const res = await this.dao.findByCode(id);
-    if (!res.show && role == Role.client) {
+    if (!res.visible && role == Role.client) {
       throw new HttpException(
         'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
         HttpStatus.FORBIDDEN,
@@ -63,7 +63,7 @@ export class ExamService extends BaseService {
   public async calculateExamById(id: number, user?: UserEntity) {
     try {
       const exam = await this.dao.findByCode(id);
-      if (!exam.result && !exam.show && user.role == Role.client)
+      if (!exam.result && !exam.visible && user.role == Role.client)
         throw new HttpException(
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
@@ -103,7 +103,7 @@ export class ExamService extends BaseService {
       firstname: string;
       lastname: string;
       phone: string;
-      show: boolean;
+      visible: boolean;
     },
   ) {
     await this.dao.update(code, dto);
