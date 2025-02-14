@@ -20,6 +20,7 @@ import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfService } from './pdf.service';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -29,6 +30,7 @@ export class ExamService extends BaseService {
     private detailDao: ExamDetailDao,
     private pdfService: PdfService,
     private questionService: QuestionService,
+    private authService: AuthService,
     private userAnswer: UserAnswerDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
@@ -63,16 +65,16 @@ export class ExamService extends BaseService {
   public async calculateExamById(id: number, user?: UserEntity) {
     try {
       const exam = await this.dao.findByCode(id);
-      // if (!exam.result && !exam.visible && user.role == Role.client)
-      //   throw new HttpException(
-      //     'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
-      //     HttpStatus.FORBIDDEN,
-      //   );
-      // if (exam.result)
-      //   return {
-      //     calculate: exam.result,
-      //     value: parseFloat(exam.result) / exam.assessment.totalPoint,
-      //   };
+      if (!exam.result && !exam.visible && user.role == Role.client)
+        throw new HttpException(
+          'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
+          HttpStatus.FORBIDDEN,
+        );
+      if (exam.result)
+        return {
+          calculate: exam.result,
+          value: parseFloat(exam.result) / exam.assessment.totalPoint,
+        };
 
       const formule = exam.assessment.formule;
       // console.log(formule)
@@ -130,6 +132,7 @@ export class ExamService extends BaseService {
       });
       return;
     }
+    let token = null;
     const shuffle = res.assessment.questionShuffle;
     const answerShuffle = res.assessment.answerShuffle;
     let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
@@ -147,6 +150,14 @@ export class ExamService extends BaseService {
         ...res,
         userStartDate: new Date(),
       });
+      if (res.email && res.lastname && res.firstname) {
+        token = await this.authService.generateToken({
+          role: Role.client,
+          lastname: res.lastname,
+          email: res.email,
+          firstname: res.firstname,
+        });
+      }
       allCategories =
         categories.length <= 1
           ? []
@@ -209,6 +220,7 @@ export class ExamService extends BaseService {
         category: result.category,
         categories: allCategories,
         assessment: res.assessment,
+        token,
       };
     }
   }

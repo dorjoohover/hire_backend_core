@@ -16,6 +16,10 @@ import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { VisualizationService } from '../exam/visualization.service';
 import { SinglePdf } from '../exam/reports/single.pdf';
+import { AuthService } from 'src/auth/auth.service';
+import { UserService } from '../user/user.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserDao } from '../user/user.dao';
 
 @Module({
   controllers: [UserAnswerController],
@@ -31,6 +35,11 @@ import { SinglePdf } from '../exam/reports/single.pdf';
     ExamService,
     ExamDetailDao,
     PdfService,
+    AuthService,
+    UserService,
+    JwtService,
+    UserDao,
+
     QuestionService,
     QuestionCategoryDao,
     VisualizationService,

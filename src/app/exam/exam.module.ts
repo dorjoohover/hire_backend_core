@@ -15,6 +15,10 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { VisualizationService } from './visualization.service';
 import { PdfService } from './pdf.service';
 import { SinglePdf } from './reports/single.pdf';
+import { AuthService } from 'src/auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserService } from '../user/user.service';
+import { UserDao } from '../user/user.dao';
 
 @Module({
   controllers: [ExamController],
@@ -33,6 +37,10 @@ import { SinglePdf } from './reports/single.pdf';
     FormuleService,
     UserAnswerDao,
     SinglePdf,
+    AuthService,
+    JwtService,
+    UserService,
+    UserDao,
     QuestionAnswerCategoryDao,
   ],
   exports: [ExamService, ExamDao],

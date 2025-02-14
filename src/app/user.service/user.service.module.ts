@@ -22,6 +22,9 @@ import { PaymentDao } from '../payment/dao/payment.dao';
 import { PdfService } from '../exam/pdf.service';
 import { VisualizationService } from '../exam/visualization.service';
 import { SinglePdf } from '../exam/reports/single.pdf';
+import { AuthService } from 'src/auth/auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { UserService } from '../user/user.service';
 
 @Module({
   imports: [HttpModule],
@@ -32,6 +35,9 @@ import { SinglePdf } from '../exam/reports/single.pdf';
     TransactionDao,
     ExamService,
     UserDao,
+    AuthService,
+    JwtService,
+    UserService,
     ExamDetailDao,
     PaymentDao,
     QuestionService,

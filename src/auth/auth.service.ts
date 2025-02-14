@@ -79,11 +79,15 @@ export class AuthService {
         );
     }
     return {
-      accessToken: this.jwtService.sign({
-        result,
-      }),
+      accessToken: this.generateToken(result),
       user: result,
     };
+  }
+
+  async generateToken(result) {
+    return this.jwtService.sign({
+      result,
+    });
   }
 
   async register(user: CreateUserDto) {
