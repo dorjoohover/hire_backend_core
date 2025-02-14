@@ -287,7 +287,9 @@ export class QuestionService {
 
   public async deleteQuestion(id: number) {
     const res = await this.questionDao.findOne(id);
+    console.log(res)
     const category = res.category.id;
+    console.log(category)
     const assessment = await this.questionCategoryDao.findOne(category);
 
     await this.questionDao.deleteOne(id);
