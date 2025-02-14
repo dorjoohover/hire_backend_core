@@ -140,13 +140,13 @@ export class SinglePdf {
       doc.fontSize(24);
       const widthTotal = doc.widthOfString(`/${assessment.totalPoint}`);
       doc.fontSize(32);
-
+      y = doc.y;
       doc
         .fillColor(colors.orange)
         .text(
           exam.result,
           center + center - marginX - widthResult - widthTotal,
-          doc.y,
+          y,
           {
             // align: 'right',
             continued: true,
@@ -158,7 +158,7 @@ export class SinglePdf {
         .text(
           `/${assessment.totalPoint}`,
           center + center - marginX - widthTotal,
-          doc.y + 4,
+          y + 4,
           {
             continued: false,
           },
