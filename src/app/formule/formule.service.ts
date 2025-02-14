@@ -87,7 +87,6 @@ export class FormuleService extends BaseService {
     });
     let w = `"examId" = ${where}`;
     const res = await this.aggregate(formula, w);
-    console.log(res);
     if (res.length <= 1) return res;
     const response = await Promise.all(
       res.map(async (r) => {
