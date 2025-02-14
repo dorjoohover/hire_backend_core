@@ -19,6 +19,7 @@ import { ImageReport } from './reports/exam.pdf';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PdfService } from './pdf.service';
 import { UserEntity } from '../user/entities/user.entity';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -34,8 +35,14 @@ export class ExamService extends BaseService {
     super();
   }
 
-  public async getPdf(id: number) {
+  public async getPdf(id: number, role?: number) {
     const res = await this.dao.findByCode(id);
+    if (!res.show && role == Role.client) {
+      throw new HttpException(
+        'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
     const assessment = res.assessment;
 
     return await this.pdfService.createPdfInOneFile(assessment, res);
@@ -56,6 +63,17 @@ export class ExamService extends BaseService {
   public async calculateExamById(id: number, user?: UserEntity) {
     try {
       const exam = await this.dao.findByCode(id);
+      if (!exam.result && !exam.show && user.role == Role.client)
+        throw new HttpException(
+          'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
+          HttpStatus.FORBIDDEN,
+        );
+      if (exam.result)
+        return {
+          calculate: exam.result,
+          value: parseFloat(exam.result) / exam.assessment.totalPoint,
+        };
+
       const formule = exam.assessment.formule;
       // console.log(formule)
       if (formule) {
