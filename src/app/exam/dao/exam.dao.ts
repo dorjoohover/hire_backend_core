@@ -17,6 +17,7 @@ export class ExamDao {
       service: {
         id: dto.service,
       },
+      show: true,
       firstname: user ? user.firstname : null,
       lastname: user ? user.lastname : null,
       email: user ? user.email : null,
