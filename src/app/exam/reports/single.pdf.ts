@@ -12,7 +12,12 @@ export class SinglePdf {
     private answer: UserAnswerDao,
     private vis: VisualizationService,
   ) {}
-  async section(doc: PDFKit.PDFDocument, name: string, max: number, value: number) {
+  async section(
+    doc: PDFKit.PDFDocument,
+    name: string,
+    max: number,
+    value: number,
+  ) {
     const x = doc.x;
     const y = doc.y;
     const center = doc.page.width / 2;
@@ -92,22 +97,20 @@ export class SinglePdf {
 
       let y = doc.y;
 
-      if (diff != 0) {
-        doc
-          .font(fontNormal)
-          .fillColor(colors.black)
-          .fontSize(14)
-          .text('Тестийг ', doc.x, y, { continued: true })
-          .font(fontBold)
-          .fillColor(colors.orange)
-          .fontSize(18)
-          .text(`${diff} `, doc.x, y - 2, { continued: true })
-          .font(fontNormal)
-          .fillColor(colors.black)
-          .fontSize(14)
-          .text('минутад гүйцэтгэсэн', doc.x, y + 2)
-          .fontSize(14);
-      }
+      doc
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(14)
+        .text('Тестийг ', doc.x, y, { continued: true })
+        .font(fontBold)
+        .fillColor(colors.orange)
+        .fontSize(18)
+        .text(`${diff == 0 ? 1 : diff} `, doc.x, y - 2, { continued: true })
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(14)
+        .text('минутад гүйцэтгэсэн', doc.x, y + 2)
+        .fontSize(14);
       if (duration && duration != 0) {
         doc
           .text('(Боломжит ', { continued: true })
