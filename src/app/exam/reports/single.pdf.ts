@@ -142,14 +142,17 @@ export class SinglePdf {
         })
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 8, { continued: false });
-      doc.moveDown(1);
-      if (assessment.partialScore) {
-        const res = await this.answer.partialCalculator(exam.id);
-        res.map((v, i) => {
-          this.section(doc, v.categoryName, v.totalPoint, v.point);
+        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 8, {
+          continued: false,
         });
-      }
+      doc.moveDown(1);
+      // if (assessment.partialScore) {
+      const res = await this.answer.partialCalculator(exam.id);
+      console.log(res);
+      res.map((v, i) => {
+        this.section(doc, v.categoryName, v.totalPoint, v.point);
+      });
+      // }
 
       y = doc.y;
       doc

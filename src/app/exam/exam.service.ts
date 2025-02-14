@@ -54,24 +54,28 @@ export class ExamService extends BaseService {
 
   // onoo bujaats ywuulah
   public async calculateExamById(id: number, user?: UserEntity) {
-    const exam = await this.dao.findByCode(id);
-    const formule = exam.assessment.formule;
-    // console.log(formule)
-    if (formule) {
-      const calculate = await this.formule.calculate(formule, exam.id);
-      await this.dao.update(+id, {
-        result: calculate[0].point,
-        lastname: user.lastname,
-        firstname: user.firstname,
-        email: user.email,
-        phone: user.phone,
-      });
-      console.log(calculate);
-      const value = calculate[0].point / exam.assessment.totalPoint;
-      return {
-        calculate,
-        value,
-      };
+    try {
+      const exam = await this.dao.findByCode(id);
+      const formule = exam.assessment.formule;
+      // console.log(formule)
+      if (formule) {
+        const calculate = await this.formule.calculate(formule, exam.id);
+        await this.dao.update(+id, {
+          result: calculate[0].point,
+          lastname: user.lastname,
+          firstname: user.firstname,
+          email: user.email,
+          phone: user.phone,
+        });
+        console.log(calculate);
+        const value = calculate[0].point / exam.assessment.totalPoint;
+        return {
+          calculate,
+          value,
+        };
+      }
+    } catch (error) {
+      console.log(error);
     }
   }
 
