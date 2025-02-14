@@ -155,9 +155,14 @@ export class SinglePdf {
       doc
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 4, {
-          continued: false,
-        });
+        .text(
+          `/${assessment.totalPoint}`,
+          center + center - marginX - widthTotal,
+          doc.y + 4,
+          {
+            continued: false,
+          },
+        );
       doc.moveDown(1);
       // if (assessment.partialScore) {
       const res = await this.answer.partialCalculator(exam.id);

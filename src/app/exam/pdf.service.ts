@@ -118,7 +118,6 @@ export class PdfService {
     });
     doc.moveUp(1);
     const date = new Date(exam.userStartDate);
-    console.log(date, exam);
     doc.fontSize(14).text(`${dateFormatter(date)}`, {
       align: 'right',
     });
