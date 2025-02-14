@@ -72,9 +72,8 @@ export class ExamController {
   }
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })
-  calculateExamById(@Param('id') id: string, @Request() {user}) {
-
-    return this.examService.calculateExamById(+id, {lastname: user['lastname'], firstname: user['firstname']});
+  calculateExamById(@Param('id') id: string, @Request() { user }) {
+    return this.examService.calculateExamById(id, user);
   }
 
   @Get('exam/:id')
