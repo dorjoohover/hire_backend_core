@@ -43,12 +43,20 @@ export class AssessmentDao {
       where: { id: id },
       relations: ['questionCategories'],
     });
-    console.log(res)
     const point = res?.questionCategories?.reduce(
       (prev, r) => +prev + +r.totalPoint,
       0,
     );
-    await this.db.save({ ...res, totalPoint: point });
+    const questionCount = res?.questionCategories?.reduce(
+      (prev, r) => +prev + +r.questionCount,
+      0,
+    );
+
+    await this.db.save({
+      ...res,
+      totalPoint: point,
+      questionCount: questionCount,
+    });
   };
 
   findOne = async (id: number) => {

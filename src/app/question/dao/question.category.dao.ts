@@ -52,7 +52,7 @@ export class QuestionCategoryDao {
       },
       relations: ['questions'],
     });
-    const point = res.questions.reduce((prev, r) => +prev + +r.point, 0);
+    const point = res.questions?.[0].point * res.questionCount;
     await this.db.save({ ...res, totalPoint: point });
   };
   findOne = async (id: number) => {
