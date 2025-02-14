@@ -32,6 +32,8 @@ export class SendLinkToEmail {
   phone: string;
   @ApiProperty()
   code: number;
+  @ApiProperty()
+  show: boolean;
 }
 
 export class SendLinkToEmails {

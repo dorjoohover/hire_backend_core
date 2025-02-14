@@ -80,7 +80,13 @@ export class ExamService extends BaseService {
 
   public async updateExamByCode(
     code: number,
-    dto: { email: string; firstname: string; lastname: string; phone: string },
+    dto: {
+      email: string;
+      firstname: string;
+      lastname: string;
+      phone: string;
+      show: boolean;
+    },
   ) {
     await this.dao.update(code, dto);
   }
