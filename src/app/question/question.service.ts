@@ -290,7 +290,7 @@ export class QuestionService {
     console.log(res);
     const category = res.category.id;
     const assessment = await this.questionCategoryDao.findOne(category);
-
+    console.log(assessment)
     await this.questionCategoryDao.updatePoint(category);
     await this.assessmentDao.updatePoint(assessment.id);
     await this.questionDao.deleteOne(id);
