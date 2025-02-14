@@ -286,16 +286,13 @@ export class QuestionService {
   }
 
   public async deleteQuestion(id: number) {
-    console.log(id);
     const res = await this.questionDao.findOne(id);
-    console.log(res);
     const category = res.category.id;
-    console.log(category);
     const assessment = await this.questionCategoryDao.findOne(category);
 
-    await this.questionDao.deleteOne(id);
     await this.questionCategoryDao.updatePoint(category);
     await this.assessmentDao.updatePoint(assessment.id);
+    await this.questionDao.deleteOne(id);
   }
 
   remove(id: number) {
