@@ -145,7 +145,7 @@ export class SinglePdf {
         .fillColor(colors.orange)
         .text(
           exam.result,
-          doc.page.width - marginX - widthResult - widthTotal,
+          doc.page.width - marginX - widthResult - widthTotal - 4,
           y,
           {
             // align: 'right',
