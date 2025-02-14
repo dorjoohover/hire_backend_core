@@ -203,7 +203,6 @@ export class QuestionController {
   @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete('question/:id')
   deleteQuestion(@Param('id') id: string) {
-    console.log(id);
     return this.questionService.deleteQuestion(+id);
   }
   @Roles(Role.super_admin, Role.tester, Role.admin)
