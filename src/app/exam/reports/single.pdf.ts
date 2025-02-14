@@ -111,6 +111,7 @@ export class SinglePdf {
         .fontSize(14)
         .text('минутад гүйцэтгэсэн', doc.x, y + 2)
         .fontSize(14);
+
       if (duration && duration != 0) {
         doc
           .text('(Боломжит ', { continued: true })
@@ -130,22 +131,26 @@ export class SinglePdf {
         assessment.totalPoint,
         parseInt(exam.result),
       );
-      console.log(pie);
       const center = doc.page.width / 2;
       doc.image(pie, center + center - 168, y - 10, { width: 50 });
       doc.text('Нийт оноо', center, y - 10, { align: 'right' });
+      doc.moveTo(center, doc.y);
+      doc.font(fontBold).fontSize(32);
+      const widthResult = doc.widthOfString(exam.result);
+      doc.fontSize(24);
+      const widthTotal = doc.widthOfString(`/${assessment.totalPoint}`);
+      doc.fontSize(32);
+
       doc
-        .moveTo(center, doc.y)
-        .font(fontBold)
-        .fontSize(32)
         .fillColor(colors.orange)
-        .text(exam.result, center + center - 100, doc.y, {
+        .text(exam.result, center + center - widthResult - widthTotal, doc.y, {
           // align: 'right',
           continued: true,
-        })
+        });
+      doc
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 8, {
+        .text(`/${assessment.totalPoint}`, doc.x, doc.y + 4, {
           continued: false,
         });
       doc.moveDown(1);
