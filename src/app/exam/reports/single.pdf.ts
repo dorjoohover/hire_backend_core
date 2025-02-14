@@ -145,7 +145,7 @@ export class SinglePdf {
         .fillColor(colors.orange)
         .text(
           exam.result,
-          center + center - marginX - widthResult - widthTotal - 8,
+          doc.page.width - marginX - marginX - widthResult - widthTotal - 8,
           y,
           {
             // align: 'right',
@@ -155,14 +155,9 @@ export class SinglePdf {
       doc
         .fontSize(24)
         .fillColor(colors.black)
-        .text(
-          `/${assessment.totalPoint}`,
-          center + center - marginX - widthTotal,
-          y + 4,
-          {
-            continued: false,
-          },
-        );
+        .text(`/${assessment.totalPoint}`, doc.x, y + 4, {
+          continued: false,
+        });
       doc.moveDown(1);
       // if (assessment.partialScore) {
       const res = await this.answer.partialCalculator(exam.id);
