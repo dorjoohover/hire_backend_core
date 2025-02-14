@@ -43,7 +43,8 @@ export class AssessmentDao {
       where: { id: id },
       relations: ['questionCategories'],
     });
-    const point = res.questionCategories.reduce(
+
+    const point = res?.questionCategories?.reduce(
       (prev, r) => +prev + +r.totalPoint,
       0,
     );
