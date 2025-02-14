@@ -143,10 +143,15 @@ export class SinglePdf {
 
       doc
         .fillColor(colors.orange)
-        .text(exam.result, center + center - widthResult - widthTotal, doc.y, {
-          // align: 'right',
-          continued: true,
-        });
+        .text(
+          exam.result,
+          center + center - marginX - widthResult - widthTotal,
+          doc.y,
+          {
+            // align: 'right',
+            continued: true,
+          },
+        );
       doc
         .fontSize(24)
         .fillColor(colors.black)
