@@ -155,7 +155,7 @@ export class SinglePdf {
       doc
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${assessment.totalPoint}`, doc.x, y + 4, {
+        .text(`/${assessment.totalPoint}`, doc.x + 2, y + 4, {
           continued: false,
         });
       doc.moveDown(1);
