@@ -50,7 +50,7 @@ export const home = (
   doc.font(fontBold).fontSize(16).fillColor('#ffffff');
   doc.moveDown(3);
   doc
-    .text(firstname, doc.x, doc.y + 100, {
+    .text(lastname, doc.x, doc.y + 100, {
       continued: true,
     })
     .font(fontNormal)
@@ -58,7 +58,7 @@ export const home = (
       continued: true,
     })
     .font(fontBold)
-    .text(lastname, {
+    .text(firstname, {
       continued: true,
     })
     .font(fontNormal)
