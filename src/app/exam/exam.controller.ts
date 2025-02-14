@@ -49,12 +49,12 @@ export class ExamController {
   }
 
   @Public()
-  @Get('/pdf/:id')
-  @ApiParam({ name: 'id' })
-  async requestPdf(@Res() res: Response, @Param('id') id: string) {
+  @Get('/pdf/:code')
+  @ApiParam({ name: 'code' })
+  async requestPdf(@Res() res: Response, @Param('code') code: string) {
     let filePath: any;
     try {
-      filePath = await this.examService.getPdf(+id);
+      filePath = await this.examService.getPdf(+code);
 
       res.setHeader('Content-disposition', 'attachment; filename=output.pdf');
       res.setHeader('Content-type', 'application/pdf');

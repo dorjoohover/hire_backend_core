@@ -35,7 +35,7 @@ export class ExamService extends BaseService {
   }
 
   public async getPdf(id: number) {
-    const res = await this.dao.findOne(id);
+    const res = await this.dao.findByCode(id);
     const assessment = res.assessment;
 
     return await this.pdfService.createPdfInOneFile(assessment, res);
