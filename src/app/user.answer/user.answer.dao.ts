@@ -83,7 +83,7 @@ export class UserAnswerDao {
       .innerJoin(
         'questionCategory',
         'category',
-        'category.id = userAnswer."questionCategoryId"',
+        'category.id = "userAnswer"."questionCategoryId"',
       )
       .where('"userAnswer"."examId" = :id', { id })
       .groupBy('category.name')
