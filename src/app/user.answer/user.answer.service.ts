@@ -111,15 +111,15 @@ export class UserAnswerService extends BaseService {
             res.push(r);
           }),
         );
-        if (dto.end) {
-          await this.examDao.endExam(dto.data[0].code);
-          const response = await this.examService.calculateExamById(
-            dto.data[0].code,
-            true,
-            user,
-          );
-          return response.visible ? { visible: response.visible } : response;
-        }
+      }
+      if (dto.end) {
+        await this.examDao.endExam(dto.data[0].code);
+        const response = await this.examService.calculateExamById(
+          dto.data[0].code,
+          true,
+          user,
+        );
+        return response.visible ? { visible: response.visible } : response;
       }
 
       // if (res.includes(undefined)) {
