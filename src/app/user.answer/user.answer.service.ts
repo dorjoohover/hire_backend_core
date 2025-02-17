@@ -149,7 +149,6 @@ export class UserAnswerService extends BaseService {
   }
   public async findOne(id: number, code: number) {
     let res = await this.dao.findByCode(code, id);
-    console.log(res);
     const formatted = await Promise.all(
       res.map((r) => {
         const key = r.answer?.id;
@@ -163,7 +162,6 @@ export class UserAnswerService extends BaseService {
         };
       }),
     );
-    console.log(formatted);
 
     const groupedByQuestionAndKey = formatted.reduce((acc, item) => {
       const questionId = item.question;
@@ -172,7 +170,7 @@ export class UserAnswerService extends BaseService {
         acc[questionId] = {};
       }
 
-      const key = item.answer;
+      const key = item.answer ?? item.matrix;
       if (key == undefined) {
         acc[questionId] = {};
       } else {
