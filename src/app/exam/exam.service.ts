@@ -62,10 +62,19 @@ export class ExamService extends BaseService {
   }
 
   // onoo bujaats ywuulah
-  public async calculateExamById(id: number, user?: UserEntity) {
+  public async calculateExamById(
+    id: number,
+    calculate = false,
+    user?: UserEntity,
+  ) {
     try {
       const exam = await this.dao.findByCode(id);
-      if (!exam.result && !exam.visible && user.role == Role.client)
+      if (
+        !exam.result &&
+        !exam.visible &&
+        user.role == Role.client &&
+        !calculate
+      )
         throw new HttpException(
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
@@ -73,6 +82,7 @@ export class ExamService extends BaseService {
       if (exam.result)
         return {
           calculate: exam.result,
+          visible: exam.visible,
           value: parseFloat(exam.result) / exam.assessment.totalPoint,
         };
 
@@ -80,7 +90,6 @@ export class ExamService extends BaseService {
       // console.log(formule)
       if (formule) {
         const calculate = await this.formule.calculate(formule, exam.id);
-        console.log(calculate);
         await this.dao.update(+id, {
           result: calculate[0].point,
           lastname: user.lastname,

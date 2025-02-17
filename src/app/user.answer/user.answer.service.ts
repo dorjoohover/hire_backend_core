@@ -25,7 +25,6 @@ export class UserAnswerService extends BaseService {
     private examService: ExamService,
     private questionAnswerDao: QuestionAnswerDao,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
-    private assessmentDao: AssessmentDao,
   ) {
     super();
   }
@@ -41,7 +40,6 @@ export class UserAnswerService extends BaseService {
       const res = [];
       const exam = await this.examDao.findByCode(dto.data[0].code);
       for (const d of dto.data) {
-        console.log(d);
         if (!d.question) {
           message = 'Асуулт байхгүй';
           status = HttpStatus.BAD_REQUEST;
@@ -53,11 +51,7 @@ export class UserAnswerService extends BaseService {
           status = HttpStatus.BAD_REQUEST;
           throw new HttpException(message, status);
         }
-        // if (!d.answer) {
-        //   message = 'Хариулт байхгүй';
-        //   status = HttpStatus.BAD_REQUEST;
-        //   throw new HttpException(message, status);
-        // }
+
         const question = await this.questionDao.findOne(d.question);
         if (!d || d == null) {
           message = 'Оноогүй байна.';
@@ -117,11 +111,12 @@ export class UserAnswerService extends BaseService {
         );
         if (dto.end) {
           await this.examDao.endExam(dto.data[0].code);
-          const res = await this.examService.calculateExamById(
+          const response = await this.examService.calculateExamById(
             dto.data[0].code,
+            true,
             user,
           );
-          console.log(res);
+          return response;
         }
       }
 
