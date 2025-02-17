@@ -92,10 +92,10 @@ export class ExamService extends BaseService {
         const calculate = await this.formule.calculate(formule, exam.id);
         await this.dao.update(+id, {
           result: calculate[0].point,
-          lastname: user.lastname,
-          firstname: user.firstname,
-          email: user.email,
-          phone: user.phone,
+          lastname: user?.lastname,
+          firstname: user?.firstname,
+          email: user?.email,
+          phone: user?.phone,
         });
         const value = calculate[0].point / exam.assessment.totalPoint;
         return {
