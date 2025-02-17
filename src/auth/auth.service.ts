@@ -78,14 +78,15 @@ export class AuthService {
           HttpStatus.UNAUTHORIZED,
         );
     }
+    const token = await this.generateToken(result);
     return {
-      accessToken: this.generateToken(result),
+      accessToken: token,
       user: result,
     };
   }
 
   async generateToken(result) {
-    return this.jwtService.sign({
+    return await this.jwtService.sign({
       result,
     });
   }
