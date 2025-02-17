@@ -116,7 +116,7 @@ export class UserAnswerService extends BaseService {
             true,
             user,
           );
-          return response;
+          return response.visible ? { visible: response.visible } : response;
         }
       }
 

@@ -10,7 +10,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateOtp, CreateUserDto } from './dto/create-user.dto';
+import { CreateOtp, CreateUserDto, PasswordDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -50,6 +50,29 @@ export class UserController {
   @Get()
   findAll() {
     return this.userService.getAll();
+  }
+
+  @Public()
+  @Get('forget/send/:email')
+  @ApiParam({ name: 'email' })
+  forgetPassword(@Param('email') email: string) {
+    return this.userService.sendOtp(email);
+  }
+  @Public()
+  @Get('forget/verify/:code/:email')
+  @ApiParam({ name: 'code' })
+  @ApiParam({ name: 'email' })
+  async verifyCode(@Param('code') code: string, @Param('email') email: string) {
+    const user = await this.userService.getUser(email);
+    if (user.forget == +code) {
+      return true;
+    }
+    return false;
+  }
+  @Public()
+  @Post('forget/password')
+  updatePassword(@Body() dto: PasswordDto) {
+    return this.userService.updatePassword(dto.email, dto.password)
   }
 
   @ApiBearerAuth('access-token')

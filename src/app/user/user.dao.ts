@@ -37,6 +37,16 @@ export class UserDao {
     return res;
   };
 
+  updateByEmail = async (dto: {
+    email: string;
+    password?: string;
+    code?: number;
+  }) => {
+    const res = await this._db.findOne({ where: { email: dto.email } });
+    if (dto.password) await this._db.save({ ...res, password: dto.password });
+    if (dto.code) await this._db.save({ ...res, forget: dto.code });
+  };
+
   update = async (user: UpdateUserDto) => {
     const { id, ...d } = user;
     const res = await this._db.findOne({ where: { id: id } });

@@ -7,6 +7,8 @@ import * as bcrypt from 'bcrypt';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
+const saltOrRounds = 1;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -32,7 +34,6 @@ export class UserService {
     return res;
   }
   public async addUser(dto: CreateUserDto) {
-    const saltOrRounds = 1;
     let password = null;
     if (dto.password) {
       password = await bcrypt.hash(dto.password, saltOrRounds);
@@ -69,6 +70,28 @@ export class UserService {
   }
   public async getAll() {
     return await this.dao.getAll();
+  }
+
+  public async sendOtp(email: string) {
+    const code = Math.round(Math.random() * 100000);
+    await this.dao.updateByEmail({
+      email,
+      code,
+    });
+    await this.mailService
+      .sendMail({
+        to: email,
+        subject: 'Forget password',
+        html: `<h1>Click the link</h1>
+             <h3>${code}</h3>
+              </div>`,
+      })
+      .catch((err) => console.log(err));
+  }
+
+  public async updatePassword(email: string, password: string) {
+    const hashed = await bcrypt.hash(password, saltOrRounds);
+    await this.dao.updateByEmail({ email, password: hashed });
   }
 
   public async payment(dto: PaymentUserDto) {

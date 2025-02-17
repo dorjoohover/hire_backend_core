@@ -101,6 +101,7 @@ export class ExamService extends BaseService {
         return {
           calculate,
           value,
+          visible: exam.visible,
         };
       }
     } catch (error) {

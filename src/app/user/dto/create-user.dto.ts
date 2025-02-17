@@ -37,6 +37,12 @@ export class CreateUserDto {
   emailVerified?: boolean;
 }
 
+export class PasswordDto {
+  @ApiProperty()
+  password: string;
+  @ApiProperty()
+  email: string;
+}
 export class UserDto {
   @ApiProperty()
   @IsEmail()

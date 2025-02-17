@@ -38,6 +38,8 @@ export class UserEntity {
   organizationRegisterNumber?: string;
   @Column({ nullable: true })
   position?: string;
+  @Column({ nullable: true })
+  forget?: number;
   @CreateDateColumn()
   createdAt?: Date;
   @Column({ default: 0 })
