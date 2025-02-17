@@ -38,6 +38,7 @@ export class AuthService {
     firstname: string,
   ) {
     let user = await this.usersService.getUser(email);
+    console.log(user);
     if (!user) {
       user = await this.usersService.addUser({
         email: email,
