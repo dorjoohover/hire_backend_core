@@ -38,7 +38,7 @@ export class AuthService {
     firstname: string,
   ) {
     let user = await this.usersService.getUser(email);
-    if (user) {
+    if (!user) {
       user = await this.usersService.addUser({
         email: email,
         emailVerified: true,
