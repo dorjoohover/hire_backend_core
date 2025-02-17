@@ -88,6 +88,7 @@ export class UserAnswerService extends BaseService {
               (answer.matrix
                 ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
                 : await this.questionAnswerDao.findOne(answer.answer));
+            console.log(answer);
             const body: CreateUserAnswerDto = {
               ...d,
               startDate: dto.startDate,
@@ -151,7 +152,7 @@ export class UserAnswerService extends BaseService {
     let res = await this.dao.findByCode(code, id);
     const formatted = await Promise.all(
       res.map((r) => {
-        console.log(r)
+        console.log(r);
         const key = r.answer?.id;
         return {
           answer: key,
