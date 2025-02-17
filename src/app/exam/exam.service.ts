@@ -151,12 +151,14 @@ export class ExamService extends BaseService {
         userStartDate: new Date(),
       });
       if (res.email && res.lastname && res.firstname) {
-        token = await this.authService.generateToken({
+        const t = await this.authService.generateToken({
           role: Role.client,
           lastname: res.lastname,
           email: res.email,
           firstname: res.firstname,
         });
+        console.log(t);
+        token = t;
       }
       allCategories =
         categories.length <= 1
