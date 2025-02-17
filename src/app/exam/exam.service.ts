@@ -21,6 +21,7 @@ import { PdfService } from './pdf.service';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
+import { ReportType } from 'src/base/constants';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -90,13 +91,15 @@ export class ExamService extends BaseService {
       // console.log(formule)
       if (formule) {
         const calculate = await this.formule.calculate(formule, exam.id);
-        await this.dao.update(+id, {
-          result: calculate[0].point,
-          lastname: user?.lastname,
-          firstname: user?.firstname,
-          email: user?.email,
-          phone: user?.phone,
-        });
+        if (exam.assessment.report == ReportType.CORRECT) {
+          await this.dao.update(+id, {
+            result: calculate[0].point,
+            lastname: user?.lastname,
+            firstname: user?.firstname,
+            email: user?.email,
+            phone: user?.phone,
+          });
+        }
         const value = calculate[0].point / exam.assessment.totalPoint;
         return {
           calculate,
