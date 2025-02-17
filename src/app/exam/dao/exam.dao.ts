@@ -90,6 +90,7 @@ export class ExamDao {
           },
         },
       },
+      relations: ['assessment'],
     });
   };
   findByCode = async (code: number) => {

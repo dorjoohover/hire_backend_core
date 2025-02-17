@@ -283,7 +283,13 @@ export class ExamService extends BaseService {
   }
 
   public async findByUser(serviceId: number[], id: number) {
-    return await this.dao.findByUser(serviceId, id);
+    let res = await this.dao.findByUser(serviceId, id);
+    const formatted = [];
+    for (const r of res) {
+      const { assessment, ...body } = r;
+      formatted.push({ ...body, totalPoint: assessment.totalPoint });
+    }
+    return formatted;
   }
   remove(id: number) {
     return `This action removes a #${id} exam`;

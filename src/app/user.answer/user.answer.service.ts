@@ -40,7 +40,6 @@ export class UserAnswerService extends BaseService {
       const res = [];
       const exam = await this.examDao.findByCode(dto.data[0].code);
       for (const d of dto.data) {
-        console.log(d);
         if (!d.question) {
           message = 'Асуулт байхгүй';
           status = HttpStatus.BAD_REQUEST;
@@ -89,7 +88,6 @@ export class UserAnswerService extends BaseService {
               (answer.matrix
                 ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
                 : await this.questionAnswerDao.findOne(answer.answer));
-            console.log(answer);
             const body: CreateUserAnswerDto = {
               ...d,
               startDate: dto.startDate,
