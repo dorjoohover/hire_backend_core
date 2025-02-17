@@ -10,6 +10,7 @@ import { UserService } from 'src/app/user/user.service';
 import { LoginUserDto } from './auth.dto';
 import { CreateUserDto } from 'src/app/user/dto/create-user.dto';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
+import { jwtConstants } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -86,7 +87,7 @@ export class AuthService {
   }
 
   async generateToken(result) {
-    return await this.jwtService.sign({
+    return this.jwtService.sign({
       result,
     });
   }

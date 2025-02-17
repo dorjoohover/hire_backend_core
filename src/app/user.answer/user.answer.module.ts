@@ -18,10 +18,17 @@ import { VisualizationService } from '../exam/visualization.service';
 import { SinglePdf } from '../exam/reports/single.pdf';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { UserDao } from '../user/user.dao';
+import { jwtConstants } from 'src/auth/constants';
 
 @Module({
+  imports: [
+    JwtModule.register({
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '30d' },
+    }),
+  ],
   controllers: [UserAnswerController],
   providers: [
     UserAnswerService,
@@ -37,7 +44,6 @@ import { UserDao } from '../user/user.dao';
     PdfService,
     AuthService,
     UserService,
-    JwtService,
     UserDao,
 
     QuestionService,
