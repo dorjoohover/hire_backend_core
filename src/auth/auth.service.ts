@@ -11,6 +11,7 @@ import { LoginUserDto } from './auth.dto';
 import { CreateUserDto } from 'src/app/user/dto/create-user.dto';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { jwtConstants } from './constants';
+import { Role } from './guards/role/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +29,26 @@ export class AuthService {
       return result;
     }
     return 0;
+  }
+
+  async forceLogin(
+    email: string,
+    phone: string,
+    lastname: string,
+    firstname: string,
+  ) {
+    let user = await this.usersService.getUser(email);
+    if (user) {
+      user = await this.usersService.addUser({
+        email: email,
+        emailVerified: true,
+        firstname: firstname,
+        lastname: lastname,
+        phone: phone,
+        role: Role.client,
+      });
+    }
+    return await this.generateToken(user);
   }
 
   async login(user: LoginUserDto) {
@@ -87,7 +108,6 @@ export class AuthService {
   }
 
   async generateToken(result) {
-    console.log(result);
     return this.jwtService.sign({
       result,
     });

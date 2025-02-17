@@ -53,7 +53,7 @@ export class UserService {
         );
       }
     }
-    await this.dao.add({
+    const res = await this.dao.add({
       ...dto,
       password: password,
       role:
@@ -63,6 +63,7 @@ export class UserService {
       firstname: dto.firstname ?? '',
       emailVerified: dto.role != null,
     });
+    return res;
     // throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
     // return res;
   }

@@ -34,7 +34,7 @@ export class UserDao {
       ...user,
     });
     await this._db.save(res);
-    return true;
+    return res;
   };
 
   update = async (user: UpdateUserDto) => {
