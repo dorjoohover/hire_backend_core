@@ -133,16 +133,6 @@ export class UserServiceService extends BaseService {
           phone: email.phone,
           visible: email.visible,
         });
-
-        await this.userDao.add({
-          email: email.email,
-          emailVerified: true,
-          firstname: email.firstname,
-          lastname: email.lastname,
-          password: null,
-          role: Role.client,
-          wallet: 0,
-        });
         await this.mailer
           .sendMail({
             to: email.email,
