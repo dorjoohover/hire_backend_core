@@ -117,14 +117,13 @@ export class ExamService extends BaseService {
     const res = await this.dao.findByCode(code);
 
     if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    if (res.endDate && res.startDate && res.endDate < new Date())
-      throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
-    if (res.userEndDate != null)
-      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
+    // if (res.endDate && res.startDate && res.endDate < new Date())
+    //   throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
+    // if (res.userEndDate != null)
+    //   throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
     const answers = await this.userAnswer.findByCode(code);
-    console.log(res);
     if (category == -1) {
       await this.dao.update(res.id, {
         ...res,
@@ -150,6 +149,7 @@ export class ExamService extends BaseService {
         ...res,
         userStartDate: new Date(),
       });
+      console.log(res.email && res.lastname && res.firstname);
       if (res.email && res.lastname && res.firstname) {
         const t = await this.authService.generateToken({
           role: Role.client,

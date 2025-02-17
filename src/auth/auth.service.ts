@@ -87,6 +87,7 @@ export class AuthService {
   }
 
   async generateToken(result) {
+    console.log(result);
     return this.jwtService.sign({
       result,
     });
