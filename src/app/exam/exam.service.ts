@@ -143,13 +143,21 @@ export class ExamService extends BaseService {
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
+    if (res.email && res.lastname && res.firstname) {
+      const t = await this.authService.generateToken({
+        role: Role.client,
+        lastname: res.lastname,
+        email: res.email,
+        firstname: res.firstname,
+      });
+      token = t;
+    }
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
         ...res,
         userStartDate: new Date(),
       });
-      console.log(res.email && res.lastname && res.firstname);
       if (res.email && res.lastname && res.firstname) {
         const t = await this.authService.generateToken({
           role: Role.client,
@@ -157,7 +165,6 @@ export class ExamService extends BaseService {
           email: res.email,
           firstname: res.firstname,
         });
-        console.log(t);
         token = t;
       }
       allCategories =
