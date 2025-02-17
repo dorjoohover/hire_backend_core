@@ -46,6 +46,12 @@ export const AssessmentType = {
   UNELGEE: 20,
 };
 
+
+export const ReportType = {
+  CORRECT: 10, 
+  DISC: 20,
+}
+
 export const PaymentStatus = {
   PENDING: 10,
   SUCCESS: 20,

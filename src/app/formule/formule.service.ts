@@ -100,7 +100,7 @@ export class FormuleService extends BaseService {
         console.log(res);
         return {
           point: sum,
-          aCate: aCate.name,
+          aCate: aCate?.name ?? aCate,
         };
       }),
     );

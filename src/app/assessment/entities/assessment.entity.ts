@@ -62,6 +62,8 @@ export class AssessmentEntity {
 
   @Column()
   type: number;
+  @Column()
+  report: number;
 
   @Column({ nullable: true, default: false })
   partialScore: boolean;
