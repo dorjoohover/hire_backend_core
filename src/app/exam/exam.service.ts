@@ -143,6 +143,7 @@ export class ExamService extends BaseService {
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
+    console.log(res);
     if (res.email && res.lastname && res.firstname) {
       const t = await this.authService.generateToken({
         role: Role.client,
@@ -152,6 +153,7 @@ export class ExamService extends BaseService {
       });
       token = t;
     }
+    return token;
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
