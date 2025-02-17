@@ -117,10 +117,10 @@ export class ExamService extends BaseService {
     const res = await this.dao.findByCode(code);
 
     if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    // if (res.endDate && res.startDate && res.endDate < new Date())
-    //   throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
-    // if (res.userEndDate != null)
-    //   throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
+    if (res.endDate && res.startDate && res.endDate < new Date())
+      throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
+    if (res.userEndDate != null)
+      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
     // date false ued ehleh
     // date true ued duusah esvel urgeljluuleh
     const answers = await this.userAnswer.findByCode(code);
@@ -143,17 +143,6 @@ export class ExamService extends BaseService {
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
-    console.log(res);
-    if (res.email && res.lastname && res.firstname) {
-      const t = await this.authService.generateToken({
-        role: Role.client,
-        lastname: res.lastname,
-        email: res.email,
-        firstname: res.firstname,
-      });
-      token = t;
-    }
-    return token;
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
