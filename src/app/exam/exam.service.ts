@@ -34,6 +34,7 @@ export class ExamService extends BaseService {
     private questionService: QuestionService,
     private authService: AuthService,
     private userAnswer: UserAnswerDao,
+    private assessment: AssessmentDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
@@ -131,8 +132,8 @@ export class ExamService extends BaseService {
       for (const r of res) {
         let inten,
           total = '';
-
-        const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
+        const value = await this.assessment.findOne(r['answerCategoryId']);
+        const cate = DISC.graph3[value.name.toLowerCase()];
         const point = +r['point'];
         for (const [k, v] of Object.entries(cate)) {
           for (const { min, max, intensity } of v as any) {
