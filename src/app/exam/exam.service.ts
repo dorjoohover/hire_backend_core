@@ -133,10 +133,11 @@ export class ExamService extends BaseService {
       for (const r of res) {
         let inten,
           total = '';
+        console.log(r);
         const value = await this.answerCategory.findOne(r['answerCategoryId']);
-        console.log(value)
+        console.log(value);
         const cate = DISC.graph3[value.name.toLowerCase()];
-        console.log(cate)
+        console.log(cate);
         const point = +r['point'];
         for (const [k, v] of Object.entries(cate)) {
           for (const { min, max, intensity } of v as any) {
