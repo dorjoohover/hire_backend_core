@@ -132,7 +132,7 @@ export class ExamService extends BaseService {
         let inten,
           total = '';
 
-        const cate = DISC.graph3[r['aCate']];
+        const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
         const point = +r['point'];
         for (const [k, v] of Object.entries(cate)) {
           for (const { min, max, intensity } of v as any) {
@@ -148,6 +148,7 @@ export class ExamService extends BaseService {
             }
           }
         }
+        console.log(inten);
         response += total;
       }
       for (const [k, v] of Object.entries(DISC.pattern)) {
