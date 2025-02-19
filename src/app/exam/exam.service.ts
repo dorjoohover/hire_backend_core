@@ -22,6 +22,7 @@ import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
 import { ReportType } from 'src/base/constants';
+import { DISC } from 'src/assets/report/disc';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -90,25 +91,74 @@ export class ExamService extends BaseService {
       const formule = exam.assessment.formule;
       // console.log(formule)
       if (formule) {
-        const calculate = await this.formule.calculate(formule, exam.id);
-        if (exam.assessment.report == ReportType.CORRECT) {
-          await this.dao.update(+id, {
-            result: calculate[0].point,
-            lastname: user?.lastname,
-            firstname: user?.firstname,
-            email: user?.email,
-            phone: user?.phone,
-          });
-        }
-        const value = calculate[0].point / exam.assessment.totalPoint;
+        const res = await this.formule.calculate(formule, exam.id);
+
+        const calculate = await this.calculateByReportType(
+          res,
+          exam.assessment.report,
+          user,
+          id,
+        );
         return {
           calculate,
-          value,
           visible: exam.visible,
         };
       }
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  public async calculateByReportType(
+    res: any,
+    type: number,
+    user: UserEntity,
+    id: number,
+  ) {
+    if (type == ReportType.CORRECT) {
+      await this.dao.update(+id, {
+        result: res[0].point,
+        lastname: user?.lastname,
+        firstname: user?.firstname,
+        email: user?.email,
+        phone: user?.phone,
+      });
+      return res[0].point;
+    }
+    if (type == ReportType.DISC) {
+      let response = '',
+        agent = '';
+      for (const r of res) {
+        let inten,
+          total = '';
+
+        const cate = DISC.graph3[r['aCate']];
+        const point = +r['point'];
+        for (const [k, v] of Object.entries(cate)) {
+          for (const { min, max, intensity } of v as any) {
+            if (point == min || max == max) {
+              inten = intensity;
+              total = `${k}`;
+              break;
+            }
+            if (point >= min || point <= max) {
+              inten = intensity;
+              total = `${k}`;
+              break;
+            }
+          }
+        }
+        response += total;
+      }
+      for (const [k, v] of Object.entries(DISC.pattern)) {
+        for (const value of v) {
+          if (+response == value) {
+            agent = k;
+          }
+          break;
+        }
+      }
+      return agent;
     }
   }
 
