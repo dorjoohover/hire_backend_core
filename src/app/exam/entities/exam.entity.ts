@@ -1,6 +1,7 @@
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
@@ -36,7 +37,8 @@ export class ExamEntity {
 
   @Column({ nullable: true })
   startDate: Date;
-
+  @CreateDateColumn({ nullable: true })
+  createdAt: Date;
   @Column({ nullable: true })
   endDate: Date;
   @Column({ nullable: true })
