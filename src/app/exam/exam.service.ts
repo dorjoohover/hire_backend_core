@@ -23,6 +23,7 @@ import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
 import { ReportType } from 'src/base/constants';
 import { DISC } from 'src/assets/report/disc';
+import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -34,7 +35,7 @@ export class ExamService extends BaseService {
     private questionService: QuestionService,
     private authService: AuthService,
     private userAnswer: UserAnswerDao,
-    private assessment: AssessmentDao,
+    private answerCategory: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
@@ -132,7 +133,7 @@ export class ExamService extends BaseService {
       for (const r of res) {
         let inten,
           total = '';
-        const value = await this.assessment.findOne(r['answerCategoryId']);
+        const value = await this.answerCategory.findOne(r['answerCategoryId']);
         console.log(value)
         const cate = DISC.graph3[value.name.toLowerCase()];
         console.log(cate)
