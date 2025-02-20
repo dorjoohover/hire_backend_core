@@ -116,45 +116,46 @@ export class ExamDao {
   };
 
   findQuartile = async (assessment: number, r: number) => {
-    const result = await this.db
-      .createQueryBuilder()
-      .select([
-        `MIN(CAST(t.result AS NUMERIC)) AS Q0`,
-        `percentile_cont(0.25) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q1`,
-        `percentile_cont(0.50) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q2`, // Median
-        `percentile_cont(0.75) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q3`,
-        `MAX(CAST(t.result AS NUMERIC)) AS Q4`,
-      ])
-      .from('exam', 't')
-      .where('t."assessmentId" = :id', { id: assessment })
-      .getRawOne();
-
-    const res = await this.db
-      .createQueryBuilder()
-      .select([
-        't.id',
-        'CAST(t.result AS NUMERIC) AS point_value',
-        'ROW_NUMBER() OVER (ORDER BY CAST(t.result AS NUMERIC) ASC) AS row_index',
-      ])
-      .from('exam', 't')
-      .where('t."assessmentId" = :id', { id: assessment })
-      .andWhere('CAST(t.result AS NUMERIC) = :targetPoint', {
-        targetPoint: Number(r),
-      })
-      .getRawOne();
-    const count = await this.db.count({
+    const [res, count] = await this.db.findAndCount({
       where: {
         assessment: {
           id: assessment,
         },
       },
+      order: {
+        result: 'ASC', // Sort results in ascending order
+      },
     });
-    let percent = Math.round((res['t_id'] / count) * 100);
-    if (percent == 0) percent = 1;
-    if (percent == 100) percent = 99;
-    return {
-      q: result,
-      percent,
+
+    if (count === 0) return { q: [], percent: null }; // Handle empty dataset
+
+    const calculatePercentile = (percent: number) => {
+      const pos = ((count + 1) * percent) / 100;
+      const lowerIndex = Math.floor(pos) - 1;
+      const upperIndex = Math.min(lowerIndex + 1, res.length - 1); // Prevent out-of-bounds
+
+      if (lowerIndex < 0) return +res[0].result; // Ensure valid index
+
+      const fraction = +(pos - Math.floor(pos)).toFixed(2);
+      return (
+        +res[lowerIndex].result +
+        fraction * (+res[upperIndex].result - +res[lowerIndex].result)
+      );
     };
+
+    // Compute quartiles
+    const q = [
+      +res[0].result,
+      calculatePercentile(25),
+      calculatePercentile(50),
+      calculatePercentile(75),
+      +res[res.length - 1].result,
+    ];
+
+    // Find percentile of the given `r` value
+    const index = res.findIndex((entry) => +entry.result === r);
+    const percent = index !== -1 ? ((index + 1) / count) * 100 : null; // Null if `r` not found
+
+    return { q, percent };
   };
 }

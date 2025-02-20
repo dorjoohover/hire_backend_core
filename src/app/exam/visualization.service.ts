@@ -9,8 +9,10 @@ export class VisualizationService {
     q: number[],
     value: number,
     percent: number,
+    width: number,
   ): Promise<Buffer> {
     const max = Math.max(...q);
+    const min = Math.min(...q);
     const data = [
       ['', q[0]],
       ['25%', q[1]],
@@ -69,7 +71,7 @@ export class VisualizationService {
             },
             label: {
               show: true,
-              formatter: '89%',
+              formatter: `${percent}%`,
               fontSize: 18,
               fontWeight: 'bold',
               color: '#fff',
@@ -104,7 +106,7 @@ export class VisualizationService {
       ],
     };
 
-    const canvas = createCanvas(1000, 700);
+    const canvas = createCanvas(width, (width * (min == 0 ? 1 : min)) / max);
     const chart = echarts.init(canvas as any);
 
     chart.setOption(echartOption);

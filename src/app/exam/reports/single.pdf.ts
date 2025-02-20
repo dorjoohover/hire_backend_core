@@ -216,22 +216,17 @@ export class SinglePdf {
     result: number,
   ) {
     const res: {
-      q: {
-        q0: number;
-        q1: number;
-        q2: number;
-        q3: number;
-        q4: number;
-      };
+      q: number[];
       percent: number;
     } = await this.exam.findQuartile(assessment, result);
     console.log(res);
+    const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       Object.values(res.q),
       result,
       res.percent,
+      width,
     );
-    const width = doc.page.width - marginX - marginX;
     doc.image(buffer, { width: width, height: (width / 515) * 175 });
   }
 }
