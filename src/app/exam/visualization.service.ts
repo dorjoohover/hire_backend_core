@@ -76,7 +76,7 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            data: [{ coord: [`${percent}%`, max - 10], value: `${percent}%` }],
+            data: [{ coord: [`${percent}%`, max * 0.8], value: `${percent}%` }],
           },
           markLine: {
             symbol: ['none', 'none'],
