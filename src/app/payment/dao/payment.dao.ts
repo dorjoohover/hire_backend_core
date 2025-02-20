@@ -33,7 +33,7 @@ export class PaymentDao {
           role: role == 0 ? Not(role) : role,
         },
       },
-      relations: ['user'],
+      relations: ['user', 'charger'],
       take: limit,
       skip: (page - 1) * limit,
     });
