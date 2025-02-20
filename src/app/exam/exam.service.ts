@@ -85,12 +85,12 @@ export class ExamService extends BaseService {
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
         );
-      if (exam.result)
-        return {
-          calculate: exam.result,
-          visible: exam.visible,
-          value: parseFloat(exam.result) / exam.assessment.totalPoint,
-        };
+      // if (exam.result)
+      //   return {
+      //     calculate: exam.result,
+      //     visible: exam.visible,
+      //     value: parseFloat(exam.result) / exam.assessment.totalPoint,
+      //   };
 
       const formule = exam.assessment.formule;
       // console.log(formule)
