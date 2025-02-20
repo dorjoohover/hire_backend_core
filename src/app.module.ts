@@ -21,6 +21,7 @@ import { UserServiceModule } from './app/user.service/user.service.module';
 import { FormuleModule } from './app/formule/formule.module';
 import { EmailModule } from './auth/email.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
+import { BlogModule } from './app/blog/blog.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { FeedbackModule } from './app/feedback/feedback.module';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     DatabaseModule,
+    BlogModule,
     BaseModule,
     EmailModule,
     AuthModule,

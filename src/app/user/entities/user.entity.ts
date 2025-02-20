@@ -1,3 +1,4 @@
+import { BlogEntity } from 'src/app/blog/entities/blog.entity';
 import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
 import { TransactionEntity } from 'src/app/payment/entities/transaction.entity';
@@ -62,4 +63,8 @@ export class UserEntity {
     nullable: true,
   })
   feedbacks?: FeedbackEntity[];
+  @OneToMany(() => BlogEntity, (feedback) => feedback.user, {
+    nullable: true,
+  })
+  blogs?: BlogEntity[];
 }
