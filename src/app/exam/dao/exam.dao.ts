@@ -157,6 +157,6 @@ export class ExamDao {
     const index = res.findIndex((entry) => +entry.result === r);
     const percent = index !== -1 ? ((index + 1) / count) * 100 : null; // Null if `r` not found
 
-    return { q, percent };
+    return { q, percent: Math.round(percent) };
   };
 }
