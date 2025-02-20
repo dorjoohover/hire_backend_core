@@ -181,9 +181,12 @@ export class ExamService extends BaseService {
             start = 0;
             startInterval = 0;
           }
+          if(start + endInterval > 27) {
+              endInterval = 27 - start
+          }
           const indexs = DISC.index[aCate].slice(
             start - startInterval,
-            start + endInterval,
+            start + endInterval + 1,
           );
           index[aCate] = indexs;
         }
