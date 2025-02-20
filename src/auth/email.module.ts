@@ -8,11 +8,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         transport: {
-          host: 'smtp.gmail.com',
+          host: 'smtp.hire.mn',
           port: 587,
-
-          // service: 'gmail',
-          secure: false,
+          service: 'gmail',
           auth: {
             user: 'info@hire.mn',
             pass: 'jgig fpup gisr obii',

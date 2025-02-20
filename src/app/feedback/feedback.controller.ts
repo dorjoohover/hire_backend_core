@@ -21,7 +21,7 @@ export class FeedbackController {
     return this.feedbackService.create(createFeedbackDto, +user['id']);
   }
 
-  @Get('all/:type/:/page/:limit')
+  @Get('all/:type/:page/:limit')
   @ApiParam({ name: 'type' })
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })

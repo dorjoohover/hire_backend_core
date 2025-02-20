@@ -136,11 +136,17 @@ export class ExamService extends BaseService {
         (item) =>
           res.find((obj) => obj['aCate'].toLowerCase() === item.aCate) || item,
       );
+      let index = {
+        d: [],
+        i: [],
+        s: [],
+        c: [],
+      };
       for (const r of mergedData) {
-        let inten,
+        let inten = -1,
           total = '';
-
-        const cate = DISC.graph3[r.aCate.toLowerCase()];
+        const aCate = r.aCate.toLowerCase()
+        const cate = DISC.graph3[aCate];
         const point = +r['point'];
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
@@ -159,6 +165,10 @@ export class ExamService extends BaseService {
           }
           response += total;
         }
+        if(inten != -1) {
+          const indexs = []
+          index[aCate] = indexs
+        }
       }
       for (const [k, v] of Object.entries(DISC.pattern)) {
         for (const value of v) {
@@ -175,7 +185,10 @@ export class ExamService extends BaseService {
         email: user?.email,
         phone: user?.phone,
       });
-      return agent;
+      return {
+        agent,
+        index,
+      };
     }
   }
 
