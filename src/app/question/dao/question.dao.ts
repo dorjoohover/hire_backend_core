@@ -52,6 +52,7 @@ export class QuestionDao {
         'entity.level',
         'entity.minValue',
         'entity.maxValue',
+        'entity.slider',
         'entity.orderNumber',
         'entity.file',
         'entity.point',
