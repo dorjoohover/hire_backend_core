@@ -37,8 +37,8 @@ export class FeedbackController {
   }
   @Get('status/:assessment')
   @ApiParam({ name: 'assessment' })
-  findBy(@Param('type') type: number) {
-    return this.feedbackService.findStatus(type);
+  findBy(@Param('assessment') assessment: number) {
+    return this.feedbackService.findStatus(assessment);
   }
 
   @Get('one/:id')
