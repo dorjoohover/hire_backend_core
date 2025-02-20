@@ -223,10 +223,10 @@ export class SinglePdf {
         q3: number;
         q4: number;
       };
-      res: any;
+      percent: number;
     } = await this.exam.findQuartile(assessment, result);
     console.log(res);
-    const buffer = await this.vis.createChart(Object.values(res.q), result);
+    const buffer = await this.vis.createChart(Object.values(res.q), result, res.percent);
     doc.image(buffer, { width: 260 });
   }
 }
