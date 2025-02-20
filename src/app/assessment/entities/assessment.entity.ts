@@ -16,6 +16,7 @@ import { UserService } from 'src/app/user/user.service';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { QuestionAnswerCategoryEntity } from 'src/app/question/entities/question.answer.category.entity';
+import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -101,5 +102,9 @@ export class AssessmentEntity {
   @OneToMany(() => UserServiceEntity, (service) => service.assessment, {
     nullable: true,
   })
-  services: QuestionCategoryEntity[];
+  services: UserServiceEntity[];
+  @OneToMany(() => FeedbackEntity, (service) => service.assessment, {
+    nullable: true,
+  })
+  feedbacks: FeedbackEntity[];
 }

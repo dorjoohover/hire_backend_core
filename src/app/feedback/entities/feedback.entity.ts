@@ -1,3 +1,4 @@
+import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import {
   Column,
@@ -22,4 +23,6 @@ export class FeedbackEntity {
   status: number;
   @ManyToOne(() => UserEntity, (service) => service.feedbacks)
   user: UserEntity;
+  @ManyToOne(() => AssessmentEntity, (service) => service.feedbacks)
+  assessment: AssessmentEntity;
 }

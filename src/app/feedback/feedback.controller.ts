@@ -22,16 +22,23 @@ export class FeedbackController {
     return this.feedbackService.create(createFeedbackDto, +user['id']);
   }
 
-  @Get('all/:type/:page/:limit')
+  @Get('all/:assessment/:type/:page/:limit')
   @ApiParam({ name: 'type' })
+  @ApiParam({ name: 'assessment' })
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })
   findAll(
     @Param('type') type: number,
+    @Param('assessment') assessment: number,
     @Param('page') page: number,
     @Param('limit') limit: number,
   ) {
-    return this.feedbackService.findAll(type, page, limit);
+    return this.feedbackService.findAll(type, assessment, page, limit);
+  }
+  @Get('status/:assessment')
+  @ApiParam({ name: 'assessment' })
+  findBy(@Param('type') type: number) {
+    return this.feedbackService.findStatus(type);
   }
 
   @Get('one/:id')
