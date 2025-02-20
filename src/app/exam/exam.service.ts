@@ -131,24 +131,23 @@ export class ExamService extends BaseService {
       const order = ['d', 'i', 's', 'c'];
       let response = '',
         agent = '';
-      const sortedData = res.sort(
-        (x, y) =>
-          order.indexOf(x['aCate'].toLowerCase()) -
-          order.indexOf(y['aCate'].toLowerCase()),
+      const defaultData = order.map((letter) => ({ aCate: letter, point: 0 }));
+      const mergedData = defaultData.map(
+        (item) =>
+          res.find((obj) => obj['aCate'].toLowerCase() === item.aCate) || item,
       );
-      for (const r of sortedData) {
+      for (const r of mergedData) {
         let inten,
           total = '';
 
         console.log(r);
 
-        const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
-        DISC.graph3['s'];
+        const cate = DISC.graph3[r.aCate.toLowerCase()];
         const point = +r['point'];
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
             for (const { min, max, intensity } of v as any) {
-              if (point == min || point == max) {
+              if (point == min && point == max) {
                 inten = intensity;
                 total = `${k}`;
                 break;
