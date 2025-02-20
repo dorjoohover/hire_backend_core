@@ -138,7 +138,9 @@ export class ExamDao {
       ])
       .from('exam', 't')
       .where('t."assessmentId" = :id', { id: assessment })
-      .having('point_value = :targetPoint', { targetPoint: Number(r) }) // Ensure numeric match
+      .andWhere('CAST(t.result AS NUMERIC) = :targetPoint', {
+        targetPoint: Number(r),
+      })
       .getRawOne();
     return {
       q: result,
