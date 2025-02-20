@@ -119,11 +119,11 @@ export class ExamDao {
     const result = await this.db
       .createQueryBuilder()
       .select([
-        `MIN(CAST(result AS NUMERIC)) AS Q0`,
-        `percentile_cont(0.25) WITHIN GROUP (ORDER BY CAST(result AS NUMERIC)) AS Q1`,
-        `percentile_cont(0.50) WITHIN GROUP (ORDER BY CAST(result AS NUMERIC)) AS Q2`, // Median
-        `percentile_cont(0.75) WITHIN GROUP (ORDER BY CAST(result AS NUMERIC)) AS Q3`,
-        `MAX(CAST(result AS NUMERIC)) AS Q4`,
+        `MIN(CAST(t.result AS NUMERIC)) AS Q0`,
+        `percentile_cont(0.25) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q1`,
+        `percentile_cont(0.50) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q2`, // Median
+        `percentile_cont(0.75) WITHIN GROUP (ORDER BY CAST(t.result AS NUMERIC)) AS Q3`,
+        `MAX(CAST(t.result AS NUMERIC)) AS Q4`,
       ])
       .from('exam', 't')
       .where('t."assessmentId" = :id', { id: assessment })
@@ -137,7 +137,7 @@ export class ExamDao {
         'ROW_NUMBER() OVER (ORDER BY CAST(t.result AS NUMERIC) ASC) AS row_index',
       ])
       .from('exam', 't')
-      .where('t.assessmentId = :id', { id: assessment })
+      .where('t."assessmentId" = :id', { id: assessment })
       .having('point_value = :targetPoint', { targetPoint: Number(r) }) // Ensure numeric match
       .getRawOne();
     return {
