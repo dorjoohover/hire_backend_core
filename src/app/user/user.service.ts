@@ -62,7 +62,7 @@ export class UserService {
       wallet: 0,
       lastname: dto.lastname ?? '',
       firstname: dto.firstname ?? '',
-      emailVerified: dto.role != null,
+      emailVerified: dto.emailVerified ?? dto.role != null,
     });
     return res;
     // throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);

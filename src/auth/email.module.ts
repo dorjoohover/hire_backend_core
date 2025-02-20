@@ -12,6 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           port: 587,
 
           // service: 'gmail',
+          secure: false,
           auth: {
             user: 'info@hire.mn',
             pass: 'jgig fpup gisr obii',
