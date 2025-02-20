@@ -46,14 +46,18 @@ export class FeedbackService extends BaseService {
     const res = await this._db
       .createQueryBuilder('feedback')
       .select('status')
-      .addSelect('count(id)', 'count');
-    if (assessment != 0)
-      res
-        .innerJoin('assessment', 'ass', 'ass.id = "feedback"."assessmentId"')
-        .where('"feedback"."assessmentId" = :id', { id: assessment });
-    res.groupBy('status').getRawMany();
+      .addSelect('COUNT(id)', 'count');
 
-    return res;
+    if (assessment !== 0) {
+      res
+        .innerJoin('assessment', 'ass', 'ass.id = feedback.assessmentId')
+        .where('feedback.assessmentId = :id', { id: assessment });
+    }
+
+    const result = await res.groupBy('status').getRawMany(); // ✅ Add `await`
+    console.log(result);
+
+    return result;
   }
 
   public async findOne(id: number) {
