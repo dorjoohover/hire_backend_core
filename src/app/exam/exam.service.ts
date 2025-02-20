@@ -133,8 +133,10 @@ export class ExamService extends BaseService {
       for (const r of res) {
         let inten,
           total = '';
-        console.log(r['aCate'])
+
+        console.log(r)
         const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
+        DISC.graph3['s']
         const point = +r['point'];
         console.log(point, cate)
         if (cate != null) {
