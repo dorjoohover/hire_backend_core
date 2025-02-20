@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Not, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
 import { CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
@@ -121,7 +121,7 @@ export class ExamDao {
         assessment: {
           id: assessment,
         },
-        result: Not(null),
+        result: Not(IsNull()),
       },
       order: {
         result: 'ASC', // Sort results in ascending order
