@@ -152,7 +152,7 @@ export class PdfService {
     await this.single.default(doc, assessment, exam);
     footer(doc);
     doc.addPage();
-    home(doc, exam.lastname, exam.firstname, assessment.name);
+    header(doc);
 
     footer(doc);
     doc.pipe(out);
