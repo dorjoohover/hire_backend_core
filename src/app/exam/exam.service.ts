@@ -153,7 +153,7 @@ export class ExamService extends BaseService {
                 total = `${k}`;
                 break;
               }
-              if (point >= min || point <= max) {
+              if (point >= min && point <= max) {
                 inten = intensity;
                 total = `${k}`;
                 break;
