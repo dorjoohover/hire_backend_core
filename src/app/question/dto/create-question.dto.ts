@@ -18,6 +18,8 @@ export class CreateQuestionDto {
   @ApiProperty()
   maxValue: number;
   @ApiProperty()
+  slider: string;
+  @ApiProperty()
   point?: number;
   @ApiProperty()
   orderNumber?: number;

@@ -5,11 +5,13 @@ import { VisualizationService } from '../visualization.service';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ExamEntity } from '../entities/exam.entity';
 import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
+import { ExamDao } from '../dao/exam.dao';
 
 @Injectable()
 export class SinglePdf {
   constructor(
     private answer: UserAnswerDao,
+    private exam: ExamDao,
     private vis: VisualizationService,
   ) {}
   async section(
@@ -207,5 +209,24 @@ export class SinglePdf {
     } catch (error) {
       console.log(error);
     }
+  }
+  async examQuartile(
+    doc: PDFKit.PDFDocument,
+    assessment: number,
+    result: number,
+  ) {
+    const res: {
+      q: {
+        q0: number;
+        q1: number;
+        q2: number;
+        q3: number;
+        q4: number;
+      };
+      res: any;
+    } = await this.exam.findQuartile(assessment, result);
+    console.log(res);
+    const buffer = await this.vis.createChart(Object.values(res.q), result);
+    doc.image(buffer, { width: 260 });
   }
 }

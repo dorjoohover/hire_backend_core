@@ -93,7 +93,6 @@ export class PdfService {
 
   async createPdfInOneFile(assessment: AssessmentEntity, exam: ExamEntity) {
     const name = `${exam.lastname} ${exam.firstname}`;
-    const buffer = await this.vis.createChart();
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';
@@ -152,9 +151,13 @@ export class PdfService {
 
     await this.single.default(doc, assessment, exam);
     footer(doc);
-    doc.pipe(out);
+    doc.addPage();
+    home(doc, exam.lastname, exam.firstname, assessment.name);
 
-    // doc.image(buffer, { width: 260 });
+    footer(doc);
+    doc.pipe(out);
+    await this.single.examQuartile(doc, exam.assessment.id, +exam.result);
+
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
 

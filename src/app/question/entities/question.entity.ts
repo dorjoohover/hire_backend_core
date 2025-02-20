@@ -36,6 +36,8 @@ export class QuestionEntity {
   point: number;
   @Column()
   orderNumber: number;
+  @Column({ nullable: true })
+  slider: string;
   @CreateDateColumn()
   createdAt: Date;
   @UpdateDateColumn()

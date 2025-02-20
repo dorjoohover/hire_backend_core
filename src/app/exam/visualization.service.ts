@@ -5,7 +5,31 @@ import * as echarts from 'echarts';
 @Injectable()
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
-  async createChart(data?): Promise<Buffer> {
+  async createChart(q: number[], value: number): Promise<Buffer> {
+    const max = Math.max(...q);
+    const data = [
+      ['', q[0]],
+      ['25%', q[1]],
+      ['50%', q[2]],
+      ['75%', q[3]],
+      ['100%', q[4]],
+    ];
+    const index = data.findIndex(([, v]) => value < Number(v));
+    const insertIndex = index === -1 ? data.length - 1 : Math.max(1, index); // Ensure insertion is between 1 and last index
+
+    // Insert value while keeping the first and last elements unchanged
+    const updatedData = [
+      data[0], // Keep the first element
+      ...data.slice(1, insertIndex),
+      ['', value],
+      ...data.slice(insertIndex),
+    ];
+    // let index = 0;
+    // if (value < q[1]) index = 0;
+    // if (value < q[2]) index = 1;
+    // if (value < q[3]) index = 2;
+    // if (value < q[4]) index = 3;
+    // data.splice(index, 0, ['', value]);
     const echartOption = {
       xAxis: {
         type: 'category',
@@ -16,16 +40,10 @@ export class VisualizationService {
         right: '4%',
         top: '10%',
         containLabel: true,
-
-        // left: 0,
-        // top: 0,
-        // right: 0,
-        // bottom: 0,
         show: false,
       },
       yAxis: {
         type: 'value',
-        // boundaryGap: [0, '30%'],
 
         show: false,
       },
@@ -53,7 +71,7 @@ export class VisualizationService {
               color: '#fff',
             },
             data: [
-              { coord: ['2019-10-11', 200], value: '89%' }, // Position the text
+              { coord: ['89%', max - 10], value: '89%' }, // Position the text
             ],
           },
           markLine: {
@@ -63,7 +81,7 @@ export class VisualizationService {
               color: '#ED1C45',
               width: 2,
             },
-            data: [{ xAxis: 1 }],
+            data: [{ xAxis: index + 1 }],
           },
           areaStyle: {
             opacity: 0.8,
@@ -79,17 +97,7 @@ export class VisualizationService {
               },
             ]),
           },
-          data: [
-            ['2019-10-10', 0],
-            ['2019-10-11', 100],
-            ['2019-10-12', 300],
-            ['2019-10-13', 100],
-            ['2019-10-14', 0],
-            // ['2019-10-15', 300],
-            // ['2019-10-16', 450],
-            // ['2019-10-17', 300],
-            // ['2019-10-18', 100]
-          ],
+          data: updatedData,
         },
       ],
     };

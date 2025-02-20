@@ -114,4 +114,35 @@ export class ExamDao {
     });
     return res;
   };
+
+  findQuartile = async (assessment: number, r: number) => {
+    const result = await this.db
+      .createQueryBuilder()
+      .select([
+        `MIN(CAST(point AS NUMERIC)) AS Q0`,
+        `percentile_cont(0.25) WITHIN GROUP (ORDER BY CAST(point AS NUMERIC)) AS Q1`,
+        `percentile_cont(0.50) WITHIN GROUP (ORDER BY CAST(point AS NUMERIC)) AS Q2`, // Median
+        `percentile_cont(0.75) WITHIN GROUP (ORDER BY CAST(point AS NUMERIC)) AS Q3`,
+        `MAX(CAST(point AS NUMERIC)) AS Q4`,
+      ])
+      .from('exam', 't')
+      .where('t."assessmentId" = :id', { id: assessment })
+      .getRawOne();
+
+    const res = await this.db
+      .createQueryBuilder()
+      .select([
+        't.id',
+        'CAST(t.result AS NUMERIC) AS point_value',
+        'ROW_NUMBER() OVER (ORDER BY CAST(t.point AS NUMERIC) ASC) AS row_index',
+      ])
+      .from('exam', 't')
+      .where('t.assessmentId = :id', { id: assessment })
+      .having('point_value = :targetPoint', { targetPoint: Number(r) }) // Ensure numeric match
+      .getRawOne();
+    return {
+      q: result,
+      res: res,
+    };
+  };
 }
