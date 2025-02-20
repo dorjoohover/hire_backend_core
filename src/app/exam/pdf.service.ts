@@ -154,9 +154,9 @@ export class PdfService {
     doc.addPage();
     header(doc);
 
+    await this.single.examQuartile(doc, exam.assessment.id, +exam.result);
     footer(doc);
     doc.pipe(out);
-    await this.single.examQuartile(doc, exam.assessment.id, +exam.result);
 
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
