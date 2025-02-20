@@ -78,7 +78,7 @@ export const FeedbackStatus = {
 
 export const PaymentTypeDict = {
   1: 'Карт',
-  2: 'Бэлэн',
+  2: 'QPay',
   3: 'Мобайл',
   4: 'Зээл',
   5: 'Сошиал пэй',

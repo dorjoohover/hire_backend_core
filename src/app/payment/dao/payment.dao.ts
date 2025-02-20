@@ -29,11 +29,11 @@ export class PaymentDao {
     return await this.db.find({
       where: {
         method: method,
-        charger: {
+        user: {
           role: role == 0 ? Not(role) : role,
         },
       },
-      relations: ['charger'],
+      relations: ['user'],
       take: limit,
       skip: (page - 1) * limit,
     });
