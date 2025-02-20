@@ -9,10 +9,11 @@ import {
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
-import { ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Fxeedback')
 @Controller('feedback')
+@ApiBearerAuth('access-token')
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
