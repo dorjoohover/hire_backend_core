@@ -21,6 +21,8 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Response } from 'express';
 import fs from 'fs';
 import { UserEntity } from '../user/entities/user.entity';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -56,7 +58,7 @@ export class ExamController {
     @Param('code') code: string,
     @Request() { user },
   ) {
-    const role = user?.['role']
+    const role = user?.['role'];
     let filePath: any;
     try {
       filePath = await this.examService.getPdf(+code, role);
@@ -78,7 +80,7 @@ export class ExamController {
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })
   calculateExamById(@Param('id') id: string, @Request() { user }) {
-    console.log(user)
+    console.log(user);
     return this.examService.calculateExamById(+id, user);
   }
 
@@ -88,6 +90,19 @@ export class ExamController {
   @Get('service/:id')
   findByService(@Param('id') id: string) {
     return this.examService.findExamByService(+id);
+  }
+
+  @Roles(Role.admin, Role.tester, Role.super_admin)
+  @Get('all/:assessment/:limit/:page')
+  @ApiParam({ name: 'assessment' })
+  @ApiParam({ name: 'limit' })
+  @ApiParam({ name: 'page' })
+  findByAdmin(
+    @Param('assessment') assessment: number,
+    @Param('limit') limit: number,
+    @Param('page') page: number,
+  ) {
+    return this.examService.findByAdmin(assessment, page, limit);
   }
 
   @Post('user')

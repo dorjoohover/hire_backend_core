@@ -145,7 +145,7 @@ export class ExamService extends BaseService {
       for (const r of mergedData) {
         let inten = -1,
           total = '';
-        const aCate = r.aCate.toLowerCase()
+        const aCate = r.aCate.toLowerCase();
         const cate = DISC.graph3[aCate];
         const point = +r['point'];
         if (cate != null) {
@@ -165,9 +165,9 @@ export class ExamService extends BaseService {
           }
           response += total;
         }
-        if(inten != -1) {
-          const indexs = []
-          index[aCate] = indexs
+        if (inten != -1) {
+          const indexs = [];
+          index[aCate] = indexs;
         }
       }
       for (const [k, v] of Object.entries(DISC.pattern)) {
@@ -373,6 +373,10 @@ export class ExamService extends BaseService {
       formatted.push({ ...body, totalPoint: assessment.totalPoint });
     }
     return formatted;
+  }
+  public async findByAdmin(ass: number, page: number, limit: number) {
+    let res = await this.dao.findByAdmin(ass, page, limit);
+    return res;
   }
   remove(id: number) {
     return `This action removes a #${id} exam`;

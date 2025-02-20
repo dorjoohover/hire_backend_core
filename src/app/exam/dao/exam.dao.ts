@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Not, Repository } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
 import { CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
@@ -91,6 +91,18 @@ export class ExamDao {
         },
       },
       relations: ['assessment'],
+    });
+  };
+  findByAdmin = async (assessment: number, page: number, limit: number) => {
+    return await this.db.find({
+      where: {
+        assessment: {
+          id: assessment == 0 ? Not(0) : assessment,
+        },
+      },
+      take: limit,
+      skip: (page - 1) * limit,
+      relations: ['assessment', 'user'],
     });
   };
   findByCode = async (code: number) => {
