@@ -5,7 +5,11 @@ import * as echarts from 'echarts';
 @Injectable()
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
-  async createChart(q: number[], value: number): Promise<Buffer> {
+  async createChart(
+    q: number[],
+    value: number,
+    percent: number,
+  ): Promise<Buffer> {
     const max = Math.max(...q);
     const data = [
       ['', q[0]],
@@ -21,7 +25,7 @@ export class VisualizationService {
     const updatedData = [
       data[0], // Keep the first element
       ...data.slice(1, insertIndex),
-      ['', value],
+      [`${percent}%`, value],
       ...data.slice(insertIndex),
     ];
     // let index = 0;
@@ -70,9 +74,7 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            data: [
-              { coord: ['89%', max - 10], value: '89%' }, // Position the text
-            ],
+            data: [{ coord: [`${percent}%`, max - 10], value: `${percent}%` }],
           },
           markLine: {
             symbol: ['none', 'none'],

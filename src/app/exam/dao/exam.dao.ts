@@ -142,9 +142,19 @@ export class ExamDao {
         targetPoint: Number(r),
       })
       .getRawOne();
+    const count = await this.db.count({
+      where: {
+        assessment: {
+          id: assessment,
+        },
+      },
+    });
+    let percent = Math.round((res['t_id'] / count) * 100);
+    if (percent == 0) percent = 1;
+    if (percent == 100) percent = 99;
     return {
       q: result,
-      res: res,
+      percent,
     };
   };
 }
