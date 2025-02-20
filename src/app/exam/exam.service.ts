@@ -162,6 +162,7 @@ export class ExamService extends BaseService {
           break;
         }
       }
+      console.log(agent)
       return agent;
     }
   }
