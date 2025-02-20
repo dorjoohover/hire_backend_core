@@ -813,6 +813,7 @@ export class DISC {
         },
       ],
     },
+    n: null,
   };
   static graph1 = {
     d: {
@@ -1189,6 +1190,7 @@ export class DISC {
         },
       ],
     },
+    n: null,
   };
   static graph2 = {
     d: {
@@ -1565,5 +1567,6 @@ export class DISC {
         },
       ],
     },
+    n: null,
   };
 }
