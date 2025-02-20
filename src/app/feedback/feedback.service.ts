@@ -4,6 +4,7 @@ import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { BaseService } from 'src/base/base.service';
 import { DataSource, Db, Not, Repository } from 'typeorm';
 import { FeedbackEntity } from './entities/feedback.entity';
+import { FeedbackType } from 'src/base/constants';
 
 @Injectable()
 export class FeedbackService extends BaseService {
@@ -50,8 +51,9 @@ export class FeedbackService extends BaseService {
       .createQueryBuilder('feedback')
       .select('feedback.status', 'status') // Specify table for status
       .addSelect('COUNT(feedback.id)', 'count')
+      .where('feedback.type = :type', { type: FeedbackType.RESULT })
       .groupBy('feedback.status')
-      .getRawMany(); 
+      .getRawMany();
 
     // if (assessment !== 0) {
     //   res
