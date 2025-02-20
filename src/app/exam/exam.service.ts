@@ -144,6 +144,7 @@ export class ExamService extends BaseService {
         s: [],
         c: [],
       };
+      console.log(res);
       for (const r of mergedData) {
         let inten = -1,
           total = '';
@@ -168,7 +169,22 @@ export class ExamService extends BaseService {
           response += total;
         }
         if (inten != -1) {
-          const indexs = [];
+          const float = inten % 1 !== 0;
+          let startInterval = 3,
+            endInterval = 3;
+          if (float) {
+            endInterval = 2;
+            inten = Math.floor(inten);
+          }
+          let start = 28 - inten;
+          if (start <= 3) {
+            start = 0;
+            startInterval = 0;
+          }
+          const indexs = DISC.index[aCate].slice(
+            start - startInterval,
+            start + endInterval,
+          );
           index[aCate] = indexs;
         }
       }
