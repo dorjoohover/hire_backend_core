@@ -121,6 +121,7 @@ export class ExamDao {
         assessment: {
           id: assessment,
         },
+        result: Not(null),
       },
       order: {
         result: 'ASC', // Sort results in ascending order
