@@ -24,6 +24,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { ReportType } from 'src/base/constants';
 import { DISC } from 'src/assets/report/disc';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { UserDao } from '../user/user.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -35,6 +36,7 @@ export class ExamService extends BaseService {
     private questionService: QuestionService,
     private authService: AuthService,
     private userAnswer: UserAnswerDao,
+    private userDao: UserDao,
     private answerCategory: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
@@ -376,6 +378,15 @@ export class ExamService extends BaseService {
   }
   public async findByAdmin(ass: number, page: number, limit: number) {
     let res = await this.dao.findByAdmin(ass, page, limit);
+    res = await Promise.all(
+      res.map(async (r) => {
+        const user = await this.userDao.getByEmail(r.email);
+        return {
+          ...r,
+          user,
+        };
+      }),
+    );
     return res;
   }
   remove(id: number) {

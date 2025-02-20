@@ -102,7 +102,7 @@ export class ExamDao {
       },
       take: limit,
       skip: (page - 1) * limit,
-      relations: ['assessment', 'user'],
+      relations: ['assessment'],
     });
   };
   findByCode = async (code: number) => {
