@@ -128,21 +128,27 @@ export class ExamService extends BaseService {
       return res[0].point;
     }
     if (type == ReportType.DISC) {
+      const order = ['d', 'i', 's', 'c'];
       let response = '',
         agent = '';
-      for (const r of res) {
+      const sortedData = res.sort(
+        (x, y) =>
+          order.indexOf(x['aCate'].toLowerCase()) -
+          order.indexOf(y['aCate'].toLowerCase()),
+      );
+      for (const r of sortedData) {
         let inten,
           total = '';
 
-        console.log(r)
+        console.log(r);
+
         const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
-        DISC.graph3['s']
+        DISC.graph3['s'];
         const point = +r['point'];
-        console.log(point, cate)
+        console.log(point, cate);
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
             for (const { min, max, intensity } of v as any) {
-              
               if (point == min || point == max) {
                 inten = intensity;
                 total = `${k}`;
