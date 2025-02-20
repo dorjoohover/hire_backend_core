@@ -227,6 +227,6 @@ export class SinglePdf {
       res.percent,
       width,
     );
-    doc.image(buffer, { width: width, height: (width / 515) * 175 });
+    doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }
 }
