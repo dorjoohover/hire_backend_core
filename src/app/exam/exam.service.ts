@@ -146,8 +146,9 @@ export class ExamService extends BaseService {
         const point = +r['point'];
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
+            console.log(k)
             for (const { min, max, intensity } of v as any) {
-              console.log(min, max);
+              console.log(point == min && point == max);
               if (point == min && point == max) {
                 inten = intensity;
                 total = `${k}`;
