@@ -8,4 +8,6 @@ export class CreateFeedbackDto {
   type: number;
   @ApiProperty({ nullable: true })
   message: string;
+  @ApiProperty( )
+  assessment: number;
 }

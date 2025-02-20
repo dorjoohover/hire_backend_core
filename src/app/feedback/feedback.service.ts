@@ -20,6 +20,9 @@ export class FeedbackService extends BaseService {
       user: {
         id: user,
       },
+      assessment: {
+        id: dto.assessment,
+      },
     });
     return this._db.save(res);
   }
