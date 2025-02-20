@@ -158,8 +158,8 @@ export class ExamService extends BaseService {
         for (const value of v) {
           if (+response == value) {
             agent = k;
+            break;
           }
-          break;
         }
       }
       console.log('result', agent);
