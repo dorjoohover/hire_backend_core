@@ -139,7 +139,8 @@ export class ExamService extends BaseService {
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
             for (const { min, max, intensity } of v as any) {
-              if (point == min || max == max) {
+
+              if (point == min || point == max) {
                 inten = intensity;
                 total = `${k}`;
                 break;
