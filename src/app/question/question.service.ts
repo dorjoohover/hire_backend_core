@@ -154,7 +154,10 @@ export class QuestionService {
   ) {
     try {
       const questionCategory = await this.updateChecker(dto.category, dto.type);
-      const point = await this.getPoint(dto.question, dto.answers);
+      const point =
+        dto.question.point == null
+          ? await this.getPoint(dto.question, dto.answers)
+          : dto.question.point;
 
       let questionId = create
         ? await this.questionDao.create({

@@ -39,6 +39,7 @@ export const QuestionType = {
   TRUEFALSE: 30,
   MATRIX: 40,
   CONSTANTSUM: 50,
+  SLIDER: 60,
 };
 
 export const AssessmentType = {
