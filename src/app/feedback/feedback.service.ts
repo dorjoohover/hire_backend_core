@@ -57,10 +57,9 @@ export class FeedbackService extends BaseService {
         .where('feedback.assessmentId = :id', { id: assessment });
     }
 
-    const result = await res.groupBy('feedback.status').getRawMany(); // Specify table for status
-    console.log(result);
-
-    return result;
+    res.groupBy('feedback.status').getRawMany(); // Specify table for status
+    res;
+    return res;
   }
 
   public async findOne(id: number) {
