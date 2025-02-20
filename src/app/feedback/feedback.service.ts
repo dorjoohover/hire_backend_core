@@ -49,16 +49,16 @@ export class FeedbackService extends BaseService {
     const res = await this._db
       .createQueryBuilder('feedback')
       .select('feedback.status', 'status') // Specify table for status
-      .addSelect('COUNT(feedback.id)', 'count');
+      .addSelect('COUNT(feedback.id)', 'count')
+      .groupBy('feedback.status')
+      .getRawMany(); 
 
-    if (assessment !== 0) {
-      res
-        .innerJoin('assessment', 'ass', 'ass.id = feedback.assessmentId')
-        .where('feedback.assessmentId = :id', { id: assessment });
-    }
+    // if (assessment !== 0) {
+    //   res
+    //     .innerJoin('assessment', 'ass', 'ass.id = feedback.assessmentId')
+    //     .where('feedback.assessmentId = :id', { id: assessment });
+    // }
 
-    res.groupBy('feedback.status').getRawMany(); // Specify table for status
-    res;
     return res;
   }
 
