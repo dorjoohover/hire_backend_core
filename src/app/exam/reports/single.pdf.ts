@@ -226,7 +226,12 @@ export class SinglePdf {
       percent: number;
     } = await this.exam.findQuartile(assessment, result);
     console.log(res);
-    const buffer = await this.vis.createChart(Object.values(res.q), result, res.percent);
-    doc.image(buffer, { width: 260 });
+    const buffer = await this.vis.createChart(
+      Object.values(res.q),
+      result,
+      res.percent,
+    );
+    const width = doc.page.width - marginX - marginX;
+    doc.image(buffer, { width: width, height: (width / 515) * 175 });
   }
 }
