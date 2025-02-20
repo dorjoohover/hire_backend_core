@@ -140,13 +140,10 @@ export class ExamService extends BaseService {
         let inten,
           total = '';
 
-        console.log(r);
-
         const cate = DISC.graph3[r.aCate.toLowerCase()];
         const point = +r['point'];
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
-            console.log(v);
             for (const { min, max, intensity } of v as any) {
               if (point == min && point == max) {
                 inten = intensity;
@@ -160,7 +157,6 @@ export class ExamService extends BaseService {
               }
             }
           }
-          console.log('total', total);
           response += total;
         }
       }
@@ -172,7 +168,13 @@ export class ExamService extends BaseService {
           }
         }
       }
-      console.log('result', agent);
+      await this.dao.update(+id, {
+        result: agent,
+        lastname: user?.lastname,
+        firstname: user?.firstname,
+        email: user?.email,
+        phone: user?.phone,
+      });
       return agent;
     }
   }
