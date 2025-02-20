@@ -74,7 +74,7 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            data: [{ coord: [`${percent}%`, max - 10], value: `${percent}%` }],
+            data: [{ coord: [`${percent}%`, max], value: `${percent}%` }],
           },
           markLine: {
             symbol: ['none', 'none'],
@@ -83,7 +83,7 @@ export class VisualizationService {
               color: '#ED1C45',
               width: 2,
             },
-            data: [{ xAxis: index + 1 }],
+            data: [{ xAxis: insertIndex }],
           },
           areaStyle: {
             opacity: 0.8,
