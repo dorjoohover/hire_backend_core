@@ -48,8 +48,8 @@ export class FeedbackService extends BaseService {
   public async findStatus(assessment: number) {
     const res = await this._db
       .createQueryBuilder('feedback')
-      .select('status', 'status')
-      .addSelect('COUNT(id)', 'count');
+      .select('feedback.status', 'status') // Specify table for status
+      .addSelect('COUNT(feedback.id)', 'count');
 
     if (assessment !== 0) {
       res
@@ -57,7 +57,7 @@ export class FeedbackService extends BaseService {
         .where('feedback.assessmentId = :id', { id: assessment });
     }
 
-    const result = await res.groupBy('status').getRawMany(); // ✅ Add `await`
+    const result = await res.groupBy('feedback.status').getRawMany(); // Specify table for status
     console.log(result);
 
     return result;
