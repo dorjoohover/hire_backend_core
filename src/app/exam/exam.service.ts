@@ -151,6 +151,7 @@ export class ExamService extends BaseService {
               }
             }
           }
+          console.log(total);
           response += total;
         }
       }

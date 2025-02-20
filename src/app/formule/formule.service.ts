@@ -73,7 +73,6 @@ export class FormuleService extends BaseService {
       if (group) query += ` group by ${group}`;
       if (o) query += ` order by "${o}" ${sort ? 'desc' : 'asc'}`;
       if (l) query += ` limit  ${l}`;
-      console.log(query);
       const res = await this.userAnswerDao.query(query);
       return res;
     } catch (error) {
@@ -97,7 +96,6 @@ export class FormuleService extends BaseService {
         aCate = await this.answerCategoryDao.findOne(+aCate);
 
         let sum = parseInt(r.point);
-        console.log(res);
         return {
           point: sum,
           aCate: aCate?.name ?? aCate,
