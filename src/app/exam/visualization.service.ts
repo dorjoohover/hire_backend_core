@@ -106,7 +106,7 @@ export class VisualizationService {
       ],
     };
 
-    const canvas = createCanvas(width, (width * (min == 0 ? 1 : min)) / max);
+    const canvas = createCanvas(1000, 700);
     const chart = echarts.init(canvas as any);
 
     chart.setOption(echartOption);
