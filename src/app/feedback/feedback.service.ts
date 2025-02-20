@@ -48,7 +48,7 @@ export class FeedbackService extends BaseService {
   public async findStatus(assessment: number) {
     const res = await this._db
       .createQueryBuilder('feedback')
-      .select('status')
+      .select('status', 'status')
       .addSelect('COUNT(id)', 'count');
 
     if (assessment !== 0) {

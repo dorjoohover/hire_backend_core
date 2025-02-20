@@ -10,6 +10,7 @@ import {
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
 @ApiTags('Fxeedback')
 @Controller('feedback')
@@ -35,6 +36,7 @@ export class FeedbackController {
   ) {
     return this.feedbackService.findAll(type, assessment, page, limit);
   }
+  @Public()
   @Get('status/:assessment')
   @ApiParam({ name: 'assessment' })
   findBy(@Param('assessment') assessment: number) {
