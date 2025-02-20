@@ -145,7 +145,6 @@ export class ExamService extends BaseService {
         const cate = DISC.graph3[(r['aCate'] as string).toLowerCase()];
         DISC.graph3['s'];
         const point = +r['point'];
-        console.log(point, cate);
         if (cate != null) {
           for (const [k, v] of Object.entries(cate)) {
             for (const { min, max, intensity } of v as any) {
@@ -161,7 +160,7 @@ export class ExamService extends BaseService {
               }
             }
           }
-          console.log(total);
+          console.log('total', total);
           response += total;
         }
       }
