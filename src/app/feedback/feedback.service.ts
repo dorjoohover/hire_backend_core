@@ -49,7 +49,7 @@ export class FeedbackService extends BaseService {
       .addSelect('count(id)', 'count')
       .innerJoin('assessment', 'ass', 'ass.id = "feedback"."assessmentId"');
     if (assessment != 0)
-      res.where('"feedback"."assessmentId" = :id', { assessment });
+      res.where('"feedback"."assessmentId" = :id', { id: assessment });
     res.groupBy('status').getRawMany();
 
     return res;
