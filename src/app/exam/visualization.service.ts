@@ -6,37 +6,13 @@ import * as echarts from 'echarts';
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
   async createChart(
-    q: any,
+    dataPoints: any,
     value: number,
     percent: number,
     width: number,
     markline: any,
+    normal: any,
   ): Promise<Buffer> {
-    const max = Math.max(...q);
-    const min = Math.min(...q);
-    const data = [
-      ['', q[0]],
-      ['25%', q[1]],
-      ['50%', q[2]],
-      ['75%', q[3]],
-      ['100%', 0],
-    ];
-    const index = data.findIndex(([, v]) => value < Number(v));
-    const insertIndex = index === -1 ? data.length - 1 : Math.max(1, index); // Ensure insertion is between 1 and last index
-
-    // Insert value while keeping the first and last elements unchanged
-    const updatedData = [
-      data[0], // Keep the first element
-      ...data.slice(1, insertIndex),
-      [`${percent}%`, value],
-      ...data.slice(insertIndex),
-    ];
-    // let index = 0;
-    // if (value < q[1]) index = 0;
-    // if (value < q[2]) index = 1;
-    // if (value < q[3]) index = 2;
-    // if (value < q[4]) index = 3;
-    // data.splice(index, 0, ['', value]);
     const echartOption = {
       xAxis: {
         type: 'category',
@@ -85,7 +61,8 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            data: [{ coord: [`${percent}%`, max * 0.9], value: `${percent}%` }],
+            // percent
+            data: [{ coord: [`${value}%`, 100], value: `${value}%` }],
           },
 
           areaStyle: {
@@ -102,7 +79,19 @@ export class VisualizationService {
               },
             ]),
           },
-          data: q,
+          data: dataPoints,
+        },
+
+        {
+          type: 'scatter',
+          data: [[value, normal]],
+          symbolSize: 10,
+          itemStyle: { color: 'green' },
+          label: {
+            show: true,
+            formatter: `Random: ${value.toFixed(2)}`,
+            position: 'top',
+          },
         },
       ],
     };

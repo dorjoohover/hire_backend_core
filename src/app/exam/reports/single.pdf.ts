@@ -314,10 +314,11 @@ export class SinglePdf {
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       dataPoints,
-      result,
+      randomValue,
       res.percent,
       width,
       marklines,
+      normalDistribution(randomValue, mean, stdDev),
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }
