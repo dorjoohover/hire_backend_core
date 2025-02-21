@@ -215,6 +215,17 @@ export class SinglePdf {
     assessment: number,
     result: number,
   ) {
+    function calculateMean(data) {
+      return data.reduce((sum, val) => sum + val, 0) / data.length;
+    }
+
+    function calculateStdDev(data, mean) {
+      const variance =
+        data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+        data.length;
+      return Math.sqrt(variance);
+    }
+
     function normalDistribution(x, mean, stdDev) {
       const exponent = Math.exp(
         -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)),
@@ -222,17 +233,78 @@ export class SinglePdf {
       return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
     }
 
-    // Define mean and standard deviation
-    const mean = 50;
-    const stdDev = 15;
+    function percentile(data, value) {
+      let count = 0;
+      for (let num of data) {
+        if (num <= value) count++;
+      }
+      return (count / data.length) * 100;
+    }
+    // data
+    const dataset = [];
+    for (let i = 0; i < 1000; i++) {
+      dataset.push(Math.random() * 100);
+    }
+    dataset.sort((a, b) => a - b); // Sort data
 
-    // Generate X values (range from mean - 3*stdDev to mean + 3*stdDev)
+    const mean = calculateMean(dataset);
+    const stdDev = calculateStdDev(dataset, mean);
+
+    // Compute percentiles
+    const p25 = dataset[Math.floor(0.25 * dataset.length)];
+    const p50 = dataset[Math.floor(0.5 * dataset.length)];
+    const p75 = dataset[Math.floor(0.75 * dataset.length)];
+    const p100 = dataset[dataset.length - 1];
+
     const dataPoints = [];
     for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
       dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
     }
-    console.log(dataPoints)
 
+    // Choose a random value and find its percentile
+    const randomValue = Math.random() * 100;
+    const randomPercentile = percentile(dataset, randomValue);
+    dataPoints.push([
+      {
+        xAxis: randomValue,
+        label: {
+          formatter: `Random P: ${randomPercentile.toFixed(2)}%`,
+          position: 'insideEndTop',
+        },
+        lineStyle: { color: 'green', type: 'solid' },
+      },
+    ]);
+    console.log(dataPoints);
+    const marklines = [
+      {
+        xAxis: p25,
+        label: { formatter: '25th P' },
+        lineStyle: { color: 'red', type: 'dashed' },
+      },
+      {
+        xAxis: p50,
+        label: { formatter: '50th P' },
+        lineStyle: { color: 'orange', type: 'dashed' },
+      },
+      {
+        xAxis: p75,
+        label: { formatter: '75th P' },
+        lineStyle: { color: 'purple', type: 'dashed' },
+      },
+      {
+        xAxis: p100,
+        label: { formatter: '100th P' },
+        lineStyle: { color: 'black', type: 'dashed' },
+      },
+      {
+        xAxis: randomValue,
+        label: {
+          formatter: `Random P: ${randomPercentile.toFixed(2)}%`,
+          position: 'insideEndTop',
+        },
+        lineStyle: { color: 'green', type: 'solid' },
+      },
+    ];
     const res: {
       q: number[];
       percent: number;
@@ -245,6 +317,7 @@ export class SinglePdf {
       result,
       res.percent,
       width,
+      marklines,
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }

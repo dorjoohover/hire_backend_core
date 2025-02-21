@@ -10,6 +10,7 @@ export class VisualizationService {
     value: number,
     percent: number,
     width: number,
+    markline: any
   ): Promise<Buffer> {
     const max = Math.max(...q);
     const min = Math.min(...q);
@@ -85,7 +86,7 @@ export class VisualizationService {
               color: '#ED1C45',
               width: 2,
             },
-            data: [{ xAxis: insertIndex }],
+            data: [markline],
           },
           areaStyle: {
             opacity: 0.8,
