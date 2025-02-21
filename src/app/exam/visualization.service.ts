@@ -101,7 +101,7 @@ export class VisualizationService {
               },
             ]),
           },
-          data: updatedData,
+          data: data,
         },
       ],
     };
