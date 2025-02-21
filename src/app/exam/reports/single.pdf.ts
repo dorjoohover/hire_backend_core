@@ -255,8 +255,8 @@ export class SinglePdf {
     const p75 = dataset[Math.floor(0.75 * dataset.length)];
     const p100 = dataset[dataset.length - 1];
     const dataPoints = [];
-    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
-      dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
+    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 2) {
+      dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
     }
 
     const percent = percentile(dataset, result);
