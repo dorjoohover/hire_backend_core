@@ -25,12 +25,15 @@ export const header = (
   doc.image(assetPath('top'), 0, 0, {
     width: doc.page.width,
   });
-  doc.font(fontNormal).fontSize(14).text('Шалгуулагч', {
-    align: 'left',
-  });
   let y = doc.y;
   doc.moveUp(1);
-  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 150, {
+  doc
+    .font(fontNormal)
+    .fontSize(14)
+    .text('Шалгуулагч', doc.x, y + 150, {
+      align: 'left',
+    });
+  doc.fontSize(14).text('Тест өгсөн огноо', {
     align: 'right',
   });
   doc.font(fontBold).fontSize(14).text(name, {

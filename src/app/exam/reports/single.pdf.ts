@@ -98,8 +98,8 @@ export class SinglePdf {
   ) {
     try {
       const diff = Math.floor(
-        (Date.parse(exam.userEndDate.toString()) -
-          Date.parse(exam.userStartDate.toString())) /
+        (Date.parse(exam.userEndDate?.toString()) -
+          Date.parse(exam.userStartDate?.toString())) /
           60000,
       );
       let duration = assessment.duration;
@@ -281,12 +281,11 @@ export class SinglePdf {
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
     doc.moveDown(1);
     let y = doc.y + (width / 515) * 250;
-    doc.moveTo(width / 2, y);
     doc
       .fillColor(colors.black)
       .font(fontNormal)
       .fontSize(14)
-      .text('Нийт ', {
+      .text('Нийт ', width / 2, y, {
         continued: true,
       })
       .font(fontBold)
