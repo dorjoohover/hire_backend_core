@@ -6,7 +6,7 @@ import * as echarts from 'echarts';
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
   async createChart(
-    q: number[],
+    q: any,
     value: number,
     percent: number,
     width: number,
@@ -101,7 +101,7 @@ export class VisualizationService {
               },
             ]),
           },
-          data: updatedData,
+          data: q,
         },
       ],
     };

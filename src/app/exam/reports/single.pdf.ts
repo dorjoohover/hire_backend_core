@@ -215,14 +215,33 @@ export class SinglePdf {
     assessment: number,
     result: number,
   ) {
+    function normalDistribution(x, mean, stdDev) {
+      const exponent = Math.exp(
+        -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)),
+      );
+      return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
+    }
+
+    // Define mean and standard deviation
+    const mean = 50;
+    const stdDev = 15;
+
+    // Generate X values (range from mean - 3*stdDev to mean + 3*stdDev)
+    const dataPoints = [];
+    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
+      dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
+    }
+    console.log(dataPoints)
+
     const res: {
       q: number[];
       percent: number;
     } = await this.exam.findQuartile(assessment, result);
+
     console.log(res);
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
-      Object.values(res.q),
+      dataPoints,
       result,
       res.percent,
       width,
