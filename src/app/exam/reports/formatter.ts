@@ -29,10 +29,10 @@ export const header = (
   doc
     .font(fontNormal)
     .fontSize(14)
-    .text('Шалгуулагч', doc.x, y + 150, {
+    .text('Шалгуулагч', doc.x, y + 80, {
       align: 'left',
     });
-  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 150, {
+  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 80, {
     align: 'right',
   });
   doc.font(fontBold).fontSize(14).text(name, {
