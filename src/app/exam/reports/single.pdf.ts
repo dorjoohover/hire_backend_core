@@ -241,12 +241,8 @@ export class SinglePdf {
       return (count / data.length) * 100;
     }
     // data
-    const dataset = [];
-    for (let i = 0; i < 1000; i++) {
-      dataset.push(Math.random() * 100);
-    }
-    dataset.sort((a, b) => a - b); // Sort data
-
+    const dataset = await this.exam.findQuartile(assessment, result);
+    console.log(dataset);
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
 
@@ -264,12 +260,8 @@ export class SinglePdf {
     const value = Math.random() * 100;
     const percent = percentile(dataset, value);
 
-    const res: {
-      q: number[];
-      percent: number;
-    } = await this.exam.findQuartile(assessment, result);
+    // dataset.sort((a, b) => a - b); // Sort data
 
-    console.log(res);
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       dataPoints,
