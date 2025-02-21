@@ -273,7 +273,7 @@ export class SinglePdf {
       dataPoints,
       dataPoints[0][0],
       dataPoints[dataPoints.length - 1][0],
-      normalDistribution(result, mean, stdDev) / 10,
+      normalDistribution(result, mean, stdDev) / 10 - dataPoints[0][1],
       result,
       percent,
       // [p0, p25, p50, p75, p100],
@@ -300,10 +300,10 @@ export class SinglePdf {
     y = doc.y;
 
     doc
-      .text(`${percent}%`, doc.x, y - 6, { continued: true })
+      .text(`${percent}%`, doc.x, y - 14, { continued: true })
       .fontSize(14)
       .fillColor(colors.black)
       .font(fontNormal)
-      .text('-г давсан', doc.x, y);
+      .text('-г давсан');
   }
 }
