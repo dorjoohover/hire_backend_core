@@ -288,19 +288,19 @@ export class SinglePdf {
       .text('Нийт ', width / 2, y, {
         continued: true,
       })
-      .font(fontBold);
-
-    y = doc.y;
-    doc
-      .text(firstLetterUpper(assessment.name), doc.x, y - 6, {
+      .font(fontBold)
+      .text(firstLetterUpper(assessment.name), {
         continued: true,
       })
       .font(fontNormal)
       .text(' гүйцэтгэгчдийн', { continued: true })
       .font(fontBold)
       .fontSize(20)
-      .fillColor(colors.orange)
-      .text(`${percent}%`, { continued: true })
+      .fillColor(colors.orange);
+    y = doc.y;
+
+    doc
+      .text(`${percent}%`, doc.x, y - 6, { continued: true })
       .fontSize(14)
       .fillColor(colors.black)
       .font(fontNormal)
