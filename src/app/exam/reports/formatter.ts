@@ -12,7 +12,12 @@ export const assetPath = (p: string) => {
   const imagePath = path.join(__dirname, `../../../../src/assets/${p}.png`);
   return fs.readFileSync(imagePath);
 };
-export const header = (doc: PDFKit.PDFDocument, name: string, date: Date, assessment: string) => {
+export const header = (
+  doc: PDFKit.PDFDocument,
+  name: string,
+  date: Date,
+  assessment: string,
+) => {
   doc.fontSize(10);
   doc.image(assetPath('logo'), marginX, marginY, {
     width: 70,
@@ -23,24 +28,21 @@ export const header = (doc: PDFKit.PDFDocument, name: string, date: Date, assess
   doc.font(fontNormal).fontSize(14).text('Шалгуулагч', {
     align: 'left',
   });
+  let y = doc.y;
   doc.moveUp(1);
-  doc.fontSize(14).text('Тест өгсөн огноо', {
+  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 150, {
     align: 'right',
   });
   doc.font(fontBold).fontSize(14).text(name, {
     align: 'left',
   });
   doc.moveUp(1);
- 
+
   doc.fontSize(14).text(`${dateFormatter(date)}`, {
     align: 'right',
   });
   doc.moveDown(1);
-  doc
-    .font(fontBold)
-    .fontSize(20)
-    .fillColor(colors.orange)
-    .text(assessment);
+  doc.font(fontBold).fontSize(20).fillColor(colors.orange).text(assessment);
 };
 
 export const home = (

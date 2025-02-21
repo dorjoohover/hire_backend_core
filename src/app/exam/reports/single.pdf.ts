@@ -275,13 +275,15 @@ export class SinglePdf {
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
     doc.moveDown(1);
+    let y = doc.y + (width / 515) * 250;
     doc
+      .fillColor(colors.black)
       .font(fontNormal)
       .fontSize(14)
-      .moveTo(width / 2, doc.y)
+      .moveTo(width / 2, y + 20)
       .text('Нийт', {
         continued: true,
-        align: 'right',
+        // align: 'right',
       })
       .font(fontBold)
       .text(assessment.name)
