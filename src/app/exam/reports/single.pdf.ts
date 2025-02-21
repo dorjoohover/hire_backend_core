@@ -251,20 +251,28 @@ export class SinglePdf {
     const stdDev = calculateStdDev(dataset, mean);
 
     // Compute percentiles
+    const p0 = dataset[Math.floor(0 * dataset.length)];
     const p25 = dataset[Math.floor(0.25 * dataset.length)];
     const p50 = dataset[Math.floor(0.5 * dataset.length)];
     const p75 = dataset[Math.floor(0.75 * dataset.length)];
     const p100 = dataset[dataset.length - 1];
 
-    const dataPoints = [];
-    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
-      dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
-    }
+    const dataPoints = [
+      ['', p0],
+      ['25%', p25],
+      ['50%', p50],
+      ['75%', p75],
+      ['100%', p100],
+    ];
+    // for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
+    //   dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
+    // }
 
     // Choose a random value and find its percentile
     const randomValue = Math.random() * 100;
     const randomPercentile = percentile(dataset, randomValue);
 
+    dataPoints.push([`${randomPercentile.toFixed(2)}`, randomValue]);
     console.log(dataPoints);
     const marklines = [
       {
