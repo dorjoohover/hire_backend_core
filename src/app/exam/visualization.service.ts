@@ -6,77 +6,33 @@ import * as echarts from 'echarts';
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
   async createChart(
-    q: any,
+    data: number[],
+    min: number,
+    max: number,
     value: number,
-    percent: string,
-    width: number,
+    point: number,
+    percent: number,
+    q: number[],
   ): Promise<Buffer> {
-    const max = Math.max(...q);
-    const min = Math.min(...q);
-    const data = [
-      ['', q[0]],
-      ['25%', q[1]],
-      ['50%', q[2]],
-      ['75%', q[3]],
-      ['100%', q[4]],
-    ];
-    const index = data.findIndex(([, v]) => value < Number(v));
-    const insertIndex = index === -1 ? data.length - 1 : Math.max(1, index); // Ensure insertion is between 1 and last index
-
-    // Insert value while keeping the first and last elements unchanged
-    const updatedData = [
-      data[0], // Keep the first element
-      ...data.slice(1, insertIndex),
-      [`${percent}%`, value],
-      ...data.slice(insertIndex),
-    ];
-    // let index = 0;
-    // if (value < q[1]) index = 0;
-    // if (value < q[2]) index = 1;
-    // if (value < q[3]) index = 2;
-    // if (value < q[4]) index = 3;
-    // data.splice(index, 0, ['', value]);
     const echartOption = {
       xAxis: {
-        type: 'category',
-        boundaryGap: false,
-      },
-      grid: {
-        left: '5%',
-        right: '4%',
-        top: '10%',
-        containLabel: true,
         show: false,
+        min: min, //mean - 3 * stdDev
+        max: max, // mean + 3 * stdDev
       },
-      yAxis: {
-        type: 'value',
-
-        show: false,
-      },
-
       series: [
         {
           type: 'line',
-          smooth: 0.5,
+          data: data,
+          smooth: true,
           symbol: 'none',
-          lineStyle: {
-            color: '#ED1C45',
-            width: 3,
-          },
-          markPoint: {
-            symbol: 'pin',
-            symbolSize: 80,
-            itemStyle: {
-              color: '#F36421',
-            },
-            label: {
-              show: true,
-              formatter: `${percent}%`,
-              fontSize: 18,
-              fontWeight: 'bold',
-              color: '#fff',
-            },
-            data: [{ coord: [`${percent}%`, max * 0.9], value: `${percent}%` }],
+          lineStyle: { color: '#ED1C45', width: 3 },
+          areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
+              { offset: 0, color: 'rgba(243,100,33, 0.6)' },
+              { offset: 1, color: 'rgba(243,100,33, 1)' },
+            ]),
           },
           markLine: {
             symbol: ['none', 'none'],
@@ -85,23 +41,52 @@ export class VisualizationService {
               color: '#ED1C45',
               width: 2,
             },
-            data: [{ xAxis: insertIndex }],
-          },
-          areaStyle: {
-            opacity: 0.8,
-            color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
-              {
-                offset: 0,
 
-                color: 'rgba(243,100,33, 0.6)',
-              },
+            data: [
               {
-                offset: 1,
-                color: 'rgba(243,100,33, 1)',
+                xAxis: point,
               },
-            ]),
+            ],
           },
-          data: data,
+          markPoint: {
+            symbol: 'pin',
+            symbolSize: 100,
+            itemStyle: { color: '#F36421' },
+            label: {
+              show: true,
+              formatter: `${percent}%`,
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#fff',
+            },
+            data: [{ coord: [point, value], point: `${percent}%` }], // Fixed position
+          },
+        },
+        {
+          type: 'scatter',
+          data: [
+            [q[0], 0],
+            [q[1], 0],
+            [q[2], 0],
+            [q[3], 0],
+            [q[4], 0],
+            [point, 0],
+          ],
+          symbolSize: 10,
+          itemStyle: { color: 'red' },
+          label: {
+            show: true,
+            position: 'bottom',
+            formatter: (params) => {
+              const x = params.value[0];
+              if (x === q[1]) return '25%';
+              if (x === q[2]) return '50%';
+              if (x === q[3]) return '75%';
+              if (x === value) return `${percent}%`;
+              if (x === q[4]) return '100%';
+              return '';
+            },
+          },
         },
       ],
     };

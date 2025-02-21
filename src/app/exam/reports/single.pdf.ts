@@ -256,18 +256,13 @@ export class SinglePdf {
     const p50 = dataset[Math.floor(0.5 * dataset.length)];
     const p75 = dataset[Math.floor(0.75 * dataset.length)];
     const p100 = dataset[dataset.length - 1];
+    const dataPoints = [];
+    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
+      dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
+    }
 
-    const dataPoints = [p0, p25, p50, p75, p100];
-    // for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
-    //   dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
-    // }
-
-    // Choose a random value and find its percentile
-    const randomValue = Math.random() * 100;
-    const randomPercentile = percentile(dataset, randomValue);
-
-    // dataPoints.push([`${randomPercentile.toFixed(2)}`, randomValue]);
-    console.log(dataPoints);
+    const value = Math.random() * 100;
+    const percent = percentile(dataset, value);
 
     const res: {
       q: number[];
@@ -278,10 +273,12 @@ export class SinglePdf {
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       dataPoints,
-      randomValue,
-      // res.percent,
-      randomPercentile.toFixed(2),
-      width,
+      mean - 3 * stdDev,
+      mean + 3 * stdDev,
+      normalDistribution(value, mean, stdDev),
+      value,
+      percent,
+      [p0, p25, p50, p75, p100],
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }
