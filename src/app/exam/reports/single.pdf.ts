@@ -272,38 +272,9 @@ export class SinglePdf {
     const randomValue = Math.random() * 100;
     const randomPercentile = percentile(dataset, randomValue);
 
-    dataPoints.push([`${randomPercentile.toFixed(2)}`, randomValue]);
+    // dataPoints.push([`${randomPercentile.toFixed(2)}`, randomValue]);
     console.log(dataPoints);
-    const marklines = [
-      {
-        xAxis: p25,
-        label: { formatter: '25th P' },
-        lineStyle: { color: 'red', type: 'dashed' },
-      },
-      {
-        xAxis: p50,
-        label: { formatter: '50th P' },
-        lineStyle: { color: 'orange', type: 'dashed' },
-      },
-      {
-        xAxis: p75,
-        label: { formatter: '75th P' },
-        lineStyle: { color: 'purple', type: 'dashed' },
-      },
-      {
-        xAxis: p100,
-        label: { formatter: '100th P' },
-        lineStyle: { color: 'black', type: 'dashed' },
-      },
-      {
-        xAxis: randomValue,
-        label: {
-          formatter: `Random P: ${randomPercentile.toFixed(2)}%`,
-          position: 'insideEndTop',
-        },
-        lineStyle: { color: 'green', type: 'solid' },
-      },
-    ];
+
     const res: {
       q: number[];
       percent: number;
@@ -314,10 +285,9 @@ export class SinglePdf {
     const buffer = await this.vis.createChart(
       dataPoints,
       randomValue,
-      res.percent,
+      // res.percent,
+      randomPercentile.toFixed(2),
       width,
-      marklines,
-      normalDistribution(randomValue, mean, stdDev),
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }

@@ -6,13 +6,36 @@ import * as echarts from 'echarts';
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
   async createChart(
-    dataPoints: any,
+    q: any,
     value: number,
-    percent: number,
+    percent: string,
     width: number,
-    markline: any,
-    normal: any,
   ): Promise<Buffer> {
+    const max = Math.max(...q);
+    const min = Math.min(...q);
+    const data = [
+      ['', q[0]],
+      ['25%', q[1]],
+      ['50%', q[2]],
+      ['75%', q[3]],
+      ['100%', 0],
+    ];
+    const index = data.findIndex(([, v]) => value < Number(v));
+    const insertIndex = index === -1 ? data.length - 1 : Math.max(1, index); // Ensure insertion is between 1 and last index
+
+    // Insert value while keeping the first and last elements unchanged
+    const updatedData = [
+      data[0], // Keep the first element
+      ...data.slice(1, insertIndex),
+      [`${percent}%`, value],
+      ...data.slice(insertIndex),
+    ];
+    // let index = 0;
+    // if (value < q[1]) index = 0;
+    // if (value < q[2]) index = 1;
+    // if (value < q[3]) index = 2;
+    // if (value < q[4]) index = 3;
+    // data.splice(index, 0, ['', value]);
     const echartOption = {
       xAxis: {
         type: 'category',
@@ -30,15 +53,7 @@ export class VisualizationService {
 
         show: false,
       },
-      markLine: {
-        symbol: ['none', 'none'],
-        label: { show: false },
-        lineStyle: {
-          color: '#ED1C45',
-          width: 2,
-        },
-        data: [markline],
-      },
+
       series: [
         {
           type: 'line',
@@ -61,10 +76,17 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            // percent
-            data: [{ coord: [`${value}%`, 100], value: `${value}%` }],
+            data: [{ coord: [`${percent}%`, max * 0.9], value: `${percent}%` }],
           },
-
+          markLine: {
+            symbol: ['none', 'none'],
+            label: { show: false },
+            lineStyle: {
+              color: '#ED1C45',
+              width: 2,
+            },
+            data: [{ xAxis: insertIndex }],
+          },
           areaStyle: {
             opacity: 0.8,
             color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
@@ -79,19 +101,7 @@ export class VisualizationService {
               },
             ]),
           },
-          data: dataPoints,
-        },
-
-        {
-          type: 'scatter',
-          data: [[value, normal]],
-          symbolSize: 10,
-          itemStyle: { color: 'green' },
-          label: {
-            show: true,
-            formatter: `Random: ${value.toFixed(2)}`,
-            position: 'top',
-          },
+          data: updatedData,
         },
       ],
     };
