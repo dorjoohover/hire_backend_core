@@ -18,7 +18,7 @@ export class VisualizationService {
       ['25%', q[1]],
       ['50%', q[2]],
       ['75%', q[3]],
-      ['100%', 0],
+      ['100%', q[4]],
     ];
     const index = data.findIndex(([, v]) => value < Number(v));
     const insertIndex = index === -1 ? data.length - 1 : Math.max(1, index); // Ensure insertion is between 1 and last index
