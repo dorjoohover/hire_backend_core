@@ -86,7 +86,7 @@ export class VisualizationService {
               if (x === q[1]) return '25%';
               if (x === q[2]) return '50%';
               if (x === q[3]) return '75%';
-              if (x === value) return `${percent}%`;
+              if (x === point) return `${percent}%`;
               if (x === q[4]) return '100%';
               return '';
             },
@@ -95,7 +95,7 @@ export class VisualizationService {
       ],
     };
 
-    const canvas = createCanvas(1000, 700);
+    const canvas = createCanvas(900, 700);
     const chart = echarts.init(canvas as any);
 
     chart.setOption(echartOption);
