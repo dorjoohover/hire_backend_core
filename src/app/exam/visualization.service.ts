@@ -10,7 +10,7 @@ export class VisualizationService {
     value: number,
     percent: number,
     width: number,
-    markline: any
+    markline: any,
   ): Promise<Buffer> {
     const max = Math.max(...q);
     const min = Math.min(...q);
@@ -54,7 +54,15 @@ export class VisualizationService {
 
         show: false,
       },
-
+      markLine: {
+        symbol: ['none', 'none'],
+        label: { show: false },
+        lineStyle: {
+          color: '#ED1C45',
+          width: 2,
+        },
+        data: [markline],
+      },
       series: [
         {
           type: 'line',
@@ -79,15 +87,7 @@ export class VisualizationService {
             },
             data: [{ coord: [`${percent}%`, max * 0.9], value: `${percent}%` }],
           },
-          markLine: {
-            symbol: ['none', 'none'],
-            label: { show: false },
-            lineStyle: {
-              color: '#ED1C45',
-              width: 2,
-            },
-            data: [markline],
-          },
+
           areaStyle: {
             opacity: 0.8,
             color: new echarts.graphic.LinearGradient(0, 1, 0, 0, [
