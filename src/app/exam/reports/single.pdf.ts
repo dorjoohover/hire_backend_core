@@ -212,7 +212,7 @@ export class SinglePdf {
   }
   async examQuartile(
     doc: PDFKit.PDFDocument,
-    assessment: number,
+    assessment: AssessmentEntity,
     result: number,
   ) {
     function calculateMean(data) {
@@ -241,7 +241,7 @@ export class SinglePdf {
       return (count / data.length) * 100;
     }
     // data
-    const dataset = await this.exam.findQuartile(assessment, result);
+    const dataset = await this.exam.findQuartile(assessment.id, result);
     console.log(dataset);
     const mean = calculateMean(dataset);
     console.log(mean);
@@ -260,8 +260,7 @@ export class SinglePdf {
     }
 
     const percent = percentile(dataset, result);
-    console.log(dataPoints);
-    console.log(normalDistribution(result, mean, stdDev));
+
     // dataset.sort((a, b) => a - b); // Sort data
 
     const width = doc.page.width - marginX - marginX;
@@ -275,5 +274,26 @@ export class SinglePdf {
       // [p0, p25, p50, p75, p100],
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
+    doc.moveDown(1);
+    doc
+      .font(fontNormal)
+      .fontSize(14)
+      .moveTo(width / 2, doc.y)
+      .text('Нийт', {
+        continued: true,
+        align: 'right',
+      })
+      .font(fontBold)
+      .text(assessment.name)
+      .font(fontNormal)
+      .text('гүйцэтгэгчдийн', { continued: true })
+      .font(fontBold)
+      .fontSize(20)
+      .fillColor(colors.orange)
+      .text(`${percent}%`, { continued: true })
+      .fontSize(14)
+      .fillColor(colors.black)
+      .font(fontNormal)
+      .text('-г давсан');
   }
 }

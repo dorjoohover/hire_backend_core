@@ -102,30 +102,10 @@ export class PdfService {
       exam.firstname,
       assessment.name,
     );
-    header(doc);
+    const date = new Date(exam.userStartDate);
+    header(doc, name, date, assessment.name);
     doc.moveDown(5);
 
-    doc.font(fontNormal).fontSize(14).text('Шалгуулагч', {
-      align: 'left',
-    });
-    doc.moveUp(1);
-    doc.fontSize(14).text('Тест өгсөн огноо', {
-      align: 'right',
-    });
-    doc.font(fontBold).fontSize(14).text(name, {
-      align: 'left',
-    });
-    doc.moveUp(1);
-    const date = new Date(exam.userStartDate);
-    doc.fontSize(14).text(`${dateFormatter(date)}`, {
-      align: 'right',
-    });
-    doc.moveDown(1);
-    doc
-      .font(fontBold)
-      .fontSize(20)
-      .fillColor(colors.orange)
-      .text(assessment.name);
     doc
       .moveTo(30, doc.y)
       .strokeColor(colors.orange)
@@ -152,12 +132,13 @@ export class PdfService {
     await this.single.default(doc, assessment, exam);
     footer(doc);
     doc.addPage();
-    header(doc);
+    header(doc, name, date, assessment.name);
     doc.moveDown(4);
-    await this.single.examQuartile(doc, exam.assessment.id, +exam.result);
+    await this.single.examQuartile(doc, exam.assessment, +exam.result);
     footer(doc);
     doc.pipe(out);
 
+    
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
 
