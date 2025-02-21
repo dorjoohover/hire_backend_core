@@ -304,6 +304,6 @@ export class SinglePdf {
       .fontSize(14)
       .fillColor(colors.black)
       .font(fontNormal)
-      .text('-г давсан');
+      .text('-г давсан', doc.x, y);
   }
 }
