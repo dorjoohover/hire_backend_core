@@ -242,7 +242,6 @@ export class SinglePdf {
     }
     // data
     const dataset = await this.exam.findQuartile(assessment, result);
-    console.log(dataset);
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
 
@@ -257,8 +256,7 @@ export class SinglePdf {
       dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
     }
 
-    const value = Math.random() * 100;
-    const percent = percentile(dataset, value);
+    const percent = percentile(dataset, result);
 
     // dataset.sort((a, b) => a - b); // Sort data
 
@@ -267,8 +265,8 @@ export class SinglePdf {
       dataPoints,
       mean - 3 * stdDev,
       mean + 3 * stdDev,
-      normalDistribution(value, mean, stdDev),
-      value,
+      normalDistribution(result, mean, stdDev),
+      result,
       percent,
       [p0, p25, p50, p75, p100],
     );
