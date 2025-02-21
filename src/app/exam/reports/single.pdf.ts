@@ -267,8 +267,8 @@ export class SinglePdf {
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       dataPoints,
-      dataset[0],
-      dataset[dataset.length - 1],
+      dataPoints[0],
+      dataPoints[dataPoints.length - 1],
       normalDistribution(result, mean, stdDev),
       result,
       percent,
