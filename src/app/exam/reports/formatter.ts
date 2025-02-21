@@ -43,6 +43,12 @@ export const header = (
   });
   doc.moveDown(1);
   doc.font(fontBold).fontSize(20).fillColor(colors.orange).text(assessment);
+  doc
+    .moveTo(30, doc.y)
+    .strokeColor(colors.orange)
+    .lineTo(230, doc.y)
+    .stroke()
+    .moveDown();
 };
 
 export const home = (
@@ -119,6 +125,11 @@ export const dateFormatter = (date: Date): string => {
   parseInt(day) < 10 ? `0${day}` : null;
   return `${year}.${month}.${day}`;
 };
+
+export const firstLetterUpper = (text: string) => {
+  return text.substring(0, 1).toUpperCase() + text.substring(1);
+};
+
 export const footer = (doc: PDFKit.PDFDocument) => {
   doc
     .font(fontNormal)

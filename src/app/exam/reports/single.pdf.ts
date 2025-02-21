@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { assetPath, colors, fontBold, fontNormal, marginX } from './formatter';
+import {
+  assetPath,
+  colors,
+  firstLetterUpper,
+  fontBold,
+  fontNormal,
+  marginX,
+} from './formatter';
 import { QuestionCategoryDao } from 'src/app/question/dao/question.category.dao';
 import { VisualizationService } from '../visualization.service';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
@@ -244,9 +251,7 @@ export class SinglePdf {
     const dataset = await this.exam.findQuartile(assessment.id, result);
     console.log(dataset);
     const mean = calculateMean(dataset);
-    console.log(mean);
     const stdDev = calculateStdDev(dataset, mean);
-    console.log(stdDev);
 
     // Compute percentiles
     const p0 = dataset[Math.floor(0 * dataset.length)];
@@ -276,17 +281,16 @@ export class SinglePdf {
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
     doc.moveDown(1);
     let y = doc.y + (width / 515) * 250;
+    doc.moveTo(width / 2, y);
     doc
       .fillColor(colors.black)
       .font(fontNormal)
       .fontSize(14)
-      .moveTo(width / 2, y + 20)
-      .text('Нийт', {
+      .text('Нийт ', {
         continued: true,
-        // align: 'right',
       })
       .font(fontBold)
-      .text(assessment.name)
+      .text(firstLetterUpper(assessment.name), { continued: true })
       .font(fontNormal)
       .text('гүйцэтгэгчдийн', { continued: true })
       .font(fontBold)

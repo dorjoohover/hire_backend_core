@@ -103,15 +103,7 @@ export class PdfService {
       assessment.name,
     );
     const date = new Date(exam.userStartDate);
-    header(doc, name, date, assessment.name);
-    doc.moveDown(5);
-
-    doc
-      .moveTo(30, doc.y)
-      .strokeColor(colors.orange)
-      .lineTo(230, doc.y)
-      .stroke()
-      .moveDown();
+    header(doc, name, date, assessment.name);    
     doc
       .font(fontNormal)
       .fillColor(colors.black)
@@ -132,8 +124,8 @@ export class PdfService {
     await this.single.default(doc, assessment, exam);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
     doc.moveDown(4);
+    header(doc, name, date, assessment.name);
     await this.single.examQuartile(doc, exam.assessment, +exam.result);
     footer(doc);
     doc.pipe(out);
