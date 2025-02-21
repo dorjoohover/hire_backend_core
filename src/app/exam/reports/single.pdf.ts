@@ -264,16 +264,7 @@ export class SinglePdf {
     // Choose a random value and find its percentile
     const randomValue = Math.random() * 100;
     const randomPercentile = percentile(dataset, randomValue);
-    dataPoints.push([
-      {
-        xAxis: randomValue,
-        label: {
-          formatter: `Random P: ${randomPercentile.toFixed(2)}%`,
-          position: 'insideEndTop',
-        },
-        lineStyle: { color: 'green', type: 'solid' },
-      },
-    ]);
+
     console.log(dataPoints);
     const marklines = [
       {
