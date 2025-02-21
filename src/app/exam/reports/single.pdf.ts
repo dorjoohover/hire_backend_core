@@ -273,7 +273,7 @@ export class SinglePdf {
       dataPoints,
       dataPoints[0][0],
       dataPoints[dataPoints.length - 1][0],
-      normalDistribution(result, mean, stdDev) / 10 + dataPoints[0][1],
+      normalDistribution(result, mean, stdDev) / 10,
       result,
       percent,
       // [p0, p25, p50, p75, p100],
@@ -295,7 +295,7 @@ export class SinglePdf {
       .font(fontBold)
       .fontSize(20)
       .fillColor(colors.orange)
-      .text(`${percent}%`, doc.x, doc.y - 6, { continued: true })
+      .text(`${percent}%`, doc.x, doc.y + 6, { continued: true })
       .fontSize(14)
       .fillColor(colors.black)
       .font(fontNormal)
