@@ -257,13 +257,7 @@ export class SinglePdf {
     const p75 = dataset[Math.floor(0.75 * dataset.length)];
     const p100 = dataset[dataset.length - 1];
 
-    const dataPoints = [
-      ['', p0],
-      ['25%', p25],
-      ['50%', p50],
-      ['75%', p75],
-      ['100%', p100],
-    ];
+    const dataPoints = [p0, p25, p50, p75, p100];
     // for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
     //   dataPoints.push([x, normalDistribution(x, mean, stdDev)]);
     // }
