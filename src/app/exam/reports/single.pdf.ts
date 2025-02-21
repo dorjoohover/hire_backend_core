@@ -242,8 +242,11 @@ export class SinglePdf {
     }
     // data
     const dataset = await this.exam.findQuartile(assessment, result);
+    console.log(dataset);
     const mean = calculateMean(dataset);
+    console.log(mean);
     const stdDev = calculateStdDev(dataset, mean);
+    console.log(stdDev);
 
     // Compute percentiles
     const p0 = dataset[Math.floor(0 * dataset.length)];
@@ -257,7 +260,8 @@ export class SinglePdf {
     }
 
     const percent = percentile(dataset, result);
-
+    console.log(dataPoints);
+    console.log(normalDistribution(result, mean, stdDev));
     // dataset.sort((a, b) => a - b); // Sort data
 
     const width = doc.page.width - marginX - marginX;
