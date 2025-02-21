@@ -299,11 +299,8 @@ export class SinglePdf {
       .fillColor(colors.orange);
     y = doc.y;
 
-    doc
-      .text(`${percent}%`, doc.x, y - 14, { continued: true })
-      .fontSize(14)
-      .fillColor(colors.black)
-      .font(fontNormal)
-      .text('-г давсан');
+    doc.text(`${percent}%`, { continued: true }).fontSize(14);
+    doc.y += 6;
+    doc.fillColor(colors.black).font(fontNormal).text('-г давсан');
   }
 }
