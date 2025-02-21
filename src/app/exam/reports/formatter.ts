@@ -26,14 +26,13 @@ export const header = (
     width: doc.page.width,
   });
   let y = doc.y;
-  doc.moveUp(1);
   doc
     .font(fontNormal)
     .fontSize(14)
     .text('Шалгуулагч', doc.x, y + 150, {
       align: 'left',
     });
-  doc.fontSize(14).text('Тест өгсөн огноо', {
+  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 150, {
     align: 'right',
   });
   doc.font(fontBold).fontSize(14).text(name, {

@@ -264,7 +264,7 @@ export class SinglePdf {
       dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
     }
 
-    const percent = percentile(dataset, result);
+    const percent = Math.round(percentile(dataset, result));
 
     // dataset.sort((a, b) => a - b); // Sort data
 
