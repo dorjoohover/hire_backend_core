@@ -263,12 +263,12 @@ export class SinglePdf {
     const width = doc.page.width - marginX - marginX;
     const buffer = await this.vis.createChart(
       dataPoints,
-      mean - 3 * stdDev,
-      mean + 3 * stdDev,
+      dataset[0],
+      dataset[dataset.length - 1],
       normalDistribution(result, mean, stdDev),
       result,
       percent,
-      [p0, p25, p50, p75, p100],
+      // [p0, p25, p50, p75, p100],
     );
     doc.image(buffer, { width: width, height: (width / 515) * 250 });
   }

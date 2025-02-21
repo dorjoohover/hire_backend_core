@@ -12,7 +12,6 @@ export class VisualizationService {
     value: number,
     point: number,
     percent: number,
-    q: number[],
   ): Promise<Buffer> {
     const echartOption = {
       xAxis: {
@@ -68,27 +67,14 @@ export class VisualizationService {
         },
         {
           type: 'scatter',
-          data: [
-            [q[0], 0],
-            [q[1], 0],
-            [q[2], 0],
-            [q[3], 0],
-            [q[4], 0],
-            [point, 0],
-          ],
+          data: [[point, 0]],
           symbolSize: 10,
           itemStyle: { color: 'red' },
           label: {
             show: true,
             position: 'bottom',
             formatter: (params) => {
-              const x = params.value[0];
-              if (x === q[1]) return '25%';
-              if (x === q[2]) return '50%';
-              if (x === q[3]) return '75%';
-              if (x === point) return `${percent}%`;
-              if (x === q[4]) return '100%';
-              return '';
+              return `${percent}%`;
             },
           },
         },
