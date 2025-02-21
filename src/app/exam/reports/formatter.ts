@@ -44,7 +44,11 @@ export const header = (
     align: 'right',
   });
   doc.moveDown(1);
-  doc.font(fontBold).fontSize(20).fillColor(colors.orange).text(assessment);
+  doc
+    .font(fontBold)
+    .fontSize(20)
+    .fillColor(colors.orange)
+    .text(firstLetterUpper(assessment));
   doc
     .moveTo(30, doc.y)
     .strokeColor(colors.orange)
