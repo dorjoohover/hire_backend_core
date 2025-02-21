@@ -20,6 +20,10 @@ export class VisualizationService {
         min: min, //mean - 3 * stdDev
         max: max, // mean + 3 * stdDev
       },
+      yAxis: {
+        type: 'value',
+        show: false,
+      },
       series: [
         {
           type: 'line',
