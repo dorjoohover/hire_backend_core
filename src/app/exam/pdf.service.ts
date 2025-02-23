@@ -23,6 +23,8 @@ import {
 import { SinglePdf } from './reports/single.pdf';
 import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { ExamEntity } from './entities/exam.entity';
+import { ReportType } from 'src/base/constants';
+import { DISC } from 'src/assets/report/disc';
 
 const fonts = {
   CIP: {
@@ -45,6 +47,57 @@ export class PdfService {
     private vis: VisualizationService,
     private single: SinglePdf,
   ) {}
+
+  async singleTemplate(
+    doc: PDFKit.PDFDocument,
+    assessment: AssessmentEntity,
+    exam: ExamEntity,
+    name: string,
+    date: Date,
+  ) {
+    doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+
+    await this.single.default(doc, assessment, exam);
+    footer(doc);
+    doc.addPage();
+    header(doc, name, date, assessment.name);
+    await this.single.examQuartile(doc, exam.assessment, +exam.result);
+    footer(doc);
+  }
+
+  async discTemplate(
+    doc: PDFKit.PDFDocument,
+    assessment: AssessmentEntity,
+    exam: ExamEntity,
+    name: string,
+    date: Date,
+  ) {
+    doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Оршил');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+    doc
+      .font(fontNormal)
+      .fontSize(14)
+      .fillColor(colors.black)
+      .text(DISC.preface);
+    doc.text(
+      'Таны өгсөн хариултанд үндэслэн дискийн 4 төрлөөс танд давамгайлж буй хэв шинжийг доорх DiSC графикт харууллаа. Энэхүү тайлангийн бүлэг бүрийн тайлбарууд эдгээр оноонуудад суурилсан болно. Та уг тайлангаас өөрийн хамгийн өндөр үзүүлэлт бүхий дискийн төрөл, түүний боломжит давуу болон сул талууд, мөн таныг илэрхийлэх загварын Хувь хүний хэв шинжтэй танилцах болно. ',
+    );
+    doc.image(assetPath('report/disc/graph'));
+    doc.font(fontBold).text('Таны хувь хүний хэв шинж: ', { continued: true });
+    doc.fillColor(colors.orange).text(exam.result);
+    
+  }
 
   async generateImage(html: string) {
     const image = await nodeHtmlToImage({
@@ -113,22 +166,10 @@ export class PdfService {
     doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
 
     doc.font(fontNormal).text(assessment.measure).moveDown(1);
-    doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
-    doc
-      .moveTo(30, doc.y)
-      .strokeColor(colors.orange)
-      .lineTo(75, doc.y)
-      .stroke()
-      .moveDown();
-
-    await this.single.default(doc, assessment, exam);
-    footer(doc);
-    doc.addPage();
-    header(doc, name, date, assessment.name);
-    await this.single.examQuartile(doc, exam.assessment, +exam.result);
-    footer(doc);
-    doc.pipe(out);
-
+    if (assessment.type == ReportType.CORRECT)
+      await this.singleTemplate(doc, assessment, exam, name, date);
+    if (assessment.type == ReportType.DISC) doc.pipe(out);
+    await this.discTemplate(doc, assessment, exam, name, date);
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
 
@@ -139,4 +180,6 @@ export class PdfService {
 
     return filePath;
   }
+
+  async createSingleCorrect() {}
 }
