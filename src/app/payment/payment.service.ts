@@ -73,12 +73,11 @@ export class PaymentService extends BaseService {
           res.push({
             paymentDate: transaction.createdAt,
             assessment: exam.assessment.name,
-            userEndDate: exam.userEndDate,
-            userStartDate: exam.userStartDate,
             price: transaction.service.price,
             count: transaction.service.count,
             usedUserCount: transaction.service.usedUserCount,
           });
+          break;
         }
       }
     }
