@@ -103,22 +103,28 @@ export class ExamDao {
     });
   };
   findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
-    return await this.db.find({
-      where: {
-        assessment: {
-          id: dto.assessment == 0 ? Not(0) : dto.assessment,
-        },
-        email: dto.email ? Like(`%${dto.email}%`) : Not('0'),
-        createdAt:
-          dto.endDate && dto.startDate
-            ? Between(dto.startDate, dto.endDate)
-            : Not(IsNull()),
+    const whereCondition: any = {
+      assessment: {
+        id: dto.assessment == 0 ? Not(0) : dto.assessment,
       },
+      createdAt:
+        dto.endDate && dto.startDate
+          ? Between(dto.startDate, dto.endDate)
+          : Not(IsNull()),
+    };
+
+    // Only add email condition if dto.email exists
+    if (dto.email) {
+      whereCondition.email = Like(`%${dto.email}%`);
+    }
+
+    return await this.db.find({
+      where: whereCondition,
       take: limit,
       skip: (page - 1) * limit,
       relations: ['assessment', 'service', 'service.user'],
       order: {
-        createdAt: 'desc',
+        createdAt: 'DESC',
       },
     });
   };
