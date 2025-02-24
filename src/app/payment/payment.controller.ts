@@ -25,7 +25,7 @@ export class PaymentController {
     return this.paymentService.create(createPaymentDto, user['id']);
   }
 
-  @Roles(Role.super_admin, Role.tester, Role.admin)
+  // @Roles(Role.super_admin, Role.tester, Role.admin)
   @Get('/view/:method/:role/:page/:limit')
   @ApiParam({ name: 'method' })
   @ApiParam({ name: 'page' })
@@ -36,8 +36,9 @@ export class PaymentController {
     @Param('page') page: string,
     @Param('limit') limit: string,
     @Param('role') role: string,
+    @Request() {user}
   ) {
-    return this.paymentService.findAll(+method, +role, +page, +limit);
+    return this.paymentService.findAll(+method, +role, +page, +limit, user);
   }
 
   @Roles(Role.super_admin, Role.tester, Role.admin)

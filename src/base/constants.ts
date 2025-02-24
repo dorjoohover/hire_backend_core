@@ -85,11 +85,9 @@ export const PaymentTypeDict = {
 };
 
 export const PaymentType = {
-  CARD: 1,
+  LOYALTY: 1,
   QPAY: 2,
   BANK: 3,
-  LOAN: 4,
-  SOCIAL: 5,
 };
 
 export const ProductMeasureUnit = {

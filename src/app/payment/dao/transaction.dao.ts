@@ -15,14 +15,22 @@ export class TransactionDao {
       ...dto,
       service: dto.service ? { id: dto.service } : null,
       payment: dto.payment ? { id: dto.payment } : null,
-      createdUser: dto.user
+      createdUser: dto.user,
     });
     await this.db.save(res);
   };
 
-  findAll = async () => {
+  findAll = async (page: number, limit: number, user: number) => {
     return await this.db.find({
-      //   relations: [''],
+      where: {
+        createdUser: user,
+      },
+      take: limit,
+      skip: (page - 1) * limit,
+      order: {
+        createdAt: 'DESC',
+      },
+      relations: ['service', 'service.exams'],
     });
   };
 

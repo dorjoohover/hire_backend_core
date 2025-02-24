@@ -77,6 +77,7 @@ export class ExamDao {
           id: service,
         },
       },
+      relations: ['assessment'],
     });
   };
 

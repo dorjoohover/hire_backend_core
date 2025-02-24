@@ -383,9 +383,9 @@ export class PdfService {
     doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
 
     doc.font(fontNormal).text(assessment.measure).moveDown(1);
-    if (assessment.type == ReportType.CORRECT)
+    if (assessment.report == ReportType.CORRECT)
       await this.singleTemplate(doc, assessment, exam, name, date);
-    if (assessment.type == ReportType.DISC) {
+    if (assessment.report == ReportType.DISC) {
       await this.discTemplate(doc, assessment, exam, name, date, res);
     }
     doc.pipe(out);

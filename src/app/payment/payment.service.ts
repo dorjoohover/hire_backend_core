@@ -7,6 +7,8 @@ import { BaseService } from 'src/base/base.service';
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { PaymentType } from 'src/base/constants';
+import { ExamDao } from '../exam/dao/exam.dao';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
 export class PaymentService extends BaseService {
@@ -14,6 +16,7 @@ export class PaymentService extends BaseService {
     private dao: PaymentDao,
     private userDao: UserDao,
     private transactionDao: TransactionDao,
+    private examDao: ExamDao,
   ) {
     super();
   }
@@ -51,7 +54,40 @@ export class PaymentService extends BaseService {
     role: number,
     page: number,
     limit: number,
+    user: any,
   ) {
+    const transactions = await this.transactionDao.findAll(
+      page,
+      limit,
+      user['id'],
+    );
+    const res = [];
+    for (const transaction of transactions) {
+      const serviceId = transaction.service.id;
+      const exams = await this.examDao.findByService(serviceId);
+      for (const exam of exams) {
+        if (user['role'] == Role.client) {
+          res.push({
+            paymentDate: transaction.createdAt,
+            assessment: exam.assessment.name,
+            userEndDate: exam.userEndDate,
+            userStartDate: exam.userStartDate,
+            price: transaction.service.price,
+          });
+        }
+        if (user['role'] == Role.organization) {
+          res.push({
+            paymentDate: transaction.createdAt,
+            assessment: exam.assessment.name,
+            userEndDate: exam.userEndDate,
+            userStartDate: exam.userStartDate,
+            price: transaction.service.price,
+            count: transaction.service.count,
+            usedUserCount: transaction.service.usedUserCount,
+          });
+        }
+      }
+    }
     return await this.dao.findAll(method, role, page, limit);
   }
 
