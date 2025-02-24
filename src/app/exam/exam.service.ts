@@ -52,12 +52,15 @@ export class ExamService extends BaseService {
       );
     }
     const assessment = res.assessment;
-    const result = await this.calculateExamById(id, true);
+    const result =
+      res.assessment.report == ReportType.DISC
+        ? await this.calculateExamById(id, true)
+        : null;
 
     return await this.pdfService.createPdfInOneFile(
       assessment,
       res,
-      result.calculate,
+      result?.calculate,
     );
   }
 

@@ -101,11 +101,13 @@ export class PdfService {
     footer(doc);
     header(doc, name, date, assessment.name);
     console.log(exam.result);
-    const style = Object.entries(DISC.pattern).find(([_, value]) => {
-      return Object.keys(value).includes(exam.result);
-    });
-    console.log(style);
+    // const style = Object.entries(DISC.pattern).find(([_, value]) => {
+    //   return Object.keys(value).includes(exam.result);
+    // });
+    // console.log(style);
+    const style = DISC.values.d;
     let result = style[0] ? DISC.values[style[0].toLowerCase()] : '';
+    // let result = ''
     doc
       .font(fontNormal)
       .fontSize(14)
@@ -304,8 +306,10 @@ export class PdfService {
     doc.font(fontNormal).text(assessment.measure).moveDown(1);
     if (assessment.type == ReportType.CORRECT)
       await this.singleTemplate(doc, assessment, exam, name, date);
-    if (assessment.type == ReportType.DISC) doc.pipe(out);
-    await this.discTemplate(doc, assessment, exam, name, date, res);
+    if (assessment.type == ReportType.DISC) {
+      await this.discTemplate(doc, assessment, exam, name, date, res);
+    }
+    doc.pipe(out);
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
 
