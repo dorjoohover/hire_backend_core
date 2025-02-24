@@ -279,7 +279,7 @@ export class PdfService {
     doc.text(
       'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
       x,
-      y + doc.page.width / 6,
+      y + doc.page.width / 5,
       {
         align: 'justify',
         width: doc.page.width / 4 - marginX - marginX,
@@ -287,8 +287,8 @@ export class PdfService {
     );
     doc.text(
       'Хүрээлэн буй орчноо таатай гэж ойлгодог',
-      (doc.page.width / 4) * 3 + marginX + marginX,
-      y + doc.page.width / 6,
+      (doc.page.width / 4) * 3 + marginX,
+      y + doc.page.width / 5,
       {
         align: 'justify',
         width: doc.page.width / 4 - marginX - marginX,
@@ -302,7 +302,7 @@ export class PdfService {
     doc.text(
       'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
       x + doc.page.width / 4 + marginX,
-      doc.y + doc.page.width / 6,
+      doc.y + doc.page.width / 5,
       {
         align: 'justify',
         width: doc.page.width / 2 - marginX - marginX,
