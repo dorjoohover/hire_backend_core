@@ -97,16 +97,18 @@ export class PdfService {
     footer(doc);
     doc.addPage();
     header(doc, name, date, assessment.name);
-    doc.font(fontNormal).fillColor(colors.black);
+    doc.font(fontNormal).fillColor(colors.black).fontSize(12);
     doc
       .text(
         'Таны өгсөн хариултанд үндэслэн дискийн 4 төрлөөс танд давамгайлж буй хэв шинжийг доорх DiSC графикт харууллаа. Энэхүү тайлангийн бүлэг бүрийн тайлбарууд эдгээр оноонуудад суурилсан болно. Та уг тайлангаас өөрийн хамгийн өндөр үзүүлэлт бүхий дискийн төрөл, түүний боломжит давуу болон сул талууд, мөн таныг илэрхийлэх загварын Хувь хүний хэв шинжтэй танилцах болно. ',
       )
       .moveDown();
-    doc.image(assetPath('report/disc/graph'), doc.page.width / 4, doc.y, {
-      width: doc.page.width / 2 - marginX,
-      height: doc.page.width / 2 - marginX,
-    });
+    doc
+      .image(assetPath('report/disc/graph'), doc.page.width / 4, doc.y, {
+        width: doc.page.width / 2 - marginX,
+        height: doc.page.width / 2 - marginX,
+      })
+      .moveDown();
     doc
       .font(fontBold)
       .text(
@@ -261,7 +263,8 @@ export class PdfService {
       .fontSize(12)
       .text(
         'DiSC Давамгайлах (D), Нөлөөлөх (I), Туйлбартай (S), мөн Нягт нямбай (C) гэсэн дөрвөн  шинжийг дөрвөн талт хүснэгтэн загвараар тайлбарладаг. Зарим хүмүүст зөвхөн нэг төрлийн хэв шинж илэрдэг бол заримд хоёр, эсвэл бүр гурван хэв шинж ч  илэрч болно.\nТаны Диск загвар бусад хүмүүсийнхээс хэр их ялгаатай бол? Дискийн бусад загваруудтай адил төстэй ямар шинж байна вэ? Эдгээр асуултуудыг ойлгоход доорх Диск загвар танд туслана. Доорх хүснэгтэнд зэрэгцээ байрлах дискийн зан төлвийн төрлүүд нь өөр хоорондоо ямар нэгэн ижил төстэй шинжтэй. Таны харж байгаагаар C болон S төрлийн хүмүүс нь ажлын орчиндоо өөрсдийгөө нөлөөлөл багатай хэмээн үнэлдэг нь харагдаж байна. Тэд өөрийгөө бусдад нөлөөлөх чадвар багатай гэж боддог тул эргэн тойрныхоо хүмүүст илүү уусах хандлагатай байдаг. Нөгөө талдаа D болон I төрлийн хүмүүс нь өөрсдийгөө ажлын орчндоо нөлөөлөл ихтэй байдаг гэж үздэг тул илүү өөртөө итгэлтэй байх хандлагатай. Түүнчлэн, D болон C төрлийн хүмүүс ажлын орчиноо таагүй (хаалттай, эсэргүүцэж) хэмээн хүлээж авдаг бол I болон S төрлийн хүмүүс эсрэгээрээ илүү таатай (нөхөрсөг, дэмжлэг үзүүлдэг) хэмээн хүлээж авдаг.',
-      );
+      )
+      .moveDown();
     const x = doc.x;
     doc.text(
       ' Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
@@ -269,38 +272,40 @@ export class PdfService {
       doc.y,
       {
         align: 'justify',
-        width: doc.page.width / 2 - marginX * 2,
+        width: doc.page.width / 2 - marginX - marginX,
       },
     );
     const y = doc.y;
     doc.text(
       'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
       x,
-      y + doc.page.width / 4,
+      y + doc.page.width / 6,
       {
         align: 'justify',
-        width: doc.page.width / 4 - marginX * 2,
+        width: doc.page.width / 4 - marginX - marginX,
       },
     );
     doc.text(
       'Хүрээлэн буй орчноо таатай гэж ойлгодог',
-      (doc.page.width / 4) * 3 + marginX * 2,
-      y + doc.page.width / 4,
+      (doc.page.width / 4) * 3 + marginX + marginX,
+      y + doc.page.width / 6,
       {
         align: 'justify',
-        width: doc.page.width / 4 - marginX * 2,
+        width: doc.page.width / 4 - marginX - marginX,
       },
     );
-    doc.image(assetPath('report/disc/graph'), doc.page.width / 4, y, {
-      width: doc.page.width / 2,
-    });
+    doc
+      .image(assetPath('report/disc/graph'), doc.page.width / 4, y, {
+        width: doc.page.width / 2,
+      })
+      .moveDown();
     doc.text(
       'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
       x + doc.page.width / 4 + marginX,
-      doc.y,
+      doc.y + doc.page.width / 6,
       {
         align: 'justify',
-        width: doc.page.width / 2 - marginX * 2,
+        width: doc.page.width / 2 - marginX - marginX,
       },
     );
     footer(doc);
