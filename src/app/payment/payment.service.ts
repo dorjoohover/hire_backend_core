@@ -51,7 +51,18 @@ export class PaymentService extends BaseService {
 
   public async findAdmin(date: DateDto, page: number, limit: number) {
     const payments = await this.dao.findAdmin(date);
-    const transactions = await this.transactionDao.findAdmin(date, page, limit);
+    let responses = await this.transactionDao.findAdmin(date, page, limit);
+    const transactions = [];
+    for (const res of responses) {
+      const user = await this.userDao.get(res.createdUser);
+      transactions.push({
+        price: res.price,
+        count: res.count,
+        assessment: res.service.assessment.name,
+        id: res.id,
+        user: user,
+      });
+    }
     return {
       payments,
       transactions,

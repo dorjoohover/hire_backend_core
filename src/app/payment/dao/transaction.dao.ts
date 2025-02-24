@@ -42,6 +42,7 @@ export class TransactionDao {
       order: {
         createdAt: 'DESC',
       },
+      relations: ['service', 'service.assessment'],
     });
     return res;
   };
