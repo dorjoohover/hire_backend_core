@@ -204,6 +204,7 @@ export class PdfService {
     );
     footer(doc);
     header(doc, name, date, assessment.name);
+    
     doc
       .font(fontBold)
       .fontSize(16)
