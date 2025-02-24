@@ -103,7 +103,8 @@ export class PdfService {
     const style = Object.entries(DISC.style).find(([_, value]) =>
       value.values.includes(exam.result),
     );
-    let result = style ? `${style[1].text} (${style[0]})` : '';
+    console.log(style);
+    let result = style ? `${style[1].text} (${style?.[0] ?? ''})` : '';
     doc
       .font(fontNormal)
       .fontSize(14)
@@ -117,7 +118,9 @@ export class PdfService {
     doc.font(fontBold).fontSize(16).text(result);
     doc.moveDown();
     const character =
-      DISC.characterDescription[style[0].substring(0, 1).toLowerCase()];
+      DISC.characterDescription[
+        (style?.[0] ?? '0').substring(0, 1).toLowerCase()
+      ];
     doc
       .font(fontNormal)
       .fontSize(14)
