@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import {
+  AdminExamDto,
   CreateExamDto,
   ExamUser,
   FindExamByCodeDto,
@@ -93,16 +94,15 @@ export class ExamController {
   }
 
   @Roles(Role.admin, Role.tester, Role.super_admin)
-  @Get('all/:assessment/:limit/:page')
-  @ApiParam({ name: 'assessment' })
+  @Post('all/:limit/:page')
   @ApiParam({ name: 'limit' })
   @ApiParam({ name: 'page' })
   findByAdmin(
-    @Param('assessment') assessment: number,
+    @Body() dto: AdminExamDto,
     @Param('limit') limit: number,
     @Param('page') page: number,
   ) {
-    return this.examService.findByAdmin(assessment, page, limit);
+    return this.examService.findByAdmin(dto, page, limit);
   }
 
   @Post('user')

@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreateExamDto } from './dto/create-exam.dto';
+import { AdminExamDto, CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { ExamDao } from './dao/exam.dao';
 import { ExamDetailDao } from './dao/exam.detail.dao';
@@ -403,14 +403,15 @@ export class ExamService extends BaseService {
     }
     return formatted;
   }
-  public async findByAdmin(ass: number, page: number, limit: number) {
-    let res = await this.dao.findByAdmin(ass, page, limit);
+  public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
+    let res = await this.dao.findByAdmin(dto, page, limit);
     res = await Promise.all(
       res.map(async (r) => {
         const user = await this.userDao.getByEmail(r.email);
         return {
           ...r,
           user,
+          buyer: r.service.user,
         };
       }),
     );

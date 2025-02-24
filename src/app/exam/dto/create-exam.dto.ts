@@ -26,3 +26,15 @@ export class ExamUser {
   @ApiProperty({ isArray: true })
   id: number[];
 }
+
+export class AdminExamDto {
+  @ApiProperty()
+  assessment: number;
+  @ApiProperty()
+  email: string;
+  @ApiProperty({ type: Date })
+  startDate: Date;
+
+  @ApiProperty({ type: Date })
+  endDate: Date;
+}

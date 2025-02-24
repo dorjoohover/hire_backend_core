@@ -1,7 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  In,
+  IsNull,
+  Like,
+  Not,
+  Repository,
+} from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
-import { CreateExamDto } from '../dto/create-exam.dto';
+import { AdminExamDto, CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
 
@@ -94,16 +102,24 @@ export class ExamDao {
       relations: ['assessment'],
     });
   };
-  findByAdmin = async (assessment: number, page: number, limit: number) => {
+  findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
     return await this.db.find({
       where: {
         assessment: {
-          id: assessment == 0 ? Not(0) : assessment,
+          id: dto.assessment == 0 ? Not(0) : dto.assessment,
         },
+        email: dto.email ? Like(`%${dto.email}%`) : Not('0'),
+        createdAt:
+          dto.endDate && dto.startDate
+            ? Between(dto.startDate, dto.endDate)
+            : Not(IsNull()),
       },
       take: limit,
       skip: (page - 1) * limit,
-      relations: ['assessment'],
+      relations: ['assessment', 'service', 'service.user'],
+      order: {
+        createdAt: 'desc',
+      },
     });
   };
   findByCode = async (code: number) => {
