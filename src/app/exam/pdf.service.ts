@@ -122,8 +122,9 @@ export class PdfService {
     doc.moveDown(2);
     doc.font(fontBold).fontSize(16).text(result);
     doc.moveDown();
-    const character =
-      DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
+    const character = DISC.characterDescription.d;
+    // const character =
+    //   DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
       .font(fontNormal)
       .fontSize(14)
