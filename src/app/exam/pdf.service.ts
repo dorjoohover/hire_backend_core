@@ -277,6 +277,7 @@ export class PdfService {
     res: any,
   ) {
     const name = `${exam.lastname} ${exam.firstname}`;
+
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';
