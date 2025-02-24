@@ -37,7 +37,7 @@ export class PaymentDao {
     const res = this.db
       .createQueryBuilder('payment')
       .select('payment.method', 'method')
-      .addSelect('SUM(payment.point)', 'total');
+      .addSelect('SUM(payment."totalPoint")', 'total');
 
     if (date.endDate && date.startDate) {
       res.where(
