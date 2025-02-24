@@ -49,13 +49,13 @@ export class FeedbackService extends BaseService {
   public async findStatus(assessment: number) {
     const res = await this._db
       .createQueryBuilder('feedback')
-      .select('feedback.status', 'status') // Specify table for status
+      .select('feedback.type', 'type') // Specify table for status
       .addSelect('COUNT(feedback.id)', 'count')
       .where('feedback."assessmentId" = :id', {
         id: assessment,
       })
 
-      .groupBy('feedback.status')
+      .groupBy('feedback.type')
       .getRawMany();
 
     // if (assessment !== 0) {
