@@ -51,7 +51,11 @@ export class FeedbackService extends BaseService {
       .createQueryBuilder('feedback')
       .select('feedback.status', 'status') // Specify table for status
       .addSelect('COUNT(feedback.id)', 'count')
-      .where('feedback.type = :type', { type: FeedbackType.RESULT })
+      .where('feedback.type = :type and feedback."assessmentId" = :id', {
+        id: assessment,
+        type: FeedbackType.RESULT,
+      })
+
       .groupBy('feedback.status')
       .getRawMany();
 
