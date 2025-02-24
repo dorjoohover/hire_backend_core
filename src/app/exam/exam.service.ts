@@ -405,6 +405,7 @@ export class ExamService extends BaseService {
   }
   public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
     let res = await this.dao.findByAdmin(dto, page, limit);
+    console.log(res);
     res = await Promise.all(
       res.map(async (r) => {
         const user = await this.userDao.getByEmail(r.email);
