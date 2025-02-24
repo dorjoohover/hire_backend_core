@@ -100,9 +100,11 @@ export class PdfService {
     doc.fillColor(colors.orange).text(exam.result);
     footer(doc);
     header(doc, name, date, assessment.name);
+    console.log(exam.result);
     const style = Object.entries(DISC.index).find(([_, value]) => {
-      if (Object.values(value).includes(exam.result)) return _;
+      if (Object.values(value).includes(exam.result.toUpperCase())) return _;
     });
+    console.log(style);
     let result = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     doc
       .font(fontNormal)
