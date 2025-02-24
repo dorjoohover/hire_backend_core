@@ -100,11 +100,10 @@ export class PdfService {
     doc.fillColor(colors.orange).text(exam.result);
     footer(doc);
     header(doc, name, date, assessment.name);
-    const style = Object.entries(DISC.style).find(([_, value]) =>
-      value.values.includes(exam.result),
-    );
-    console.log(style);
-    let result = style ? `${style[1].text} (${style?.[0] ?? ''})` : '';
+    const style = Object.entries(DISC.index).find(([_, value]) => {
+      if (Object.values(value).includes(exam.result)) return _;
+    });
+    let result = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     doc
       .font(fontNormal)
       .fontSize(14)
@@ -144,7 +143,7 @@ export class PdfService {
         .text('Үе шат II: Таныг тодорхойлох онцлог шинжүүд');
       doc.text(k.toUpperCase() + ' шинж чанар');
 
-      const value = DISC.style[k];
+      const value = DISC.values[k.toLowerCase()];
 
       doc
         .font(fontNormal)

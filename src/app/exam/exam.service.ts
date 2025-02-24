@@ -54,7 +54,11 @@ export class ExamService extends BaseService {
     const assessment = res.assessment;
     const result = await this.calculateExamById(id, true);
 
-    return await this.pdfService.createPdfInOneFile(assessment, res, result.calculate);
+    return await this.pdfService.createPdfInOneFile(
+      assessment,
+      res,
+      result.calculate,
+    );
   }
 
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
@@ -185,7 +189,7 @@ export class ExamService extends BaseService {
           if (start + endInterval > 27) {
             endInterval = 27 - start;
           }
-          const indexs = DISC.index[aCate].slice(
+          const indexs = Object.values(DISC.index[aCate]).slice(
             start - startInterval,
             start + endInterval + 1,
           );
