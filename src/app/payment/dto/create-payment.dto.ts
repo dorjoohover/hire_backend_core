@@ -13,3 +13,24 @@ export class CreatePaymentDto {
   user: number;
   charger?: number;
 }
+
+export class ChargePaymentDto {
+  @ApiProperty()
+  amount: number;
+
+  // @ApiProperty()
+  // method: number;
+  @ApiProperty()
+  message: string;
+
+  @ApiProperty()
+  id: number;
+}
+
+export class DateDto {
+  @ApiProperty({ type: Date })
+  startDate: Date;
+
+  @ApiProperty({ type: Date })
+  endDate: Date;
+}

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Not, Repository } from 'typeorm';
 import { PaymentEntity } from '../entities/payment.entity';
-import { CreatePaymentDto } from '../dto/create-payment.dto';
+import { CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
 
 @Injectable()
 export class PaymentDao {
@@ -31,6 +31,27 @@ export class PaymentDao {
       take: limit,
       skip: (page - 1) * limit,
     });
+  };
+
+  findAdmin = async (date: DateDto) => {
+    const res = this.db
+      .createQueryBuilder('payment')
+      .select('payment.method', 'method')
+      .addSelect('SUM(payment.point)', 'total');
+
+    if (date.endDate && date.startDate) {
+      res.where(
+        'payment."createdAt" <= :end AND payment."createdAt" >= :start',
+        {
+          end: date.endDate,
+          start: date.startDate,
+        },
+      );
+    }
+
+    res.groupBy('payment.method');
+
+    return await res.getRawMany();
   };
 
   findOne = async (id: number) => {

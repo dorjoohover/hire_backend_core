@@ -1,7 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  IsNull,
+  LessThan,
+  MoreThan,
+  Not,
+  Repository,
+} from 'typeorm';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
+import { DateDto } from '../dto/create-payment.dto';
 
 @Injectable()
 export class TransactionDao {
@@ -20,10 +29,27 @@ export class TransactionDao {
     await this.db.save(res);
   };
 
+  findAdmin = async (date: DateDto, page: number, limit: number) => {
+    const res = await this.db.find({
+      where: {
+        createdAt:
+          date.endDate && date.startDate
+            ? Between(date.startDate, date.endDate)
+            : Not(IsNull()),
+      },
+      take: limit,
+      skip: (page - 1) * limit,
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return res;
+  };
+
   findAll = async (page: number, limit: number, user: number) => {
     return await this.db.find({
       where: {
-        createdUser: user,
+        createdUser: user == 0 ? Not(0) : user,
       },
       take: limit,
       skip: (page - 1) * limit,

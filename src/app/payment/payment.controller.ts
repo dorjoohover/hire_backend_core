@@ -9,7 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { CreatePaymentDto } from './dto/create-payment.dto';
+import { ChargePaymentDto, CreatePaymentDto, DateDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
@@ -40,19 +40,22 @@ export class PaymentController {
   }
 
   @Roles(Role.super_admin, Role.tester, Role.admin)
-  @Get('/charge/:id/:amount')
-  @ApiParam({
-    name: 'id',
-  })
-  @ApiParam({
-    name: 'amount',
-  })
-  findOne(
-    @Param('id') id: string,
-    @Param('amount') amount: string,
-    @Request() { user },
-  ) {
-    return this.paymentService.charge(+id, +amount, '', +user['id']);
+  @Post('/admin/:page/:limit')
+  @ApiParam({ name: 'page' })
+  @ApiParam({ name: 'limit' })
+  findAdmin(@Body() dto: DateDto, @Param('page') page: number, @Param('limit') limit: number) {
+    return this.paymentService.findAdmin(dto, page, limit);
+  }
+
+  @Roles(Role.super_admin, Role.tester, Role.admin)
+  @Post('/charge')
+  findOne(@Body() dto: ChargePaymentDto, @Request() { user }) {
+    return this.paymentService.charge(
+      dto.id,
+      dto.amount,
+      dto.message,
+      +user['id'],
+    );
   }
 
   @Patch(':id')

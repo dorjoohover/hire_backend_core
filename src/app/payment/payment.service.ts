@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreatePaymentDto, DateDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentDao } from './dao/payment.dao';
 import { TransactionDao } from './dao/transaction.dao';
@@ -47,6 +47,15 @@ export class PaymentService extends BaseService {
     if (payment) {
       await this.userDao.updateWallet(id, amount);
     }
+  }
+
+  public async findAdmin(date: DateDto, page: number, limit: number) {
+    const payments = await this.dao.findAdmin(date);
+    const transactions = await this.transactionDao.findAdmin(date, page, limit);
+    return {
+      payments,
+      transactions,
+    };
   }
 
   public async findAll(role: number, page: number, limit: number, user: any) {
