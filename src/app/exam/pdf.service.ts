@@ -105,7 +105,9 @@ export class PdfService {
     //   return Object.keys(value).includes(exam.result);
     // });
     // console.log(style);
-    const style = DISC.values.d;
+    const style = {
+      d: DISC.values.d,
+    };
     let result = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     // let result = ''
     doc
@@ -121,9 +123,7 @@ export class PdfService {
     doc.font(fontBold).fontSize(16).text(result);
     doc.moveDown();
     const character =
-      DISC.characterDescription[
-        (style?.[0] ?? '0').substring(0, 1).toLowerCase()
-      ];
+      DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
       .font(fontNormal)
       .fontSize(14)
