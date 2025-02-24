@@ -54,6 +54,7 @@ export class PaymentController {
       dto.id,
       dto.amount,
       dto.message,
+      dto.method,
       +user['id'],
     );
   }

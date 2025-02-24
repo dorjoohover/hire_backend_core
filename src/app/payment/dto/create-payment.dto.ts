@@ -17,6 +17,8 @@ export class CreatePaymentDto {
 export class ChargePaymentDto {
   @ApiProperty()
   amount: number;
+  @ApiProperty()
+  method: number;
 
   // @ApiProperty()
   // method: number;

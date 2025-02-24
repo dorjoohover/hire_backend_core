@@ -35,10 +35,11 @@ export class PaymentService extends BaseService {
     id: number,
     amount: number,
     message: string,
+    method: number,
     user: number,
   ) {
     const payment = await this.dao.create({
-      method: PaymentType.BANK,
+      method: method,
       totalPrice: amount,
       user: id,
       charger: user,
