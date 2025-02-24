@@ -49,13 +49,7 @@ export class PaymentService extends BaseService {
     }
   }
 
-  public async findAll(
-    method: number,
-    role: number,
-    page: number,
-    limit: number,
-    user: any,
-  ) {
+  public async findAll(role: number, page: number, limit: number, user: any) {
     const transactions = await this.transactionDao.findAll(
       page,
       limit,
@@ -88,7 +82,18 @@ export class PaymentService extends BaseService {
         }
       }
     }
-    return await this.dao.findAll(method, role, page, limit);
+
+    if (user['role'] == Role.organization) {
+      const payments = await this.dao.findAll(role, page, limit);
+      for (const payment of payments) {
+        res.push({
+          paymentDate: payment.createdAt,
+          price: payment.totalPrice,
+          admin: payment.charger,
+        });
+      }
+    }
+    return res;
   }
 
   findOne(id: number) {

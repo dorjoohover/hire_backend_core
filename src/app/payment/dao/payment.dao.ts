@@ -20,15 +20,9 @@ export class PaymentDao {
     return res.id;
   };
 
-  findAll = async (
-    method: number,
-    role: number,
-    page: number,
-    limit: number,
-  ) => {
+  findAll = async (role: number, page: number, limit: number) => {
     return await this.db.find({
       where: {
-        method: method,
         user: {
           role: role == 0 ? Not(role) : role,
         },
