@@ -41,6 +41,7 @@ export class FeedbackService extends BaseService {
           id: assessment == 0 ? Not(0) : assessment,
         },
       },
+      relations: ['assessment', 'user'],
       take: limit,
       skip: (page - 1) * limit,
     });
