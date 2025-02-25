@@ -153,6 +153,7 @@ export class UserServiceService extends BaseService {
     user: number,
   ) {
     const res = await this.dao.findOne(service);
+    console.log(res);
     await this.transactionDao.create({
       user: user,
       count: count == 0 ? -used : count,
