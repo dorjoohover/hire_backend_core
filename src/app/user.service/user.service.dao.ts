@@ -31,6 +31,7 @@ export class UserServiceDao {
     });
     res.status = status;
     await this.db.save(res);
+    return res
   };
 
   findAll = async () => {

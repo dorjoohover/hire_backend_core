@@ -73,11 +73,18 @@ export class UserServiceService extends BaseService {
     const payment = await this.qpay.checkPayment(code);
     if (payment.paid_amount) {
       await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
-      await this.paymentDao.create({
+      const res = await this.paymentDao.create({
         method: PaymentType.QPAY,
         totalPrice: payment.paid_amount,
         user: user,
         message: 'Худалдан авалт хийсэн.',
+      });
+      await this.transactionDao.create({
+        price: payment.paid_amount,
+        count: -1,
+        payment: res,
+        service: id,
+        user: user,
       });
       return true;
     }
@@ -118,7 +125,8 @@ export class UserServiceService extends BaseService {
         return res;
       }),
     );
-    await this.updateCount(dto.service, 0, dto.count, id);
+    if (role == Role.organization)
+      await this.updateCount(dto.service, 0, dto.count, id);
 
     return code;
   }
@@ -153,7 +161,6 @@ export class UserServiceService extends BaseService {
     user: number,
   ) {
     const res = await this.dao.findOne(service);
-    console.log(res);
     await this.transactionDao.create({
       user: user,
       count: count == 0 ? -used : count,
