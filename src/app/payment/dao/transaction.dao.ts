@@ -29,13 +29,19 @@ export class TransactionDao {
     await this.db.save(res);
   };
 
-  findAdmin = async (date: DateDto, page: number, limit: number) => {
+  findAdmin = async (
+    date: DateDto,
+    page: number,
+    limit: number,
+    price = true,
+  ) => {
     const res = await this.db.find({
       where: {
         createdAt:
           date.endDate && date.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
+        price: !price ? Not('0') : Not(IsNull()),
       },
       take: limit,
       skip: (page - 1) * limit,
