@@ -62,7 +62,8 @@ export class QuestionAnswerDao {
   };
 
   findByQuestion = async (id: number, shuffle: boolean, admin: boolean) => {
-    const res = await this.db.find({
+    let result = [];
+    let res = await this.db.find({
       select: {
         point: true,
         correct: true,
@@ -79,33 +80,41 @@ export class QuestionAnswerDao {
       },
       relations: ['matrix', 'matrix.category', 'category'],
     });
-    if (res?.[0]?.matrix)
-      return res.map((result) => {
-        const { point, correct, ...res } = result;
-        return admin
-          ? {
-              ...res,
-              point: point,
-              correct: correct,
-              matrix: shuffle
-                ? this.shuffle(result.matrix)
-                : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
-            }
-          : {
-              ...res,
-              matrix: shuffle
-                ? this.shuffle(result.matrix)
-                : result.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
-            };
-      });
-    return shuffle ? this.shuffle(res) : res;
+    if (res?.[0]?.matrix?.length > 0)
+      for (const r of res) {
+        const { point, correct, ...body } = r;
+        result.push(
+          admin
+            ? {
+                ...body,
+                point: point,
+                correct: correct,
+                matrix: shuffle
+                  ? await this.shuffle(body.matrix)
+                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+              }
+            : {
+                ...body,
+                matrix: shuffle
+                  ? await this.shuffle(body.matrix)
+                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+              },
+        );
+      }
+    else {
+      result = await this.shuffle(res);
+    }
+
+    return result;
   };
 
-  shuffle = (list: any[]) => {
-    return list
-      .map((value) => ({ value, sort: Math.random() }))
-      .sort((a, b) => a.sort - b.sort)
-      .map(({ value }) => value);
+  shuffle = async (list: any[]) => {
+    return await Promise.all(
+      list
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value),
+    );
   };
   findOne = async (id: number) => {
     return await this.db.findOne({
