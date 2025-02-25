@@ -118,7 +118,6 @@ export class UserServiceService extends BaseService {
         return res;
       }),
     );
-    console.log(code);
     await this.updateCount(dto.service, 0, dto.count, id);
 
     return code;
@@ -153,10 +152,11 @@ export class UserServiceService extends BaseService {
     used: number,
     user: number,
   ) {
+    const res = await this.dao.findOne(service);
     await this.transactionDao.create({
       user: user,
       count: count == 0 ? -used : count,
-      price: 0,
+      price: res.price ?? 0,
       service: service,
     });
     await this.dao.updateCount(service, count, used);
