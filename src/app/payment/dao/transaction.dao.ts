@@ -11,11 +11,16 @@ import {
 import { TransactionEntity } from '../entities/transaction.entity';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { DateDto } from '../dto/create-payment.dto';
+import { PaymentDao } from './payment.dao';
+import { PaymentType } from 'src/base/constants';
 
 @Injectable()
 export class TransactionDao {
   private db: Repository<TransactionEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private paymentDao: PaymentDao,
+  ) {
     this.db = this.dataSource.getRepository(TransactionEntity);
   }
 
@@ -27,6 +32,14 @@ export class TransactionDao {
       createdUser: dto.user,
     });
     await this.db.save(res);
+    await this.paymentDao.create({
+      message: dto.assesmentName
+        ? `${Math.abs(dto.count)} ${dto.assesmentName}`
+        : 'Худалдан авалт хийсэн.',
+      totalPrice: -Math.abs(dto.price * (dto.count ?? 1)),
+      method: PaymentType.COST,
+      user: dto.user,
+    });
   };
 
   findAdmin = async (

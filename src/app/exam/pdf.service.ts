@@ -152,13 +152,7 @@ export class PdfService {
     doc
       .font(fontNormal)
       .fontSize(12)
-      .text(
-        exam.lastname +
-          ' танд ' +
-          result +
-          ' шинж хүчтэй илэрсэн байна. ' +
-          character,
-      );
+      .text(exam.lastname + character);
     footer(doc);
 
     const index: {

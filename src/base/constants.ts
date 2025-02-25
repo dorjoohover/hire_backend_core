@@ -88,6 +88,7 @@ export const PaymentType = {
   LOYALTY: 1,
   QPAY: 2,
   BANK: 3,
+  COST: 4,
 };
 
 export const ProductMeasureUnit = {
