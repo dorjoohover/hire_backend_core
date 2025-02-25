@@ -64,6 +64,7 @@ export class PaymentService extends BaseService {
       const user = await this.userDao.get(res.createdUser);
       transactions.push({
         price: res.price,
+        createdAt: res.createdAt,
         count: res.count,
         assessment: res.service.assessment.name,
         id: res.id,
