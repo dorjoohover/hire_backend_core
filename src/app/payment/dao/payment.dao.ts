@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Not, Repository } from 'typeorm';
+import { Between, DataSource, IsNull, Not, Repository } from 'typeorm';
 import { PaymentEntity } from '../entities/payment.entity';
 import { CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
 
@@ -20,12 +20,21 @@ export class PaymentDao {
     return res.id;
   };
 
-  findAll = async (role: number, page: number, limit: number) => {
+  findAll = async (
+    role: number,
+    page: number,
+    limit: number,
+    date?: DateDto,
+  ) => {
     return await this.db.find({
       where: {
         user: {
           role: role == 0 ? Not(role) : role,
         },
+        createdAt:
+          date?.endDate && date?.startDate
+            ? Between(date.startDate, date.endDate)
+            : Not(IsNull()),
       },
       relations: ['user', 'charger'],
       take: limit,

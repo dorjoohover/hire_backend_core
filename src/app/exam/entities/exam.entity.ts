@@ -37,7 +37,7 @@ export class ExamEntity {
 
   @Column({ nullable: true })
   startDate: Date;
-  @CreateDateColumn({ nullable: true })
+  @CreateDateColumn()
   createdAt: Date;
   @Column({ nullable: true })
   endDate: Date;
