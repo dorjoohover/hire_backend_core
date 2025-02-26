@@ -70,6 +70,9 @@ export class UserService {
       firstname: dto.firstname ?? '',
       emailVerified: dto.emailVerified ?? dto.role != null,
     });
+    if (!dto.emailVerified) {
+      await this.sendConfirmMail(dto.email);
+    }
     return res;
     // throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
     // return res;
