@@ -64,7 +64,7 @@ export class UserController {
   @ApiParam({ name: 'email' })
   async verifyCode(@Param('code') code: string, @Param('email') email: string) {
     const user = await this.userService.getUser(email);
-    if (user.forget == +code) {
+    if (user.forget == code) {
       return true;
     }
     return false;

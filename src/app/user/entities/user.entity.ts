@@ -40,7 +40,7 @@ export class UserEntity {
   @Column({ nullable: true })
   position?: string;
   @Column({ nullable: true })
-  forget?: number;
+  forget?: string;
   @CreateDateColumn()
   createdAt?: Date;
   @Column({ default: 0 })

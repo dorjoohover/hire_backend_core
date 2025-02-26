@@ -80,7 +80,9 @@ export class UserService {
   }
 
   public async sendOtp(email: string) {
-    const code = Math.round(Math.random() * 100000);
+    let generated = Math.floor(Math.random() * 1000000);
+    const code = generated.toString().padStart(6, '0');
+
     await this.dao.updateByEmail({
       email,
       code,
