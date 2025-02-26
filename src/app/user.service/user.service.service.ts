@@ -144,12 +144,18 @@ export class UserServiceService extends BaseService {
           await this.mailer
             .sendMail({
               to: email.email,
-              subject: 'Click link',
-              html: `<h1>Link</h1>
-
-              <p>Линкэн дэр дарна уу</p>
-              <a href=https://hire-main.vercel.app/exam/${email.code}> Click here</a>
-              </div>`,
+              subject: 'Тест өгөх эрх үүсэх',
+              html: `<div>
+         <p> Та <a href=https://hire-main.vercel.app/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
+<p>Таны анхааралд:</p>
+<ul>
+        <li>Танд hire.mn цахим хуудас дээрх ... тест өгөх эрх үүссэн байна.</li>
+<li>Тест эхлэхийн өмнө дэлгэцэд гарах зааврыг хянамгай уншихыг хүсье.</li>
+</ul>
+          <p>Асууж, тодруулах зүйл байвал <a href=mailto:info@hire.mn>info@hire.mn</a> хаягаар, <a href=tel:976-9909 9371>976-9909 9371</a> дугаараар холбогдоорой. </p>
+          <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
+          <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
+          </div>`,
             })
             .then((d) => console.log(d))
             .finally(() => console.log('sent'))
