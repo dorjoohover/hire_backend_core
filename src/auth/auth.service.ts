@@ -65,7 +65,7 @@ export class AuthService {
       if (!user.name && !user.profile)
         throw new UnauthorizedException('Хэрэглэгч олдсонгүй.');
       if (!res) {
-        await this.usersService.addUser({
+        result = await this.usersService.addUser({
           lastname: '',
           firstname: user.name,
           email: user.email,

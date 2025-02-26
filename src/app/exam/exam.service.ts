@@ -159,7 +159,6 @@ export class ExamService extends BaseService {
         s: 0,
         c: 0,
       };
-      console.log(res);
 
       const maxValue = Math.max(...res.map((r) => +r['point']));
       const values = res

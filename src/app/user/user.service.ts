@@ -27,8 +27,6 @@ export class UserService {
               <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}> Click here</a>
               </div>`,
         })
-        .then((d) => console.log(d))
-        .finally(() => console.log('sent'))
         .catch((err) => console.log(err));
     } catch (error) {
       console.log(error);
