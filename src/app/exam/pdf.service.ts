@@ -1,17 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { TextOptionsLight, jsPDF } from 'jspdf';
-import autoTable, { UserOptions } from 'jspdf-autotable';
-import { index, TableOptions, TextOptions } from './pdf.interface';
-import PdfPrinter from 'pdfmake';
 import { VisualizationService } from './visualization.service';
 import path from 'path';
 import fs from 'fs';
 import nodeHtmlToImage from 'node-html-to-image';
-import PDFDocument, { fontSize } from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import {
   assetPath,
   colors,
-  dateFormatter,
   firstLetterUpper,
   fontBold,
   fontNormal,
@@ -26,21 +21,6 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { ExamEntity } from './entities/exam.entity';
 import { ReportType } from 'src/base/constants';
 import { DISC } from 'src/assets/report/disc';
-
-const fonts = {
-  CIP: {
-    bold: path.join(__dirname, '../../../src/assets/fonts/GIP-ExtraBold.woff'),
-    boldItalics: path.join(
-      __dirname,
-      '../../../src/assets/fonts/GIP-ExtraBoldItalic.woff',
-    ),
-    normal: path.join(__dirname, '../../../src/assets/fonts/GIP-Medium.woff'),
-    italics: path.join(
-      __dirname,
-      '../../../src/assets/fonts/GIP-MediumItalic.woff',
-    ),
-  },
-};
 
 @Injectable()
 export class PdfService {

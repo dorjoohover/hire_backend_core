@@ -131,28 +131,32 @@ export class UserServiceService extends BaseService {
     return code;
   }
   public async sendLinkToMail(dto: SendLinkToEmails) {
-    Promise.all(
-      dto.links.map(async (email) => {
-        await this.examService.updateExamByCode(email.code, {
-          email: email.email,
-          firstname: email.firstname,
-          lastname: email.lastname,
-          phone: email.phone,
-          visible: email.visible,
-        });
-        await this.mailer
-          .sendMail({
-            to: email.email,
-            subject: 'Click link',
-            html: `<h1>Link</h1>
+    try {
+      Promise.all(
+        dto.links.map(async (email) => {
+          await this.examService.updateExamByCode(email.code, {
+            email: email.email,
+            firstname: email.firstname,
+            lastname: email.lastname,
+            phone: email.phone,
+            visible: email.visible,
+          });
+          await this.mailer
+            .sendMail({
+              to: email.email,
+              subject: 'Click link',
+              html: `<h1>Link</h1>
 
-                <p>Линкэн дэр дарна уу</p>
-                <a href=https://hire-main.vercel.app/exam/${email.code}> Click here</a>
-                </div>`,
-          })
-          .catch((err) => console.log(err));
-      }),
-    );
+              <p>Линкэн дэр дарна уу</p>
+              <a href=https://hire-main.vercel.app/exam/${email.code}> Click here</a>
+              </div>`,
+            })
+            .catch((err) => console.log(err));
+        }),
+      );
+    } catch (error) {
+      console.log(error);
+    }
   }
   public async updateCount(
     service: number,

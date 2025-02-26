@@ -1,30 +1,64 @@
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ExamEntity } from './exam.entity';
 import { QuestionEntity } from 'src/app/question/entities/question.entity';
 import { QuestionCategoryEntity } from 'src/app/question/entities/question.category.entity';
+import { ResultDetailEntity } from './result.detail.entity';
 
 @Entity('result')
 export class ResultEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
 
+  @Column({ type: 'bigint' })
+  code: number;
+
+  @Column()
+  assessmentName: string;
+
+  @Column()
+  lastname: string;
+
+  @Column()
+  firstname: string;
+  @CreateDateColumn()
+  createdAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @OneToMany(() => ResultDetailEntity, (userAns) => userAns.result, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  details: ResultDetailEntity[];
+
   @Column({ nullable: true })
-  questionCategoryName: string;
+  total: number;
+  @Column()
+  type: number;
+  @Column()
+  assessment: number;
+  // possible duration
+  @Column()
+  limit: number;
+  //during duration
+  @Column()
+  duration: number;
+  @Column({ nullable: true })
+  point: number;
+  // in disc (d || c || di)
 
-  @ManyToOne(() => ExamEntity, (exam) => exam.details, { onDelete: 'CASCADE' })
-  exam: ExamEntity;
-  @ManyToOne(() => QuestionEntity, (question) => question.examDetails, {
-    onDelete: 'CASCADE',
-  })
-  question: QuestionEntity;
-  @ManyToOne(() => QuestionCategoryEntity, (category) => category.examDetails, {
-    onDelete: 'CASCADE',
-  })
-  questionCategory: QuestionCategoryEntity;
-
-  @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
-    onDelete: 'CASCADE',
-  })
-  service: UserServiceEntity;
+  @Column({ nullable: true })
+  result: string;
+  // in disc (undershift | overshift)
+  @Column({ nullable: true })
+  value: string;
 }

@@ -21,6 +21,7 @@ import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { jwtConstants } from 'src/auth/constants';
 import { DISC } from 'src/assets/report/disc';
+import { ResultDao } from './dao/result.dao';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { DISC } from 'src/assets/report/disc';
     QuestionService,
     VisualizationService,
     DISC,
+    ResultDao,
     PdfService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,

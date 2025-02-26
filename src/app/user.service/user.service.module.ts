@@ -27,6 +27,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { jwtConstants } from 'src/auth/constants';
 import { DISC } from 'src/assets/report/disc';
+import { ResultDao } from '../exam/dao/result.dao';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { DISC } from 'src/assets/report/disc';
     UserServiceService,
     UserServiceDao,
     DISC,
+    ResultDao,
     TransactionDao,
     ExamService,
     UserDao,

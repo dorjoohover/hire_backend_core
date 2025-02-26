@@ -25,6 +25,9 @@ import { ReportType } from 'src/base/constants';
 import { DISC } from 'src/assets/report/disc';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { UserDao } from '../user/user.dao';
+import { ResultDao } from './dao/result.dao';
+import { ResultDetailDto } from './dto/result.dto';
+import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -37,7 +40,7 @@ export class ExamService extends BaseService {
     private authService: AuthService,
     private userAnswer: UserAnswerDao,
     private userDao: UserDao,
-    private answerCategory: QuestionAnswerCategoryDao,
+    private resultDao: ResultDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
@@ -105,12 +108,8 @@ export class ExamService extends BaseService {
       if (formule) {
         const res = await this.formule.calculate(formule, exam.id);
 
-        const calculate = await this.calculateByReportType(
-          res,
-          exam.assessment.report,
-          user,
-          id,
-        );
+        const calculate = await this.calculateByReportType(res, exam, user, id);
+
         return {
           calculate,
           visible: exam.visible,
@@ -123,18 +122,20 @@ export class ExamService extends BaseService {
 
   public async calculateByReportType(
     res: any,
-    type: number,
+    exam: ExamEntity,
     user: UserEntity,
     id: number,
   ) {
+    const type = exam.assessment.report;
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         result: res[0].point,
-        lastname: user?.lastname,
-        firstname: user?.firstname,
+        lastname: exam.lastname ?? user?.lastname,
+        firstname: exam.firstname ?? user?.firstname,
         email: user?.email,
         phone: user?.phone,
       });
+
       return res[0].point;
     }
     if (type == ReportType.DISC) {
@@ -152,7 +153,19 @@ export class ExamService extends BaseService {
         s: [],
         c: [],
       };
+      let intens = {
+        d: 0,
+        i: 0,
+        s: 0,
+        c: 0,
+      };
       console.log(res);
+
+      const maxValue = Math.max(...res.map((r) => +r['point']));
+      const values = res
+        .filter((r) => +r['point'] == maxValue)
+        .map((r) => r['aCate'])
+        .join('');
       for (const r of mergedData) {
         let inten = -1,
           total = '';
@@ -196,6 +209,7 @@ export class ExamService extends BaseService {
             start - startInterval,
             start + endInterval + 1,
           );
+          intens[aCate] = inten;
           index[aCate] = indexs;
         }
       }
@@ -207,6 +221,29 @@ export class ExamService extends BaseService {
           }
         }
       }
+      let details: ResultDetailDto[] = [];
+      for (const [k, v] of Object.entries(index)) {
+        for (const i of v) {
+          details.push({
+            category: k,
+            cause: intens[k],
+            value: i,
+          });
+        }
+      }
+      await this.resultDao.create({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: exam.assessment.duration,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: exam.assessment.report,
+        limit: 0,
+        total: exam.assessment.totalPoint,
+        result: values,
+        value: agent,
+      });
       await this.dao.update(+id, {
         result: agent,
         lastname: user?.lastname,
