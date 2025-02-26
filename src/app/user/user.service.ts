@@ -20,11 +20,13 @@ export class UserService {
       await this.mailService
         .sendMail({
           to: email,
-          subject: 'Please confirm your account',
-          html: `<h1>Email Confirmation</h1>
-
-              <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-              <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}> Click here</a>
+          subject: 'Мэйл хаяг баталгаажуулах',
+          html: `<div>
+          <p>Та <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}>энд дарж</a> мэйл хаягаа баталгаажуулна уу!</p>
+          <p>Асууж, тодруулах зүйл байвал <a href=mailto:info@hire.mn>info@hire.mn</a> хаягаар, <a href=tel:976-9909 9371>976-9909 9371</a> дугаараар холбогдоорой. </p>
+          <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
+          <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
+              
               </div>`,
         })
         .catch((err) => console.log(err));
