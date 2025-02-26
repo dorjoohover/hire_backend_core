@@ -16,17 +16,23 @@ export class UserService {
     private mailService: MailerService,
   ) {}
   async sendConfirmMail(email: string) {
-    await this.mailService
-      .sendMail({
-        to: email,
-        subject: 'Please confirm your account',
-        html: `<h1>Email Confirmation</h1>
+    try {
+      await this.mailService
+        .sendMail({
+          to: email,
+          subject: 'Please confirm your account',
+          html: `<h1>Email Confirmation</h1>
 
-                <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
-                <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}> Click here</a>
-                </div>`,
-      })
-      .catch((err) => console.log(err));
+              <p>Thank you for subscribing. Please confirm your email by clicking on the following link</p>
+              <a href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}> Click here</a>
+              </div>`,
+        })
+        .then((d) => console.log(d))
+        .finally(() => console.log('sent'))
+        .catch((err) => console.log(err));
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   public async verifyMail(email: string) {
