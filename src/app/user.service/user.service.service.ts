@@ -151,6 +151,8 @@ export class UserServiceService extends BaseService {
               <a href=https://hire-main.vercel.app/exam/${email.code}> Click here</a>
               </div>`,
             })
+            .then((d) => console.log(d))
+            .finally(() => console.log('sent'))
             .catch((err) => console.log(err));
         }),
       );
