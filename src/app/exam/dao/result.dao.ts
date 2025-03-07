@@ -25,7 +25,7 @@ export class ResultDao {
     this.detail = this.dataSource.getRepository(ResultDetailEntity);
   }
 
-  create = async (dto: ResultDto, details?: ResultDetailDto[]) => {
+  create = async (dto: ResultDto, details : ResultDetailDto[] = []) => {
     const res = this.db.create(dto);
     await this.db.save(res);
     for (const detail of details) {

@@ -63,9 +63,8 @@ export class AssessmentEntity {
 
   @Column()
   type: number;
-  @Column()
+  @Column({nullable: true})
   report: number;
-
   @Column({ nullable: true, default: false })
   partialScore: boolean;
   @CreateDateColumn()

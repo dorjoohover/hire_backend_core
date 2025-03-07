@@ -31,7 +31,7 @@ export class UserController {
   @Post('email')
   @Public()
   sendOpt(@Body() dto: CreateOtp) {
-    return this.userService.sendConfirmMail(dto.email);
+    // return this.userService.sendConfirmMail(dto.email);
   }
 
   @Public()

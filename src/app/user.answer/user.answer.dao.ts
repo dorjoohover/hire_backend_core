@@ -85,7 +85,7 @@ export class UserAnswerDao {
         'category',
         'category.id = "userAnswer"."questionCategoryId"',
       )
-      .where('"userAnswer"."examId" = :id', { id })
+      .where('"userAnswer"."code" = :id', { id })
       .groupBy('category.name')
       .addGroupBy('category.totalPoint')
       .getRawMany();

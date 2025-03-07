@@ -13,12 +13,15 @@ import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity'
 import { ExamEntity } from '../entities/exam.entity';
 import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
 import { ExamDao } from '../dao/exam.dao';
+import { ResultEntity } from '../entities/result.entity';
+import { ResultDao } from '../dao/result.dao';
 
 @Injectable()
 export class SinglePdf {
   constructor(
     private answer: UserAnswerDao,
     private exam: ExamDao,
+    private result: ResultDao,
     private vis: VisualizationService,
   ) {}
   async section(
@@ -91,18 +94,9 @@ export class SinglePdf {
     return;
   }
 
-  async default(
-    doc: PDFKit.PDFDocument,
-    assessment: AssessmentEntity,
-    exam: ExamEntity,
-  ) {
+  async default(doc: PDFKit.PDFDocument, result: ResultEntity) {
     try {
-      const diff = Math.floor(
-        (Date.parse(exam.userEndDate?.toString()) -
-          Date.parse(exam.userStartDate?.toString())) /
-          60000,
-      );
-      let duration = assessment.duration;
+      let duration = result.duration;
 
       let y = doc.y;
 
@@ -114,7 +108,9 @@ export class SinglePdf {
         .font(fontBold)
         .fillColor(colors.orange)
         .fontSize(18)
-        .text(`${diff == 0 ? 1 : diff} `, doc.x, y - 2, { continued: true })
+        .text(`${result.duration == 0 ? 1 : result.duration} `, doc.x, y - 2, {
+          continued: true,
+        })
         .font(fontNormal)
         .fillColor(colors.black)
         .fontSize(14)
@@ -137,23 +133,23 @@ export class SinglePdf {
       const pie = await this.vis.doughnut(
         colors.grey,
         colors.orange,
-        assessment.totalPoint,
-        parseInt(exam.result),
+        result.total,
+        result.point,
       );
       const center = doc.page.width / 2;
       doc.image(pie, center + center - 168, y - 10, { width: 50 });
       doc.text('Нийт оноо', center, y - 10, { align: 'right' });
       doc.moveTo(center, doc.y);
       doc.font(fontBold).fontSize(32);
-      const widthResult = doc.widthOfString(exam.result);
+      const widthResult = doc.widthOfString(`${result.point}`);
       doc.fontSize(24);
-      const widthTotal = doc.widthOfString(`/${assessment.totalPoint}`);
+      const widthTotal = doc.widthOfString(`/${result.total}`);
       doc.fontSize(32);
       y = doc.y;
       doc
         .fillColor(colors.orange)
         .text(
-          exam.result,
+          `${result.point ?? ''}`,
           doc.page.width - marginX - widthResult - widthTotal - 4,
           y,
           {
@@ -164,12 +160,12 @@ export class SinglePdf {
       doc
         .fontSize(24)
         .fillColor(colors.black)
-        .text(`/${assessment.totalPoint}`, doc.x + 2, y + 4, {
+        .text(`/${result.total}`, doc.x + 2, y + 4, {
           continued: false,
         });
       doc.moveDown(1);
       // if (assessment.partialScore) {
-      const res = await this.answer.partialCalculator(exam.id);
+      const res = await this.answer.partialCalculator(result.code);
       res.map((v, i) => {
         this.section(doc, v.categoryName, v.totalPoint, v.point);
       });
@@ -217,11 +213,7 @@ export class SinglePdf {
       console.log(error);
     }
   }
-  async examQuartile(
-    doc: PDFKit.PDFDocument,
-    assessment: AssessmentEntity,
-    result: number,
-  ) {
+  async examQuartile(doc: PDFKit.PDFDocument, result: ResultEntity) {
     function calculateMean(data) {
       return data.reduce((sum, val) => sum + val, 0) / data.length;
     }
@@ -248,7 +240,7 @@ export class SinglePdf {
       return (count / data.length) * 100;
     }
     // data
-    const dataset = await this.exam.findQuartile(assessment.id, result);
+    const dataset = await this.result.findQuartile(result.assessment);
     console.log(dataset);
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
@@ -264,7 +256,7 @@ export class SinglePdf {
       dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
     }
 
-    const percent = Math.round(percentile(dataset, result));
+    const percent = Math.round(percentile(dataset, result.point));
 
     // dataset.sort((a, b) => a - b); // Sort data
 
@@ -273,8 +265,8 @@ export class SinglePdf {
       dataPoints,
       dataPoints[0][0],
       dataPoints[dataPoints.length - 1][0],
-      normalDistribution(result, mean, stdDev) / 10 - dataPoints[0][1],
-      result,
+      normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
+      result.point,
       percent,
       // [p0, p25, p50, p75, p100],
     );
@@ -289,7 +281,7 @@ export class SinglePdf {
         continued: true,
       })
       .font(fontBold)
-      .text(firstLetterUpper(assessment.name), {
+      .text(firstLetterUpper(result.assessmentName), {
         continued: true,
       })
       .font(fontNormal)

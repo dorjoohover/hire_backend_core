@@ -138,22 +138,22 @@ export class ExamDao {
     return res;
   };
 
-  findQuartile = async (assessment: number, r: number) => {
-    const res = await this.db.find({
-      where: {
-        assessment: {
-          id: assessment,
-        },
-        result: Not(IsNull()),
-      },
-      select: {
-        result: true,
-      },
-      order: {
-        result: 'ASC', // Sort results in ascending order
-      },
-    });
+  // findQuartile = async (assessment: number, r: number) => {
+  //   const res = await this.db.find({
+  //     where: {
+  //       assessment: {
+  //         id: assessment,
+  //       },
+  //       result: Not(IsNull()),
+  //     },
+  //     select: {
+  //       result: true,
+  //     },
+  //     order: {
+  //       result: 'ASC', // Sort results in ascending order
+  //     },
+  //   });
 
-    return res.map((r) => parseFloat(r.result));
-  };
+  //   return res.map((r) => parseFloat(r.result));
+  // };
 }

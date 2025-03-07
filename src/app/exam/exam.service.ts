@@ -54,17 +54,9 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-    const assessment = res.assessment;
-    const result =
-      res.assessment.report == ReportType.DISC
-        ? await this.calculateExamById(id, true)
-        : null;
+    const result = await this.resultDao.findOne(id);
 
-    return await this.pdfService.createPdfInOneFile(
-      assessment,
-      res,
-      result?.calculate,
-    );
+    return await this.pdfService.createPdfInOneFile(result, res);
   }
 
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
@@ -85,23 +77,19 @@ export class ExamService extends BaseService {
     user?: UserEntity,
   ) {
     try {
+      const result = await this.resultDao.findOne(id);
       const exam = await this.dao.findByCode(id);
-      if (
-        !exam.result &&
-        !exam.visible &&
-        user.role == Role.client &&
-        !calculate
-      )
+      if (!result && !exam.visible && user.role == Role.client && !calculate)
         throw new HttpException(
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
         );
-      // if (exam.result)
-      //   return {
-      //     calculate: exam.result,
-      //     visible: exam.visible,
-      //     value: parseFloat(exam.result) / exam.assessment.totalPoint,
-      //   };
+      if (result)
+        return {
+          // calculate: result.,
+          visible: exam.visible,
+          value: result,
+        };
 
       const formule = exam.assessment.formule;
       // console.log(formule)
@@ -130,8 +118,8 @@ export class ExamService extends BaseService {
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         result: res[0].point,
-        lastname: exam.lastname ?? user?.lastname,
-        firstname: exam.firstname ?? user?.firstname,
+        lastname: exam?.lastname ?? user?.lastname,
+        firstname: exam?.firstname ?? user?.firstname,
         email: user?.email,
         phone: user?.phone,
       });
@@ -230,19 +218,27 @@ export class ExamService extends BaseService {
           });
         }
       }
-      await this.resultDao.create({
-        assessment: exam.assessment.id,
-        assessmentName: exam.assessment.name,
-        code: exam.code,
-        duration: exam.assessment.duration,
-        firstname: exam?.firstname ?? user.firstname,
-        lastname: exam?.lastname ?? user.lastname,
-        type: exam.assessment.report,
-        limit: 0,
-        total: exam.assessment.totalPoint,
-        result: values,
-        value: agent,
-      });
+      const diff = Math.floor(
+        (Date.parse(exam.userEndDate?.toString()) -
+          Date.parse(exam.userStartDate?.toString())) /
+          60000,
+      );
+      await this.resultDao.create(
+        {
+          assessment: exam.assessment.id,
+          assessmentName: exam.assessment.name,
+          code: exam.code,
+          duration: diff,
+          firstname: exam?.firstname ?? user.firstname,
+          lastname: exam?.lastname ?? user.lastname,
+          type: exam.assessment.report,
+          limit: exam.assessment.duration,
+          total: exam.assessment.totalPoint,
+          result: values,
+          value: agent,
+        },
+        details,
+      );
       await this.dao.update(+id, {
         result: agent,
         lastname: user?.lastname,

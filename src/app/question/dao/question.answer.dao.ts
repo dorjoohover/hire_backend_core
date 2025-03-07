@@ -91,13 +91,15 @@ export class QuestionAnswerDao {
                 correct: correct,
                 matrix: shuffle
                   ? await this.shuffle(body.matrix)
-                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                  // : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                  : body.matrix,
               }
             : {
                 ...body,
                 matrix: shuffle
                   ? await this.shuffle(body.matrix)
-                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                  // : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                  : body.matrix,
               },
         );
       }

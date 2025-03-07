@@ -21,6 +21,9 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { ExamEntity } from './entities/exam.entity';
 import { ReportType } from 'src/base/constants';
 import { DISC } from 'src/assets/report/disc';
+import { ResultDao } from './dao/result.dao';
+import { ResultEntity } from './entities/result.entity';
+import { ResultDetailEntity } from './entities/result.detail.entity';
 
 @Injectable()
 export class PdfService {
@@ -28,12 +31,12 @@ export class PdfService {
     private vis: VisualizationService,
     private single: SinglePdf,
     private disc: DISC,
+    private resultDao: ResultDao,
   ) {}
 
   async singleTemplate(
     doc: PDFKit.PDFDocument,
-    assessment: AssessmentEntity,
-    exam: ExamEntity,
+    result: ResultEntity,
     name: string,
     date: Date,
   ) {
@@ -45,24 +48,23 @@ export class PdfService {
       .stroke()
       .moveDown();
 
-    await this.single.default(doc, assessment, exam);
+    await this.single.default(doc, result);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
-    await this.single.examQuartile(doc, exam.assessment, +exam.result);
+    header(doc, name, date, result.assessmentName);
+    await this.single.examQuartile(doc, result);
     footer(doc);
   }
 
   async discTemplate(
     doc: PDFKit.PDFDocument,
-    assessment: AssessmentEntity,
-    exam: ExamEntity,
-    name: string,
+    result: ResultEntity,
     date: Date,
-    res: any,
+    name: string,
   ) {
     doc.addPage();
-    header(doc, name, date, assessment.name);
+
+    header(doc, name, date, result.assessmentName);
     doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Оршил');
     doc
       .moveTo(30, doc.y)
@@ -77,7 +79,7 @@ export class PdfService {
       .text(DISC.preface);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
     doc.font(fontNormal).fillColor(colors.black).fontSize(12);
     doc
       .text(
@@ -98,19 +100,16 @@ export class PdfService {
         doc.y + doc.page.width / 2 - marginX,
         { continued: true },
       );
-    doc.fillColor(colors.orange).text(exam.result);
+    doc.fillColor(colors.orange).text(result.result);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
-    console.log(exam.result);
+    header(doc, name, date, result.assessmentName);
     // const style = Object.entries(DISC.pattern).find(([_, value]) => {
     //   return Object.keys(value).includes(exam.result);
     // });
     // console.log(style);
-    const style = {
-      d: DISC.values.d,
-    };
-    let result = style[0] ? DISC.values[style[0].toLowerCase()] : '';
+    const style = DISC.values[result.result];
+    // let res = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     // let result = ''
     doc
       .font(fontNormal)
@@ -122,54 +121,60 @@ export class PdfService {
           'хэв маягтай хүн юм байна. Нягт нямбай шинжийг илэрхийлэх ерөнхий тайлбарыг уншиж таны зан төлөвтэй хэр тохирч байгааг сонирхоно уу. Бусад шинжүүдийн талаархи тайлбарыг 12-р хуудаснаас уншиж танилцахыг таньд зөвлөж байна. ',
       );
     doc.moveDown(2);
+    
     doc
       .font(fontBold)
       .fontSize(16)
-      .text(`${style.d.text} (${Object.keys(style)?.[0]?.toUpperCase()})`);
+      .text(`${style.text} (${result.result.toUpperCase()})`);
     doc.moveDown();
-    const character = DISC.characterDescription.d;
+    const character = DISC.characterDescription[result.result];
     // const character =
     //   DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
       .font(fontNormal)
       .fontSize(12)
-      .text(exam.lastname + character);
+      .text(result.lastname + character);
     footer(doc);
 
-    const index: {
-      [key: string]: string[];
-    } = res.index;
-    for (const [k, i] of Object.entries(index)) {
+    const details: ResultDetailEntity[] = result.details;
+    const groupedDetails = details.reduce<Record<number, ResultDetailEntity[]>>((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = [];
+      }
+      acc[item.category].push(item);
+      return acc;
+    }, {});
+    for (const [i, k] of Object.entries(groupedDetails)) {
       doc.addPage();
-      header(doc, name, date, assessment.name);
+      header(doc, name, date, result.assessmentName);
       doc
         .font(fontBold)
         .fillColor(colors.black)
         .fontSize(16)
         .text('Үе шат II: Таныг тодорхойлох онцлог шинжүүд');
-      doc.text(k.toUpperCase() + ' шинж чанар');
+      doc.text(i.toUpperCase() + ' шинж чанар');
 
-      const value = DISC.values[k.toLowerCase()];
+      const value = DISC.values[i.toLowerCase()];
 
       doc
         .font(fontNormal)
         .fontSize(12)
         .text(
-          `Асуумжинд өгсөн хариултанд үндэслэн таны ${firstLetterUpper(value.text)} ${k.toUpperCase()} байдлыг дараах тайлбаруудаар тодорхойлж болох юм. Та өөрийн санал нийлж буй давуу талуудаа харандаагаар дугуйлж, анхаарвал зохих зан төлөвүүдийг тодруулна уу.`,
+          `Асуумжинд өгсөн хариултанд үндэслэн таны ${firstLetterUpper(value.text)} ${i.toUpperCase()} байдлыг дараах тайлбаруудаар тодорхойлж болох юм. Та өөрийн санал нийлж буй давуу талуудаа харандаагаар дугуйлж, анхаарвал зохих зан төлөвүүдийг тодруулна уу.`,
         );
 
-      for (const v of i) {
-        doc.font(fontBold).text(`${v}: `, {
+      for (const v of k) {
+        doc.font(fontBold).text(`${v.value}: `, {
           continued: true,
         });
-        const text = DISC.description[k][v];
+        const text = DISC.description[i][v.value];
         doc.font(fontNormal).text(text.value).moveDown();
       }
       footer(doc);
     }
 
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
     doc
       .font(fontBold)
       .fillColor(colors.black)
@@ -185,38 +190,41 @@ export class PdfService {
     doc
       .font(fontBold)
       .fontSize(16)
-      .text('Хэв шинж: ' + exam.result.toUpperCase());
-    doc.text(exam.lastname + ' таны мотиваци');
+      .text('Хэв шинж: ' + result.result.toUpperCase());
+    doc.text(result.lastname + ' таны мотиваци');
     // !
-    const disc = this.disc.step3(exam.lastname, firstLetterUpper(exam.result));
+    const disc = this.disc.step3(
+      result.lastname,
+      firstLetterUpper(result.value),
+    );
 
     doc.font(fontNormal).fontSize(12).text(disc.motivation);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
 
     doc
       .font(fontBold)
       .fontSize(16)
       .fillColor(colors.black)
       .text('Үе шат III: Таны хувь хүний хэв шинж ');
-    doc.text(exam.lastname + ' таны ажлын дадал зуршил');
+    doc.text(result.lastname + ' таны ажлын дадал зуршил');
     // !
     doc.font(fontNormal).fontSize(12).text(disc.habit);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
     doc
       .font(fontBold)
       .fontSize(16)
       .fillColor(colors.black)
       .text('Үе шат III: Таны хувь хүний хэв шинж ');
-    doc.text(exam.lastname + ' таныг тольдвол;');
+    doc.text(result.lastname + ' таныг тольдвол;');
     // !
     doc.font(fontNormal).fontSize(12).text(disc.self);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
     doc.font(fontBold).fontSize(16).text('ДиСК загвар');
     doc
       .font(fontNormal)
@@ -317,37 +325,32 @@ export class PdfService {
     return doc;
   }
 
-  async createPdfInOneFile(
-    assessment: AssessmentEntity,
-    exam: ExamEntity,
-    res: any,
-  ) {
-    const name = `${exam.lastname} ${exam.firstname}`;
-
+  async createPdfInOneFile(result: ResultEntity, exam: ExamEntity) {
+    const name = `${result.firstname ?? ''} ` + result.lastname;
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';
     const out = fs.createWriteStream(filePath);
     const doc = await this.createDefaultPdf(
-      exam.lastname,
-      exam.firstname,
-      assessment.name,
+      result.lastname,
+      result.firstname,
+      result.assessmentName,
     );
     const date = new Date(exam.userStartDate);
-    header(doc, name, date, assessment.name);
+    header(doc, name, date, result.assessmentName);
     doc
       .font(fontNormal)
       .fillColor(colors.black)
       .fontSize(12)
-      .text(assessment.description)
+      .text(exam.assessment.description)
       .moveDown();
     doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
 
-    doc.font(fontNormal).text(assessment.measure).moveDown(1);
-    if (assessment.report == ReportType.CORRECT)
-      await this.singleTemplate(doc, assessment, exam, name, date);
-    if (assessment.report == ReportType.DISC) {
-      await this.discTemplate(doc, assessment, exam, name, date, res);
+    doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
+    if (exam.assessment.report == ReportType.CORRECT)
+      await this.singleTemplate(doc, result, name, date);
+    if (exam.assessment.report == ReportType.DISC) {
+      await this.discTemplate(doc, result, date, name);
     }
     doc.pipe(out);
     // doc.image(buffer2, 50, 400, { width: 260 });
