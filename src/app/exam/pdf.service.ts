@@ -108,7 +108,7 @@ export class PdfService {
     //   return Object.keys(value).includes(exam.result);
     // });
     // console.log(style);
-    const style = DISC.values[result.result];
+    const style = DISC.values[result.result.toLowerCase()];
     // let res = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     // let result = ''
     doc
