@@ -130,7 +130,7 @@ export const dateFormatter = (date: Date): string => {
   let month = `${date.getMonth() + 1}`;
   parseInt(month) < 10 ? (month = `0${month}`) : null;
   let day = `${date.getDate()}`;
-  parseInt(day) < 10 ? `0${day}` : null;
+  parseInt(day) < 10 ? (day = `0${day}`) : null;
   return `${year}.${month}.${day}`;
 };
 
