@@ -127,7 +127,7 @@ export class PdfService {
       .fontSize(16)
       .text(`${style.text} (${result.result.toUpperCase()})`);
     doc.moveDown();
-    const character = DISC.characterDescription[result.result];
+    const character = DISC.characterDescription[result.result.toLowerCase()];
     // const character =
     //   DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
