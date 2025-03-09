@@ -194,11 +194,12 @@ export class PdfService {
       .text('Хэв шинж: ' + result.result.toUpperCase());
     doc.text(result.lastname + ' таны мотиваци');
     // !
+    console.log(result)
     const disc = this.disc.step3(
       result.lastname,
       firstLetterUpper(result.value),
     );
-
+    console.log(disc)
     doc.font(fontNormal).fontSize(12).text(disc.motivation);
     footer(doc);
     doc.addPage();
