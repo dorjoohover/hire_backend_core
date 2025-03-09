@@ -195,6 +195,7 @@ export class PdfService {
     doc.text(result.lastname + ' таны мотиваци');
     // !
     console.log(result)
+    console.log(firstLetterUpper(result.value))
     const disc = this.disc.step3(
       result.lastname,
       firstLetterUpper(result.value),
