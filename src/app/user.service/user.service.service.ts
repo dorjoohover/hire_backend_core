@@ -22,6 +22,7 @@ import { PaymentStatus, PaymentType } from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
+import { ResultDao } from '../exam/dao/result.dao';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -35,6 +36,7 @@ export class UserServiceService extends BaseService {
     private assessmentDao: AssessmentDao,
     private mailer: MailerService,
     private qpay: QpayService,
+    private result: ResultDao,
   ) {
     super();
   }
@@ -94,7 +96,21 @@ export class UserServiceService extends BaseService {
   // public async
 
   public async findByUser(assId: number, id: number) {
-    return await this.dao.findByUser(assId, id);
+    const responses = await this.dao.findByUser(assId, id);
+    const res = [];
+    for (const response of responses) {
+      const exams = response.exams;
+      const examResults = [];
+      for (const exam of exams) {
+        const result = await this.result.findOne(exam.code);
+        examResults.push({
+          ...exam,
+          result: result,
+        });
+      }
+      res.push({ ...response, exams: examResults });
+    }
+    return res;
   }
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {

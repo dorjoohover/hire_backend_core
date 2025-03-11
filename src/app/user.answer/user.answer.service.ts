@@ -15,6 +15,7 @@ import { ExamDao } from '../exam/dao/exam.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 import { ExamService } from '../exam/exam.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -22,6 +23,7 @@ export class UserAnswerService extends BaseService {
     private dao: UserAnswerDao,
     private questionDao: QuestionDao,
     private examDao: ExamDao,
+    private mailService: MailerService,
     private examService: ExamService,
     private questionAnswerDao: QuestionAnswerDao,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
@@ -117,6 +119,18 @@ export class UserAnswerService extends BaseService {
           true,
           user,
         );
+
+        const send = await this.mailService.sendMail({
+          to: user.email,
+          subject: 'Тайлан хүлээн авах',
+          html: `<div>
+          <p>Та тайлангаа <a href=https://srv666826.hstgr.cloud/api/v1/exam/pdf/${dto.data[0].code}>эндээс</a> татаж авна уу.</p>
+          <p>Тайлан pdf хэлбэрээр татагдах болно.</p>
+           <p>Асууж, тодруулах зүйл байвал <a href=mailto:info@hire.mn>info@hire.mn</a> хаягаар, <a href=tel:976-9909 9371>976-9909 9371</a> дугаараар холбогдоорой. </p>
+           <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
+           <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
+           </div>`,
+        });
         return response.visible ? { visible: response.visible } : response;
       }
 

@@ -73,6 +73,7 @@ export class ExamController {
         }
         fs.unlinkSync(filePath); // Remove the temporary PDF file
       });
+      // return res.redirect('https://hire.mn');
     } catch (err) {
       console.log('Error generating PDF:', err);
       throw err;
@@ -81,7 +82,7 @@ export class ExamController {
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })
   calculateExamById(@Param('id') id: string, @Request() { user }) {
-    return this.examService.calculateExamById(+id,false, user);
+    return this.examService.calculateExamById(+id, false, user);
   }
 
   @Get('exam/:id')

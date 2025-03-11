@@ -9,11 +9,6 @@ export class QpayService {
   constructor(private readonly httpService: HttpService) {}
 
   async getAccessToken() {
-    console.log(this.token);
-    console.log({
-      username: process.env.QPAY_CLIENT_ID,
-      password: process.env.QPAY_CLIENT_SECRET,
-    });
     if (this.token != null) return this.token;
     const response = await this.httpService
       .post(
