@@ -95,7 +95,7 @@ export class ExamService extends BaseService {
       // console.log(formule)
       if (formule) {
         const res = await this.formule.calculate(formule, exam.id);
-
+        console.log(res)
         const calculate = await this.calculateByReportType(res, exam, user, id);
 
         return {
