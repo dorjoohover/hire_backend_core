@@ -118,7 +118,7 @@ export class PdfService {
       .text(
         'Ажлын орчны талаарх таны хандлага, түүнийг хяналтандаа байлгадаг түвшинг тодорхойлох асуумжид таны өгсөн хариултыг шинжлэхэд та ' +
           result.result.toUpperCase() +
-          ' хэв маягтай хүн юм байна. Нягт нямбай шинжийг илэрхийлэх ерөнхий тайлбарыг уншиж таны зан төлөвтэй хэр тохирч байгааг сонирхоно уу. Бусад шинжүүдийн талаархи тайлбарыг 12-р хуудаснаас уншиж танилцахыг таньд зөвлөж байна. ',
+          ` хэв маягтай хүн юм байна. ${style.text} шинжийг илэрхийлэх ерөнхий тайлбарыг уншиж таны зан төлөвтэй хэр тохирч байгааг сонирхоно уу. Бусад шинжүүдийн талаархи тайлбарыг 12-р хуудаснаас уншиж танилцахыг таньд зөвлөж байна. `,
       );
     doc.moveDown(2);
     
@@ -194,13 +194,10 @@ export class PdfService {
       .text('Хэв шинж: ' + result.result.toUpperCase());
     doc.text(result.lastname + ' таны мотиваци');
     // !
-    console.log(result)
-    console.log(firstLetterUpper(result.value))
     const disc = this.disc.step3(
       result.lastname,
       firstLetterUpper(result.value),
     );
-    console.log(disc)
     doc.font(fontNormal).fontSize(12).text(disc.motivation);
     footer(doc);
     doc.addPage();
@@ -329,7 +326,7 @@ export class PdfService {
   }
 
   async createPdfInOneFile(result: ResultEntity, exam: ExamEntity) {
-    const name = `${result.firstname ?? ''} ` + result.lastname;
+    const name = `${result?.firstname ?? ''} ` + result.lastname;
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';

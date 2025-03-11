@@ -91,20 +91,22 @@ export class QuestionAnswerDao {
                 correct: correct,
                 matrix: shuffle
                   ? await this.shuffle(body.matrix)
-                  // : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
-                  : body.matrix,
+                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                // : body.matrix,
               }
             : {
                 ...body,
                 matrix: shuffle
                   ? await this.shuffle(body.matrix)
-                  // : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
-                  : body.matrix,
+                  : body.matrix.sort((a, b) => a.orderNumber - b.orderNumber),
+                // : body.matrix,
               },
         );
       }
     else {
-      result = await this.shuffle(res);
+      result = !shuffle
+        ? res.sort((a, b) => a.orderNumber - b.orderNumber)
+        : await this.shuffle(res);
     }
 
     return result;
