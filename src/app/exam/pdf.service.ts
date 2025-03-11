@@ -334,7 +334,7 @@ export class PdfService {
   }
 
   async createPdfInOneFile(result: ResultEntity, exam: ExamEntity) {
-    const name = `${result?.firstname ?? ''} ` + result.lastname;
+    const name = `${result?.firstname ?? ''} ` + result?.lastname ?? '';
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';
