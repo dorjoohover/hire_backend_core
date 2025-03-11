@@ -341,7 +341,7 @@ export class PdfService {
     const out = fs.createWriteStream(filePath);
     const doc = await this.createDefaultPdf(
       result?.lastname ?? '',
-      result.firstname,
+      result?.firstname ?? '',
       result.assessmentName,
     );
     const date = new Date(exam.userStartDate);
