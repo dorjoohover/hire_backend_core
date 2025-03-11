@@ -115,6 +115,11 @@ export class ExamService extends BaseService {
     id: number,
   ) {
     const type = exam.assessment.report;
+    const diff = Math.floor(
+      (Date.parse(exam.userEndDate?.toString()) -
+        Date.parse(exam.userStartDate?.toString())) /
+        60000,
+    );
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         result: res[0].point,
@@ -123,7 +128,18 @@ export class ExamService extends BaseService {
         email: user?.email,
         phone: user?.phone,
       });
-
+      await this.resultDao.create({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: diff,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: exam.assessment.report,
+        limit: exam.assessment.duration,
+        total: exam.assessment.totalPoint,
+        point: res[0].point,
+      });
       return res[0].point;
     }
     if (type == ReportType.DISC) {
@@ -218,11 +234,7 @@ export class ExamService extends BaseService {
           });
         }
       }
-      const diff = Math.floor(
-        (Date.parse(exam.userEndDate?.toString()) -
-          Date.parse(exam.userStartDate?.toString())) /
-          60000,
-      );
+
       await this.resultDao.create(
         {
           assessment: exam.assessment.id,
