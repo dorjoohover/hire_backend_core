@@ -340,7 +340,7 @@ export class PdfService {
     const filePath = './chart.pdf';
     const out = fs.createWriteStream(filePath);
     const doc = await this.createDefaultPdf(
-      result.lastname,
+      result?.lastname ?? '',
       result.firstname,
       result.assessmentName,
     );
