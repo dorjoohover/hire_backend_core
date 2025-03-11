@@ -121,7 +121,7 @@ export class PdfService {
           ` хэв маягтай хүн юм байна. ${style.text} шинжийг илэрхийлэх ерөнхий тайлбарыг уншиж таны зан төлөвтэй хэр тохирч байгааг сонирхоно уу. Бусад шинжүүдийн талаархи тайлбарыг 12-р хуудаснаас уншиж танилцахыг таньд зөвлөж байна. `,
       );
     doc.moveDown(2);
-    
+
     doc
       .font(fontBold)
       .fontSize(16)
@@ -133,17 +133,20 @@ export class PdfService {
     doc
       .font(fontNormal)
       .fontSize(12)
-      .text(result.lastname + character);
+      .text((result?.lastname ?? result?.firstname ?? '') + character);
     footer(doc);
 
     const details: ResultDetailEntity[] = result.details;
-    const groupedDetails = details.reduce<Record<number, ResultDetailEntity[]>>((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
-      }
-      acc[item.category].push(item);
-      return acc;
-    }, {});
+    const groupedDetails = details.reduce<Record<number, ResultDetailEntity[]>>(
+      (acc, item) => {
+        if (!acc[item.category]) {
+          acc[item.category] = [];
+        }
+        acc[item.category].push(item);
+        return acc;
+      },
+      {},
+    );
     for (const [i, k] of Object.entries(groupedDetails)) {
       doc.addPage();
       header(doc, name, date, result.assessmentName);
@@ -167,7 +170,7 @@ export class PdfService {
         doc.font(fontBold).text(`${v.value}: `, {
           continued: true,
         });
-        console.log(v.value)
+        console.log(v.value);
         const text = DISC.description[i][v.value];
         doc.font(fontNormal).text(text?.value).moveDown();
       }
@@ -192,10 +195,10 @@ export class PdfService {
       .font(fontBold)
       .fontSize(16)
       .text('Хэв шинж: ' + result.result.toUpperCase());
-    doc.text(result.lastname + ' таны мотиваци');
+    doc.text((result?.lastname ?? result?.firstname ?? '') + ' таны мотиваци');
     // !
     const disc = this.disc.step3(
-      result.lastname,
+      result?.lastname ?? result?.firstname ?? '',
       firstLetterUpper(result.value),
     );
     doc.font(fontNormal).fontSize(12).text(disc.motivation);
@@ -208,7 +211,10 @@ export class PdfService {
       .fontSize(16)
       .fillColor(colors.black)
       .text('Үе шат III: Таны хувь хүний хэв шинж ');
-    doc.text(result.lastname + ' таны ажлын дадал зуршил');
+    doc.text(
+      (result?.lastname ?? result?.firstname ?? '') +
+        ' таны ажлын дадал зуршил',
+    );
     // !
     doc.font(fontNormal).fontSize(12).text(disc.habit);
     footer(doc);
@@ -219,7 +225,9 @@ export class PdfService {
       .fontSize(16)
       .fillColor(colors.black)
       .text('Үе шат III: Таны хувь хүний хэв шинж ');
-    doc.text(result.lastname + ' таныг тольдвол;');
+    doc.text(
+      (result?.lastname ?? result?.firstname ?? '') + ' таныг тольдвол;',
+    );
     // !
     doc.font(fontNormal).fontSize(12).text(disc.self);
     footer(doc);

@@ -56,11 +56,13 @@ export class AuthService {
     let result;
     let res = await this.usersService.getUser(user.email);
     if (!res) res = await this.usersService.getUser(user.registerNumber);
-    if (res && !res.emailVerified)
+    if (res && !res.emailVerified) {
+      await this.usersService.sendConfirmMail(res.email)
       throw new HttpException(
-        'И-мейл хаягаа баталгаажуулна уу.',
+        'И-мейл хаягаа баталгаажуулна уу. Танд баталжуулах имейл илгээлээ.',
         HttpStatus.FORBIDDEN,
       );
+    }
     if (!user.password) {
       if (!user.name && !user.profile)
         throw new UnauthorizedException('Хэрэглэгч олдсонгүй.');
