@@ -25,7 +25,7 @@ export class PaymentEntity {
   @Column({ nullable: true })
   message: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.payments)
+  @ManyToOne(() => UserEntity, (user) => user.payments, { nullable: true })
   user: UserEntity;
   @ManyToOne(() => UserEntity, (user) => user.charges)
   charger: UserEntity;

@@ -37,6 +37,7 @@ export class UserServiceEntity {
   createdAt: Date;
   @OneToMany(() => ExamEntity, (exam) => exam.service, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   exams: ExamEntity[];
   @OneToMany(() => TransactionEntity, (transaction) => transaction.service, {
