@@ -162,7 +162,7 @@ export class UserServiceService extends BaseService {
               to: email.email,
               subject: 'Тест өгөх эрх үүсэх',
               html: `<div>
-         <p> Та <a href=https://hire-main.vercel.app/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
+         <p> Та <a href=https://hire.mn/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
 <p>Таны анхааралд:</p>
 <ul>
         <li>Танд hire.mn цахим хуудас дээрх ... тест өгөх эрх үүссэн байна.</li>
