@@ -141,8 +141,8 @@ export class UserServiceService extends BaseService {
         return res;
       }),
     );
-    if (role == Role.organization)
-      await this.updateCount(dto.service, 0, dto.count, id);
+    // if (role == Role.organization)
+    await this.updateCount(dto.service, 0, dto.count, id);
 
     return code;
   }

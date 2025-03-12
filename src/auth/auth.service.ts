@@ -38,7 +38,6 @@ export class AuthService {
     firstname: string,
   ) {
     let user = await this.usersService.getUser(email);
-    console.log(user);
     if (!user) {
       user = await this.usersService.addUser({
         email: email,
@@ -57,7 +56,7 @@ export class AuthService {
     let res = await this.usersService.getUser(user.email);
     if (!res) res = await this.usersService.getUser(user.registerNumber);
     if (res && !res.emailVerified) {
-      await this.usersService.sendConfirmMail(res.email)
+      await this.usersService.sendConfirmMail(res.email);
       throw new HttpException(
         'И-мейл хаягаа баталгаажуулна уу. Танд баталжуулах имейл илгээлээ.',
         HttpStatus.FORBIDDEN,
