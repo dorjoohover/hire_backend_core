@@ -104,7 +104,7 @@ export class UserServiceService extends BaseService {
       res.push({
         ...exam,
         result: result,
-        invited: !service,
+        invited: service.length == 0,
       });
     }
     return res;
