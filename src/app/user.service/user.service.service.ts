@@ -95,19 +95,34 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(assId: number, email: string, id: number) {
-    const exams = await this.examDao.findAll(assId, email);
+  public async findByUser(assId: number, id: number) {
+    const responses = await this.dao.findByUser(assId, id);
     const res = [];
-    for (const exam of exams) {
-      const result = await this.result.findOne(exam.code);
-      const service = await this.dao.findByUser(assId, id, exam.service.id);
-      res.push({
-        ...exam,
-        result: result,
-        invited: service.length == 0,
-      });
+    for (const response of responses) {
+      const exams = response.exams;
+      const examResults = [];
+      for (const exam of exams) {
+        const result = await this.result.findOne(exam.code);
+        examResults.push({
+          ...exam,
+          result: result,
+        });
+      }
+      res.push({ ...response, exams: examResults });
     }
     return res;
+    // const exams = await this.examDao.findAll(assId, email);
+    // const res = [];
+    // for (const exam of exams) {
+    //   const result = await this.result.findOne(exam.code);
+    //   const service = await this.dao.findByUser(assId, id, exam.service.id);
+    //   res.push({
+    //     ...exam,
+    //     result: result,
+    //     invited: service.length == 0,
+    //   });
+    // }
+    // return res;
   }
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {

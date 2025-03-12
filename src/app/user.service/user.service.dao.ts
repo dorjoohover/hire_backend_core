@@ -56,17 +56,32 @@ export class UserServiceDao {
     await this.db.save(res);
   };
 
-  findByUser = async (assId: number, id: number, serviceId: number) => {
+  findByUser = async (assId: number, id: number) => {
+    // const responses = await this.dao.findByUser(assId, id);
+    // const res = [];
+    // for (const response of responses) {
+    //   const exams = response.exams;
+    //   const examResults = [];
+    //   for (const exam of exams) {
+    //     const result = await this.result.findOne(exam.code);
+    //     examResults.push({
+    //       ...exam,
+    //       result: result,
+    //     });
+    //   }
+    //   res.push({ ...response, exams: examResults });
+    // }
+    // return res;
     return await this.db.find({
       where: {
         user: {
-          id,
+          id: id,
         },
-        id: serviceId,
         assessment: {
           id: assId == 0 ? Not(assId) : assId,
         },
       },
+      relations: ['assessment', 'exams'],
     });
   };
 }
