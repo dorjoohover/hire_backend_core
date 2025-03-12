@@ -12,7 +12,7 @@ import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 
-@ApiTags('Fxeedback')
+@ApiTags('Feedback')
 @Controller('feedback')
 @ApiBearerAuth('access-token')
 export class FeedbackController {
