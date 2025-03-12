@@ -50,6 +50,7 @@ export const AssessmentType = {
 export const ReportType = {
   CORRECT: 10,
   DISC: 20,
+  MBTI: 30,
 };
 export const BlogType = {
   BLOG: 10,

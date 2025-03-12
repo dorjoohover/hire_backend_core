@@ -94,11 +94,11 @@ export class FormuleService extends BaseService {
         // return { ...r, sum: sum };
         let aCate = r.answerCategoryId;
         aCate = await this.answerCategoryDao.findOne(+aCate);
-
         let sum = parseInt(r.point);
         return {
           point: sum,
           aCate: aCate?.name ?? aCate,
+          parent: aCate.parent,
         };
       }),
     );

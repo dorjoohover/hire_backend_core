@@ -95,7 +95,6 @@ export class ExamService extends BaseService {
       // console.log(formule)
       if (formule) {
         const res = await this.formule.calculate(formule, exam.id);
-        console.log(res)
         const calculate = await this.calculateByReportType(res, exam, user, id);
 
         return {
@@ -262,6 +261,9 @@ export class ExamService extends BaseService {
         agent,
         index,
       };
+    }
+    if (type == ReportType.MBTI) {
+      console.log(res);
     }
   }
 
@@ -449,7 +451,6 @@ export class ExamService extends BaseService {
   }
   public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
     let res = await this.dao.findByAdmin(dto, page, limit);
-    console.log(res);
     res = await Promise.all(
       res.map(async (r) => {
         const user = await this.userDao.getByEmail(r.email);

@@ -141,7 +141,9 @@ export class QuestionService {
       }
     else {
       point += Math.max(
-        ...(answers.map((answer) => answer.answer.point) ?? [0]),
+        ...(answers.map((answer) =>
+          answer.answer.correct ? 1 : answer.answer.point,
+        ) ?? [0]),
       );
     }
     return point;

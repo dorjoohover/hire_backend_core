@@ -18,3 +18,4 @@ export enum Role {
   // 50
   tester = TESTER,
 }
+export const Admins = [Role.super_admin, Role.admin, Role.tester];

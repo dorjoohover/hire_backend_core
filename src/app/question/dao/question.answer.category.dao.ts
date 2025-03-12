@@ -60,6 +60,7 @@ export class QuestionAnswerCategoryDao {
       where: {
         id: id,
       },
+      relations: ['parent']
     });
   };
   findByName = async (name: string) => {
