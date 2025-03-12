@@ -56,17 +56,17 @@ export class UserServiceDao {
     await this.db.save(res);
   };
 
-  findByUser = async (assId: number, id: number) => {
+  findByUser = async (assId: number, id: number, serviceId: number) => {
     return await this.db.find({
       where: {
         user: {
           id,
         },
+        id: serviceId,
         assessment: {
           id: assId == 0 ? Not(assId) : assId,
         },
       },
-      relations: ['assessment'],
     });
   };
 }
