@@ -360,7 +360,7 @@ export class PdfService {
     if (exam.assessment.report == ReportType.DISC) {
       await this.discTemplate(doc, result, date, name);
     }
-    doc.pipe(out);
+    // doc.pipe(out);
     // doc.image(buffer2, 50, 400, { width: 260 });
     doc.end();
 

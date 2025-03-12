@@ -31,7 +31,7 @@ export class UserServiceDao {
     });
     res.status = status;
     await this.db.save(res);
-    return res
+    return res;
   };
 
   findAll = async () => {
@@ -60,7 +60,7 @@ export class UserServiceDao {
     return await this.db.find({
       where: {
         user: {
-          id: id,
+          id,
         },
         assessment: {
           id: assId == 0 ? Not(assId) : assId,
