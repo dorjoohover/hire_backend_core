@@ -95,20 +95,15 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(assId: number, id: number) {
-    const responses = await this.dao.findByUser(assId, id);
+  public async findByUser(assId: number, email: string) {
+    const exams = await this.examDao.findAll(assId, email);
     const res = [];
-    for (const response of responses) {
-      const exams = response.exams;
-      const examResults = [];
-      for (const exam of exams) {
-        const result = await this.result.findOne(exam.code);
-        examResults.push({
-          ...exam,
-          result: result,
-        });
-      }
-      res.push({ ...response, exams: examResults });
+    for (const exam of exams) {
+      const result = await this.result.findOne(exam.code);
+      res.push({
+        ...exam,
+        result: result,
+      });
     }
     return res;
   }

@@ -63,9 +63,15 @@ export class ExamDao {
     await this.db.save({ ...res, userEndDate: new Date() });
   };
 
-  findAll = async () => {
+  findAll = async (assessmendId: number, email: string) => {
     return await this.db.find({
-      //   relations: [''],
+      where: {
+        assessment: {
+          id: assessmendId == 0 ? Not(0) : assessmendId,
+        },
+        email,
+      },
+        relations: ['service', 'assessment'],
     });
   };
 
