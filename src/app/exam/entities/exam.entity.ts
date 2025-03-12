@@ -46,7 +46,9 @@ export class ExamEntity {
   @Column({ nullable: true })
   userStartDate: Date;
 
-  @ManyToOne(() => UserServiceEntity, (service) => service.exams)
+  @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
+    onDelete: 'CASCADE',
+  })
   service: UserServiceEntity;
   @ManyToOne(() => AssessmentEntity, (service) => service.exams, {
     onDelete: 'CASCADE',
