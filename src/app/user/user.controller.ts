@@ -8,6 +8,8 @@ import {
   Delete,
   Request,
   Res,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateOtp, CreateUserDto, PasswordDto } from './dto/create-user.dto';
@@ -16,11 +18,15 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { AuthService } from 'src/auth/auth.service';
 
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
 
   @Roles(Role.super_admin)
   @Post()
@@ -28,10 +34,19 @@ export class UserController {
     return this.userService.addUser(dto);
   }
 
-  @Post('email')
-  @Public()
-  sendOpt(@Body() dto: CreateOtp) {
-    // return this.userService.sendConfirmMail(dto.email);
+  @Post('password')
+  @ApiBearerAuth('access-token')
+  async sendOpt(@Body() dto: CreateOtp, @Request() { user }) {
+    const validate = await this.authService.validateUser(
+      user.email,
+      dto.oldPassword,
+    );
+    if (validate == 0)
+      throw new HttpException(
+        'Хуучин нууц үг тохирохгүй байна.',
+        HttpStatus.BAD_REQUEST,
+      );
+    await this.userService.updatePassword(user.email, dto.password)
   }
 
   @Public()
@@ -72,7 +87,7 @@ export class UserController {
   @Public()
   @Post('forget/password')
   updatePassword(@Body() dto: PasswordDto) {
-    return this.userService.updatePassword(dto.email, dto.password)
+    return this.userService.updatePassword(dto.email, dto.password);
   }
 
   @ApiBearerAuth('access-token')

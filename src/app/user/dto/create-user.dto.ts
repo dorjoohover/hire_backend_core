@@ -3,7 +3,9 @@ import { IsEmail } from 'class-validator';
 
 export class CreateOtp {
   @ApiProperty()
-  email: string;
+  oldPassword: string;
+  @ApiProperty()
+  password: string;
 }
 
 export class CreateUserDto {
