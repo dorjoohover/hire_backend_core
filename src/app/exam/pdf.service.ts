@@ -344,32 +344,36 @@ export class PdfService {
       result?.firstname ?? '',
       result.assessmentName,
     );
-    const date = new Date(exam.userStartDate);
-    header(doc, name, date, result.assessmentName);
-    doc
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .fontSize(12)
-      .text(exam.assessment.description)
-      .moveDown();
-    doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
+    try {
+      doc.pipe(out);
+      const date = new Date(exam.userStartDate);
+      header(doc, name, date, result.assessmentName);
+      doc
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(12)
+        .text(exam.assessment.description)
+        .moveDown();
+      doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
 
-    doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
-    if (exam.assessment.report == ReportType.CORRECT)
-      await this.singleTemplate(doc, result, name, date);
-    if (exam.assessment.report == ReportType.DISC) {
-      await this.discTemplate(doc, result, date, name);
+      doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
+      if (exam.assessment.report == ReportType.CORRECT)
+        await this.singleTemplate(doc, result, name, date);
+      if (exam.assessment.report == ReportType.DISC) {
+        await this.discTemplate(doc, result, date, name);
+      }
+      doc.end();
+
+      await new Promise((resolve, reject) => {
+        out.on('finish', resolve);
+        out.on('error', reject);
+      });
+
+      return filePath;
+    } catch (error) {
+      throw new Error('Failed to generate PDF');
     }
-    // doc.pipe(out);
     // doc.image(buffer2, 50, 400, { width: 260 });
-    doc.end();
-
-    await new Promise((resolve, reject) => {
-      out.on('finish', resolve);
-      out.on('error', reject);
-    });
-
-    return filePath;
   }
 
   async createSingleCorrect() {}
