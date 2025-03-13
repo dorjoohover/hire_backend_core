@@ -9,7 +9,11 @@ import {
   Request,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { ChargePaymentDto, CreatePaymentDto, DateDto } from './dto/create-payment.dto';
+import {
+  ChargePaymentDto,
+  CreatePaymentDto,
+  DateDto,
+} from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
@@ -26,24 +30,30 @@ export class PaymentController {
   }
 
   // @Roles(Role.super_admin, Role.tester, Role.admin)
-  @Get('/view/:role/:page/:limit')
+  @Get('/view/:role/:id/:page/:limit')
   @ApiParam({ name: 'page' })
+  @ApiParam({ name: 'id' })
   @ApiParam({ name: 'limit' })
   @ApiParam({ name: 'role' })
   findAll(
     @Param('page') page: string,
+    @Param('id') id: string,
     @Param('limit') limit: string,
     @Param('role') role: string,
     @Request() { user },
   ) {
-    return this.paymentService.findAll(+role, +page, +limit, user);
+    return this.paymentService.findAll(+role, +page, +limit, user, +id);
   }
 
   @Roles(Role.super_admin, Role.tester, Role.admin)
   @Post('/admin/:page/:limit')
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })
-  findAdmin(@Body() dto: DateDto, @Param('page') page: number, @Param('limit') limit: number) {
+  findAdmin(
+    @Body() dto: DateDto,
+    @Param('page') page: number,
+    @Param('limit') limit: number,
+  ) {
     return this.paymentService.findAdmin(dto, page, limit);
   }
 
