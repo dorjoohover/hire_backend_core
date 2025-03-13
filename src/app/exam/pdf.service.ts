@@ -299,18 +299,32 @@ export class PdfService {
     doc.addPage();
 
     header(doc, name, date, result.assessmentName);
-    doc.font(fontBold).fontSize(14).text('Юуг хэмжих вэ?');
+    doc
+      .font(fontBold)
+      .fillColor(colors.black)
+      .fontSize(14)
+      .text('Юуг хэмжих вэ?');
 
     doc
       .font(fontNormal)
       .fontSize(12)
       .fillColor(colors.black)
-      .text(assessment.usage)
+      .text(assessment.description)
       .moveDown(2);
     doc.font(fontBold).fontSize(14).text('Тайлангийн тухайд');
-    doc.text(Belbin.about).moveDown(2);
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(Belbin.about)
+      .moveDown(2);
     doc.font(fontBold).fontSize(14).text('Зөвлөмж, тодруулга');
-    doc.text(Belbin.advice).moveDown(2);
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(Belbin.advice)
+      .moveDown(2);
     doc
       .font(fontBold)
       .fontSize(16)
@@ -327,6 +341,7 @@ export class PdfService {
 
     footer(doc);
     doc.addPage();
+    header(doc, name, date, assessment.name);
     doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
     doc
       .moveTo(30, doc.y)
@@ -336,7 +351,6 @@ export class PdfService {
       .moveDown();
 
     const details: ResultDetailEntity[] = result.details;
-    console.log(details)
     const indicator = [];
     const data = [];
     const results = [];
@@ -354,15 +368,16 @@ export class PdfService {
       results.push({ ...result, point: +detail.cause });
     }
     let y = doc.y;
-    console.log(indicator, data)
     const pie = await this.vis.createRadar(indicator, data);
-    const center = doc.page.width / 2;
-    doc.image(pie, marginX, y - 10, { width: doc.page.width - marginX * 4 });
+    doc.image(pie, marginX * 2, y - 10, {
+      width: doc.page.width - marginX * 4,
+    });
+    y += doc.page.width - marginX * 4;
     doc.moveDown(1);
-    doc.fontSize(16).fillColor('#ffffff').font(fontBold).text('9 дүр', {
+    doc.fontSize(16).font(fontBold).text('9 дүр', doc.x, y, {
       continued: true,
     });
-    doc.fontSize(16).fillColor('#ffffff').font(fontBold).text('Оноо');
+    doc.fontSize(16).font(fontBold).text('Оноо');
     results.map((res, i) => {
       doc
         .font(fontNormal)
@@ -436,14 +451,16 @@ export class PdfService {
     try {
       doc.pipe(out);
       const date = new Date(exam.userStartDate);
-      header(doc, name, date, result.assessmentName);
-      doc
-        .font(fontNormal)
-        .fillColor(colors.black)
-        .fontSize(12)
-        .text(exam.assessment.description)
-        .moveDown();
-      doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
+      if (exam.assessment.report != ReportType.BELBIN) {
+        header(doc, name, date, result.assessmentName);
+        doc
+          .font(fontNormal)
+          .fillColor(colors.black)
+          .fontSize(12)
+          .text(exam.assessment.description)
+          .moveDown();
+        doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
+      }
 
       doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
       if (exam.assessment.report == ReportType.CORRECT)

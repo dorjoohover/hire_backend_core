@@ -60,7 +60,6 @@ export class ExamService extends BaseService {
       );
     }
     const result = await this.resultDao.findOne(id);
-    console.log(result)
     return await this.pdfService.createPdfInOneFile(result, res);
   }
 

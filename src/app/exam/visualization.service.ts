@@ -98,6 +98,13 @@ export class VisualizationService {
     const echartOption = {
       radar: {
         indicator: indicator,
+        name: {
+          textStyle: {
+            fontSize: 14,
+            color: colors.orange,
+            fontWeight: 'bold',
+          },
+        },
       },
       series: [
         {
