@@ -100,56 +100,23 @@ export class SinglePdf {
       let duration = result.duration;
 
       let y = doc.y;
+      const pie = await this.vis.doughnut(
+        colors.grey,
+        colors.orange,
+        result.total,
+        result.point,
+      );
+      const width = (doc.page.width - marginX * 2) / 2;
+      doc.image(pie, doc.x, y, { width: width });
 
-      const outerRadius = (doc.page.width - marginX * 2) / 4;
-      // const outerRadius = (doc.page.width - marginX * 2) / 4;
-      const innerRadius = (doc.page.width - marginX * 2) / 8;
-      const centerX = doc.x + outerRadius;
-      const centerY = doc.y + outerRadius;
-      const startAngle = 0;
-      const endAngle = 100;
-
-      const toRadians = (angle) => (angle * Math.PI) / 180;
-
-      const startOuterX =
-        centerX + outerRadius * Math.cos(toRadians(startAngle));
-      const startOuterY =
-        centerY + outerRadius * Math.sin(toRadians(startAngle));
-      const endOuterX = centerX + outerRadius * Math.cos(toRadians(endAngle));
-      const endOuterY = centerY + outerRadius * Math.sin(toRadians(endAngle));
-
-      // Calculate inner arc points
-      const startInnerX = centerX + innerRadius * Math.cos(toRadians(endAngle));
-      const startInnerY = centerY + innerRadius * Math.sin(toRadians(endAngle));
-      const endInnerX = centerX + innerRadius * Math.cos(toRadians(startAngle));
-      const endInnerY = centerY + innerRadius * Math.sin(toRadians(startAngle));
-
+      doc.font(fontNormal).fillColor(colors.black).fontSize(14);
+      const durationWidth = doc.widthOfString(
+        `Тестийг ${result.duration == 0 ? 1 : result.duration} минутад гүйцэтгэсэн`,
+      );
       doc
-        .moveTo(startOuterX, startOuterY)
-        .bezierCurveTo(
-          centerX + outerRadius * 1.3,
-          centerY, // Control point 1
-          centerX + outerRadius * 1.3,
-          centerY, // Control point 2
-          endOuterX,
-          endOuterY, // End point
-        )
-        .lineTo(startInnerX, startInnerY)
-        .bezierCurveTo(
-          centerX + innerRadius * 1.3,
-          centerY, // Control point 1
-          centerX + innerRadius * 1.3,
-          centerY, // Control point 2
-          endInnerX,
-          endInnerY, // End point
-        )
-        .closePath()
-        .fill(colors.orange);
-      doc
-        .font(fontNormal)
-        .fillColor(colors.black)
-        .fontSize(14)
-        .text('Тестийг ', doc.x, y, { continued: true })
+        .text('Тестийг ', doc.page.width - marginX - durationWidth + 4, y, {
+          continued: true,
+        })
         .font(fontBold)
         .fillColor(colors.orange)
         .fontSize(18)
@@ -161,31 +128,32 @@ export class SinglePdf {
         .fontSize(14)
         .text('минутад гүйцэтгэсэн', doc.x, y + 2)
         .fontSize(14);
-
       if (duration && duration != 0) {
+        const possibleWidth = doc.widthOfString(`(Боломжит ${duration} минут)`);
         doc
-          .text('(Боломжит ', { continued: true })
+          .text(
+            '(Боломжит ',
+            doc.page.width - marginX - possibleWidth + 4,
+            doc.y,
+            { continued: true },
+          )
           .font(fontBold)
           .fontSize(18)
-          .text('30 ', doc.x, doc.y - 2, { continued: true })
+          .text(`${duration} `, doc.x, doc.y - 2, { continued: true })
           .font(fontNormal)
           .fillColor(colors.black)
           .fontSize(14)
-          .text('минут)', doc.x, doc.y + 2, { continued: false })
-          .image(assetPath('icons/time'), doc.x + 150, y + 15, { width: 18 });
+          .text('минут)', doc.x, doc.y + 2);
       }
+      doc
+        .moveTo(doc.page.width - marginX - 75, doc.y)
+        .strokeColor(colors.red)
+        .lineTo(75, doc.y)
+        .stroke()
+        .moveDown();
+      const totalPointWidth = doc.widthOfString('Нийт оноо');
+      doc.text('Нийт оноо', { align: 'right' });
 
-      // pie chart
-      const pie = await this.vis.doughnut(
-        colors.grey,
-        colors.orange,
-        result.total,
-        result.point,
-      );
-      const center = doc.page.width / 2;
-      doc.image(pie, center + center - 168, y - 10, { width: 50 });
-      doc.text('Нийт оноо', center, y - 10, { align: 'right' });
-      doc.moveTo(center, doc.y);
       doc.font(fontBold).fontSize(32);
       const widthResult = doc.widthOfString(`${result.point}`);
       doc.fontSize(24);

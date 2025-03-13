@@ -157,14 +157,7 @@ export class VisualizationService {
             radius: ['50%', '100%'],
             startAngle: 90,
             silent: true,
-            data: [
-              {
-                value: total,
-                itemStyle: {
-                  color: bg,
-                },
-              },
-            ],
+
             label: { show: false },
             emphasis: { disabled: true },
             animation: false,
@@ -173,18 +166,17 @@ export class VisualizationService {
           {
             type: 'pie',
             radius: ['50%', '100%'],
-            startAngle: 90,
+            startAngle: 180,
             silent: true,
             data: [
               {
                 value: point,
                 itemStyle: {
                   color: color,
-                  borderRadius: 24,
                 },
               },
               {
-                value: total - point,
+                value: total,
                 itemStyle: {
                   color: 'transparent',
                 },
@@ -195,6 +187,19 @@ export class VisualizationService {
             emphasis: { disabled: true },
           },
         ],
+        graphic: {
+          type: 'text',
+          left: 'center',
+          top: '40%',
+          style: {
+            text: `${Math.round((point / total) * 100)}%`,
+            fontSize: 64,
+            fontWeight: 'bold',
+            fill: colors.orange, // Text color
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+          },
+        },
       };
 
       const canvas = createCanvas(520, 520);
