@@ -83,7 +83,7 @@ export const home = (
   });
 
   doc.font(fontBold).fontSize(16).fillColor('#ffffff');
-  doc.moveDown(3);
+  doc.moveDown(5);
   if (lastname != '')
     doc
       .text(lastname, doc.x, doc.y + 100, {
