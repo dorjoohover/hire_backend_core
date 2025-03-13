@@ -107,7 +107,6 @@ export class QuestionCategoryDao {
       const userAnswer = await this.userAnswerDao.findByQuestion(
         questions[0].id,
       );
-      console.log(userAnswer);
       if (!userAnswer) responses.push(body);
     }
     return responses;

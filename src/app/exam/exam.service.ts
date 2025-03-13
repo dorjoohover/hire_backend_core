@@ -311,6 +311,7 @@ export class ExamService extends BaseService {
     const categories = await this.questionCategoryDao.findByAssessment(
       res.assessment.id,
     );
+    console.log(categories)
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
