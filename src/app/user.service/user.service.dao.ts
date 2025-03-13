@@ -28,6 +28,7 @@ export class UserServiceDao {
       where: {
         id,
       },
+      relations: ['assessment']
     });
     res.status = status;
     await this.db.save(res);
