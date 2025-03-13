@@ -115,6 +115,13 @@ export class VisualizationService {
               lineStyle: {
                 color: colors.orange,
               },
+              label: {
+                show: true,
+                position: 'top',
+                color: colors.black,
+                fontSize: 14,
+                formatter: '{c}',
+              },
               itemStyle: {
                 color: colors.orange,
               },

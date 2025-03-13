@@ -374,21 +374,37 @@ export class PdfService {
     doc.image(pie, marginX / 2 + doc.page.width / 8, y - 10, {
       width: (doc.page.width * 3) / 4 - marginX * 2,
     });
-    y += (doc.page.width * 3) / 4 - marginX * 2;
-    doc.moveDown(1);
-    doc.fontSize(16).font(fontBold).text('9 дүр', doc.x, y, {
-      continued: true,
-    });
-    doc.fontSize(16).font(fontBold).text('Оноо');
+    footer(doc);
+    doc.addPage();
+    header(doc, name, date, assessment.name);
+    const width = doc.page.width / 2;
+    let x = doc.x + width / 2;
+    y = doc.y;
+    const pointSize = (width / 20) * 7;
+    const indexSize = (width / 20) * 1;
+    const nameSize = (width / 20) * 12;
+    doc.rect(x, doc.y, width, 24).fill(colors.orange).fillColor('#ffffff');
+    doc
+      .fontSize(16)
+      .font(fontBold)
+      .text('9 дүр', x + pointSize, y);
+    doc.text('Оноо', width + x - (width / 20) * 5, y);
     results.map((res, i) => {
+      y = doc.y;
       doc
         .font(fontNormal)
         .fillColor(colors.black)
-        .text(`${i + 1}.`, { continued: true })
-        .text(`${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`, {
-          continued: true,
-        })
-        .text(`${res.point}`);
+        .text(`${i + 1}.`, x, y);
+      const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
+      const nameWidth = doc.widthOfString(name);
+      doc.text(name, x + indexSize + nameWidth / 2 + nameSize / 2, y);
+      const pointWidth = doc.widthOfString(res.point);
+      doc.rect(x + indexSize + nameSize, y, width, 24).fill(colors.orange);
+      doc.text(
+        `${res.point}`,
+        x + indexSize + nameSize + pointSize / 2 + pointWidth / 2,
+        y,
+      );
     });
 
     footer(doc);
