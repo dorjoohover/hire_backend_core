@@ -42,7 +42,11 @@ export class PdfService {
     name: string,
     date: Date,
   ) {
-    doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
+    doc
+      .font(fontBold)
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Үр дүн', marginX, doc.y);
     doc
       .moveTo(30, doc.y)
       .strokeColor(colors.orange)
@@ -514,7 +518,7 @@ export class PdfService {
         doc
           .fontSize(12)
           .font(fontNormal)
-          .text(exam.assessment.measure)
+          .text(exam.assessment.measure, x, doc.y)
           .moveDown(1);
         y = doc.y;
         doc.image(assetPath('icons/bag'), x, y, { width: iconSize });
@@ -523,7 +527,7 @@ export class PdfService {
           .fillColor(colors.black)
           .fontSize(14)
           .text('Хэрэглээ', x + iconSize + 2, y);
-        doc.fontSize(12).font(fontNormal).text(exam.assessment.usage);
+        doc.fontSize(12).font(fontNormal).text(exam.assessment.usage, x, doc.y);
         doc.moveDown(1);
       }
 
