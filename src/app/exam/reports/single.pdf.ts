@@ -126,7 +126,7 @@ export class SinglePdf {
         .font(fontNormal)
         .fillColor(colors.black)
         .fontSize(14)
-        .text('минутад гүйцэтгэсэн', doc.x, y - 2)
+        .text('минутад гүйцэтгэсэн', doc.x, y)
         .fontSize(14);
       // if (duration && duration != 0) {
       const possibleWidth = doc.widthOfString(
@@ -135,7 +135,7 @@ export class SinglePdf {
       doc
         .text(
           '(Боломжит ',
-          doc.page.width - marginX - possibleWidth + 4,
+          doc.page.width - marginX - possibleWidth - 4,
           doc.y,
           { continued: true },
         )
@@ -150,10 +150,9 @@ export class SinglePdf {
       doc
         .moveTo(doc.page.width - marginX - 75, doc.y)
         .strokeColor(colors.red)
-        .lineTo(75, doc.y)
+        .lineTo(doc.page.width - marginX, doc.y)
         .stroke()
         .moveDown();
-      const totalPointWidth = doc.widthOfString('Нийт оноо');
       doc.text('Нийт оноо', { align: 'right' });
 
       doc.font(fontBold).fontSize(32);
@@ -306,6 +305,18 @@ export class SinglePdf {
     doc.text(`${percent}%`, { continued: true }).fontSize(14);
     doc.y += 6;
     doc.fillColor(colors.black).font(fontNormal).text('-г давсан');
+    doc.moveDown(3);
+    doc
+      .font(fontBold)
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Дэлгэрэнгүй үр дүн', marginX, doc.y);
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
     const res = await this.answer.partialCalculator(result.code);
     res.map((v, i) => {
       this.section(doc, v.categoryName, v.totalPoint, v.point);

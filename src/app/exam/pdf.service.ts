@@ -58,6 +58,7 @@ export class PdfService {
     footer(doc);
     doc.addPage();
     header(doc, name, date, result.assessmentName);
+    
     await this.single.examQuartile(doc, result);
     footer(doc);
   }
