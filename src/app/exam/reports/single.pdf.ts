@@ -145,7 +145,8 @@ export class SinglePdf {
         .font(fontNormal)
         .fillColor(colors.black)
         .fontSize(14)
-        .text('минут)', doc.x, doc.y + 2);
+        .text('минут)', doc.x, doc.y + 2)
+        .moveDown(1);
       // }
       doc
         .moveTo(doc.page.width - marginX - 75, doc.y)
