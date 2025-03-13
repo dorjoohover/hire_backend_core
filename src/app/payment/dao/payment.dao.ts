@@ -54,7 +54,7 @@ export class PaymentDao {
             : Not(IsNull()),
         totalPrice: role != Role.client ? Not(IsNull()) : MoreThan(0),
       },
-      relations: ['user', 'charger'],
+      relations: ['user', 'charger', 'assessment'],
       take: limit,
       order: {
         createdAt: 'desc',
