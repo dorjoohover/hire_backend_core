@@ -25,6 +25,7 @@ import { ResultDao } from './dao/result.dao';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { PaymentDao } from '../payment/dao/payment.dao';
+import { Belbin } from 'src/assets/report/belbin';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PaymentDao } from '../payment/dao/payment.dao';
     TransactionDao,
     UserServiceDao,
     PaymentDao,
+    Belbin,
     PdfService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,

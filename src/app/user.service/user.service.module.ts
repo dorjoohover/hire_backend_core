@@ -28,6 +28,7 @@ import { UserService } from '../user/user.service';
 import { jwtConstants } from 'src/auth/constants';
 import { DISC } from 'src/assets/report/disc';
 import { ResultDao } from '../exam/dao/result.dao';
+import { Belbin } from 'src/assets/report/belbin';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ResultDao } from '../exam/dao/result.dao';
     UserServiceDao,
     DISC,
     ResultDao,
+    Belbin,
     TransactionDao,
     ExamService,
     UserDao,

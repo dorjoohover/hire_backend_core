@@ -26,6 +26,7 @@ import { ResultDao } from '../exam/dao/result.dao';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
+import { Belbin } from 'src/assets/report/belbin';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { UserServiceDao } from '../user.service/user.service.dao';
     AuthService,
     UserService,
     UserDao,
+    Belbin,
     QuestionService,
     QuestionCategoryDao,
     VisualizationService,
