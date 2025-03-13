@@ -18,7 +18,6 @@ export class UserAnswerDao {
       },
       relations: ['answerCategory', 'answer', 'matrix'],
     });
-    console.log(res);
     return await this.db.query(q);
   };
   create = async (dto: CreateUserAnswerDto) => {
