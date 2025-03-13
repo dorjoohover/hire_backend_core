@@ -140,7 +140,7 @@ export class QuestionService {
         );
       }
     else {
-      console.log(answers)
+      console.log(answers);
       point += Math.max(
         ...(answers.map((answer) =>
           answer.answer.correct ? 1 : answer.answer.point,
@@ -160,8 +160,9 @@ export class QuestionService {
       const point =
         dto.question.point == null
           ? await this.getPoint(dto.question, dto.answers)
-          : dto.question.point;
-      console.log(point)
+          : dto.question.point == 0
+            ? 1
+            : dto.question.point;
       let questionId = create
         ? await this.questionDao.create({
             ...dto.question,
