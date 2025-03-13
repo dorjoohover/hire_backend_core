@@ -63,7 +63,6 @@ export const home = (
   firstname: string,
   title: string,
 ) => {
-  const y = doc.y;
   let grad = doc.linearGradient(0, 0, doc.page.height, doc.page.height);
   grad.stop(0, colors.orange).stop(1, '#EF3638');
 
@@ -83,10 +82,11 @@ export const home = (
   });
 
   doc.font(fontBold).fontSize(16).fillColor('#ffffff');
-  doc.moveDown(5);
+  let y = doc.y + doc.page.height * 0.3;
+
   if (lastname != '')
     doc
-      .text(lastname, doc.x, doc.y + 100, {
+      .text(lastname, doc.x, y, {
         continued: true,
       })
       .font(fontNormal)
@@ -105,7 +105,7 @@ export const home = (
     .font(fontBold)
     .fontSize(44)
     .lineGap(0.1)
-    .text(firstLetterUpper(title), doc.x, doc.y, {
+    .text(firstLetterUpper(title), doc.x, y, {
       width: doc.page.width * 0.7,
     });
   doc.moveDown(2);
