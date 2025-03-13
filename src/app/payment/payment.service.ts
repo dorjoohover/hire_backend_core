@@ -71,14 +71,14 @@ export class PaymentService extends BaseService {
   ) {
     let transactions = [];
     let payments = [];
+    const userInfo = await this.userDao.getUserInfo(userId);
     if (Admins.includes(+user['role'])) {
       const res = await this.transactionDao.findAll(page, limit, userId);
-      const user = await this.userDao.getUserInfo(userId);
       for (const transaction of res) {
         const serviceId = transaction.service.id;
         const exams = await this.examDao.findByService(serviceId);
         for (const exam of exams) {
-          if (role == Role.client || user.role == Role.client) {
+          if (role == Role.client || userInfo.role == Role.client) {
             transactions.push({
               paymentDate: transaction.createdAt,
               assessment: exam.assessment,
@@ -87,7 +87,7 @@ export class PaymentService extends BaseService {
               price: transaction.service.price,
             });
           }
-          if (role == Role.organization || user.role == Role.organization) {
+          if (role == Role.organization || userInfo.role == Role.organization) {
             transactions.push({
               paymentDate: transaction.createdAt,
               assessment: exam.assessment,
@@ -101,7 +101,11 @@ export class PaymentService extends BaseService {
     }
 
     const res = await this.dao.findAll(
-      Admins.includes(+user['role']) ? role : +user['role'],
+      Admins.includes(+user['role'])
+        ? userId
+          ? userInfo.role
+          : role
+        : +user['role'],
       page,
       limit,
       Admins.includes(+user['role']) ? userId : user['id'],
