@@ -296,7 +296,7 @@ export class PdfService {
     name: string,
     assessment: AssessmentEntity,
   ) {
-    doc.addPage();
+    // doc.addPage();
 
     header(doc, name, date, result.assessmentName);
     doc
@@ -326,6 +326,7 @@ export class PdfService {
       .text(Belbin.advice)
       .moveDown(2);
     doc.addPage();
+    header(doc, name, date, result.assessmentName);
     doc
       .font(fontBold)
       .fontSize(16)
@@ -370,10 +371,10 @@ export class PdfService {
     }
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
-    doc.image(pie, marginX + doc.page.width / 8, y - 10, {
-      width: (doc.page.width * 3) / 4 - marginX * 4,
+    doc.image(pie, marginX / 2 + doc.page.width / 8, y - 10, {
+      width: (doc.page.width * 3) / 4 - marginX * 2,
     });
-    y += (doc.page.width * 3) / 4 - marginX * 4;
+    y += (doc.page.width * 3) / 4 - marginX * 2;
     doc.moveDown(1);
     doc.fontSize(16).font(fontBold).text('9 дүр', doc.x, y, {
       continued: true,
