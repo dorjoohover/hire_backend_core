@@ -11,6 +11,7 @@ import { QuestionAnswerCategoryController } from './question.answer.category.con
 import { QuestionAnswerCategoryService } from './question.answer.category.service';
 import { QuestionAnswerService } from './question.answer.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
+import { UserAnswerDao } from '../user.answer/user.answer.dao';
 
 @Module({
   controllers: [
@@ -23,6 +24,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
     QuestionAnswerCategoryService,
     QuestionAnswerService,
     QuestionDao,
+    UserAnswerDao,
     AssessmentDao,
     QuestionAnswerDao,
     QuestionCategoryDao,

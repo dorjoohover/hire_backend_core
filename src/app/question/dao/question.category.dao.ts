@@ -4,11 +4,15 @@ import { QuestionCategoryEntity } from '../entities/question.category.entity';
 import { CreateQuestionCategoryDto } from '../dto/create-question.category.dto';
 import { UpdateQuestionCategoryDto } from '../dto/create-question.dto';
 import { QuestionStatus } from 'src/base/constants';
+import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
 
 @Injectable()
 export class QuestionCategoryDao {
   private db: Repository<QuestionCategoryEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private readonly userAnswerDao: UserAnswerDao,
+  ) {
     this.db = this.dataSource.getRepository(QuestionCategoryEntity);
   }
 
@@ -84,7 +88,7 @@ export class QuestionCategoryDao {
               orderNumber: 'ASC',
             },
 
-            relations: ['assessment'],
+            relations: ['assessment', 'questions'],
           })
         : await this.db.find({
             where: {
@@ -95,9 +99,14 @@ export class QuestionCategoryDao {
             order: {
               orderNumber: 'ASC',
             },
-            relations: ['assessment'],
+            relations: ['assessment', 'questions'],
           });
-
+    const responses = [];
+    for (const r of res) {
+      const { questions, ...body } = r;
+      const userAnswer = await this.userAnswerDao.findOne(questions[0].id);
+      if (!userAnswer) responses.push(body);
+    }
     return res;
   };
 
