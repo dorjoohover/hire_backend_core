@@ -135,7 +135,7 @@ export const dateFormatter = (date: Date): string => {
 };
 
 export const firstLetterUpper = (text: string) => {
-  return text.substring(0, 1).toUpperCase() + text.substring(1);
+  return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
 };
 
 export const footer = (doc: PDFKit.PDFDocument) => {
