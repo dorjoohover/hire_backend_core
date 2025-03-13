@@ -73,8 +73,8 @@ export class Belbin {
       };
     if (value == 'shaper')
       res = {
-        name: 'sh',
-        key: 'SHAPER',
+        key: 'sh',
+        name: 'ХЭЛБЭРЖҮҮЛЭГЧ',
         character:
           'Хүсэл тэмүүлэлтэй, эрмэлзэлтэй, өрсөлдөөч, зоригтой, тэвчээргүй.',
         contribution:
@@ -88,8 +88,8 @@ export class Belbin {
       };
     if (value == 'implementer')
       res = {
-        name: 'imp',
-        key: 'IMPLEMENTER',
+        key: 'imp',
+        name: 'ХЭРЭГЖҮҮЛЭГЧ',
         character:
           'Аливаад зохион байгуулалттай ханддаг, шаргуу хөдөлмөрч, амьдралд ойрхон бодитой, мэргэжлийн талаас ханддаг, ямар ажил юу болохгүй байна гэдгийг маш сайн олж хардаг.',
         contribution:

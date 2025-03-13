@@ -325,6 +325,7 @@ export class PdfService {
       .fillColor(colors.black)
       .text(Belbin.advice)
       .moveDown(2);
+    doc.addPage();
     doc
       .font(fontBold)
       .fontSize(16)
@@ -369,10 +370,10 @@ export class PdfService {
     }
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
-    doc.image(pie, marginX * 2, y - 10, {
-      width: doc.page.width - marginX * 4,
+    doc.image(pie, marginX + doc.page.width / 8, y - 10, {
+      width: (doc.page.width * 3) / 4 - marginX * 4,
     });
-    y += doc.page.width - marginX * 4;
+    y += (doc.page.width * 3) / 4 - marginX * 4;
     doc.moveDown(1);
     doc.fontSize(16).font(fontBold).text('9 дүр', doc.x, y, {
       continued: true,
@@ -460,9 +461,9 @@ export class PdfService {
           .text(exam.assessment.description)
           .moveDown();
         doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
+        doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
       }
 
-      doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
       if (exam.assessment.report == ReportType.CORRECT)
         await this.singleTemplate(doc, result, name, date);
       if (exam.assessment.report == ReportType.DISC) {
