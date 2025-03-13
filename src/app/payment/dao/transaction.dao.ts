@@ -54,7 +54,7 @@ export class TransactionDao {
           date.endDate && date.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
-        price: !price ? Not('0') : Not(IsNull()),
+        price: !price ? LessThan(0) : Not(IsNull()),
       },
       take: limit,
       skip: (page - 1) * limit,
@@ -66,13 +66,18 @@ export class TransactionDao {
     return res;
   };
 
-  findAll = async (page: number, limit: number, user: number) => {
+  findAll = async (
+    page: number,
+    limit: number,
+    user: number,
+  ) => {
     return await this.db.find({
       where: {
         createdUser: user == 0 ? Not(0) : user,
       },
       take: limit,
       skip: (page - 1) * limit,
+
       order: {
         createdAt: 'DESC',
       },
