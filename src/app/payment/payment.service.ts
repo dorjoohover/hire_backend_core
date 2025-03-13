@@ -57,7 +57,7 @@ export class PaymentService extends BaseService {
       date,
       page,
       limit,
-      true,
+      false,
     );
     const transactions = [];
     for (const res of responses) {

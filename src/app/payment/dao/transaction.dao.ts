@@ -54,7 +54,7 @@ export class TransactionDao {
           date.endDate && date.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
-        price: !price ? MoreThan(0.5) : Not(IsNull()),
+        price: !price ? MoreThan(0) : Not(IsNull()),
       },
       take: limit,
       skip: (page - 1) * limit,
