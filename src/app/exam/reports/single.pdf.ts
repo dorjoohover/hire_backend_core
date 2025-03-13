@@ -245,11 +245,11 @@ export class SinglePdf {
     const stdDev = calculateStdDev(dataset, mean);
 
     // Compute percentiles
-    const p0 = dataset[Math.floor(0 * dataset.length)];
-    const p25 = dataset[Math.floor(0.25 * dataset.length)];
-    const p50 = dataset[Math.floor(0.5 * dataset.length)];
-    const p75 = dataset[Math.floor(0.75 * dataset.length)];
-    const p100 = dataset[dataset.length - 1];
+    // const p0 = dataset[Math.floor(0 * dataset.length)];
+    // const p25 = dataset[Math.floor(0.25 * dataset.length)];
+    // const p50 = dataset[Math.floor(0.5 * dataset.length)];
+    // const p75 = dataset[Math.floor(0.75 * dataset.length)];
+    // const p100 = dataset[dataset.length - 1];
     const dataPoints = [];
     for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
       dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
@@ -263,8 +263,8 @@ export class SinglePdf {
     console.log(dataPoints)
     const buffer = await this.vis.createChart(
       dataPoints,
-      dataPoints[0][0],
-      dataPoints[dataPoints.length - 1][0],
+      dataPoints[0]?.[0] ?? 0,
+      dataPoints[dataPoints.length - 1]?.[0] ?? dataset,
       normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
       result.point,
       percent,

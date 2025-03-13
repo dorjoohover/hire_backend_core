@@ -25,7 +25,7 @@ export class ResultDao {
     this.detail = this.dataSource.getRepository(ResultDetailEntity);
   }
 
-  create = async (dto: ResultDto, details : ResultDetailDto[] = []) => {
+  create = async (dto: ResultDto, details: ResultDetailDto[] = []) => {
     const res = this.db.create(dto);
     await this.db.save(res);
     for (const detail of details) {
@@ -60,7 +60,7 @@ export class ResultDao {
     const res = await this.db.find({
       where: {
         assessment: assessment,
-        result: Not(IsNull()),
+        point: Not(IsNull()),
       },
       select: {
         point: true,
