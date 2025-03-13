@@ -258,13 +258,13 @@ export class SinglePdf {
     const percent = Math.round(percentile(dataset, result.point));
 
     // dataset.sort((a, b) => a - b); // Sort data
-
+    const max = Math.max(...dataset);
     const width = doc.page.width - marginX - marginX;
-    console.log(dataPoints)
+    console.log(dataPoints);
     const buffer = await this.vis.createChart(
       dataPoints,
       dataPoints[0]?.[0] ?? 0,
-      dataPoints[dataPoints.length - 1]?.[0] ?? dataset,
+      dataPoints[dataPoints.length - 1]?.[0] ?? max,
       normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
       result.point,
       percent,
