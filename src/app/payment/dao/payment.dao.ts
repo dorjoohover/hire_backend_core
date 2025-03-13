@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { PaymentEntity } from '../entities/payment.entity';
 import { CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
 export class PaymentDao {
@@ -34,7 +35,6 @@ export class PaymentDao {
     limit: number,
     user: number,
     date?: DateDto,
-    cost = true,
   ) => {
     return await this.db.find({
       where: {
@@ -46,7 +46,7 @@ export class PaymentDao {
           date?.endDate && date?.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
-        totalPrice: !cost ? MoreThan(0) : Not(IsNull()),
+        totalPrice: role != Role.client ? Not(IsNull()) : MoreThan(0),
       },
       relations: ['user', 'charger'],
       take: limit,

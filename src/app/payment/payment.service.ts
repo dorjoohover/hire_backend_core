@@ -52,7 +52,7 @@ export class PaymentService extends BaseService {
 
   public async findAdmin(date: DateDto, page: number, limit: number) {
     const total = await this.dao.findAdmin(date);
-    const payments = await this.dao.findAll(0, page, limit, 0, date, false);
+    const payments = await this.dao.findAll(0, page, limit, 0, date);
 
     return {
       total,
@@ -100,7 +100,7 @@ export class PaymentService extends BaseService {
     }
 
     const res = await this.dao.findAll(
-      Admins.includes(user['role']) ? role : 0,
+      Admins.includes(user['role']) ? role : +user['role'],
       page,
       limit,
       Admins.includes(user['role']) ? userId : user['id'],
