@@ -129,7 +129,15 @@ export class UserAnswerDao {
       },
     });
   };
-
+  findByQuestion = async (id: number) => {
+    return await this.db.findOne({
+      where: {
+        question: {
+          id,
+        },
+      },
+    });
+  };
   findByExam = async (exam: number) => {
     return await this.db.find({
       where: {
