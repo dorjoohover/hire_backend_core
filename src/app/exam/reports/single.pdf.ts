@@ -106,26 +106,42 @@ export class SinglePdf {
       const innerRadius = (doc.page.width - marginX * 2) / 8;
       const centerX = doc.x + outerRadius;
       const centerY = doc.y + outerRadius;
+      const startAngle = 0;
+      const endAngle = 100;
+
+      const toRadians = (angle) => (angle * Math.PI) / 180;
+
+      const startOuterX =
+        centerX + outerRadius * Math.cos(toRadians(startAngle));
+      const startOuterY =
+        centerY + outerRadius * Math.sin(toRadians(startAngle));
+      const endOuterX = centerX + outerRadius * Math.cos(toRadians(endAngle));
+      const endOuterY = centerY + outerRadius * Math.sin(toRadians(endAngle));
+
+      // Calculate inner arc points
+      const startInnerX = centerX + innerRadius * Math.cos(toRadians(endAngle));
+      const startInnerY = centerY + innerRadius * Math.sin(toRadians(endAngle));
+      const endInnerX = centerX + innerRadius * Math.cos(toRadians(startAngle));
+      const endInnerY = centerY + innerRadius * Math.sin(toRadians(startAngle));
 
       doc
-        .moveTo(centerX - outerRadius, centerY)
+        .moveTo(startOuterX, startOuterY)
         .bezierCurveTo(
-          centerX - outerRadius,
-          centerY - outerRadius,
-          centerX + outerRadius,
-          centerY - outerRadius,
-          centerX + outerRadius,
-          centerY,
+          centerX + outerRadius * 1.3,
+          centerY, // Control point 1
+          centerX + outerRadius * 1.3,
+          centerY, // Control point 2
+          endOuterX,
+          endOuterY, // End point
         )
-        .lineTo(centerX + innerRadius, centerY)
-
+        .lineTo(startInnerX, startInnerY)
         .bezierCurveTo(
-          centerX + innerRadius,
-          centerY - innerRadius,
-          centerX - innerRadius,
-          centerY - innerRadius,
-          centerX - innerRadius,
-          centerY,
+          centerX + innerRadius * 1.3,
+          centerY, // Control point 1
+          centerX + innerRadius * 1.3,
+          centerY, // Control point 2
+          endInnerX,
+          endInnerY, // End point
         )
         .closePath()
         .fill(colors.orange);
