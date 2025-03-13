@@ -30,6 +30,7 @@ import { ResultDetailDto } from './dto/result.dto';
 import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
+import { Belbin } from 'src/assets/report/belbin';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -279,46 +280,40 @@ export class ExamService extends BaseService {
       console.log(res);
     }
     if (type == ReportType.BELBIN) {
-      let response = '',
-        agent = '';
-      // const mergedData = defaultData.map(
-      //   (item) =>
-      //     res.find((obj) => obj['aCate'].toLowerCase() === item.aCate) || item,
-      // );
-      let index = {
-        d: [],
-        i: [],
-        s: [],
-        c: [],
-      };
-      let intens = {
-        d: 0,
-        i: 0,
-        s: 0,
-        c: 0,
-      };
+      console.log(res);
+      let details: ResultDetailDto[] = [];
+      for (const r of res) {
+        const cate = r['aCate'];
+        const point = r['point'];
+        details.push({
+          value: point,
+          category: cate,
+        });
+      }
 
-      const maxValue = Math.max(...res.map((r) => +r['point']));
-      const values = res
-        .filter((r) => +r['point'] == maxValue)
-        .map((r) => r['aCate'])
-        .join('');
-      await this.resultDao.create({
-        assessment: exam.assessment.id,
-        assessmentName: exam.assessment.name,
-        code: exam.code,
-        duration: diff,
-        firstname: exam?.firstname ?? user.firstname,
-        lastname: exam?.lastname ?? user.lastname,
-        type: exam.assessment.report,
-        limit: exam.assessment.duration,
-        total: exam.assessment.totalPoint,
-        result: values,
-        value: agent,
-      });
+      const max = details.reduce(
+        (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
+        details[0],
+      );
+      await this.resultDao.create(
+        {
+          assessment: exam.assessment.id,
+          assessmentName: exam.assessment.name,
+          code: exam.code,
+          duration: diff,
+          firstname: exam?.firstname ?? user.firstname,
+          lastname: exam?.lastname ?? user.lastname,
+          type: exam.assessment.report,
+          limit: exam.assessment.duration,
+          total: exam.assessment.totalPoint,
+          result: max.value,
+          value: max.category,
+        },
+        details,
+      );
       return {
-        agent,
-        index,
+        agent: max.category,
+        details,
       };
     }
   }
