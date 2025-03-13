@@ -377,8 +377,8 @@ export class PdfService {
     footer(doc);
     doc.addPage();
     header(doc, name, date, assessment.name);
-    const width = doc.page.width / 2;
-    let x = doc.x + width / 2;
+    const width = (doc.page.width / 8) * 5;
+    let x = doc.x + width / 2 - marginX;
     y = doc.y;
     const pointSize = (width / 20) * 7;
     const indexSize = (width / 20) * 1;
@@ -400,9 +400,9 @@ export class PdfService {
       doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
       const pointWidth = doc.widthOfString(`${res.point}`);
       doc
-        .rect(x + indexSize + nameSize, y, pointSize, 16)
+        .rect(x + indexSize + nameSize, y - 4, pointSize, 16)
         .fill(colors.orange)
-        .fillColor(colors.black);
+        .fillColor('#ffffff');
       doc.text(
         `${res.point}`,
         x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
