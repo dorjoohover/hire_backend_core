@@ -327,7 +327,6 @@ export class ExamService extends BaseService {
     );
     let categories = (await Promise.all(categoryPromises)).filter(Boolean);
 
-    console.log('categories', currentCategory, res, categories);
     if (categories.length == 0) {
       categories = await Promise.all(
         categoriesByAssessment.map((a) => {
