@@ -85,13 +85,22 @@ export class UserServiceService extends BaseService {
   public async checkPayment(id: number, code: string, user: number) {
     const payment = await this.qpay.checkPayment(code);
     if (payment.paid_amount) {
-      await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
+      const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
       await this.paymentDao.create({
         method: PaymentType.QPAY,
         totalPrice: payment.paid_amount,
         user: user,
         message: 'Худалдан авалт хийсэн.',
       });
+      await this.transactionDao.create(
+        {
+          price: payment.paid_amount,
+          count: -1,
+          service: service.id,
+          user: user,
+        },
+        2,
+      );
       return true;
     }
     return false;

@@ -68,61 +68,50 @@ export class PaymentService extends BaseService {
     user: any,
     userId: number,
   ) {
-    const transactions = await this.transactionDao.findAll(
-      page,
-      limit,
-      Admins.includes(user['role']) ? userId : user['id'],
-    );
-    const res = [];
-    for (const transaction of transactions) {
-      const serviceId = transaction.service.id;
-      const exams = await this.examDao.findByService(serviceId);
-      for (const exam of exams) {
-        if (
-          user['role'] == Role.client ||
-          (role == Role.client && Admins.includes(user['role']))
-        ) {
-          res.push({
-            paymentDate: transaction.createdAt,
-            assessment: exam.assessment.name,
-            userEndDate: exam.userEndDate,
-            userStartDate: exam.userStartDate,
-            price: transaction.service.price,
-          });
-        }
-        if (
-          user['role'] == Role.organization ||
-          (role == Role.organization && Admins.includes(user['role']))
-        ) {
-          res.push({
-            paymentDate: transaction.createdAt,
-            assessment: exam.assessment.name,
-            price: transaction.service.price,
-            count: transaction.service.count,
-            usedUserCount: transaction.service.usedUserCount,
-          });
-          break;
+    let transactions = [];
+    let payments = [];
+    if (Admins.includes(user['role'])) {
+      const res = await this.transactionDao.findAll(page, limit, userId);
+      for (const transaction of res) {
+        const serviceId = transaction.service.id;
+        const exams = await this.examDao.findByService(serviceId);
+        for (const exam of exams) {
+          if (role == Role.client) {
+            transactions.push({
+              paymentDate: transaction.createdAt,
+              assessment: exam.assessment.name,
+              userEndDate: exam.userEndDate,
+              userStartDate: exam.userStartDate,
+              price: transaction.service.price,
+            });
+          }
+          if (role == Role.organization) {
+            transactions.push({
+              paymentDate: transaction.createdAt,
+              assessment: exam.assessment.name,
+              price: transaction.service.price,
+              count: transaction.service.count,
+              usedUserCount: transaction.service.usedUserCount,
+            });
+            break;
+          }
         }
       }
     }
 
-    if (
-      user['role'] == Role.organization ||
-      (role == Role.organization && Admins.includes(user['role']))
-    ) {
-      const payments = await this.dao.findAll(
-        role,
-        page,
-        limit,
-        Admins.includes(user['role']) ? userId : user['id'],
-      );
-      for (const payment of payments) {
-        res.push({
-          paymentDate: payment.createdAt,
-          price: payment.totalPrice,
-          admin: payment.charger,
-        });
-      }
+    const res = await this.dao.findAll(
+      Admins.includes(user['role']) ? role : 0,
+      page,
+      limit,
+      Admins.includes(user['role']) ? userId : user['id'],
+    );
+    for (const payment of res) {
+      payments.push({
+        message: payment.message,
+        paymentDate: payment.createdAt,
+        price: payment.totalPrice,
+        admin: user['role'] == Role.client ? null : payment.charger,
+      });
     }
     return res;
   }
