@@ -105,6 +105,7 @@ export class QuestionCategoryDao {
     for (const r of res) {
       const { questions, ...body } = r;
       const userAnswer = await this.userAnswerDao.findOne(questions[0].id);
+      console.log(userAnswer)
       if (!userAnswer) responses.push(body);
     }
     return res;
