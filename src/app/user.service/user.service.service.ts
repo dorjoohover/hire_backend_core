@@ -68,6 +68,7 @@ export class UserServiceService extends BaseService {
         {
           price: assessment.price,
           assesmentName: assessment.name,
+          assessment: assessment.id,
           count: dto.count,
           service: res.id,
           user: +user['id'],
@@ -91,9 +92,11 @@ export class UserServiceService extends BaseService {
         totalPrice: payment.paid_amount,
         user: user,
         message: 'Худалдан авалт хийсэн.',
+        assessment: service.assessment.id,
       });
       await this.transactionDao.create(
         {
+          assessment: service.assessment.id,
           price: payment.paid_amount,
           count: -1,
           service: service.id,

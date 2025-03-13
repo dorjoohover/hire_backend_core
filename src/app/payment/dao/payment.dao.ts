@@ -24,6 +24,12 @@ export class PaymentDao {
       ...dto,
       user: { id: dto.user },
       charger: dto.charger ? { id: dto.charger } : null,
+      assessment:
+        dto.assessment != 0
+          ? {
+              id: dto.assessment,
+            }
+          : null,
     });
     await this.db.save(res);
     return res.id;

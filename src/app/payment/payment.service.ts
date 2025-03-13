@@ -44,6 +44,7 @@ export class PaymentService extends BaseService {
       user: id,
       charger: user,
       message: message,
+      assessment: null,
     });
     if (payment) {
       await this.userDao.updateWallet(id, amount);
@@ -79,7 +80,7 @@ export class PaymentService extends BaseService {
           if (role == Role.client) {
             transactions.push({
               paymentDate: transaction.createdAt,
-              assessment: exam.assessment.name,
+              assessment: exam.assessment,
               userEndDate: exam.userEndDate,
               userStartDate: exam.userStartDate,
               price: transaction.service.price,
@@ -88,7 +89,7 @@ export class PaymentService extends BaseService {
           if (role == Role.organization) {
             transactions.push({
               paymentDate: transaction.createdAt,
-              assessment: exam.assessment.name,
+              assessment: exam.assessment,
               price: transaction.service.price,
               count: transaction.service.count,
               usedUserCount: transaction.service.usedUserCount,
@@ -108,12 +109,13 @@ export class PaymentService extends BaseService {
     for (const payment of res) {
       payments.push({
         message: payment.message,
+        assessment: payment.assessment,
         paymentDate: payment.createdAt,
         price: payment.totalPrice,
         admin: user['role'] == Role.client ? null : payment.charger,
       });
     }
-    return res;
+    return { transactions, payments };
   }
 
   findOne(id: number) {

@@ -71,12 +71,13 @@ export class ExamService extends BaseService {
       ),
     );
     await this.dao.create({ ...createExamDto, code: code }, user);
-    const service = await this.userServiceDao.findOne(createExamDto.service)
+    const service = await this.userServiceDao.findOne(createExamDto.service);
     await this.transactionDao.create(
       {
         price: service.price,
         count: -service.count,
         service: service.id,
+        assessment: service.assessment.id,
         user: service.user.id,
       },
       0,

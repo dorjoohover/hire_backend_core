@@ -12,5 +12,6 @@ export class CreateTransactionDto {
   @ApiProperty()
   service?: number;
   assesmentName?: string;
+  assessment?: number;
   user?: number;
 }

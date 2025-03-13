@@ -17,6 +17,7 @@ import { UserServiceEntity } from 'src/app/user.service/entities/user.service.en
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { QuestionAnswerCategoryEntity } from 'src/app/question/entities/question.answer.category.entity';
 import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
+import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -63,7 +64,7 @@ export class AssessmentEntity {
 
   @Column()
   type: number;
-  @Column({nullable: true})
+  @Column({ nullable: true })
   report: number;
   @Column({ nullable: true, default: false })
   partialScore: boolean;
@@ -94,6 +95,10 @@ export class AssessmentEntity {
     },
   )
   answerCategories: QuestionAnswerCategoryEntity[];
+  @OneToMany(() => PaymentEntity, (question) => question.assessment, {
+    nullable: true,
+  })
+  payments: PaymentEntity[];
   @OneToMany(() => ExamEntity, (question) => question.assessment, {
     nullable: true,
   })

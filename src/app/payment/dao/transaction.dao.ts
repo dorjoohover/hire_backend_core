@@ -37,6 +37,7 @@ export class TransactionDao {
     }
     if (cost >= 1) {
       await this.paymentDao.create({
+        assessment: dto.assessment,
         message: dto.assesmentName
           ? `${Math.abs(dto.count)} ${dto.assesmentName}`
           : `Худалдан авалт хийсэн. ${dto.count} ${dto.price}`,

@@ -12,6 +12,7 @@ export class CreatePaymentDto {
 
   user: number;
   charger?: number;
+  assessment: number;
 }
 
 export class ChargePaymentDto {
