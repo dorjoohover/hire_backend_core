@@ -354,6 +354,7 @@ export class PdfService {
       results.push({ ...result, point: +detail.cause });
     }
     let y = doc.y;
+    console.log(indicator, data)
     const pie = await this.vis.createRadar(indicator, data);
     const center = doc.page.width / 2;
     doc.image(pie, marginX, y - 10, { width: doc.page.width - marginX * 4 });
