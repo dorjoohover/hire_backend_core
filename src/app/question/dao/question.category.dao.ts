@@ -102,15 +102,17 @@ export class QuestionCategoryDao {
             relations: ['assessment', 'questions'],
           });
     let responses = [];
+    await Promise.all(
+      res.map(async (r) => {
+        const { questions, ...body } = r;
+        const userAnswer = await this.userAnswerDao.findByQuestion(
+          questions[0].id,
+        );
+        console.log('answer', userAnswer);
+        if (!userAnswer) responses.push(body);
+      }),
+    );
 
-    for (const r of res) {
-      const { questions, ...body } = r;
-      const userAnswer = await this.userAnswerDao.findByQuestion(
-        questions[0].id,
-      );
-      console.log('answer', userAnswer);
-      if (!userAnswer) responses.push(body);
-    }
     console.log('res', responses);
     if (responses.length == 0) responses = res;
     return responses;
