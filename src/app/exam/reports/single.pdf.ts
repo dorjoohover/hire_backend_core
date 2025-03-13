@@ -241,7 +241,6 @@ export class SinglePdf {
     }
     // data
     const dataset = await this.result.findQuartile(result.assessment);
-    console.log(dataset);
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
 

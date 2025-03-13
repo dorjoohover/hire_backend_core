@@ -138,7 +138,6 @@ export class UserAnswerService extends BaseService {
       //   res.map(async (r) => {
       //     if (r != undefined) await this.dao.deleteOne(r);
       //   });
-      //   console.log(res)
       //   // throw new HttpException(message, status);
       // }
       // return res;

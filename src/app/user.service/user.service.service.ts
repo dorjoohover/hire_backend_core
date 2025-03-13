@@ -142,7 +142,6 @@ export class UserServiceService extends BaseService {
       );
     const code = Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
-        console.log(dto.service);
         const res = await this.examService.create({
           endDate: dto.endDate,
           service: dto.service,
@@ -169,11 +168,10 @@ export class UserServiceService extends BaseService {
             phone: email.phone,
             visible: email.visible,
           });
-          await this.mailer
-            .sendMail({
-              to: email.email,
-              subject: 'Тест өгөх эрх үүсэх',
-              html: `<div>
+          await this.mailer.sendMail({
+            to: email.email,
+            subject: 'Тест өгөх эрх үүсэх',
+            html: `<div>
          <p> Та <a href=https://hire.mn/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
 <p>Таны анхааралд:</p>
 <ul>
@@ -184,10 +182,7 @@ export class UserServiceService extends BaseService {
           <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
           <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
           </div>`,
-            })
-            .then((d) => console.log(d))
-            .finally(() => console.log('sent'))
-            .catch((err) => console.log(err));
+          });
         }),
       );
     } catch (error) {

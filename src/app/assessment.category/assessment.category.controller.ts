@@ -57,7 +57,6 @@ export class AssessmentCategoryController {
     @Body() createAssessmentCategoryDto: CreateAssessmentCategoryDto,
     @Request() { user },
   ) {
-    console.log(user)
     return await this.assessmentCategoryService.create(
       createAssessmentCategoryDto,
       user['id'],
@@ -66,7 +65,6 @@ export class AssessmentCategoryController {
   @Public()
   @Get()
   findAll(@Request() req) {
-    // console.log(req);
     return this.assessmentCategoryService.findAll();
   }
   @Public()

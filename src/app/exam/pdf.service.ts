@@ -170,7 +170,6 @@ export class PdfService {
         doc.font(fontBold).text(`${v.value}: `, {
           continued: true,
         });
-        console.log(v.value);
         const text = DISC.description[i][v.value];
         doc.font(fontNormal).text(text?.value).moveDown();
       }
@@ -371,6 +370,7 @@ export class PdfService {
 
       return filePath;
     } catch (error) {
+      console.log(error);
       throw new Error('Failed to generate PDF');
     }
     // doc.image(buffer2, 50, 400, { width: 260 });

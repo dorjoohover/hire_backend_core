@@ -30,21 +30,6 @@ export class QpayService {
     try {
       const accessToken = await this.getAccessToken();
 
-      console.log({
-        invoice_code: 'AXIOM_INC_INVOICE',
-        sender_invoice_no: `${invoiceId}`,
-        sender_branch_code: 'hire',
-        invoice_receiver_code: `${userId}`,
-        amount,
-        invoice_description: 'Тест худалдан авлаа.',
-        invoice_due_date: null,
-        allow_partial: false,
-        minimum_amount: null,
-        allow_exceed: false,
-        maximum_amount: null,
-        note: null,
-        callback_url: 'http://srv666826.hstgr.cloud/api/v1/qpay/callback',
-      });
       const response = await this.httpService
         .post(
           `${this.baseUrl}/invoice`,

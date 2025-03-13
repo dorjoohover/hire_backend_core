@@ -140,7 +140,6 @@ export class QuestionService {
         );
       }
     else {
-      console.log(answers);
       point += Math.max(
         ...(answers.map((answer) =>
           answer.answer.correct ? 1 : answer.answer.point,
