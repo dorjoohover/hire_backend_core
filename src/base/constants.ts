@@ -51,6 +51,7 @@ export const ReportType = {
   CORRECT: 10,
   DISC: 20,
   MBTI: 30,
+  BELBIN: 40,
 };
 export const BlogType = {
   BLOG: 10,

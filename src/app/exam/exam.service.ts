@@ -135,7 +135,6 @@ export class ExamService extends BaseService {
     );
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
-        result: res[0].point,
         lastname: exam?.lastname ?? user?.lastname,
         firstname: exam?.firstname ?? user?.firstname,
         email: user?.email,
@@ -278,6 +277,30 @@ export class ExamService extends BaseService {
     }
     if (type == ReportType.MBTI) {
       console.log(res);
+    }
+    if (type == ReportType.BELBIN) {
+      let agent = '';
+
+      // await this.resultDao.create(
+      //   {
+      //     assessment: exam.assessment.id,
+      //     assessmentName: exam.assessment.name,
+      //     code: exam.code,
+      //     duration: diff,
+      //     firstname: exam?.firstname ?? user.firstname,
+      //     lastname: exam?.lastname ?? user.lastname,
+      //     type: exam.assessment.report,
+      //     limit: exam.assessment.duration,
+      //     total: exam.assessment.totalPoint,
+      //     result: values,
+      //     value: agent,
+      //   },
+      //   details,
+      // );
+      // return {
+      //   agent,
+      //   index,
+      // };
     }
   }
 
@@ -493,10 +516,12 @@ export class ExamService extends BaseService {
     res = await Promise.all(
       res.map(async (r) => {
         const user = await this.userDao.getByEmail(r.email);
+        const result = await this.resultDao.findOne(r.code);
         return {
           ...r,
           user,
           buyer: r.service.user,
+          result,
         };
       }),
     );
