@@ -24,22 +24,27 @@ export class TransactionDao {
     this.db = this.dataSource.getRepository(TransactionEntity);
   }
 
-  create = async (dto: CreateTransactionDto) => {
-    const res = this.db.create({
-      ...dto,
-      service: dto.service ? { id: dto.service } : null,
-      payment: dto.payment ? { id: dto.payment } : null,
-      createdUser: dto.user,
-    });
-    await this.db.save(res);
-    await this.paymentDao.create({
-      message: dto.assesmentName
-        ? `${Math.abs(dto.count)} ${dto.assesmentName}`
-        : 'Худалдан авалт хийсэн.',
-      totalPrice: -Math.abs(dto.price * (dto.count ?? 1)),
-      method: PaymentType.COST,
-      user: dto.user,
-    });
+  create = async (dto: CreateTransactionDto, cost: number) => {
+    // cost:0 zowhon zartsuulalt hj bga ued cost:1 mongo gargaad zartsuulalt hiih cost: 2 zowhon mongo gargah
+    if (cost <= 1) {
+      const res = this.db.create({
+        ...dto,
+        service: dto.service ? { id: dto.service } : null,
+        payment: dto.payment ? { id: dto.payment } : null,
+        createdUser: dto.user,
+      });
+      await this.db.save(res);
+    }
+    if (cost >= 1) {
+      await this.paymentDao.create({
+        message: dto.assesmentName
+          ? `${Math.abs(dto.count)} ${dto.assesmentName}`
+          : `Худалдан авалт хийсэн. ${dto.count} ${dto.price}`,
+        totalPrice: -Math.abs(dto.price * (dto.count ?? 1)),
+        method: PaymentType.COST,
+        user: dto.user,
+      });
+    }
   };
 
   findAdmin = async (
@@ -66,11 +71,7 @@ export class TransactionDao {
     return res;
   };
 
-  findAll = async (
-    page: number,
-    limit: number,
-    user: number,
-  ) => {
+  findAll = async (page: number, limit: number, user: number) => {
     return await this.db.find({
       where: {
         createdUser: user == 0 ? Not(0) : user,

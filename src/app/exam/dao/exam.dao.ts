@@ -71,7 +71,7 @@ export class ExamDao {
         },
         email,
       },
-        relations: ['service', 'assessment'],
+      relations: ['service', 'assessment'],
     });
   };
 

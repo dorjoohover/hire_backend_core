@@ -20,16 +20,16 @@ export class PaymentService extends BaseService {
   ) {
     super();
   }
-  public async create(createPaymentDto: CreatePaymentDto, user: number) {
-    const payment = await this.dao.create({ ...createPaymentDto, user: user });
-    await this.userDao.updateWallet(user, createPaymentDto.totalPrice);
-    await this.transactionDao.create({
-      price: createPaymentDto.totalPrice,
-      payment: payment,
-      user: user,
-    });
-    return payment;
-  }
+  // public async create(createPaymentDto: CreatePaymentDto, user: number) {
+  //   const payment = await this.dao.create({ ...createPaymentDto, user: user });
+  //   await this.userDao.updateWallet(user, createPaymentDto.totalPrice);
+  //   await this.transactionDao.create({
+  //     price: createPaymentDto.totalPrice,
+  //     payment: payment,
+  //     user: user,
+  //   });
+  //   return payment;
+  // }
 
   public async charge(
     id: number,

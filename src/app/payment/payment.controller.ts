@@ -24,10 +24,10 @@ import { Role } from 'src/auth/guards/role/role.enum';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @Post()
-  create(@Body() createPaymentDto: CreatePaymentDto, @Request() { user }) {
-    return this.paymentService.create(createPaymentDto, user['id']);
-  }
+  // @Post()
+  // create(@Body() createPaymentDto: CreatePaymentDto, @Request() { user }) {
+  //   return this.paymentService.create(createPaymentDto, user['id']);
+  // }
 
   // @Roles(Role.super_admin, Role.tester, Role.admin)
   @Get('/view/:role/:id/:page/:limit')

@@ -28,6 +28,8 @@ import { UserDao } from '../user/user.dao';
 import { ResultDao } from './dao/result.dao';
 import { ResultDetailDto } from './dto/result.dto';
 import { AssessmentEntity } from '../assessment/entities/assessment.entity';
+import { TransactionDao } from '../payment/dao/transaction.dao';
+import { UserServiceDao } from '../user.service/user.service.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -41,6 +43,8 @@ export class ExamService extends BaseService {
     private userAnswer: UserAnswerDao,
     private userDao: UserDao,
     private resultDao: ResultDao,
+    private transactionDao: TransactionDao,
+    private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
@@ -67,6 +71,16 @@ export class ExamService extends BaseService {
       ),
     );
     await this.dao.create({ ...createExamDto, code: code }, user);
+    const service = await this.userServiceDao.findOne(createExamDto.service)
+    await this.transactionDao.create(
+      {
+        price: service.price,
+        count: -service.count,
+        service: service.id,
+        user: service.user.id,
+      },
+      0,
+    );
     return code;
   }
 

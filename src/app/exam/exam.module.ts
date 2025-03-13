@@ -22,6 +22,9 @@ import { UserDao } from '../user/user.dao';
 import { jwtConstants } from 'src/auth/constants';
 import { DISC } from 'src/assets/report/disc';
 import { ResultDao } from './dao/result.dao';
+import { TransactionDao } from '../payment/dao/transaction.dao';
+import { UserServiceDao } from '../user.service/user.service.dao';
+import { PaymentDao } from '../payment/dao/payment.dao';
 
 @Module({
   imports: [
@@ -42,6 +45,9 @@ import { ResultDao } from './dao/result.dao';
     VisualizationService,
     DISC,
     ResultDao,
+    TransactionDao,
+    UserServiceDao,
+    PaymentDao,
     PdfService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
