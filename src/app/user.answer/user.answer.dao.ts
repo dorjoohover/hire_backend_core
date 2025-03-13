@@ -128,12 +128,13 @@ export class UserAnswerDao {
       },
     });
   };
-  findByQuestion = async (id: number) => {
+  findByQuestion = async (id: number, code: number) => {
     return await this.db.findOne({
       where: {
         question: {
           id,
         },
+        code,
       },
     });
   };
