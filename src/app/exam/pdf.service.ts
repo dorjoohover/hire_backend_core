@@ -502,9 +502,8 @@ export class PdfService {
         doc
           .fillColor(colors.black)
           .fontSize(12)
-          .text(exam.assessment.description)
+          .text(exam.assessment.description, x, doc.y)
           .moveDown();
-        x = doc.x;
         y = doc.y;
         doc.image(assetPath('icons/eye'), x, y, { width: iconSize });
         doc
@@ -512,8 +511,11 @@ export class PdfService {
           .fillColor(colors.black)
           .fontSize(14)
           .text('Хэмжих зүйлс', x + iconSize + 2, y);
-        doc.fontSize(12).text(exam.assessment.measure).moveDown(1);
-        x = doc.x;
+        doc
+          .fontSize(12)
+          .font(fontNormal)
+          .text(exam.assessment.measure)
+          .moveDown(1);
         y = doc.y;
         doc.image(assetPath('icons/bag'), x, y, { width: iconSize });
         doc
@@ -521,7 +523,8 @@ export class PdfService {
           .fillColor(colors.black)
           .fontSize(14)
           .text('Хэрэглээ', x + iconSize + 2, y);
-        doc.fontSize(12).text(exam.assessment.usage).moveDown(1);
+        doc.fontSize(12).font(fontNormal).text(exam.assessment.usage);
+        doc.moveDown(1);
       }
 
       if (exam.assessment.report == ReportType.CORRECT)

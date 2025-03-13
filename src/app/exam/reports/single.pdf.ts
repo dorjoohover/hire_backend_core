@@ -101,11 +101,11 @@ export class SinglePdf {
 
       let y = doc.y;
 
-      const centerX = 200;
-      const centerY = 300;
-      const outerRadius = 50;
+      const centerX = doc.x;
+      const centerY = doc.y;
+      const outerRadius = (doc.page.width - marginX * 2) / 4;
       // const outerRadius = (doc.page.width - marginX * 2) / 4;
-      const innerRadius = 25;
+      const innerRadius = (doc.page.width - marginX * 2) / 8;
 
       doc
         .moveTo(centerX - outerRadius, centerY)
