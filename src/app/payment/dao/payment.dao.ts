@@ -52,7 +52,7 @@ export class PaymentDao {
           date?.endDate && date?.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
-        totalPrice: role != Role.organization ? Not(IsNull()) : MoreThan(0),
+        totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
       },
       relations: ['user', 'charger', 'assessment'],
       take: limit,
