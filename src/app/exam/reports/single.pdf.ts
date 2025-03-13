@@ -260,6 +260,7 @@ export class SinglePdf {
     // dataset.sort((a, b) => a - b); // Sort data
 
     const width = doc.page.width - marginX - marginX;
+    console.log(dataPoints)
     const buffer = await this.vis.createChart(
       dataPoints,
       dataPoints[0][0],
