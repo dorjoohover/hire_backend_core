@@ -42,7 +42,6 @@ export class PaymentDao {
     user: number,
     date?: DateDto,
   ) => {
-    console.log(role, user)
     return await this.db.find({
       where: {
         user: {
