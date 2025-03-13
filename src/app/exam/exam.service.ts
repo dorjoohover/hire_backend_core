@@ -350,7 +350,7 @@ export class ExamService extends BaseService {
                 if (i > 0) return cate.id;
               })
               .filter((f) => f != undefined);
-      currentCategory = categories[0].id;
+      currentCategory = categories?.[0]?.id;
     }
     if (answers.length > 0) {
       const answeredCategory = answers[answers.length - 1].questionCategory.id;

@@ -103,6 +103,7 @@ export class QuestionCategoryDao {
           });
     const responses = [];
     for (const r of res) {
+      console.log(r)
       const { questions, ...body } = r;
       const userAnswer = await this.userAnswerDao.findByQuestion(
         questions[0].id,
