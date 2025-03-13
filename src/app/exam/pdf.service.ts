@@ -397,13 +397,17 @@ export class PdfService {
         .text(`${i + 1}.`, x, y);
       const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
       const nameWidth = doc.widthOfString(name);
-      doc.text(name, x + indexSize + nameSize / 2, y);
+      doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
       const pointWidth = doc.widthOfString(`${res.point}`);
       doc
         .rect(x + indexSize + nameSize, y, pointSize, 16)
         .fill(colors.orange)
         .fillColor(colors.black);
-      doc.text(`${res.point}`, x + indexSize + nameSize + pointWidth / 2, y);
+      doc.text(
+        `${res.point}`,
+        x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
+        y,
+      );
     });
 
     footer(doc);
