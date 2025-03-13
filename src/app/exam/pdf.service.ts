@@ -24,6 +24,7 @@ import { DISC } from 'src/assets/report/disc';
 import { ResultDao } from './dao/result.dao';
 import { ResultEntity } from './entities/result.entity';
 import { ResultDetailEntity } from './entities/result.detail.entity';
+import { Belbin } from 'src/assets/report/belbin';
 
 @Injectable()
 export class PdfService {
@@ -31,6 +32,7 @@ export class PdfService {
     private vis: VisualizationService,
     private single: SinglePdf,
     private disc: DISC,
+    private belbin: Belbin,
     private resultDao: ResultDao,
   ) {}
 
@@ -287,6 +289,93 @@ export class PdfService {
     footer(doc);
   }
 
+  async belbinTemplate(
+    doc: PDFKit.PDFDocument,
+    result: ResultEntity,
+    date: Date,
+    name: string,
+    assessment: AssessmentEntity,
+  ) {
+    doc.addPage();
+
+    header(doc, name, date, result.assessmentName);
+    doc.font(fontBold).fontSize(14).text('Юуг хэмжих вэ?');
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(assessment.usage)
+      .moveDown(2);
+    doc.font(fontBold).fontSize(14).text('Тайлангийн тухайд');
+    doc.text(Belbin.about).moveDown(2);
+    doc.font(fontBold).fontSize(14).text('Зөвлөмж, тодруулга');
+    doc.text(Belbin.advice).moveDown(2);
+    doc
+      .font(fontBold)
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Белбиний багийн 9 дүр');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+
+    // 9 characters
+
+    footer(doc);
+    doc.addPage();
+    doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+
+    const details: ResultDetailEntity[] = result.details;
+
+    const indicator = [];
+    const data = [];
+    const results = [];
+    const max = details.reduce(
+      (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
+      details[0],
+    );
+    for (const detail of details) {
+      const result = this.belbin.result(detail.value);
+      indicator.push({
+        name: result.name,
+        max: +max.cause,
+      });
+      data.push(+detail.cause);
+      results.push({ ...result, point: +detail.cause });
+    }
+    let y = doc.y;
+    const pie = await this.vis.createRadar(indicator, data);
+    const center = doc.page.width / 2;
+    doc.image(pie, marginX, y - 10, { width: doc.page.width - marginX * 4 });
+    doc.moveDown(1);
+    doc.fontSize(16).fillColor('#ffffff').font(fontBold).text('9 дүр', {
+      continued: true,
+    });
+    doc.fontSize(16).fillColor('#ffffff').font(fontBold).text('Оноо');
+    results.map((res, i) => {
+      doc
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .text(`${i + 1}.`, { continued: true })
+        .text(`${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`, {
+          continued: true,
+        })
+        .text(`${res.point}`);
+    });
+
+    footer(doc);
+  }
+
   async generateImage(html: string) {
     const image = await nodeHtmlToImage({
       html: html.toString(),
@@ -360,6 +449,10 @@ export class PdfService {
         await this.singleTemplate(doc, result, name, date);
       if (exam.assessment.report == ReportType.DISC) {
         await this.discTemplate(doc, result, date, name);
+      }
+
+      if (exam.assessment.report == ReportType.BELBIN) {
+        await this.belbinTemplate(doc, result, date, name, exam.assessment);
       }
       doc.end();
 

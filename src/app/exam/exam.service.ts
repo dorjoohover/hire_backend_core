@@ -100,12 +100,12 @@ export class ExamService extends BaseService {
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
         );
-      // if (result)
-      //   return {
-      //     // calculate: result.,
-      //     visible: exam.visible,
-      //     value: result,
-      //   };
+      if (result)
+        return {
+          // calculate: result.,
+          visible: exam.visible,
+          value: result,
+        };
 
       const formule = exam.assessment.formule;
       if (formule) {
@@ -134,7 +134,6 @@ export class ExamService extends BaseService {
         Date.parse(exam.userStartDate?.toString())) /
         60000,
     );
-    console.log(type);
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         lastname: exam?.lastname ?? user?.lastname,
@@ -281,15 +280,25 @@ export class ExamService extends BaseService {
       console.log(res);
     }
     if (type == ReportType.BELBIN) {
-      console.log(res);
       let details: ResultDetailDto[] = [];
       for (const r of res) {
         const cate = r['aCate'];
         const point = r['point'];
         details.push({
-          value: point,
-          category: cate,
+          cause: point,
+          value: cate,
         });
+      }
+      for (const v of Belbin.values) {
+        const include =
+          details.filter(
+            (detail) => detail.value.toLowerCase() == v.toLowerCase(),
+          ).length != 0;
+        if (!include)
+          details.push({
+            cause: '0',
+            value: v,
+          });
       }
 
       const max = details.reduce(

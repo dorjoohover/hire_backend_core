@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { createCanvas } from 'canvas';
 import * as echarts from 'echarts';
+import { Belbin } from 'src/assets/report/belbin';
+import { colors } from './reports/formatter';
 
 @Injectable()
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
+
   async createChart(
     data: number[],
     min: number,
@@ -88,6 +91,42 @@ export class VisualizationService {
 
     return canvas.toBuffer('image/png');
   }
+  async createRadar(
+    indicator: { name: string; max: number }[],
+    data: number[],
+  ): Promise<Buffer> {
+    const echartOption = {
+      radar: {
+        indicator: indicator,
+      },
+      series: [
+        {
+          type: 'radar',
+          data: [
+            {
+              value: data,
+              lineStyle: {
+                color: colors.orange,
+              },
+              itemStyle: {
+                color: colors.orange,
+              },
+              areaStyle: {
+                color: 'rgba(255, 0, 0, 0.3)',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const canvas = createCanvas(900, 900);
+    const chart = echarts.init(canvas as any);
+
+    chart.setOption(echartOption);
+
+    return canvas.toBuffer('image/png');
+  }
 
   async doughnut(
     bg: string,
@@ -96,7 +135,6 @@ export class VisualizationService {
     point: number,
   ): Promise<Buffer> {
     try {
-
       const option = {
         series: [
           // Gray background (full circle)
@@ -155,4 +193,6 @@ export class VisualizationService {
       console.log(error);
     }
   }
+
+  async;
 }
