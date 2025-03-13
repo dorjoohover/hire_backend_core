@@ -101,15 +101,18 @@ export class QuestionCategoryDao {
             },
             relations: ['assessment', 'questions'],
           });
-    const responses = [];
+    let responses = [];
+
     for (const r of res) {
-      console.log(r)
       const { questions, ...body } = r;
       const userAnswer = await this.userAnswerDao.findByQuestion(
         questions[0].id,
       );
+      console.log('answer', userAnswer);
       if (!userAnswer) responses.push(body);
     }
+    console.log('res', responses);
+    if (responses.length == 0) responses = res;
     return responses;
   };
 
