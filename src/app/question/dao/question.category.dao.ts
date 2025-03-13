@@ -110,7 +110,7 @@ export class QuestionCategoryDao {
       console.log(userAnswer);
       if (!userAnswer) responses.push(body);
     }
-    return res;
+    return responses;
   };
 
   findByName = async (name: string) => {
