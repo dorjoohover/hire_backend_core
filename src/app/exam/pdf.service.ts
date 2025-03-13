@@ -336,7 +336,7 @@ export class PdfService {
       .moveDown();
 
     const details: ResultDetailEntity[] = result.details;
-
+    console.log(details)
     const indicator = [];
     const data = [];
     const results = [];
