@@ -398,7 +398,7 @@ export class PdfService {
       const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
       const nameWidth = doc.widthOfString(name);
       doc.text(name, x + indexSize + nameWidth / 2 + nameSize / 2, y);
-      const pointWidth = doc.widthOfString(res.point);
+      const pointWidth = doc.widthOfString(`${res.point}`);
       doc.rect(x + indexSize + nameSize, y, width, 24).fill(colors.orange);
       doc.text(
         `${res.point}`,
