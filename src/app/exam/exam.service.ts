@@ -134,6 +134,7 @@ export class ExamService extends BaseService {
         Date.parse(exam.userStartDate?.toString())) /
         60000,
     );
+    console.log(type);
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         lastname: exam?.lastname ?? user?.lastname,
