@@ -71,8 +71,9 @@ export class PaymentService extends BaseService {
   ) {
     let transactions = [];
     let payments = [];
-    if (Admins.includes(user['role'])) {
+    if (Admins.includes(+user['role'])) {
       const res = await this.transactionDao.findAll(page, limit, userId);
+      console.log('transactions', res);
       for (const transaction of res) {
         const serviceId = transaction.service.id;
         const exams = await this.examDao.findByService(serviceId);
@@ -85,6 +86,7 @@ export class PaymentService extends BaseService {
               userStartDate: exam.userStartDate,
               price: transaction.service.price,
             });
+            break;
           }
           if (role == Role.organization) {
             transactions.push({
@@ -101,11 +103,12 @@ export class PaymentService extends BaseService {
     }
 
     const res = await this.dao.findAll(
-      Admins.includes(user['role']) ? role : +user['role'],
+      Admins.includes(+user['role']) ? role : +user['role'],
       page,
       limit,
-      Admins.includes(user['role']) ? userId : user['id'],
+      Admins.includes(+user['role']) ? userId : user['id'],
     );
+    console.log(res);
     for (const payment of res) {
       payments.push({
         message: payment.message,

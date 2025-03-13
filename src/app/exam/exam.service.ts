@@ -279,28 +279,47 @@ export class ExamService extends BaseService {
       console.log(res);
     }
     if (type == ReportType.BELBIN) {
-      let agent = '';
-
-      // await this.resultDao.create(
-      //   {
-      //     assessment: exam.assessment.id,
-      //     assessmentName: exam.assessment.name,
-      //     code: exam.code,
-      //     duration: diff,
-      //     firstname: exam?.firstname ?? user.firstname,
-      //     lastname: exam?.lastname ?? user.lastname,
-      //     type: exam.assessment.report,
-      //     limit: exam.assessment.duration,
-      //     total: exam.assessment.totalPoint,
-      //     result: values,
-      //     value: agent,
-      //   },
-      //   details,
+      let response = '',
+        agent = '';
+      // const mergedData = defaultData.map(
+      //   (item) =>
+      //     res.find((obj) => obj['aCate'].toLowerCase() === item.aCate) || item,
       // );
-      // return {
-      //   agent,
-      //   index,
-      // };
+      let index = {
+        d: [],
+        i: [],
+        s: [],
+        c: [],
+      };
+      let intens = {
+        d: 0,
+        i: 0,
+        s: 0,
+        c: 0,
+      };
+
+      const maxValue = Math.max(...res.map((r) => +r['point']));
+      const values = res
+        .filter((r) => +r['point'] == maxValue)
+        .map((r) => r['aCate'])
+        .join('');
+      await this.resultDao.create({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: diff,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: exam.assessment.report,
+        limit: exam.assessment.duration,
+        total: exam.assessment.totalPoint,
+        result: values,
+        value: agent,
+      });
+      return {
+        agent,
+        index,
+      };
     }
   }
 
