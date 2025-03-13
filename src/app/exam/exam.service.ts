@@ -314,7 +314,7 @@ export class ExamService extends BaseService {
     const categoryPromises = await Promise.all(
       categoriesByAssessment.map(async (ass) => {
         const { questions, ...body } = ass;
-
+        console.log(body)
         if (!questions || questions.length === 0) {
           console.log('Skipping: No questions found in category', ass);
           return null;
