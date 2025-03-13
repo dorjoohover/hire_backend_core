@@ -50,6 +50,9 @@ export class PaymentDao {
       },
       relations: ['user', 'charger'],
       take: limit,
+      order: {
+        createdAt: 'desc',
+      },
       skip: (page - 1) * limit,
     });
   };
