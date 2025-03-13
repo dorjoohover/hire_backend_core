@@ -474,14 +474,54 @@ export class PdfService {
       const date = new Date(exam.userStartDate);
       if (exam.assessment.report != ReportType.BELBIN) {
         header(doc, name, date, result.assessmentName);
+        let y = doc.y,
+          x = doc.x;
+        let iconSize = 16;
+        // doc
+        //   .roundedRect(
+        //     x - padding,
+        //     y - padding,
+        //     textWidth + padding * 2,
+        //     textHeight + padding * 2,
+        //     cornerRadius,
+        //   )
+        //   .fill('#ff0000');
+
+        // doc
+        //   .fillColor('#ffffff') // Text color (white)
+        //   .text(text, x, y);
+        // doc.image(assetPath('icons/category'), x, y, { width: iconSize });
+        doc.image(assetPath('icons/book'), x, y, { width: iconSize - 4 });
         doc
           .font(fontNormal)
+          .fillColor(colors.orange)
+          .fontSize(12)
+          .text(exam.assessment.author, x + iconSize, y)
+          .moveDown(1);
+
+        doc
           .fillColor(colors.black)
           .fontSize(12)
           .text(exam.assessment.description)
           .moveDown();
-        doc.font(fontBold).text('Хэмжих зүйлс').moveDown(1);
-        doc.font(fontNormal).text(exam.assessment.measure).moveDown(1);
+        x = doc.x;
+        y = doc.y;
+        doc.image(assetPath('icons/eye'), x, y, { width: iconSize });
+        doc
+          .font(fontBold)
+          .fillColor(colors.black)
+          .fontSize(14)
+          .text('Хэмжих зүйлс', x + iconSize + 2, y);
+        doc.fontSize(12).text(exam.assessment.measure).moveDown(1);
+        x = doc.x;
+        y = doc.y;
+        doc.image(assetPath('icons/bag'), x, y, { width: iconSize });
+        doc
+          .font(fontBold)
+          .fillColor(colors.black)
+          .fontSize(14)
+          .text('Хэрэглээ', x + iconSize + 2, y);
+        doc.fontSize(12).text(exam.assessment.usage).moveDown(1);
       }
 
       if (exam.assessment.report == ReportType.CORRECT)

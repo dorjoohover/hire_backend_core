@@ -15,6 +15,7 @@ import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
 import { ExamDao } from '../dao/exam.dao';
 import { ResultEntity } from '../entities/result.entity';
 import { ResultDao } from '../dao/result.dao';
+import { color } from 'echarts';
 
 @Injectable()
 export class SinglePdf {
@@ -100,6 +101,34 @@ export class SinglePdf {
 
       let y = doc.y;
 
+      const centerX = 200;
+      const centerY = 300;
+      const outerRadius = 50;
+      // const outerRadius = (doc.page.width - marginX * 2) / 4;
+      const innerRadius = 25;
+
+      doc
+        .moveTo(centerX - outerRadius, centerY)
+        .bezierCurveTo(
+          centerX - outerRadius,
+          centerY - outerRadius,
+          centerX + outerRadius,
+          centerY - outerRadius,
+          centerX + outerRadius,
+          centerY,
+        )
+        .lineTo(centerX + innerRadius, centerY)
+
+        .bezierCurveTo(
+          centerX + innerRadius,
+          centerY - innerRadius,
+          centerX - innerRadius,
+          centerY - innerRadius,
+          centerX - innerRadius,
+          centerY,
+        )
+        .closePath()
+        .fill(colors.orange);
       doc
         .font(fontNormal)
         .fillColor(colors.black)
@@ -129,6 +158,7 @@ export class SinglePdf {
           .text('минут)', doc.x, doc.y + 2, { continued: false })
           .image(assetPath('icons/time'), doc.x + 150, y + 15, { width: 18 });
       }
+
       // pie chart
       const pie = await this.vis.doughnut(
         colors.grey,
