@@ -46,7 +46,7 @@ export class PaymentDao {
           date?.endDate && date?.startDate
             ? Between(date.startDate, date.endDate)
             : Not(IsNull()),
-        totalPrice: !cost ? LessThan(0) : Not(IsNull()),
+        totalPrice: !cost ? MoreThan(0) : Not(IsNull()),
       },
       relations: ['user', 'charger'],
       take: limit,
