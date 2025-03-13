@@ -82,7 +82,7 @@ export const home = (
   });
 
   doc.font(fontBold).fontSize(16).fillColor('#ffffff');
-  let y = doc.y + doc.page.height * 0.3;
+  let y = doc.y + 300;
 
   if (lastname != '')
     doc
@@ -95,7 +95,7 @@ export const home = (
       });
   doc
     .font(fontBold)
-    .text(firstname, {
+    .text(firstname, doc.x, y, {
       continued: true,
     })
     .font(fontNormal)
@@ -105,7 +105,7 @@ export const home = (
     .font(fontBold)
     .fontSize(44)
     .lineGap(0.1)
-    .text(firstLetterUpper(title), doc.x, y, {
+    .text(firstLetterUpper(title), {
       width: doc.page.width * 0.7,
     });
   doc.moveDown(2);
