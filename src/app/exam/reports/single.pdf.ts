@@ -31,7 +31,7 @@ export class SinglePdf {
     max: number,
     value: number,
   ) {
-    const x = doc.x;
+    const x = marginX;
     const y = doc.y;
     const center = doc.page.width / 2;
     doc
@@ -114,7 +114,7 @@ export class SinglePdf {
         `Тестийг ${result.duration == 0 ? 1 : result.duration} минутад гүйцэтгэсэн`,
       );
       doc
-        .text('Тестийг ', doc.page.width - marginX - durationWidth + 4, y, {
+        .text('Тестийг ', doc.page.width - marginX - durationWidth - 4, y, {
           continued: true,
         })
         .font(fontBold)
@@ -126,25 +126,27 @@ export class SinglePdf {
         .font(fontNormal)
         .fillColor(colors.black)
         .fontSize(14)
-        .text('минутад гүйцэтгэсэн', doc.x, y + 2)
+        .text('минутад гүйцэтгэсэн', doc.x, y - 2)
         .fontSize(14);
-      if (duration && duration != 0) {
-        const possibleWidth = doc.widthOfString(`(Боломжит ${duration} минут)`);
-        doc
-          .text(
-            '(Боломжит ',
-            doc.page.width - marginX - possibleWidth + 4,
-            doc.y,
-            { continued: true },
-          )
-          .font(fontBold)
-          .fontSize(18)
-          .text(`${duration} `, doc.x, doc.y - 2, { continued: true })
-          .font(fontNormal)
-          .fillColor(colors.black)
-          .fontSize(14)
-          .text('минут)', doc.x, doc.y + 2);
-      }
+      // if (duration && duration != 0) {
+      const possibleWidth = doc.widthOfString(
+        `(Боломжит ${duration ?? 0} минут)`,
+      );
+      doc
+        .text(
+          '(Боломжит ',
+          doc.page.width - marginX - possibleWidth + 4,
+          doc.y,
+          { continued: true },
+        )
+        .font(fontBold)
+        .fontSize(18)
+        .text(`${duration ?? 0} `, doc.x, doc.y - 2, { continued: true })
+        .font(fontNormal)
+        .fillColor(colors.black)
+        .fontSize(14)
+        .text('минут)', doc.x, doc.y + 2);
+      // }
       doc
         .moveTo(doc.page.width - marginX - 75, doc.y)
         .strokeColor(colors.red)
@@ -179,50 +181,47 @@ export class SinglePdf {
         });
       doc.moveDown(1);
       // if (assessment.partialScore) {
-      const res = await this.answer.partialCalculator(result.code);
-      res.map((v, i) => {
-        this.section(doc, v.categoryName, v.totalPoint, v.point);
-      });
+
       // }
 
       y = doc.y;
-      doc
-        .font(fontBold)
-        .fontSize(16)
-        .fillColor(colors.orange)
-        .text('Давуу талууд', marginX, y);
-      doc.text('Анхаарах нь', doc.x, y, {
-        align: 'right',
-      });
-      y = doc.y;
+      // doc
+      //   .font(fontBold)
+      //   .fontSize(16)
+      //   .fillColor(colors.orange)
+      //   .text('Давуу талууд', marginX, y);
+      // doc.text('Анхаарах нь', doc.x, y, {
+      //   align: 'right',
+      // });
+      // y = doc.y;
 
-      doc
-        .moveTo(marginX, y)
-        .strokeColor(colors.orange)
-        .lineTo(84, doc.y)
-        .stroke();
-      doc
-        .moveTo(doc.page.width - marginX, y)
-        .strokeColor(colors.orange)
-        .lineTo(doc.page.width - marginX - 84, y)
-        .stroke();
-      doc.moveDown();
-      [
-        {
-          title: 'Давуу тал 1',
-          value: 'Хөгжүүлэх шаардлагатай чадвар 1',
-        },
-        {
-          title: 'Давуу тал 2',
-          value: 'Хөгжүүлэх шаардлагатай чадвар 2',
-        },
-        {
-          title: 'Давуу тал 3',
-          value: 'Хөгжүүлэх шаардлагатай чадвар 3',
-        },
-      ].map((e) => {
-        this.list(doc, e.title, e.value);
-      });
+      // doc
+      //   .moveTo(marginX, y)
+      //   .strokeColor(colors.orange)
+      //   .lineTo(84, doc.y)
+      //   .stroke();
+      // doc
+      //   .moveTo(doc.page.width - marginX, y)
+      //   .strokeColor(colors.orange)
+      //   .lineTo(doc.page.width - marginX - 84, y)
+      //   .stroke();
+      // doc.moveDown();
+      // [
+      //   {
+      //     title: 'Давуу тал 1',
+      //     value: 'Хөгжүүлэх шаардлагатай чадвар 1',
+      //   },
+      //   {
+      //     title: 'Давуу тал 2',
+      //     value: 'Хөгжүүлэх шаардлагатай чадвар 2',
+      //   },
+      //   {
+      //     title: 'Давуу тал 3',
+      //     value: 'Хөгжүүлэх шаардлагатай чадвар 3',
+      //   },
+      // ].map((e) => {
+      //   this.list(doc, e.title, e.value);
+      // });
     } catch (error) {
       console.log(error);
     }
@@ -307,5 +306,9 @@ export class SinglePdf {
     doc.text(`${percent}%`, { continued: true }).fontSize(14);
     doc.y += 6;
     doc.fillColor(colors.black).font(fontNormal).text('-г давсан');
+    const res = await this.answer.partialCalculator(result.code);
+    res.map((v, i) => {
+      this.section(doc, v.categoryName, v.totalPoint, v.point);
+    });
   }
 }

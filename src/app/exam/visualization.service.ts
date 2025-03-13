@@ -178,7 +178,7 @@ export class VisualizationService {
               {
                 value: total,
                 itemStyle: {
-                  color: 'transparent',
+                  color: '#fff',
                 },
               },
             ],
