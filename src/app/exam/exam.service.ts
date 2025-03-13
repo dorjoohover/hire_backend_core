@@ -311,13 +311,21 @@ export class ExamService extends BaseService {
     const categoriesByAssessment =
       await this.questionCategoryDao.findByAssessment(res.assessment.id);
 
-    const categories = [];
-    for (const ass of categoriesByAssessment) {
+    const categoryPromises = categoriesByAssessment.map(async (ass) => {
       const { questions, ...body } = ass;
-      console.log(ass);
+
+      if (!questions || questions.length === 0) {
+        console.log('Skipping: No questions found in category', ass);
+        return null;
+      }
+
       const userAnswer = await this.userAnswer.findByQuestion(questions[0].id);
-      if (!userAnswer) categories.push(body);
-    }
+      if (!userAnswer) return body;
+
+      return null;
+    });
+
+    const categories = (await Promise.all(categoryPromises)).filter(Boolean);
 
     console.log('categories', currentCategory, res, categories);
     if (res.userStartDate == null && category === undefined) {
