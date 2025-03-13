@@ -24,7 +24,6 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     QuestionAnswerCategoryService,
     QuestionAnswerService,
     QuestionDao,
-    UserAnswerDao,
     AssessmentDao,
     QuestionAnswerDao,
     QuestionCategoryDao,

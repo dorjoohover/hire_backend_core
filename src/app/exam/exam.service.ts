@@ -308,9 +308,17 @@ export class ExamService extends BaseService {
     let currentCategory = category;
     let allCategories = [];
 
-    const categories = await this.questionCategoryDao.findByAssessment(
-      res.assessment.id,
-    );
+    const categoriesByAssessment =
+      await this.questionCategoryDao.findByAssessment(res.assessment.id);
+
+    const categories = [];
+    for (const ass of categoriesByAssessment) {
+      const { questions, ...body } = ass;
+      console.log(ass);
+      const userAnswer = await this.userAnswer.findByQuestion(questions[0].id);
+      if (!userAnswer) categories.push(body);
+    }
+
     console.log('categories', currentCategory, res, categories);
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;

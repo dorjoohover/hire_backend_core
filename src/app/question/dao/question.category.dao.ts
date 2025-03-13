@@ -11,7 +11,6 @@ export class QuestionCategoryDao {
   private db: Repository<QuestionCategoryEntity>;
   constructor(
     private dataSource: DataSource,
-    private readonly userAnswerDao: UserAnswerDao,
   ) {
     this.db = this.dataSource.getRepository(QuestionCategoryEntity);
   }
@@ -101,21 +100,8 @@ export class QuestionCategoryDao {
             },
             relations: ['assessment', 'questions'],
           });
-    let responses = [];
-    await Promise.all(
-      res.map(async (r) => {
-        const { questions, ...body } = r;
-        const userAnswer = await this.userAnswerDao.findByQuestion(
-          questions[0].id,
-        );
-        console.log('answer', userAnswer);
-        if (!userAnswer) responses.push(body);
-      }),
-    );
 
-    console.log('res', responses);
-    if (responses.length == 0) responses = res;
-    return responses;
+    return res;
   };
 
   findByName = async (name: string) => {
