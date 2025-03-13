@@ -100,12 +100,12 @@ export class ExamService extends BaseService {
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
         );
-      if (result)
-        return {
-          // calculate: result.,
-          visible: exam.visible,
-          value: result,
-        };
+      // if (result)
+      //   return {
+      //     // calculate: result.,
+      //     visible: exam.visible,
+      //     value: result,
+      //   };
 
       const formule = exam.assessment.formule;
       if (formule) {
