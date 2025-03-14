@@ -63,11 +63,11 @@ export class QuestionDao {
       });
 
     // Conditionally exclude IDs if prevQuestions is not empty
-    if (prevQuestions.length > 0) {
-      query.andWhere('entity."id" NOT IN (:...prevQuestions)', {
-        prevQuestions,
-      });
-    }
+    // if (prevQuestions.length > 0) {
+    //   query.andWhere('entity."id" NOT IN (:...prevQuestions)', {
+    //     prevQuestions,
+    //   });
+    // }
 
     // Conditionally add limit only if it's not null
     if (limit !== null) {
