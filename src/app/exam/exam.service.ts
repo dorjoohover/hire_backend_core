@@ -388,6 +388,7 @@ export class ExamService extends BaseService {
         break;
       }
     }
+    console.log(categoryIndex)
 
     categories = categories.slice(0, categoryIndex + 1);
 
