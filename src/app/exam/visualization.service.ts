@@ -17,7 +17,7 @@ export class VisualizationService {
     percent: number,
   ): Promise<Buffer> {
     console.log(data);
-    console.log(max * Math.floor((data.length / 100) * percent), value);
+    console.log(max * Math.floor(percent / 100), value);
     const echartOption = {
       xAxis: {
         show: false,
@@ -162,9 +162,17 @@ export class VisualizationService {
           {
             type: 'pie',
             radius: ['50%', '100%'],
-            startAngle: 90,
+            startAngle: 180,
             silent: true,
-
+            data: [
+              {
+                value: total,
+                itemStyle: {
+                  color: 'white',
+                  borderWidth: 0, // 🔹 Remove border
+                },
+              },
+            ],
             label: { show: false },
             emphasis: { disabled: true },
             animation: false,
