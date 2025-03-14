@@ -69,7 +69,10 @@ export class VisualizationService {
             },
             data: [
               {
-                coord: [max * Math.floor((data.length / 100) * percent), value],
+                coord: [
+                  max * Math.floor(percent / 100),
+                  data.filter((d) => d[0] == max * Math.floor(percent / 100))[0][1],
+                ],
                 point: `${percent}%`,
               },
             ], // Fixed position
