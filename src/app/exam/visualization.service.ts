@@ -17,10 +17,14 @@ export class VisualizationService {
     percent: number,
   ): Promise<Buffer> {
     console.log(data);
-    console.log(max * Math.floor(percent / 100), value);
-    console.log(
-      data.filter((d) => d[0] == Math.floor((max * percent) / 100))[0],
-    );
+
+    const coordinate =
+      data[
+        (Math.floor((data.length / 100) * percent) == 0
+          ? 1
+          : Math.floor((data.length / 100) * percent)) - 1
+      ];
+    console.log(coordinate);
     const echartOption = {
       xAxis: {
         show: false,
@@ -55,7 +59,7 @@ export class VisualizationService {
 
             data: [
               {
-                xAxis: Math.floor((max * percent) / 100),
+                xAxis: coordinate[0],
               },
             ],
           },
@@ -72,12 +76,7 @@ export class VisualizationService {
             },
             data: [
               {
-                coord: [
-                  Math.floor((max * percent) / 100),
-                  data.filter(
-                    (d) => d[0] == Math.floor((max * percent) / 100),
-                  )[0][1],
-                ],
+                coord: [coordinate[0], coordinate[1]],
                 point: `${percent}%`,
               },
             ], // Fixed position
@@ -85,7 +84,7 @@ export class VisualizationService {
         },
         {
           type: 'scatter',
-          data: [[max * Math.floor((max * percent) / 100), 0]],
+          data: [[coordinate[0], 0]],
           symbolSize: 10,
           itemStyle: { color: 'red' },
           label: {
