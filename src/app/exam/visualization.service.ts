@@ -80,7 +80,7 @@ export class VisualizationService {
         },
         {
           type: 'scatter',
-          data: [[point, 0]],
+          data: [[max * Math.floor(percent / 100), 0]],
           symbolSize: 10,
           itemStyle: { color: 'red' },
           label: {
