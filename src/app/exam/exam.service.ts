@@ -362,9 +362,10 @@ export class ExamService extends BaseService {
     let token = null;
     const shuffle = res.assessment.questionShuffle;
     const answerShuffle = res.assessment.answerShuffle;
-    let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-      (a) => a.id,
-    );
+    // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+    //   (a) => a.id,
+    // );
+    let prevQuestions = [];
     let allCategories = [];
 
     const categoriesByAssessment =
