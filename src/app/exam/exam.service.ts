@@ -365,7 +365,6 @@ export class ExamService extends BaseService {
     let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
       (a) => a.id,
     );
-    let currentCategory = category;
     let allCategories = [];
 
     const categoriesByAssessment =
@@ -393,7 +392,8 @@ export class ExamService extends BaseService {
     allCategories = await Promise.all(
       categories.slice(categoryIndex).map((cate) => cate.id),
     );
-    console.log(allCategories)
+    let currentCategory = allCategories[categoryIndex];
+
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
@@ -411,13 +411,13 @@ export class ExamService extends BaseService {
       }
     }
 
-    if (
-      res.userStartDate != null &&
-      category == undefined &&
-      res.userEndDate == null
-    ) {
-      currentCategory = categories?.[0]?.id;
-    }
+    // if (
+    //   res.userStartDate != null &&
+    //   category == undefined &&
+    //   res.userEndDate == null
+    // ) {
+    //   currentCategory = categories?.[0]?.id;
+    // }
     if (answers.length > 0) {
       const answeredCategory = answers[answers.length - 1].questionCategory.id;
       const i = allCategories.indexOf(answeredCategory);
