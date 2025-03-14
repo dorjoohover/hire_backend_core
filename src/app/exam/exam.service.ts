@@ -388,9 +388,9 @@ export class ExamService extends BaseService {
         break;
       }
     }
-    console.log(categoryIndex)
+    console.log(categoryIndex);
 
-    categories = categories.slice(0, categoryIndex + 1);
+    categories = categories.slice(categoryIndex);
 
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
