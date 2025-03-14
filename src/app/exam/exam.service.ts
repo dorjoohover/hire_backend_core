@@ -390,7 +390,7 @@ export class ExamService extends BaseService {
     }
     console.log(categoryIndex);
 
-    categories = categories.slice(categoryIndex);
+    allCategories = categories.slice(categoryIndex).map((cate) => cate.id);
 
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
@@ -407,14 +407,6 @@ export class ExamService extends BaseService {
         );
         token = user;
       }
-      allCategories =
-        categories.length <= 1
-          ? []
-          : categories
-              .map((cate, i) => {
-                return cate.id;
-              })
-              .filter((f) => f != undefined);
     }
 
     if (
@@ -422,14 +414,6 @@ export class ExamService extends BaseService {
       category == undefined &&
       res.userEndDate == null
     ) {
-      allCategories =
-        categories.length <= 1
-          ? []
-          : categories
-              .map((cate, i) => {
-                return cate.id;
-              })
-              .filter((f) => f != undefined);
       currentCategory = categories?.[0]?.id;
     }
     if (answers.length > 0) {
@@ -467,7 +451,7 @@ export class ExamService extends BaseService {
       return {
         questions: result.questions,
         category: result.category,
-        categories: allCategories,
+        categories: allCategories.slice(1),
         assessment: res.assessment,
         token,
       };
