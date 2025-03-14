@@ -65,7 +65,19 @@ export class VisualizationService {
               fontWeight: 'bold',
               color: '#fff',
             },
-            data: [{ coord: [point, value], point: `${percent}%` }], // Fixed position
+            data: [
+              {
+                coord: [
+                  data[
+                    (Math.floor((data.length / 100) * percent) == 0
+                      ? 1
+                      : Math.floor((data.length / 100) * percent)) - 1
+                  ],
+                  value,
+                ],
+                point: `${percent}%`,
+              },
+            ], // Fixed position
           },
         },
         {
@@ -214,6 +226,4 @@ export class VisualizationService {
       console.log(error);
     }
   }
-
-  async;
 }
