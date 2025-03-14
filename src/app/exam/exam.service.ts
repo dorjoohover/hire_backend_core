@@ -390,8 +390,10 @@ export class ExamService extends BaseService {
     }
     console.log(categoryIndex);
 
-    allCategories = categories.slice(categoryIndex).map((cate) => cate.id);
-
+    allCategories = await Promise.all(
+      categories.slice(categoryIndex).map((cate) => cate.id),
+    );
+    console.log(allCategories)
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
