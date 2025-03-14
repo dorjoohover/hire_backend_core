@@ -370,31 +370,23 @@ export class ExamService extends BaseService {
 
     const categoriesByAssessment =
       await this.questionCategoryDao.findByAssessment(res.assessment.id);
-
-    const categoryPromises = await Promise.all(
-      categoriesByAssessment.map(async (ass) => {
-        const { questions, ...body } = ass;
-        if (!questions || questions.length === 0) {
-          return null;
-        }
-
-        const userAnswer = await this.userAnswer.findByQuestion(
-          questions[0].id,
-          res.code,
-        );
-        if (!userAnswer) return body;
+    let categories = await Promise.all(
+      categoriesByAssessment.map((c) => {
+        const { questions, ...body } = c;
+        return { ...body };
       }),
     );
-    let categories = (await Promise.all(categoryPromises)).filter(Boolean);
-
-    if (categories.length == 0) {
-      categories = await Promise.all(
-        categoriesByAssessment.map((a) => {
-          const { questions, ...body } = a;
-          return body;
-        }),
+    let categoryIndex = 0;
+    for (let i = 0; i < categoriesByAssessment.length; i++) {
+      const { questions } = categoriesByAssessment[i];
+      const userAnswer = await this.userAnswer.findByQuestion(
+        questions[0].id,
+        res.code,
       );
+      if (!userAnswer) categoryIndex = i;
     }
+
+    categories = categories.slice(0, categoryIndex + 1);
 
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
