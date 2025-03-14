@@ -412,7 +412,7 @@ export class ExamService extends BaseService {
           ? []
           : categories
               .map((cate, i) => {
-                if (i > 0) return cate.id;
+                return cate.id;
               })
               .filter((f) => f != undefined);
     }
@@ -427,7 +427,7 @@ export class ExamService extends BaseService {
           ? []
           : categories
               .map((cate, i) => {
-                if (i > 0) return cate.id;
+                return cate.id;
               })
               .filter((f) => f != undefined);
       currentCategory = categories?.[0]?.id;
