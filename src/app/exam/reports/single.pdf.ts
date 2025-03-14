@@ -239,9 +239,7 @@ export class SinglePdf {
     }
 
     function normalDistribution(x, mean, stdDev) {
-      const exponent = Math.exp(
-        -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)),
-      );
+      const exponent = Math.exp(-Math.pow((x - mean) / stdDev, 2) * 0.5);
       return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
     }
 
@@ -265,8 +263,8 @@ export class SinglePdf {
     // const p75 = dataset[Math.floor(0.75 * dataset.length)];
     // const p100 = dataset[dataset.length - 1];
     const dataPoints = [];
-    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
-      dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
+    for (const set of dataset) {
+      dataPoints.push([set, normalDistribution(set, mean, stdDev) / 10]);
     }
 
     const percent = Math.round(percentile(dataset, result.point));
