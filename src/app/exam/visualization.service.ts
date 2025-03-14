@@ -16,6 +16,8 @@ export class VisualizationService {
     point: number,
     percent: number,
   ): Promise<Buffer> {
+    console.log(data);
+    console.log(max * Math.floor((data.length / 100) * percent), value);
     const echartOption = {
       xAxis: {
         show: false,
