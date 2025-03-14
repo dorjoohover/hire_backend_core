@@ -438,6 +438,7 @@ export class ExamService extends BaseService {
             )
           ).map((a) => a.id),
         );
+      console.log(shuffle, currentCategory, answerShuffle, prevQuestions);
       const result = await this.getQuestions(
         shuffle,
         currentCategory,
