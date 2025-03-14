@@ -239,7 +239,9 @@ export class SinglePdf {
     }
 
     function normalDistribution(x, mean, stdDev) {
-      const exponent = Math.exp(-Math.pow((x - mean) / stdDev, 2) * 0.5);
+      const exponent = Math.exp(
+        -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)),
+      );
       return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
     }
 
