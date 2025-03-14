@@ -392,7 +392,7 @@ export class ExamService extends BaseService {
     allCategories = await Promise.all(
       categories.slice(categoryIndex).map((cate) => cate.id),
     );
-    let currentCategory = allCategories[categoryIndex];
+    let currentCategory = allCategories[0];
 
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
