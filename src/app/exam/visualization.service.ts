@@ -173,12 +173,14 @@ export class VisualizationService {
                 value: point,
                 itemStyle: {
                   color: color,
+                  borderWidth: 0,
                 },
               },
               {
                 value: total,
                 itemStyle: {
                   color: '#fff',
+                  borderWidth: 0,
                 },
               },
             ],
