@@ -52,7 +52,7 @@ export class VisualizationService {
 
             data: [
               {
-                xAxis: point,
+                xAxis: Math.floor(max *percent / 100),
               },
             ],
           },
@@ -70,8 +70,10 @@ export class VisualizationService {
             data: [
               {
                 coord: [
-                  max * Math.floor(percent / 100),
-                  data.filter((d) => d[0] == max * Math.floor(percent / 100))[0][1],
+                  Math.floor((max * percent) / 100),
+                  data.filter(
+                    (d) => d[0] == max * Math.floor((max * percent) / 100),
+                  )[0][1],
                 ],
                 point: `${percent}%`,
               },
@@ -80,7 +82,7 @@ export class VisualizationService {
         },
         {
           type: 'scatter',
-          data: [[max * Math.floor(percent / 100), 0]],
+          data: [[max * Math.floor((max * percent) / 100), 0]],
           symbolSize: 10,
           itemStyle: { color: 'red' },
           label: {
