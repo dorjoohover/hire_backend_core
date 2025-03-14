@@ -19,7 +19,7 @@ export class VisualizationService {
     console.log(data);
     console.log(max * Math.floor(percent / 100), value);
     console.log(
-      data.filter((d) => d[0] == max * Math.floor((max * percent) / 100))[0],
+      data.filter((d) => d[0] == Math.floor((max * percent) / 100))[0],
     );
     const echartOption = {
       xAxis: {
@@ -75,8 +75,8 @@ export class VisualizationService {
                 coord: [
                   Math.floor((max * percent) / 100),
                   data.filter(
-                    (d) => d[0] == max * Math.floor((max * percent) / 100),
-                  )[0],
+                    (d) => d[0] == Math.floor((max * percent) / 100),
+                  )[0][1],
                 ],
                 point: `${percent}%`,
               },
