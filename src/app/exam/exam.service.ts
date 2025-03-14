@@ -383,7 +383,10 @@ export class ExamService extends BaseService {
         questions[0].id,
         res.code,
       );
-      if (!userAnswer) categoryIndex = i;
+      if (!userAnswer) {
+        categoryIndex = i;
+        break;
+      }
     }
 
     categories = categories.slice(0, categoryIndex + 1);
