@@ -120,7 +120,7 @@ export class UserAnswerService extends BaseService {
           user,
         );
 
-        if (!response.visible)
+        if (response.visible)
           await this.mailService.sendMail({
             to: user.email,
             subject: 'Тайлан хүлээн авах',
