@@ -418,15 +418,15 @@ export class ExamService extends BaseService {
     // ) {
     //   currentCategory = categories?.[0]?.id;
     // }
-    if (answers.length > 0) {
-      const answeredCategory = answers[answers.length - 1].questionCategory.id;
-      const i = allCategories.indexOf(answeredCategory);
-      const predictCategory = allCategories[i + 1];
-      if (currentCategory < predictCategory) {
-        currentCategory = predictCategory;
-        allCategories = allCategories.slice(i + 2);
-      }
-    }
+    // if (answers.length > 0) {
+    //   const answeredCategory = answers[answers.length - 1].questionCategory.id;
+    //   const i = allCategories.indexOf(answeredCategory);
+    //   const predictCategory = allCategories[i + 1];
+    //   if (currentCategory < predictCategory) {
+    //     currentCategory = predictCategory;
+    //     allCategories = allCategories.slice(i + 2);
+    //   }
+    // }
 
     if (currentCategory) {
       if (allCategories.length == 0)
