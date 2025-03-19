@@ -175,9 +175,9 @@ export const firstLetterUpper = (text: string) => {
 
 export const footer = (doc: PDFKit.PDFDocument) => {
   doc
-    .moveTo(marginX, doc.y)
+    .moveTo(marginX, doc.page.height - marginY - 52)
     .strokeColor(colors.light)
-    .lineTo(doc.page.width - marginX, doc.y)
+    .lineTo(doc.page.width - marginX, doc.page.height - marginY - 52)
     .stroke()
     .moveDown();
   doc
