@@ -34,6 +34,7 @@ export const header = (
   // icons
   doc
     .fillColor(colors.black)
+    .font(fontNormal)
     .fontSize(13)
     .text(firstname ?? '', marginX + 97, marginY);
 
@@ -41,8 +42,8 @@ export const header = (
     .fillColor(colors.black)
     .fontSize(13)
     .font(fontBold)
-    .text(lastname ?? '', marginX + 97, marginY + 14);
-
+    .text(lastname ?? '', marginX + 97, marginY + 15);
+  doc.moveTo(marginX, doc.y);
   // let y = doc.y;
   // doc
   //   .font(fontNormal)
