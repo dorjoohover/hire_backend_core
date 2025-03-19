@@ -201,7 +201,8 @@ export class PdfService {
         doc.x = marginX;
         const text = DISC.description[i][v.value];
         const textHeight = doc.heightOfString(text?.value);
-        const includes = doc.page.height - doc.y - 100 - textHeight;
+        console.log(doc.y, doc.page.height, textHeight);
+        const includes = doc.page.height - doc.y - 116 - textHeight;
         if (!includes) {
           doc.addPage();
           header(doc, firstname, lastname);
@@ -297,7 +298,7 @@ export class PdfService {
     const x = doc.x;
     doc.text(
       ' Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
-      x + doc.page.width / 3 + marginX,
+      x + doc.page.width / 3,
       doc.y,
       {
         align: 'justify',
@@ -316,8 +317,8 @@ export class PdfService {
     );
     doc.text(
       'Хүрээлэн буй орчноо таатай гэж ойлгодог',
-      (doc.page.width / 3) * 3 + marginX,
-      y + doc.page.width / 5,
+      (doc.page.width / 3) * 2 + marginX,
+      y + doc.page.width / 6,
       {
         align: 'justify',
         width: doc.page.width / 3 - marginX - marginX,
