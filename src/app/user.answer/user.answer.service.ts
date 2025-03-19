@@ -132,7 +132,7 @@ export class UserAnswerService extends BaseService {
            <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
            </div>`,
           });
-        return response.visible ? { visible: response.visible } : response;
+        return !response.visible ? { visible: response.visible } : response;
       }
 
       // if (res.includes(undefined)) {

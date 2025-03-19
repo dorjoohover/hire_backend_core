@@ -39,7 +39,8 @@ export class PdfService {
   async singleTemplate(
     doc: PDFKit.PDFDocument,
     result: ResultEntity,
-    name: string,
+    firstname: string,
+    lastname: string,
     date: Date,
   ) {
     doc
@@ -57,8 +58,8 @@ export class PdfService {
     await this.single.default(doc, result);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
-    
+    header(doc, firstname, lastname, date, result.assessmentName);
+
     await this.single.examQuartile(doc, result);
     footer(doc);
   }
@@ -67,11 +68,12 @@ export class PdfService {
     doc: PDFKit.PDFDocument,
     result: ResultEntity,
     date: Date,
-    name: string,
+    firstname: string,
+    lastname: string,
   ) {
     doc.addPage();
 
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Оршил');
     doc
       .moveTo(30, doc.y)
@@ -86,7 +88,7 @@ export class PdfService {
       .text(DISC.preface);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc.font(fontNormal).fillColor(colors.black).fontSize(12);
     doc
       .text(
@@ -110,7 +112,7 @@ export class PdfService {
     doc.fillColor(colors.orange).text(result.result);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     // const style = Object.entries(DISC.pattern).find(([_, value]) => {
     //   return Object.keys(value).includes(exam.result);
     // });
@@ -156,7 +158,7 @@ export class PdfService {
     );
     for (const [i, k] of Object.entries(groupedDetails)) {
       doc.addPage();
-      header(doc, name, date, result.assessmentName);
+      header(doc, firstname, lastname, date, result.assessmentName);
       doc
         .font(fontBold)
         .fillColor(colors.black)
@@ -184,7 +186,7 @@ export class PdfService {
     }
 
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc
       .font(fontBold)
       .fillColor(colors.black)
@@ -210,7 +212,7 @@ export class PdfService {
     doc.font(fontNormal).fontSize(12).text(disc.motivation);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
 
     doc
       .font(fontBold)
@@ -225,7 +227,7 @@ export class PdfService {
     doc.font(fontNormal).fontSize(12).text(disc.habit);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc
       .font(fontBold)
       .fontSize(16)
@@ -238,7 +240,7 @@ export class PdfService {
     doc.font(fontNormal).fontSize(12).text(disc.self);
     footer(doc);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc.font(fontBold).fontSize(16).text('ДиСК загвар');
     doc
       .font(fontNormal)
@@ -298,12 +300,13 @@ export class PdfService {
     doc: PDFKit.PDFDocument,
     result: ResultEntity,
     date: Date,
-    name: string,
+    firstname: string,
+    lastname: string,
     assessment: AssessmentEntity,
   ) {
     // doc.addPage();
 
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc
       .font(fontBold)
       .fillColor(colors.black)
@@ -331,7 +334,7 @@ export class PdfService {
       .text(Belbin.advice)
       .moveDown(2);
     doc.addPage();
-    header(doc, name, date, result.assessmentName);
+    header(doc, firstname, lastname, date, result.assessmentName);
     doc
       .font(fontBold)
       .fontSize(16)
@@ -348,7 +351,7 @@ export class PdfService {
 
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, firstname, lastname, date, assessment.name);
     doc.font(fontBold).fontSize(16).fillColor(colors.orange).text('Үр дүн');
     doc
       .moveTo(30, doc.y)
@@ -381,7 +384,7 @@ export class PdfService {
     });
     footer(doc);
     doc.addPage();
-    header(doc, name, date, assessment.name);
+    header(doc, firstname, lastname, date, assessment.name);
     const width = (doc.page.width / 8) * 5;
     let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
     y = doc.y;
@@ -464,7 +467,8 @@ export class PdfService {
   }
 
   async createPdfInOneFile(result: ResultEntity, exam: ExamEntity) {
-    const name = `${result?.firstname ?? ''} ` + (result?.lastname ?? '');
+    const firstname = result?.firstname ?? '';
+    const lastname = result?.lastname ?? '';
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
     const filePath = './chart.pdf';
@@ -478,7 +482,7 @@ export class PdfService {
       doc.pipe(out);
       const date = new Date(exam.userStartDate);
       if (exam.assessment.report != ReportType.BELBIN) {
-        header(doc, name, date, result.assessmentName);
+        header(doc, firstname, lastname, date, result.assessmentName);
         let y = doc.y,
           x = doc.x;
         let iconSize = 16;
@@ -533,13 +537,20 @@ export class PdfService {
       }
 
       if (exam.assessment.report == ReportType.CORRECT)
-        await this.singleTemplate(doc, result, name, date);
+        await this.singleTemplate(doc, result, firstname, lastname, date);
       if (exam.assessment.report == ReportType.DISC) {
-        await this.discTemplate(doc, result, date, name);
+        await this.discTemplate(doc, result, date, firstname, lastname);
       }
 
       if (exam.assessment.report == ReportType.BELBIN) {
-        await this.belbinTemplate(doc, result, date, name, exam.assessment);
+        await this.belbinTemplate(
+          doc,
+          result,
+          date,
+          firstname,
+          lastname,
+          exam.assessment,
+        );
       }
       doc.end();
 

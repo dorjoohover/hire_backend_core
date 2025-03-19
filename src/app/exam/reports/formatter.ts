@@ -14,47 +14,65 @@ export const assetPath = (p: string) => {
 };
 export const header = (
   doc: PDFKit.PDFDocument,
-  name: string,
+  firstname: string,
+  lastname: string,
   date: Date,
   assessment: string,
 ) => {
   doc.fontSize(10);
+
   doc.image(assetPath('logo'), marginX, marginY, {
     width: 70,
   });
   doc.image(assetPath('top'), 0, 0, {
     width: doc.page.width,
   });
-  let y = doc.y;
+  let grad = doc.linearGradient(0, 0, doc.page.height, doc.page.height);
+  grad.stop(0, colors.orange).stop(1, colors.orange);
+  doc.rect(marginX + 70 + 13, marginY, 1, 28);
+  doc.fill(grad);
+  // icons
   doc
-    .font(fontNormal)
-    .fontSize(14)
-    .text('Шалгуулагч', doc.x, y + 80, {
-      align: 'left',
-    });
-  doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 80, {
-    align: 'right',
-  });
-  doc.font(fontBold).fontSize(14).text(name, {
-    align: 'left',
-  });
-  doc.moveUp(1);
+    .fillColor(colors.black)
+    .fontSize(13)
+    .text(firstname ?? '', marginX + 97, marginY);
 
-  doc.fontSize(14).text(`${dateFormatter(date)}`, {
-    align: 'right',
-  });
-  doc.moveDown(1);
   doc
+    .fillColor(colors.black)
+    .fontSize(13)
     .font(fontBold)
-    .fontSize(20)
-    .fillColor(colors.orange)
-    .text(firstLetterUpper(assessment));
-  doc
-    .moveTo(30, doc.y)
-    .strokeColor(colors.orange)
-    .lineTo(230, doc.y)
-    .stroke()
-    .moveDown();
+    .text(lastname ?? '', marginX + 97, marginY + 14);
+
+  // let y = doc.y;
+  // doc
+  //   .font(fontNormal)
+  //   .fontSize(14)
+  //   .text('Шалгуулагч', doc.x, y + 80, {
+  //     align: 'left',
+  //   });
+  // doc.fontSize(14).text('Тест өгсөн огноо', doc.x, y + 80, {
+  //   align: 'right',
+  // });
+  // doc.font(fontBold).fontSize(14).text(name, {
+  //   align: 'left',
+  // });
+  // doc.moveUp(1);
+
+  // doc.fontSize(14).text(`${dateFormatter(date)}`, {
+  //   align: 'right',
+  // });
+  // doc.moveDown(1);
+  // doc
+  //   .font(fontBold)
+  //   .fontSize(20)
+  //   .fillColor(colors.orange)
+  //   .text(firstLetterUpper(assessment));
+  // doc
+  //   .moveTo(30, doc.y)
+  //   .strokeColor(colors.orange)
+  //   .lineTo(230, doc.y)
+  //   .stroke()
+  //   .moveDown();
 };
 
 export const home = (
