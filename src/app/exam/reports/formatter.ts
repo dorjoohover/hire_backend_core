@@ -82,11 +82,7 @@ export const header = (
   // });
   // doc.moveDown(1);
   if (assessment) {
-    doc
-      .font(fontBold)
-      .fontSize(20)
-      .fillColor(colors.orange)
-      .text(assessment);
+    doc.font(fontBold).fontSize(20).fillColor(colors.orange).text(assessment);
     doc
       .moveTo(30, doc.y)
       .strokeColor(colors.orange)
@@ -178,6 +174,12 @@ export const firstLetterUpper = (text: string) => {
 };
 
 export const footer = (doc: PDFKit.PDFDocument) => {
+  doc
+    .moveTo(marginX, doc.y)
+    .strokeColor(colors.light)
+    .lineTo(doc.page.width - marginX, doc.y)
+    .stroke()
+    .moveDown();
   doc
     .font(fontNormal)
     .fillColor('#2f2d2d')

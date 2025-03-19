@@ -202,7 +202,7 @@ export class PdfService {
         const text = DISC.description[i][v.value];
         const textHeight = doc.heightOfString(text?.value);
         console.log(doc.y, doc.page.height, textHeight);
-        const includes = doc.page.height - doc.y - 100 - textHeight < 0;
+        const includes = doc.page.height - doc.y - 80 - textHeight < 0;
         if (includes) {
           doc.addPage();
           header(doc, firstname, lastname);
