@@ -202,7 +202,7 @@ export class PdfService {
         const text = DISC.description[i][v.value];
         const textHeight = doc.heightOfString(text?.value);
         console.log(doc.y, doc.page.height, textHeight);
-        const includes = doc.page.height - doc.y - 116 - textHeight < 0;
+        const includes = doc.page.height - doc.y - 100 - textHeight < 0;
         if (includes) {
           doc.addPage();
           header(doc, firstname, lastname);
@@ -332,7 +332,7 @@ export class PdfService {
     doc.text(
       'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
       x + doc.page.width / 3,
-      doc.y + fz.lg,
+      doc.y + doc.page.width / 12,
       {
         align: 'justify',
         width: doc.page.width / 3 - marginX - marginX,
