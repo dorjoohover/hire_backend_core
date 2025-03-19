@@ -143,8 +143,6 @@ export class PdfService {
     // let res = style[0] ? DISC.values[style[0].toLowerCase()] : '';
     // let result = ''
 
-    doc.moveDown(2);
-
     doc
       .font(fontBold)
       .fontSize(fz.sm)
@@ -196,10 +194,18 @@ export class PdfService {
         .fontSize(fz.sm)
         .text(
           `Асуумжинд өгсөн хариултанд үндэслэн таны ${firstLetterUpper(value.text)} ${i.toUpperCase()} байдлыг дараах тайлбаруудаар тодорхойлж болох юм. Та өөрийн санал нийлж буй давуу талуудаа харандаагаар дугуйлж, анхаарвал зохих зан төлөвүүдийг тодруулна уу.`,
-        );
+        )
+        .moveDown();
 
       for (const v of k) {
         doc.x = marginX;
+        const text = DISC.description[i][v.value];
+        const textHeight = doc.heightOfString(text?.value);
+        const includes = doc.page.height - doc.y - 100 - textHeight;
+        if (!includes) {
+          doc.addPage();
+          header(doc, firstname, lastname);
+        }
         doc.image(assetPath('icons/disc_2_' + color.key), doc.x, doc.y, {
           width: 16,
           height: 16,
@@ -211,7 +217,7 @@ export class PdfService {
           .text(`${v.value}: `, doc.x, doc.y, {
             continued: true,
           });
-        const text = DISC.description[i][v.value];
+
         doc
           .font(fontNormal)
           .fillColor(colors.black)
@@ -239,11 +245,13 @@ export class PdfService {
       .fontSize(fz.sm)
       .text(
         ` хэв шинжийн бүлэгт хамаарч байна. Доорх тайлбаруудыг уншиж таны зан төлөвтэй тохирч буй хэсгүүдэд анхаарал хандуулна уу.`,
+        doc.x,
+        doc.y + 3,
       );
     doc.moveDown();
     doc
       .font(fontBold)
-      .fontSize(fz.lg)
+      .fontSize(fz.sm)
       .fillColor(colors.orange)
       .text(name + ' таны мотиваци')
       .moveDown();
@@ -264,7 +272,7 @@ export class PdfService {
       .fontSize(fz.sm)
       .text(name + ' таны ажлын дадал зуршил');
     // !
-    doc.font(fontNormal).fontSize(fz.sm).text(disc.habit);
+    doc.font(fontNormal).fillColor(colors.black).text(disc.habit);
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Үе шат III: Таны хувь хүний хэв шинж');
@@ -289,44 +297,44 @@ export class PdfService {
     const x = doc.x;
     doc.text(
       ' Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
-      x + doc.page.width / 4 + marginX,
+      x + doc.page.width / 3 + marginX,
       doc.y,
       {
         align: 'justify',
-        width: doc.page.width / 2 - marginX - marginX,
+        width: doc.page.width / 3 - marginX - marginX,
       },
     );
     const y = doc.y;
     doc.text(
       'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
       x,
-      y + doc.page.width / 5,
+      y + doc.page.width / 6,
       {
         align: 'justify',
-        width: doc.page.width / 4 - marginX - marginX,
+        width: doc.page.width / 3 - marginX - marginX,
       },
     );
     doc.text(
       'Хүрээлэн буй орчноо таатай гэж ойлгодог',
-      (doc.page.width / 4) * 3 + marginX,
+      (doc.page.width / 3) * 3 + marginX,
       y + doc.page.width / 5,
       {
         align: 'justify',
-        width: doc.page.width / 4 - marginX - marginX,
+        width: doc.page.width / 3 - marginX - marginX,
       },
     );
     doc
-      .image(assetPath('report/disc/graph'), doc.page.width / 4, y, {
-        width: doc.page.width / 2,
+      .image(assetPath('report/disc/graph'), doc.page.width / 3, y, {
+        width: doc.page.width / 3,
       })
       .moveDown();
     doc.text(
       'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
-      x + doc.page.width / 4 + marginX,
-      doc.y + doc.page.width / 5,
+      x + doc.page.width / 3 + marginX,
+      doc.y + doc.page.width / 6,
       {
         align: 'justify',
-        width: doc.page.width / 2 - marginX - marginX,
+        width: doc.page.width / 3 - marginX - marginX,
       },
     );
     footer(doc);
