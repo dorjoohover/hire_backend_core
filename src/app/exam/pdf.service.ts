@@ -201,7 +201,7 @@ export class PdfService {
 
       for (const v of k) {
         doc.x = marginX;
-        doc.image(assetPath('icons/' + color.key), doc.x, doc.y, {
+        doc.image(assetPath('icons/disc_2_' + color.key), doc.x, doc.y, {
           width: 16,
           height: 16,
         });
