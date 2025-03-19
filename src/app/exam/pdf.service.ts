@@ -74,12 +74,13 @@ export class PdfService {
     lastname: string,
   ) {
     doc.addPage();
+    const name = result?.firstname ?? result?.lastname ?? '';
 
     header(doc, firstname, lastname, 'Оршил');
     doc
       .font(fontNormal)
       .fontSize(fz.sm)
-      .lineGap(fz.sm * lh.md)
+      .lineGap(lh.md)
       .fillColor(colors.black)
       .text(DISC.preface);
     footer(doc);
@@ -101,14 +102,11 @@ export class PdfService {
       .moveDown();
     doc
       .font(fontBold)
-      .text(firstname ?? lastname ?? '', { continued: true })
+      .text(name, doc.x, doc.y + doc.page.width / 2 - marginX, {
+        continued: true,
+      })
       .font(fontNormal)
-      .text(
-        ' таны хувь хүний хэв шинж: ',
-        doc.x,
-        doc.y + doc.page.width / 2 - marginX,
-        { continued: true },
-      )
+      .text(' таны хувь хүний хэв шинж: ', { continued: true })
       .fillColor(colors.orange)
       .font(fontBold)
       .text(`${DISC.enMn[result.value]} (${result.value})`);
@@ -157,7 +155,8 @@ export class PdfService {
     //   DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
       .font(fontNormal)
-      .text((result?.lastname ?? result?.firstname ?? '') + character);
+      .fillColor(colors.black)
+      .text(name + character);
     footer(doc);
 
     const details: ResultDetailEntity[] = result.details;
@@ -206,11 +205,18 @@ export class PdfService {
           height: 16,
         });
         doc.x += 21;
-        doc.font(fontBold).text(`${v.value}: `, doc.x, doc.y, {
-          continued: true,
-        });
+        doc
+          .font(fontBold)
+          .fillColor(color.value)
+          .text(`${v.value}: `, doc.x, doc.y, {
+            continued: true,
+          });
         const text = DISC.description[i][v.value];
-        doc.font(fontNormal).text(text?.value).moveDown();
+        doc
+          .font(fontNormal)
+          .fillColor(colors.black)
+          .text(text?.value)
+          .moveDown();
       }
       footer(doc);
     }
@@ -220,14 +226,15 @@ export class PdfService {
 
     doc
       .font(fontNormal)
-      .fontSize(12)
+      .fontSize(fz.sm)
+      .fillColor(colors.black)
       .text(
         `Давамгайлагч, Нөлөөлөгч, Нягт нямбай, Туйлбартай гэсэн үндсэн 4 шинжийн үзүүлэлтүүд нийлж хувь хүнийг тодорхойлох өвөрмөц хэв шинжийг бий болгодог. Судлаачид нийтлэг ажиглагддаг онцлог 15 хэв шинжийг илрүүлсэн. Онолын бөгөөд практикийн нэмэлт судалгааны дүнд тэдгээр хэв шинжүүдийн онцлогуудыг тодорхойлжээ. Эдгээр онцлогуудыг мэдсэнээр та өөрийгөө илүү ихээр танин мэдэх болно. \n\nАсуумжинд өгсөн хариултын дагуу та `,
         { continued: true },
       )
       .font(fontBold)
       .fontSize(fz.lg)
-      .text(`${style.text}`, { continued: true })
+      .text(`${style.text}`, doc.x, doc.y - 3, { continued: true })
       .font(fontNormal)
       .fontSize(fz.sm)
       .text(
@@ -238,14 +245,15 @@ export class PdfService {
       .font(fontBold)
       .fontSize(fz.lg)
       .fillColor(colors.orange)
-      .text((result?.lastname ?? result?.firstname ?? '') + ' таны мотиваци')
+      .text(name + ' таны мотиваци')
       .moveDown();
     // !
-    const disc = this.disc.step3(
-      result?.lastname ?? result?.firstname ?? '',
-      firstLetterUpper(result.value),
-    );
-    doc.font(fontNormal).fontSize(fz.sm).text(disc.motivation);
+    const disc = this.disc.step3(name, firstLetterUpper(result.value));
+    doc
+      .font(fontNormal)
+      .fillColor(colors.black)
+      .fontSize(fz.sm)
+      .text(disc.motivation);
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Үе шат III: Таны хувь хүний хэв шинж ');
@@ -254,10 +262,7 @@ export class PdfService {
       .font(fontBold)
       .fillColor(colors.orange)
       .fontSize(fz.sm)
-      .text(
-        (result?.lastname ?? result?.firstname ?? '') +
-          ' таны ажлын дадал зуршил',
-      );
+      .text(name + ' таны ажлын дадал зуршил');
     // !
     doc.font(fontNormal).fontSize(fz.sm).text(disc.habit);
     footer(doc);
@@ -267,9 +272,9 @@ export class PdfService {
       .font(fontBold)
       .fontSize(fz.sm)
       .fillColor(colors.orange)
-      .text((result?.lastname ?? result?.firstname ?? '') + ' таныг тольдвол;');
+      .text(name + ' таныг тольдвол;');
     // !
-    doc.font(fontNormal).fontSize(12).text(disc.self);
+    doc.font(fontNormal).fillColor(colors.black).fontSize(12).text(disc.self);
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'ДиСК загвар');

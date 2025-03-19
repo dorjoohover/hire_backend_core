@@ -53,13 +53,13 @@ export const header = (
     .fillColor(colors.black)
     .font(fontNormal)
     .fontSize(13)
-    .text(firstname ?? '', marginX + 97, marginY);
+    .text(lastname ?? '', marginX + 97, marginY);
 
   doc
     .fillColor(colors.black)
     .fontSize(13)
     .font(fontBold)
-    .text(lastname ?? '', marginX + 97, marginY + 15);
+    .text(firstname ?? '', marginX + 97, marginY + 15);
   doc.x = marginX;
   doc.y = doc.y + 50;
   // let y = doc.y;
@@ -86,7 +86,7 @@ export const header = (
       .font(fontBold)
       .fontSize(20)
       .fillColor(colors.orange)
-      .text(firstLetterUpper(assessment));
+      .text(assessment);
     doc
       .moveTo(30, doc.y)
       .strokeColor(colors.orange)
@@ -187,7 +187,7 @@ export const footer = (doc: PDFKit.PDFDocument) => {
       marginX,
       doc.page.height - marginY - 32,
     );
-  doc.font(fontBold).text('© Hire.mn');
+  doc.font(fontBold).text('©2025 Hire.mn. Бүх эрх хуулиар хамгаалагдсан.');
 };
 
 export const fontBold = 'Gilroy-Bold';
