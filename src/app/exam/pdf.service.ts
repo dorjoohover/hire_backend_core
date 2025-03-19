@@ -483,8 +483,8 @@ export class PdfService {
       const date = new Date(exam.userStartDate);
       if (exam.assessment.report != ReportType.BELBIN) {
         header(doc, firstname, lastname, date, result.assessmentName);
-        let y = doc.y,
-          x = doc.x;
+        let y = doc.y + 50,
+          x = marginX;
         let iconSize = 16;
         // doc
         //   .roundedRect(

@@ -43,7 +43,6 @@ export const header = (
     .fontSize(13)
     .font(fontBold)
     .text(lastname ?? '', marginX + 97, marginY + 15);
-  doc.moveTo(marginX, doc.y);
   // let y = doc.y;
   // doc
   //   .font(fontNormal)
