@@ -259,6 +259,7 @@ export class ExamService extends BaseService {
           limit: exam.assessment.duration,
           total: exam.assessment.totalPoint,
           result: values,
+          segment: response,
           value: agent,
         },
         details,

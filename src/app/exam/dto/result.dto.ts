@@ -26,6 +26,9 @@ export class ResultDto {
   // in disc (d || c || di)
   @ApiProperty()
   result?: string;
+  // 1233
+  @ApiProperty()
+  segment?: string;
   // in disc (undershift | overshift)
   @ApiProperty()
   value?: string;

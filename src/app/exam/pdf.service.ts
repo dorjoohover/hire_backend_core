@@ -201,7 +201,6 @@ export class PdfService {
         doc.x = marginX;
         const text = DISC.description[i][v.value];
         const textHeight = doc.heightOfString(text?.value);
-        console.log(doc.y, doc.page.height, textHeight);
         const includes = doc.page.height - doc.y - 80 - textHeight < 0;
         if (includes) {
           doc.addPage();
@@ -241,7 +240,9 @@ export class PdfService {
       )
       .font(fontBold)
       .fontSize(fz.lg)
-      .text(`${style.text}`, doc.x, doc.y - 3, { continued: true })
+      .text(`${DISC.enMn[result.value]} `, doc.x, doc.y - 3, {
+        continued: true,
+      })
       .font(fontNormal)
       .fontSize(fz.sm)
       .text(
@@ -293,7 +294,7 @@ export class PdfService {
       .fontSize(fz.sm)
       .text(
         'DiSC Давамгайлах (D), Нөлөөлөх (I), Туйлбартай (S), мөн Нягт нямбай (C) гэсэн дөрвөн  шинжийг дөрвөн талт хүснэгтэн загвараар тайлбарладаг. Зарим хүмүүст зөвхөн нэг төрлийн хэв шинж илэрдэг бол заримд хоёр, эсвэл бүр гурван хэв шинж ч  илэрч болно.\nТаны Диск загвар бусад хүмүүсийнхээс хэр их ялгаатай бол? Дискийн бусад загваруудтай адил төстэй ямар шинж байна вэ? Эдгээр асуултуудыг ойлгоход доорх Диск загвар танд туслана. Доорх хүснэгтэнд зэрэгцээ байрлах дискийн зан төлвийн төрлүүд нь өөр хоорондоо ямар нэгэн ижил төстэй шинжтэй. Таны харж байгаагаар C болон S төрлийн хүмүүс нь ажлын орчиндоо өөрсдийгөө нөлөөлөл багатай хэмээн үнэлдэг нь харагдаж байна. Тэд өөрийгөө бусдад нөлөөлөх чадвар багатай гэж боддог тул эргэн тойрныхоо хүмүүст илүү уусах хандлагатай байдаг. Нөгөө талдаа D болон I төрлийн хүмүүс нь өөрсдийгөө ажлын орчндоо нөлөөлөл ихтэй байдаг гэж үздэг тул илүү өөртөө итгэлтэй байх хандлагатай. Түүнчлэн, D болон C төрлийн хүмүүс ажлын орчиноо таагүй (хаалттай, эсэргүүцэж) хэмээн хүлээж авдаг бол I болон S төрлийн хүмүүс эсрэгээрээ илүү таатай (нөхөрсөг, дэмжлэг үзүүлдэг) хэмээн хүлээж авдаг.',
-      )
+      );
     const x = doc.x;
     doc.text(
       ' Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
@@ -338,6 +339,52 @@ export class PdfService {
       },
     );
     footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Оноо ба өгөгдлийн шинжилгээ');
+    doc
+      .font(fontNormal)
+      .fillColor(colors.black)
+      .text(
+        'Энэхүү хураангуй нь таны хувь хүний тайлан хэрхэн боловсруулагдсан болохыг харуулж байна. Асуумжийн “байнга”, “бараг үгүй” гэсэн сонголтуудад таны хариулсан үр дүнд үндэслэн өгөгдлийн шинжилгээ хийсэн. Мөн таны хамгийн өндөр оноо авсан DiSC төрөл, хүчний индексийн оноо, хувь хүний хэв шинжийг тодорхойлсон.',
+      )
+      .moveDown(2);
+    doc
+      .font(fontBold)
+      .fontSize(fz.lg)
+      .fillColor(colors.orange)
+      .text('Хариултын дэлгэрэнгүй');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+    // table
+    doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y)
+      .stroke()
+      .moveDown();
+    doc
+      .font(fontNormal)
+      .fontSize(fz.sm)
+      .text('Танд зонхилж буй шинж: ', { continued: true })
+      .font(fontBold)
+      .text(`${firstLetterUpper(style.text)} (${result.result.toUpperCase()})`);
+    doc
+      .font(fontNormal)
+      .fontSize(fz.sm)
+      .text('Хувь хүний хэв шинж: ', { continued: true })
+      .font(fontBold)
+      .text(`${DISC.enMn[result.value]}`);
+    doc
+      .font(fontNormal)
+      .fontSize(fz.sm)
+      .text('Сегментийн тоо: ', { continued: true })
+      .font(fontBold)
+      .text(`${result.segment ?? ''}`);
   }
 
   async belbinTemplate(

@@ -58,6 +58,8 @@ export class ResultEntity {
 
   @Column({ nullable: true })
   result: string;
+  @Column({ nullable: true })
+  segment: string;
   // in disc (undershift | overshift)
   @Column({ nullable: true })
   value: string;
