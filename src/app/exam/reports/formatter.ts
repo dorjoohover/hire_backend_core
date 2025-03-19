@@ -4,8 +4,25 @@ export const colors = {
   black: '#231F20',
   orange: '#F36421',
   red: '#ED1C45',
+  redSecondary: '#D6483E',
   grey: '#ccc',
   light: '#e2e2e2',
+  green: '#518138',
+  yellow: '#EDA600',
+  blue: '#2DA9FF',
+};
+
+export const fz = {
+  xs: 12,
+  md: 14,
+  sm: 13,
+  lg: 16,
+  xl: 20,
+  xl2: 44,
+};
+
+export const lh = {
+  md: 1.2,
 };
 
 export const assetPath = (p: string) => {
@@ -16,8 +33,8 @@ export const header = (
   doc: PDFKit.PDFDocument,
   firstname: string,
   lastname: string,
-  date: Date,
-  assessment: string,
+  // date: Date,
+  assessment?: string,
 ) => {
   doc.fontSize(10);
 
@@ -43,6 +60,8 @@ export const header = (
     .fontSize(13)
     .font(fontBold)
     .text(lastname ?? '', marginX + 97, marginY + 15);
+  doc.x = marginX;
+  doc.y = doc.y + 50;
   // let y = doc.y;
   // doc
   //   .font(fontNormal)
@@ -62,17 +81,19 @@ export const header = (
   //   align: 'right',
   // });
   // doc.moveDown(1);
-  // doc
-  //   .font(fontBold)
-  //   .fontSize(20)
-  //   .fillColor(colors.orange)
-  //   .text(firstLetterUpper(assessment));
-  // doc
-  //   .moveTo(30, doc.y)
-  //   .strokeColor(colors.orange)
-  //   .lineTo(230, doc.y)
-  //   .stroke()
-  //   .moveDown();
+  if (assessment) {
+    doc
+      .font(fontBold)
+      .fontSize(20)
+      .fillColor(colors.orange)
+      .text(firstLetterUpper(assessment));
+    doc
+      .moveTo(30, doc.y)
+      .strokeColor(colors.orange)
+      .lineTo(230, doc.y)
+      .stroke()
+      .moveDown();
+  }
 };
 
 export const home = (

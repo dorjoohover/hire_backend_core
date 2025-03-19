@@ -1,3 +1,5 @@
+import { colors } from 'src/app/exam/reports/formatter';
+
 export class DISC {
   static pattern = {
     Undershift: [
@@ -2442,4 +2444,23 @@ export class DISC {
       };
     return res;
   }
+
+  static colors = {
+    d: {
+      key: 'green',
+      value: colors.green,
+    },
+    i: {
+      key: 'red',
+      value: colors.redSecondary,
+    },
+    s: {
+      key: 'yellow',
+      value: colors.yellow,
+    },
+    c: {
+      key: 'blue',
+      value: colors.blue,
+    },
+  };
 }
