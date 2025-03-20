@@ -411,6 +411,11 @@ export class PdfService {
       .lineTo(doc.page.width - marginX, y + lineHeight)
       .stroke();
     doc
+      .moveTo(8 * a + marginX, y)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y)
+      .stroke();
+    doc
       .moveTo(marginX, y + 4 * lineHeight)
       .strokeColor(colors.black)
       .lineTo(doc.page.width - marginX, y + 4 * lineHeight)
@@ -463,24 +468,32 @@ export class PdfService {
     const text2 = 'Бараг үгүй';
     const text2Width = doc.widthOfString(text2);
     doc
-      .text(text2, a * 4 - text2Width / 2 + marginX, y + lineHeight * 2)
+      .text(text2, a * 6.5 - text2Width / 2 + marginX, y + lineHeight * 2)
       .font(fontBold);
 
     const text3 = 'Зөрүү';
     const text3Width = doc.widthOfString(text3);
-    doc.text(text3, a * 4 - text3Width / 2 + marginX, y + lineHeight * 3);
+    doc.text(text3, a * 6.5 - text3Width / 2 + marginX, y + lineHeight * 3);
 
     for (const [i, [key, value]] of Object.entries(indexs).entries()) {
       const headerWidth = doc.widthOfString(key.toUpperCase());
       doc
         .font(fontNormal)
-        .text(key.toUpperCase(), a * 8 + i * a - headerWidth / 2 + marginX, y);
+        .text(
+          key.toUpperCase(),
+          a * 8 + i * 2 * a - headerWidth / 2 + marginX,
+          y,
+        );
       const max = `${value.max}`;
       const maxWidth = doc.widthOfString(max);
-      doc.text(max, a * 8 + i * a - maxWidth / 2 + marginX, y + lineHeight);
+      doc.text(max, a * 8 + i * 2 * a - maxWidth / 2 + marginX, y + lineHeight);
       const min = `${Math.abs(value.min)}`;
       const minWidth = doc.widthOfString(min);
-      doc.text(min, a * 8 + i * a - minWidth / 2 + marginX, y + 2 * lineHeight);
+      doc.text(
+        min,
+        a * 8 + i * 2 * a - minWidth / 2 + marginX,
+        y + 2 * lineHeight,
+      );
       doc
         .moveTo(10 * a + marginX + i * 2 * a + 1, y)
         .strokeColor(colors.black)
