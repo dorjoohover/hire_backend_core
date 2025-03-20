@@ -27,6 +27,7 @@ import { ResultDao } from './dao/result.dao';
 import { ResultEntity } from './entities/result.entity';
 import { ResultDetailEntity } from './entities/result.detail.entity';
 import { Belbin } from 'src/assets/report/belbin';
+import { UserAnswerDao } from '../user.answer/user.answer.dao';
 
 @Injectable()
 export class PdfService {
@@ -35,6 +36,8 @@ export class PdfService {
     private single: SinglePdf,
     private disc: DISC,
     private belbin: Belbin,
+    private userAnswer: UserAnswerDao,
+
     private resultDao: ResultDao,
   ) {}
 
@@ -72,6 +75,7 @@ export class PdfService {
     date: Date,
     firstname: string,
     lastname: string,
+    code: number,
   ) {
     doc.addPage();
     const name = result?.firstname ?? result?.lastname ?? '';
@@ -343,11 +347,13 @@ export class PdfService {
     header(doc, firstname, lastname, 'Оноо ба өгөгдлийн шинжилгээ');
     doc
       .font(fontNormal)
+      .fontSize(fz.sm)
       .fillColor(colors.black)
       .text(
         'Энэхүү хураангуй нь таны хувь хүний тайлан хэрхэн боловсруулагдсан болохыг харуулж байна. Асуумжийн “байнга”, “бараг үгүй” гэсэн сонголтуудад таны хариулсан үр дүнд үндэслэн өгөгдлийн шинжилгээ хийсэн. Мөн таны хамгийн өндөр оноо авсан DiSC төрөл, хүчний индексийн оноо, хувь хүний хэв шинжийг тодорхойлсон.',
       )
       .moveDown(2);
+
     doc
       .font(fontBold)
       .fontSize(fz.lg)
@@ -360,6 +366,10 @@ export class PdfService {
       .stroke()
       .moveDown();
     // table
+    let query = `select point, "answerCategory".name from "userAnswer" where code = ${code}`;
+
+    const res = await this.userAnswer.query(query);
+    console.log(res);
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
     doc
       .moveTo(30, doc.y)
@@ -370,6 +380,7 @@ export class PdfService {
     doc
       .font(fontNormal)
       .fontSize(fz.sm)
+      .fillColor(colors.black)
       .text('Танд зонхилж буй шинж: ', { continued: true })
       .font(fontBold)
       .text(`${firstLetterUpper(style.text)} (${result.result.toUpperCase()})`);
@@ -630,7 +641,14 @@ export class PdfService {
       if (exam.assessment.report == ReportType.CORRECT)
         await this.singleTemplate(doc, result, firstname, lastname, date);
       if (exam.assessment.report == ReportType.DISC) {
-        await this.discTemplate(doc, result, date, firstname, lastname);
+        await this.discTemplate(
+          doc,
+          result,
+          date,
+          firstname,
+          lastname,
+          exam.code,
+        );
       }
 
       if (exam.assessment.report == ReportType.BELBIN) {
