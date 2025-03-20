@@ -393,8 +393,8 @@ export class PdfService {
     };
     for (const r of res) {
       if (r.point == 0) continue;
-      if (r.point == 1) indexs[r.name.toLowerCase()] += +r['point'];
-      if (r.point == -1) indexs[r.name.toLowerCase()] += +r['point'];
+      if (r.point == 1) indexs[r.name.toLowerCase()].max += +r['point'];
+      if (r.point == -1) indexs[r.name.toLowerCase()].min += +r['point'];
     }
 
     console.log(res);
