@@ -598,7 +598,7 @@ export class PdfService {
         .strokeColor(value.fill)
         .lineTo(ml + w, mt)
         .stroke();
-      mt += 15;
+      mt += 12;
       doc.image(assetPath(`icons/belbin/${image}`), ml, mt, {
         width: 30,
       });
@@ -613,7 +613,7 @@ export class PdfService {
         .text(firstLetterUpper(value.name), ml, mt + 13, {
           width: w - 30,
         });
-      mt += 20;
+      mt += 15;
       doc
         .fontSize(11)
         .fillColor(colors.black)
