@@ -464,7 +464,7 @@ export class PdfService {
 
     const text1 = 'Байнга';
     const text1Width = doc.widthOfString(text1);
-    doc.text(text1, a * 4 - text1Width / 2 + marginX, y + lineHeight);
+    doc.text(text1, a * 6.5 - text1Width / 2 + marginX, y + lineHeight);
     const text2 = 'Бараг үгүй';
     const text2Width = doc.widthOfString(text2);
     doc
@@ -481,17 +481,17 @@ export class PdfService {
         .font(fontNormal)
         .text(
           key.toUpperCase(),
-          a * 8 + i * 2 * a - headerWidth / 2 + marginX,
+          a * 9 + i * 2 * a - headerWidth / 2 + marginX,
           y,
         );
       const max = `${value.max}`;
       const maxWidth = doc.widthOfString(max);
-      doc.text(max, a * 8 + i * 2 * a - maxWidth / 2 + marginX, y + lineHeight);
+      doc.text(max, a * 9 + i * 2 * a - maxWidth / 2 + marginX, y + lineHeight);
       const min = `${Math.abs(value.min)}`;
       const minWidth = doc.widthOfString(min);
       doc.text(
         min,
-        a * 8 + i * 2 * a - minWidth / 2 + marginX,
+        a * 9 + i * 2 * a - minWidth / 2 + marginX,
         y + 2 * lineHeight,
       );
       doc
@@ -506,7 +506,7 @@ export class PdfService {
           .font(fontBold)
           .text(
             diff,
-            a * 8 + i * a - diffWidth / 2 + marginX,
+            a * 9 + i * a - diffWidth / 2 + marginX,
             y + 3 * lineHeight,
           );
     }
