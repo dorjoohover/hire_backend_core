@@ -369,7 +369,54 @@ export class PdfService {
     let query = `select point, "qac".name from "userAnswer" inner join "questionAnswerCategory" qac on qac.id = "answerCategoryId" where code = ${code}`;
 
     const res = await this.userAnswer.query(query);
+    const indexs = {
+      d: {
+        min: 0,
+        max: 0,
+      },
+      i: {
+        min: 0,
+        max: 0,
+      },
+      s: {
+        min: 0,
+        max: 0,
+      },
+      c: {
+        min: 0,
+        max: 0,
+      },
+      n: {
+        min: 0,
+        max: 0,
+      },
+    };
+    for (const r of res) {
+      if (r.point == 0) continue;
+      if (r.point == 1) indexs[r.name.toLowerCase()] += +r['point'];
+      if (r.point == -1) indexs[r.name.toLowerCase()] += +r['point'];
+    }
+
     console.log(res);
+    console.log(indexs);
+
+    doc
+      .font(fontNormal)
+      .fontSize(fz.sm)
+      .fillColor(colors.black)
+      .text('Үнэлгээний хүснэгт')
+      .text('Байнга')
+      .text('Бараг үгүй')
+      .font(fontBold)
+      .text('Зөрүү');
+
+    for (const [i, v] of Object.entries(indexs)) {
+      doc.font(fontNormal).text(i.toUpperCase());
+      doc.text(`${v.max}`);
+      doc.text(`${Math.abs(v.min)}`);
+      doc.font(fontNormal).text(`${v.max + v.min}`);
+    }
+
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
     doc
       .moveTo(30, doc.y)
