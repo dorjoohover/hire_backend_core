@@ -591,13 +591,14 @@ export class PdfService {
       const value = this.belbin.result(Belbin.values[i]);
       const image = value.icon;
       let ml = marginX + (i % 3) * w;
-      let mt = v + Math.floor(i / 3) * height + 12;
+      let mt = v + Math.floor(i / 3) * height;
       doc.lineWidth(5);
       doc
         .moveTo(ml, mt)
         .strokeColor(value.fill)
         .lineTo(ml + w, mt)
         .stroke();
+      mt += 15;
       doc.image(assetPath(`icons/belbin/${image}`), ml, mt, {
         width: 30,
       });
@@ -628,7 +629,7 @@ export class PdfService {
       doc.roundedRect(ml, mt, 50, 20, 20).fill(value.fill);
       doc.font(fontBold).fillColor('#ffffff');
       const keyWidth = doc.widthOfString(value.key);
-      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 2);
+      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 6);
     }
 
     doc.lineWidth(1);
