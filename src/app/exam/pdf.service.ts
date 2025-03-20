@@ -366,7 +366,7 @@ export class PdfService {
       .stroke()
       .moveDown();
     // table
-    let query = `select point, "answerCategory".name from "userAnswer" where code = ${code}`;
+    let query = `select point, "qac".name from "userAnswer" inner join "questionAnswerCategory" qac on qac.id = "answerCategoryId" where code = ${code}`;
 
     const res = await this.userAnswer.query(query);
     console.log(res);
