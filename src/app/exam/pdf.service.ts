@@ -405,19 +405,67 @@ export class PdfService {
     doc.font(fontNormal).fontSize(fz.sm).fillColor(colors.black);
     y = doc.y;
     const titleWidth = doc.widthOfString('Үнэлгээний хүснэгт');
+    doc
+      .moveTo(marginX, y + lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y + lineHeight)
+      .stroke();
+    doc
+      .moveTo(marginX, y + 4 * lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y + lineHeight)
+      .stroke();
+    doc
+      .moveTo(5 * a + marginX, y + 2 * lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y + 2 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(5 * a + marginX, y + 3 * lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y + 3 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(marginX, y + lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(marginX, y + 4 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(5 * a + marginX, y + lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(5 * a + marginX, y + 4 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(8 * a + marginX, y)
+      .strokeColor(colors.black)
+      .lineTo(8 * a + marginX, y + 4 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(8 * a + marginX, y)
+      .strokeColor(colors.black)
+      .lineTo(8 * a + marginX, y + 4 * lineHeight)
+      .stroke();
+    doc
+      .moveTo(8 * a + marginX, y + lineHeight)
+      .strokeColor(colors.black)
+      .lineTo(doc.page.width - marginX, y + lineHeight)
+      .stroke();
+
     doc.text(
       'Үнэлгээний хүснэгт',
       a * 2.5 - titleWidth / 2 + marginX,
       doc.y + lineHeight * 2,
     );
+
     const text1 = 'Байнга';
     const text2 = 'Бараг үгүй';
     const text1Width = doc.widthOfString(text1);
     const text2Width = doc.widthOfString(text2);
     doc
-      .text(text1, a * 8 - text1Width / 2, y + lineHeight)
-      .text(text2, a * 8 - text2Width / 2, y + lineHeight * 2)
+      .text(text1, a * 8 - text1Width / 2 + marginX, y + lineHeight)
+      .text(text2, a * 8 - text2Width / 2 + marginX, y + lineHeight * 2)
       .font(fontBold);
+
     const text3 = 'Зөрүү';
     const text3Width = doc.widthOfString(text3);
     doc.text(text3, a * 8 - text3Width / 2, y + lineHeight * 3);
@@ -426,21 +474,38 @@ export class PdfService {
       const headerWidth = doc.widthOfString(key.toUpperCase());
       doc
         .font(fontNormal)
-        .text(key.toUpperCase(), a * 8 + i * 2 * a - headerWidth / 2, y);
+        .text(
+          key.toUpperCase(),
+          a * 8 + i * 2 * a - headerWidth / 2 + marginX,
+          y,
+        );
       const max = `${value.max}`;
       const maxWidth = doc.widthOfString(max);
-      doc.text(max, a * 8 + i * 2 * a - maxWidth / 2, y + lineHeight);
+      doc.text(max, a * 8 + i * 2 * a - maxWidth / 2 + marginX, y + lineHeight);
       const min = `${Math.abs(value.min)}`;
       const minWidth = doc.widthOfString(min);
-      doc.text(min, a * 8 + i * 2 * a - minWidth / 2, y + 2 * lineHeight);
+      doc.text(
+        min,
+        a * 8 + i * 2 * a - minWidth / 2 + marginX,
+        y + 2 * lineHeight,
+      );
+      doc
+        .moveTo(8 * a + marginX + i * a, y)
+        .strokeColor(colors.black)
+        .lineTo(8 * a + marginX, y + 4 * lineHeight)
+        .stroke();
       const diff = `${value.max + value.min}`;
       const diffWidth = doc.widthOfString(diff);
       if (key.toLowerCase() != 'n')
         doc
-          .font(fontBold) 
-          .text(diff, a * 8 + i * 2 * a - diffWidth / 2, y + 3 * lineHeight);
+          .font(fontBold)
+          .text(
+            diff,
+            a * 8 + i * 2 * a - diffWidth / 2 + marginX,
+            y + 3 * lineHeight,
+          );
     }
-    doc.y = marginX;
+    doc.x = marginX;
 
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
     doc
