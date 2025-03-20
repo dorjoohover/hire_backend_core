@@ -591,8 +591,8 @@ export class PdfService {
       const value = this.belbin.result(Belbin.values[i]);
       const image = value.icon;
       let ml = marginX + i * w;
-      let mt = v + i * height;
-      doc.lineWidth(2);
+      let mt = v + (i / 3) * height;
+      doc.lineWidth(5);
       doc
         .moveTo(ml, mt)
         .strokeColor(value.fill)
@@ -601,7 +601,7 @@ export class PdfService {
       doc.image(assetPath(`icons/belbin/${image}`), ml, mt + 7, {
         width: 30,
       });
-      ml += 30;
+      ml += 36;
       doc
         .font(fontBold)
         .fontSize(fz.sm)
@@ -609,12 +609,15 @@ export class PdfService {
         .text(Belbin.values[i], ml, mt + 7, {
           width: w - 30,
         })
-        .text(value.name, ml, mt + 20, {
+        .text(firstLetterUpper(value.name), ml, mt + 20, {
           width: w - 30,
         });
       mt += 20;
-      doc.fontSize(11).text('Шинж чанар:', ml, mt + 10);
-      mt += 10;
+      doc
+        .fontSize(11)
+        .fillColor(colors.black)
+        .text('Шинж чанар:', ml, mt + 23);
+      mt += 39;
       doc.font(fontNormal).text(value.character, ml, mt, {
         width: w - 30,
       });
@@ -625,9 +628,10 @@ export class PdfService {
       doc.roundedRect(ml, mt, 50, 20, 20).fill(value.fill);
       doc.font(fontBold).fillColor('#ffffff');
       const keyWidth = doc.widthOfString(value.key);
-      doc.text(value.key, ml + 25 + keyWidth / 2, mt + 4);
+      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 4);
     }
 
+    doc.lineWidth(1);
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, assessment.name);
