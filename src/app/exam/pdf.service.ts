@@ -587,19 +587,18 @@ export class PdfService {
     const w = (doc.page.width - marginX * 2) / 3;
     let v = doc.y;
     const height = (doc.page.height - marginY * 2 - 150) / 3;
-    console.log(height);
     for (let i = 0; i < Belbin.values.length; i++) {
       const value = this.belbin.result(Belbin.values[i]);
       const image = value.icon;
       let ml = marginX + (i % 3) * w;
-      let mt = v + Math.floor(i / 3) * height;
+      let mt = v + Math.floor(i / 3) * height + 12;
       doc.lineWidth(5);
       doc
         .moveTo(ml, mt)
         .strokeColor(value.fill)
         .lineTo(ml + w, mt)
         .stroke();
-      doc.image(assetPath(`icons/belbin/${image}`), ml, mt + 7, {
+      doc.image(assetPath(`icons/belbin/${image}`), ml, mt, {
         width: 30,
       });
       ml += 36;
@@ -610,7 +609,7 @@ export class PdfService {
         .text(Belbin.values[i], ml, mt + 7, {
           width: w - 30,
         })
-        .text(firstLetterUpper(value.name), ml, mt + 20, {
+        .text(firstLetterUpper(value.name), ml, mt + 13, {
           width: w - 30,
         });
       mt += 20;
@@ -629,7 +628,7 @@ export class PdfService {
       doc.roundedRect(ml, mt, 50, 20, 20).fill(value.fill);
       doc.font(fontBold).fillColor('#ffffff');
       const keyWidth = doc.widthOfString(value.key);
-      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 4);
+      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 2);
     }
 
     doc.lineWidth(1);
