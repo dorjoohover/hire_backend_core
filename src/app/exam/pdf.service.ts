@@ -413,7 +413,7 @@ export class PdfService {
     doc
       .moveTo(marginX, y + 4 * lineHeight)
       .strokeColor(colors.black)
-      .lineTo(doc.page.width - marginX, y + lineHeight)
+      .lineTo(doc.page.width - marginX, y + 4 * lineHeight)
       .stroke();
     doc
       .moveTo(5 * a + marginX, y + 2 * lineHeight)
@@ -490,9 +490,9 @@ export class PdfService {
         y + 2 * lineHeight,
       );
       doc
-        .moveTo(8 * a + marginX + i * a, y)
+        .moveTo(8 * a + marginX + i * a + 1, y)
         .strokeColor(colors.black)
-        .lineTo(8 * a + marginX, y + 4 * lineHeight)
+        .lineTo(8 * a + marginX + i * a + 1, y + 4 * lineHeight)
         .stroke();
       const diff = `${value.max + value.min}`;
       const diffWidth = doc.widthOfString(diff);
@@ -506,7 +506,7 @@ export class PdfService {
           );
     }
     doc.x = marginX;
-
+    doc.y = doc.y + 50;
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
     doc
       .moveTo(30, doc.y)
