@@ -459,21 +459,21 @@ export class PdfService {
     doc.text(
       'Үнэлгээний хүснэгт',
       a * 2.5 - titleWidth / 2 + marginX,
-      doc.y + lineHeight * 2,
+      doc.y + lineHeight * 2 + 2,
     );
 
     const text1 = 'Байнга';
     const text1Width = doc.widthOfString(text1);
-    doc.text(text1, a * 6.5 - text1Width / 2 + marginX, y + lineHeight);
+    doc.text(text1, a * 6.5 - text1Width / 2 + marginX, y + lineHeight + 2);
     const text2 = 'Бараг үгүй';
     const text2Width = doc.widthOfString(text2);
     doc
-      .text(text2, a * 6.5 - text2Width / 2 + marginX, y + lineHeight * 2)
+      .text(text2, a * 6.5 - text2Width / 2 + marginX, y + lineHeight * 2 + 2)
       .font(fontBold);
 
     const text3 = 'Зөрүү';
     const text3Width = doc.widthOfString(text3);
-    doc.text(text3, a * 6.5 - text3Width / 2 + marginX, y + lineHeight * 3);
+    doc.text(text3, a * 6.5 - text3Width / 2 + marginX, y + lineHeight * 3 + 2);
 
     for (const [i, [key, value]] of Object.entries(indexs).entries()) {
       const headerWidth = doc.widthOfString(key.toUpperCase());
@@ -482,17 +482,21 @@ export class PdfService {
         .text(
           key.toUpperCase(),
           a * 9 + i * 2 * a - headerWidth / 2 + marginX,
-          y,
+          y + 2,
         );
       const max = `${value.max}`;
       const maxWidth = doc.widthOfString(max);
-      doc.text(max, a * 9 + i * 2 * a - maxWidth / 2 + marginX, y + lineHeight);
+      doc.text(
+        max,
+        a * 9 + i * 2 * a - maxWidth / 2 + marginX,
+        y + lineHeight + 2,
+      );
       const min = `${Math.abs(value.min)}`;
       const minWidth = doc.widthOfString(min);
       doc.text(
         min,
         a * 9 + i * 2 * a - minWidth / 2 + marginX,
-        y + 2 * lineHeight,
+        y + 2 * lineHeight + 2,
       );
       doc
         .moveTo(10 * a + marginX + i * 2 * a + 1, y)
@@ -506,8 +510,8 @@ export class PdfService {
           .font(fontBold)
           .text(
             diff,
-            a * 9 + i * a - diffWidth / 2 + marginX,
-            y + 3 * lineHeight,
+            a * 9 + i * 2 * a - diffWidth / 2 + marginX,
+            y + 3 * lineHeight + 2,
           );
     }
     doc.x = marginX;
