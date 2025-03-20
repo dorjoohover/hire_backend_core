@@ -3,7 +3,7 @@ import { VisualizationService } from './visualization.service';
 import path from 'path';
 import fs from 'fs';
 import nodeHtmlToImage from 'node-html-to-image';
-import PDFDocument from 'pdfkit';
+import PDFDocument, { text } from 'pdfkit';
 import {
   assetPath,
   colors,
@@ -309,7 +309,7 @@ export class PdfService {
         width: doc.page.width / 3 - marginX - marginX,
       },
     );
-    const y = doc.y;
+    let y = doc.y;
     doc.text(
       'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
       x,
@@ -400,21 +400,45 @@ export class PdfService {
     console.log(res);
     console.log(indexs);
 
+    const a = (doc.page.width - 2 * marginX) / 18;
+    const lineHeight = 18;
+    doc.font(fontNormal).fontSize(fz.sm).fillColor(colors.black);
+    y = doc.y;
+    const titleWidth = doc.widthOfString('Үнэлгээний хүснэгт');
+    doc.text(
+      'Үнэлгээний хүснэгт',
+      doc.y + lineHeight * 2,
+      a * 2.5 - titleWidth / 2,
+    );
+    const text1 = 'Байнга';
+    const text2 = 'Бараг үгүй';
+    const text1Width = doc.widthOfString(text1);
+    const text2Width = doc.widthOfString(text2);
     doc
-      .font(fontNormal)
-      .fontSize(fz.sm)
-      .fillColor(colors.black)
-      .text('Үнэлгээний хүснэгт')
-      .text('Байнга')
-      .text('Бараг үгүй')
-      .font(fontBold)
-      .text('Зөрүү');
+      .text(text1, y + lineHeight, a * 8 - text1Width / 2)
+      .text(text2, y + lineHeight * 2, a * 8 - text2Width / 2)
+      .font(fontBold);
+    const text3 = 'Зөрүү';
+    const text3Width = doc.widthOfString(text3);
+    doc.text(text3, y + lineHeight * 3, a * 8 - text3Width / 2);
 
-    for (const [i, v] of Object.entries(indexs)) {
-      doc.font(fontNormal).text(i.toUpperCase());
-      doc.text(`${v.max}`);
-      doc.text(`${Math.abs(v.min)}`);
-      doc.font(fontNormal).text(`${v.max + v.min}`);
+    for (const [i, [key, value]] of Object.entries(indexs).entries()) {
+      const headerWidth = doc.widthOfString(key.toUpperCase());
+      doc
+        .font(fontNormal)
+        .text(key.toUpperCase(), y, a * 10 + i * 2 - headerWidth / 2);
+      const max = `${value.max}`;
+      const maxWidth = doc.widthOfString(max);
+      doc.text(max, y + lineHeight, a * 10 + i * 2 - maxWidth / 2);
+      const min = `${Math.abs(value.min)}`;
+      const minWidth = doc.widthOfString(min);
+      doc.text(min, y + 2 * lineHeight, a * 10 + i * 2 - minWidth / 2);
+      const diff = `${value.max + value.min}`;
+      const diffWidth = doc.widthOfString(diff);
+      if (key.toLowerCase() != 'n')
+        doc
+          .font(fontBold)
+          .text(diff, y + 3 * lineHeight, a * 10 + i * 2 - diffWidth / 2);
     }
 
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
