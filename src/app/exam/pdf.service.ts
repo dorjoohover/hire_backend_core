@@ -587,11 +587,13 @@ export class PdfService {
     const w = (doc.page.width - marginX * 2) / 3;
     let v = doc.y;
     const height = (doc.page.height - marginY * 2 - 150) / 3;
+    console.log(height);
     for (let i = 0; i < Belbin.values.length; i++) {
       const value = this.belbin.result(Belbin.values[i]);
       const image = value.icon;
-      let ml = marginX + i * w;
+      let ml = marginX + (i % 3) * w;
       let mt = v + (i / 3) * height;
+      console.log(i / 3);
       doc.lineWidth(5);
       doc
         .moveTo(ml, mt)
