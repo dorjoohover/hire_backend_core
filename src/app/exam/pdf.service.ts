@@ -582,20 +582,51 @@ export class PdfService {
       .text(Belbin.advice)
       .moveDown(2);
     doc.addPage();
-    header(doc, firstname, lastname, result.assessmentName);
-    doc
-      .font(fontBold)
-      .fontSize(16)
-      .fillColor(colors.orange)
-      .text('Белбиний багийн 9 дүр');
-    doc
-      .moveTo(30, doc.y)
-      .strokeColor(colors.orange)
-      .lineTo(75, doc.y)
-      .stroke()
-      .moveDown();
-
+    header(doc, firstname, lastname, 'Белбиний багийн 9 дүр');
     // 9 characters
+    const w = (doc.page.width - marginX * 2) / 3;
+    let v = doc.y;
+    const height = (doc.page.height - marginY * 2 - 150) / 3;
+    for (let i = 0; i < Belbin.values.length; i++) {
+      const value = this.belbin.result(Belbin.values[i]);
+      const image = value.icon;
+      let ml = marginX + i * w;
+      let mt = v + i * height;
+      doc.lineWidth(2);
+      doc
+        .moveTo(ml, mt)
+        .strokeColor(value.fill)
+        .lineTo(ml + w, mt)
+        .stroke();
+      doc.image(assetPath(`icons/belbin/${image}`), ml, mt + 7, {
+        width: 30,
+      });
+      ml += 30;
+      doc
+        .font(fontBold)
+        .fontSize(fz.sm)
+        .fillColor(value.color)
+        .text(Belbin.values[i], ml, mt + 7, {
+          width: w - 30,
+        })
+        .text(value.name, ml, mt + 20, {
+          width: w - 30,
+        });
+      mt += 20;
+      doc.fontSize(11).text('Шинж чанар:', ml, mt + 10);
+      mt += 10;
+      doc.font(fontNormal).text(value.character, ml, mt, {
+        width: w - 30,
+      });
+      const characterHeight = doc.heightOfString(value.character, {
+        width: w - 30,
+      });
+      mt += 10 + characterHeight;
+      doc.roundedRect(ml, mt, 50, 20, 20).fill(value.fill);
+      doc.font(fontBold).fillColor('#ffffff');
+      const keyWidth = doc.widthOfString(value.key);
+      doc.text(value.key, ml + 25 + keyWidth / 2, mt + 4);
+    }
 
     footer(doc);
     doc.addPage();

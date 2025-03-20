@@ -10,6 +10,15 @@ export const colors = {
   green: '#518138',
   yellow: '#EDA600',
   blue: '#2DA9FF',
+  purple: '#A93D73',
+  brown: '#834731',
+  sky: '#91AFD2',
+  steel: '#466499',
+  sun: '#FFD54E',
+  gray: '#AAA5B4',
+  moss: '#BFBB98',
+  rust: '#C24533',
+  leaf: '#82B464',
 };
 
 export const fz = {
@@ -52,14 +61,14 @@ export const header = (
   doc
     .fillColor(colors.black)
     .font(fontNormal)
-    .fontSize(13)
-    .text(lastname ?? '', marginX + 97, marginY);
+    .fontSize(fz.sm)
+    .text(lastname ?? '', marginX + 97, marginY + (firstname ? 0 : 15));
 
   doc
     .fillColor(colors.black)
-    .fontSize(13)
+    .fontSize(fz.sm)
     .font(fontBold)
-    .text(firstname ?? '', marginX + 97, marginY + 15);
+    .text(firstname ?? '', marginX + 97, marginY + 15 - (lastname ? 0 : 14));
   doc.x = marginX;
   doc.y = doc.y + 50;
   // let y = doc.y;
