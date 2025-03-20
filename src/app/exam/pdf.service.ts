@@ -407,38 +407,38 @@ export class PdfService {
     const titleWidth = doc.widthOfString('Үнэлгээний хүснэгт');
     doc.text(
       'Үнэлгээний хүснэгт',
-      doc.y + lineHeight * 2,
       a * 2.5 - titleWidth / 2,
+      doc.y + lineHeight * 2,
     );
     const text1 = 'Байнга';
     const text2 = 'Бараг үгүй';
     const text1Width = doc.widthOfString(text1);
     const text2Width = doc.widthOfString(text2);
     doc
-      .text(text1, y + lineHeight, a * 8 - text1Width / 2)
-      .text(text2, y + lineHeight * 2, a * 8 - text2Width / 2)
+      .text(text1, a * 8 - text1Width / 2, y + lineHeight)
+      .text(text2, a * 8 - text2Width / 2, y + lineHeight * 2)
       .font(fontBold);
     const text3 = 'Зөрүү';
     const text3Width = doc.widthOfString(text3);
-    doc.text(text3, y + lineHeight * 3, a * 8 - text3Width / 2);
+    doc.text(text3, a * 8 - text3Width / 2, y + lineHeight * 3);
 
     for (const [i, [key, value]] of Object.entries(indexs).entries()) {
       const headerWidth = doc.widthOfString(key.toUpperCase());
       doc
         .font(fontNormal)
-        .text(key.toUpperCase(), y, a * 10 + i * 2 - headerWidth / 2);
+        .text(key.toUpperCase(), a * 10 + i * 2 * a - headerWidth / 2, y);
       const max = `${value.max}`;
       const maxWidth = doc.widthOfString(max);
-      doc.text(max, y + lineHeight, a * 10 + i * 2 - maxWidth / 2);
+      doc.text(max, a * 10 + i * 2 * a - maxWidth / 2, y + lineHeight);
       const min = `${Math.abs(value.min)}`;
       const minWidth = doc.widthOfString(min);
-      doc.text(min, y + 2 * lineHeight, a * 10 + i * 2 - minWidth / 2);
+      doc.text(min, a * 10 + i * 2 * a - minWidth / 2, y + 2 * lineHeight);
       const diff = `${value.max + value.min}`;
       const diffWidth = doc.widthOfString(diff);
       if (key.toLowerCase() != 'n')
         doc
           .font(fontBold)
-          .text(diff, y + 3 * lineHeight, a * 10 + i * 2 - diffWidth / 2);
+          .text(diff, a * 10 + i * 2 * a - diffWidth / 2, y + 3 * lineHeight);
     }
 
     doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
