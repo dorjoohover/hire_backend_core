@@ -607,7 +607,7 @@ export class PdfService {
         .font(fontBold)
         .fontSize(fz.sm)
         .fillColor(value.color)
-        .text(Belbin.values[i], ml, mt + 7, {
+        .text(Belbin.values[i], ml, mt , {
           width: w - 30,
         })
         .text(firstLetterUpper(value.name), ml, mt + 13, {
