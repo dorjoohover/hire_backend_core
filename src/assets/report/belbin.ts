@@ -425,13 +425,13 @@ export class Belbin {
       x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
       y,
     );
+    const points = [...new Set(results.map((res) => +res.point))].slice(0, 2);
     const agents = [];
     results.map((res, i) => {
       y = doc.y;
-      const bold =
-        i < 2 ||
-        (+results[i - results.length - 1].point == +results[i].point &&
-          i < 2 - i - results.length);
+
+      const bold = points.includes(+res.point);
+
       if (bold) agents.push(res.value);
       const color = bold ? colors.orange : colors.black;
 
