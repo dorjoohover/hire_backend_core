@@ -438,19 +438,17 @@ export class Belbin {
     doc.image(pie, 75, y - 10, {
       width: doc.page.width - 150,
     });
-    console.log(doc.y);
-    doc.y += (doc.page.width / 425) * 310;
+    doc.y += (doc.page.width / 425) * 310 - 150;
 
     const width = (doc.page.width / 8) * 5;
     let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
 
-    console.log(doc.y);
     y = doc.y + 25;
     const pointSize = (width / 20) * 7;
     const indexSize = (width / 20) * 1;
     const nameSize = (width / 20) * 12;
     doc.font(fontBold).fillColor(colors.black).text(`№`, x, y);
-    doc.text('9 дүр', x + indexSize, y);
+    doc.text('9 дүр', x + indexSize * 3, y);
     const pointWidth = doc.widthOfString(`Оноо`);
     doc.text(
       `Оноо`,
@@ -461,7 +459,7 @@ export class Belbin {
     doc
       .moveTo(x, doc.y)
       .strokeColor(colors.red)
-      .lineTo(x + indexSize + nameSize + pointSize / 2, doc.y)
+      .lineTo(x + indexSize + nameSize + pointSize / 2 + pointWidth / 2, doc.y)
       .stroke();
     doc.y += 9;
     const points = [...new Set(results.map((res) => +res.point))].slice(0, 2);
@@ -477,13 +475,14 @@ export class Belbin {
         .fillColor(color)
         .text(`${i + 1}.`, x, y);
       const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
-      doc.text(name, x + indexSize, y);
+      doc.text(name, x + indexSize * 3, y);
       const pointWidth = doc.widthOfString(`${res.point}`);
       doc.text(
         `${res.point}`,
         x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
         y,
       );
+      doc.y += 5;
     });
     doc.fillColor(colors.black);
     footer(doc);
