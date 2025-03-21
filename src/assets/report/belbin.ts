@@ -276,7 +276,7 @@ export class Belbin {
       .text(value.value, x, y);
     doc.text(firstLetterUpper(value.name), x, y + 14);
     doc.y = y;
-    doc.text(value.agent, {
+    doc.text(value.agent, doc.page.width - 200 - marginX, doc.y, {
       align: 'right',
       width: 200,
     });
