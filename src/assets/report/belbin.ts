@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { color } from 'echarts';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
@@ -43,6 +44,7 @@ export class Belbin {
         ME: 'Шинжээч',
         SP: 'Мэргэжилтэн',
       },
+      color: colors.purple,
     },
     {
       title: 'Үйлдэлд төвлөрсөн дүрүүд',
@@ -51,6 +53,7 @@ export class Belbin {
         IMP: 'Хэрэгжүүлэгч',
         CF: 'Дуусгагч',
       },
+      color: colors.tangerine,
     },
     {
       title: 'Хүмүүст төвлөрсөн дүрүүд',
@@ -59,6 +62,7 @@ export class Belbin {
         TW: 'Багийн тоглогч',
         RI: 'Санаачлагч',
       },
+      color: colors.lime,
     },
   ];
 
@@ -355,18 +359,25 @@ export class Belbin {
       });
 
       doc
-        .moveTo(x + 25 + i * width + i * 22 + marginX, y + 32)
+        .moveTo(x + i * width + i * 22 + marginX, y + 32)
         .strokeColor(colors.red)
-        .lineTo(x + 25 + i * width + i * 22 + marginX + 84, y + 32)
+        .lineTo(x + i * width + i * 22 + marginX + 84, y + 32)
         .stroke();
       let h = y + 40;
       for (const [k, v] of Object.entries(value.values)) {
         const textWidth = doc.widthOfString(`${k.toUpperCase()} ${v}`);
         doc
           .font(fontBold)
-          .text(k.toUpperCase(), x + width / 2 + textWidth / 2, h, {
-            continued: true,
-          })
+          .fillColor(value.color)
+          .text(
+            k.toUpperCase(),
+            x + i * width + i * 22 - titleWidth / 2 + textWidth / 2,
+            h,
+            {
+              continued: true,
+              align: 'center',
+            },
+          )
           .font(fontNormal)
           .text(` ${v}`);
         h += 15;
