@@ -248,7 +248,7 @@ export class Belbin {
   ) {
     const image = value.icon;
     let y = doc.y;
-    let x = doc.x + marginX;
+    let x = marginX;
     doc.lineWidth(5);
     doc
       .moveTo(x, y)
@@ -268,12 +268,13 @@ export class Belbin {
       .text(value.value, x, y);
     doc.text(firstLetterUpper(value.name), x, y + 14);
     doc.y = y;
-    const agentWidth = doc.text(value.agent, {
+    doc.text(value.agent, {
       align: 'right',
       width: 200,
     });
     x = marginX;
-    doc.y += 10;
+    doc.y += 24;
+    doc.x = marginX;
     doc.font(fontNormal).fillColor(colors.black).text(value.description);
     doc
       .font(fontBold)
@@ -401,7 +402,8 @@ export class Belbin {
     doc
       .font(fontBold)
       .fontSize(fz.sm)
-      .text(firstLetterUpper(name))
+      .fillColor(colors.black)
+      .text(firstLetterUpper(name), { continued: true })
       .font(fontNormal)
       .text(' таны багт гүйцэтгэдэг дүр')
       .moveDown();
@@ -427,30 +429,34 @@ export class Belbin {
     doc.image(pie, marginX / 2 + doc.page.width / 8, y - 10, {
       width: (doc.page.width * 3) / 4 - marginX * 2,
     });
+    doc.y += (doc.page.width * 3) / 4 - marginX * 2;
     const width = (doc.page.width / 8) * 5;
     let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
-    y = doc.y;
+    y = doc.y + 25;
     const pointSize = (width / 20) * 7;
     const indexSize = (width / 20) * 1;
     const nameSize = (width / 20) * 12;
-    doc.rect(x, doc.y, width, 16).fill(colors.orange).fillColor(colors.black);
     doc.font(fontBold).fillColor(colors.black).text(`№`, x, y);
 
-    const nameWidth = doc.widthOfString('9 дүр');
-    doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
+    doc.text('9 дүр', x + indexSize + nameSize / 2, y);
     const pointWidth = doc.widthOfString(`Оноо`);
     doc.text(
       `Оноо`,
       x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
       y,
     );
+    doc.y += fz.sm + 7;
+    doc
+      .moveTo(x, doc.y)
+      .strokeColor(colors.red)
+      .lineTo(x + indexSize + nameSize + pointSize, doc.y)
+      .stroke();
+    doc.y += 9;
     const points = [...new Set(results.map((res) => +res.point))].slice(0, 2);
     const agents = [];
     results.map((res, i) => {
       y = doc.y;
-      console.log(points.includes(+res.point));
       const bold = points.includes(+res.point);
-
       if (bold) agents.push(res);
       const color = bold ? colors.orange : colors.black;
 
@@ -459,24 +465,19 @@ export class Belbin {
         .fillColor(color)
         .text(`${i + 1}.`, x, y);
       const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
-      const nameWidth = doc.widthOfString(name);
-      doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
+      doc.text(name, x + indexSize + nameSize / 2, y);
       const pointWidth = doc.widthOfString(`${res.point}`);
-      doc
-        .rect(x + indexSize + nameSize, y - 2, pointSize, 16)
-        .fill(colors.orange)
-        .fillColor('#ffffff');
       doc.text(
         `${res.point}`,
         x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
         y,
       );
     });
+    doc.fillColor(colors.black);
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Таны багт гүйцэтгэдэг дүрүүд');
     for (const agent of agents) {
-      console.log(agent);
       this.agent(doc, agent);
     }
 
