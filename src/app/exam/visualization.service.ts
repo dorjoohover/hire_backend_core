@@ -148,7 +148,7 @@ export class VisualizationService {
       ],
     };
 
-    const canvas = createCanvas(1200, 1200);
+    const canvas = createCanvas(425, 310);
     const chart = echarts.init(canvas as any);
 
     chart.setOption(echartOption);

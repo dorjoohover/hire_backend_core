@@ -245,7 +245,15 @@ export class Belbin {
       agent: string;
       value: string;
     },
+    firstname: string,
+    lastname: string,
   ) {
+    const height = (doc.page.height - marginY * 2 - 150) / 2 - 25;
+    if (doc.page.height - doc.y < height) {
+      footer(doc);
+      doc.addPage();
+      header(doc, firstname, lastname);
+    }
     const image = value.icon;
     let y = doc.y;
     let x = marginX;
@@ -304,6 +312,7 @@ export class Belbin {
       })
       .font(fontNormal)
       .text(value.describe);
+    doc.y += 25;
   }
 
   public async template(
@@ -426,10 +435,10 @@ export class Belbin {
     }
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
-    doc.image(pie, marginX / 2 + doc.page.width / 8, y - 10, {
-      width: (doc.page.width * 3) / 4 - marginX * 2,
+    doc.image(pie, 75, y - 10, {
+      width: doc.page.width - 75,
     });
-    doc.y += (doc.page.width * 3) / 4 - marginX * 2;
+    doc.y += (doc.page.width / 425) * 310;
     const width = (doc.page.width / 8) * 5;
     let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
     y = doc.y + 25;
@@ -437,19 +446,18 @@ export class Belbin {
     const indexSize = (width / 20) * 1;
     const nameSize = (width / 20) * 12;
     doc.font(fontBold).fillColor(colors.black).text(`№`, x, y);
-
-    doc.text('9 дүр', x + indexSize + nameSize / 2, y);
+    doc.text('9 дүр', x + indexSize, y);
     const pointWidth = doc.widthOfString(`Оноо`);
     doc.text(
       `Оноо`,
       x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
       y,
     );
-    doc.y += fz.sm + 7;
+    doc.y += 7;
     doc
       .moveTo(x, doc.y)
       .strokeColor(colors.red)
-      .lineTo(x + indexSize + nameSize + pointSize, doc.y)
+      .lineTo(x + indexSize + nameSize + pointSize / 2, doc.y)
       .stroke();
     doc.y += 9;
     const points = [...new Set(results.map((res) => +res.point))].slice(0, 2);
@@ -465,7 +473,7 @@ export class Belbin {
         .fillColor(color)
         .text(`${i + 1}.`, x, y);
       const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
-      doc.text(name, x + indexSize + nameSize / 2, y);
+      doc.text(name, x + indexSize, y);
       const pointWidth = doc.widthOfString(`${res.point}`);
       doc.text(
         `${res.point}`,
@@ -478,7 +486,7 @@ export class Belbin {
     doc.addPage();
     header(doc, firstname, lastname, 'Таны багт гүйцэтгэдэг дүрүүд');
     for (const agent of agents) {
-      this.agent(doc, agent);
+      this.agent(doc, agent, firstname, lastname);
     }
 
     footer(doc);
