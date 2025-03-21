@@ -357,9 +357,10 @@ export class Belbin {
     },
     firstname: string,
     lastname: string,
+    page = false,
   ) {
     const height = (doc.page.height - marginY * 2 - 150) / 2 - 25;
-    if (doc.page.height - doc.y < height) {
+    if (doc.page.height - doc.y < height || page) {
       footer(doc);
       doc.addPage();
       header(doc, firstname, lastname, value.agent);
@@ -445,7 +446,7 @@ export class Belbin {
       );
 
       doc
-        .moveTo(x + i * width + i * 22 + marginX + (i + 1) * 11, y + 32)
+        .moveTo(x + i * width + i * 22 + marginX + 11, y + 32)
         .strokeColor(colors.red)
         .lineTo(x + i * width + i * 22 + marginX + width - 66, y + 32)
         .stroke();
@@ -476,13 +477,13 @@ export class Belbin {
     }
 
     doc.y += 10;
-
-    doc.font(fontBold).fontSize(24);
+    doc.x = marginX;
+    doc.font(fontBold).fillColor(colors.black).fontSize(24);
     doc.text('=', {
       align: 'center',
     });
     doc.y += 10;
-    doc.text('Өндөр бүтээмж, чанартай гүйцэтгэл', {
+    doc.fontSize(fz.sm).text('Өндөр бүтээмж, чанартай гүйцэтгэл', {
       align: 'center',
     });
     doc.y += 15;
@@ -716,11 +717,16 @@ export class Belbin {
       'teamworker',
       'resource',
     ].map((icon, i) =>
-      doc.image(assetPath(`icons/belbin/${icon}`), i * iconWidth, doc.y, {
-        width: iconWidth - 15,
-      }),
+      doc.image(
+        assetPath(`icons/belbin/${icon}`),
+        marginX + i * iconWidth,
+        doc.y,
+        {
+          width: iconWidth - 15,
+        },
+      ),
     );
-    doc.y += 25;
+    doc.y = doc.y + 10 + iconWidth;
     doc
       .fillColor(colors.black)
       .font(fontBold)
@@ -791,6 +797,8 @@ export class Belbin {
     doc.addPage();
     header(doc, firstname, lastname, 'Дүрүүдийг ашиглан амжилтад хүрэх нь');
     doc
+      .fillColor(colors.black)
+      .fontSize(fz.sm)
       .font(fontNormal)
       .text(
         ' • Ажилчдын албан тушаалд бус багт оруулж буй хувь нэмэрт үндэслэн багийг бүрдүүлэх боломж бүрдэнэ\n • Багийн гишүүд өөрийн зан төлөвөө таньж мэдэх, түүнийгээ бизнесийн хэрэгцээ, шаардлага болон нөхцөл байдалд нийцүүлэх • Тухайн ажил, үүрэг даалгаврыг зөв буюу зохих чадвар, зан төлөв бүхий ажилтан гүйцэтгэснээрээ багийн гүйцэтгэл, ажиллагаа сайжрах • Багийн гишүүд хоорондын харилцаа хэт хувийн бус багийн үр дүнд чиглэсэн болно • Баримтанд суурилсан мэдээлэлтэй шийдвэр гаргалт нь зөн совин эсвэл таамаглал дээр тулгуурлахаас илүү дээр байдаг • Хувь хүмүүсийн зан төлөвийн давуу болон сул талуудыг илүү нарийвчлан судлах, тодорхойлох боломж бүрдэнэ.',
@@ -800,25 +808,45 @@ export class Belbin {
 
     const resultWidth = (doc.page.width - marginX * 2) / 3;
     for (let i = 0; i < Belbin.success.length; i++) {
-      Object.entries(Belbin.success[i].agents).map(([k, v]) => {
+      doc.x = marginX;
+      let x = doc.x;
+      let y = doc.y;
+      Object.entries(Belbin.success[i].agents).map(([k, v], index) => {
         doc.image(
           assetPath('icons/belbin/' + v.icon),
-          doc.page.width - marginX - 100,
-          marginY,
+          resultWidth / 2 - 29 + resultWidth * (i % 3),
+          y,
           {
             width: 47,
           },
         );
-        doc.font(fontBold).fillColor(v.color).text(k.toUpperCase());
+        doc.font(fontBold).fontSize(fz.sm).fillColor(v.color);
+        const keyWidth = doc.widthOfString(`${k.toUpperCase()}`);
+        doc.text(
+          k.toUpperCase(),
+          x + resultWidth / 2 - 29 + resultWidth * (i % 3) - keyWidth / 2,
+          y + 50,
+        );
+        if (index == 0) {
+          doc
+            .font(fontBold)
+            .fontSize(fz.sm)
+            .fillColor(v.color)
+            .text(
+              '+',
+              x + resultWidth / 2 - 29 + resultWidth * (i % 3),
+              y + 50,
+            );
+        }
       });
       doc
-        .moveTo(x, y)
+        .moveTo(x + resultWidth / 2 + i * resultWidth - 42, y)
         .strokeColor(colors.red)
-        .lineTo(doc.page.width - marginX, y)
+        .lineTo(x + resultWidth + 84, y)
         .stroke();
       doc.fillColor(colors.black).text(Belbin.success[i].title);
     }
-
+    doc.x = marginX;
     for (let i = 0; i < results.length; i++) {
       doc.font(fontBold).fontSize(fz.sm);
       let x = doc.x;
@@ -843,10 +871,16 @@ export class Belbin {
     for (let i = 0; i < results.length; i++) {
       if (agents.filter((agent) => agent.key == results[i].key).length == 0) {
         if (head) {
-          header(doc, firstname, lastname, results[i].title);
+          header(doc, firstname, lastname, results[i].agent);
           head = false;
         }
-        this.agent(doc, results[i], firstname, lastname);
+        this.agent(
+          doc,
+          results[i],
+          firstname,
+          lastname,
+          i != 0 && results[i].agent != results[i - 1].agent,
+        );
       }
     }
   }
