@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
@@ -15,6 +16,7 @@ import {
 } from 'src/app/exam/reports/formatter';
 import { VisualizationService } from 'src/app/exam/visualization.service';
 
+@Injectable()
 export class Belbin {
   constructor(private vis: VisualizationService) {}
   static about =
