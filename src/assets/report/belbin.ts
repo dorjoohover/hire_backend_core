@@ -351,7 +351,7 @@ export class Belbin {
     for (let i = 0; i < Belbin.crewValues.length; i++) {
       const value = Belbin.crewValues[i];
       const title = value.title;
-      doc.fontSize(fz.sm).font(fontBold).fillColor(colors.purple);
+      doc.fontSize(fz.sm).font(fontBold).fillColor(value.color);
       const titleWidth = doc.widthOfString(title);
       doc.text(title, x + i * width + i * 22 - titleWidth / 2 + width / 2, y, {
         width: width - 44,
@@ -368,14 +368,12 @@ export class Belbin {
         const textWidth = doc.widthOfString(`${k.toUpperCase()} ${v}`);
         doc
           .font(fontBold)
-          .fillColor(value.color)
           .text(
             k.toUpperCase(),
-            x + i * width + i * 22 - titleWidth / 2 + textWidth / 2,
+            x + i * width + i * 22 - textWidth / 2 + width / 2,
             h,
             {
               continued: true,
-              align: 'center',
             },
           )
           .font(fontNormal)
