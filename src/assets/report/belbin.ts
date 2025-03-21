@@ -21,7 +21,7 @@ import { VisualizationService } from 'src/app/exam/visualization.service';
 export class Belbin {
   constructor(private vis: VisualizationService) {}
   static about =
-    'Энэхүү багт гүйцэтгэх үүргийг тодорхойлох тестийн тайлан нь таны үнэлгээний үр дүнд суурилсан болно. Энэ тайлангаас та дараах зүйлсийг мэдэх боломжтой.\nҮүнд:\n\tТаны багт гүйцэтгэх голлох дүр\n\tБагт оруулж буй хувь нэмэр, таны гүйцэтгэж буй багийн дүр';
+    'Энэхүү багт гүйцэтгэх үүргийг тодорхойлох тестийн тайлан нь таны үнэлгээний үр дүнд суурилсан болно. Энэ тайлангаас та дараах зүйлсийг мэдэх боломжтой.\nҮүнд:\n • Таны багт гүйцэтгэх голлох дүр\n • Багт оруулж буй хувь нэмэр, таны гүйцэтгэж буй багийн дүр';
   static advice =
     'Дан ганц зан төлөвийг тодорхойлох бус багт гүйцэтгэх үүргийг нь давхар бодолцож багийг бүрдүүлэх нь багийн хамтын ажиллагааг сайжруулахад чухал ач холбогдолтой. Белбиний багийн дүрийг тодорхойлох тестийн хувьд хувь хүний ажлын байран дээрх зан төлөв, хариу үйлдлүүдэд суурилан тухайн хүнд тохирох хамгийн тохиромжтой багийн дүрийг тодорхойлдгоороо Психометрик тестүүдээс ялгаатай юм.\n\nЭнэхүү тестийн үр дүнд сайн, муу, зөв, буруу хариулт гэж байхгүй болохыг анхаарна уу. Энэхүү тайлантай танилцсаны дараа багийн гишүүдээ ойлгох, хамтарч ажиллах чадвараа хөгжүүлэх гарын авлагатай ажиллаарай.';
   static values = [
@@ -63,6 +63,87 @@ export class Belbin {
         RI: 'Санаачлагч',
       },
       color: colors.lime,
+    },
+  ];
+
+  static success = [
+    {
+      title: 'Хэрэгцээг тодорхойлох',
+      agents: {
+        sh: {
+          icon: 'shaper',
+          color: colors.rust,
+        },
+        co: {
+          icon: 'coordinator',
+          color: colors.sky,
+        },
+      },
+    },
+    {
+      title: 'Санаа олох',
+      agents: {
+        pl: {
+          icon: 'plant',
+          color: colors.sun,
+        },
+        ri: {
+          icon: 'resource',
+          color: colors.purple,
+        },
+      },
+    },
+    {
+      title: 'Төлөвлөгөө боловсруулах',
+      agents: {
+        me: {
+          icon: 'monitor',
+          color: colors.gray,
+        },
+        sp: {
+          icon: 'specialist',
+          color: colors.moss,
+        },
+      },
+    },
+    {
+      title: 'Холбоо тогтоох',
+      agents: {
+        ri: {
+          icon: 'resource',
+          color: colors.purple,
+        },
+        tw: {
+          icon: 'teamworker',
+          color: colors.leaf,
+        },
+      },
+    },
+    {
+      title: 'Байгууллага бүрдүүлэх',
+      agents: {
+        co: {
+          icon: 'coordinator',
+          color: colors.sky,
+        },
+        imp: {
+          icon: 'implementer',
+          color: colors.steel,
+        },
+      },
+    },
+    {
+      title: 'Байлдан дагуулах',
+      agents: {
+        cf: {
+          icon: 'completer',
+          color: colors.brown,
+        },
+        imp: {
+          icon: 'implementer',
+          color: colors.steel,
+        },
+      },
     },
   ];
 
@@ -281,7 +362,7 @@ export class Belbin {
     if (doc.page.height - doc.y < height) {
       footer(doc);
       doc.addPage();
-      header(doc, firstname, lastname);
+      header(doc, firstname, lastname, value.agent);
     }
     const image = value.icon;
     let y = doc.y;
@@ -315,28 +396,28 @@ export class Belbin {
     doc.font(fontNormal).fillColor(colors.black).text(value.description);
     doc
       .font(fontBold)
-      .text('Шинж чанар: ', {
+      .text(' • Шинж чанар: ', {
         continued: true,
       })
       .font(fontNormal)
       .text(value.character);
     doc
       .font(fontBold)
-      .text('Дуртай зүйлс: ', {
+      .text(' • Дуртай зүйлс: ', {
         continued: true,
       })
       .font(fontNormal)
       .text(value.hobby);
     doc
       .font(fontBold)
-      .text('Багт оруулах хувь нэмэр: ', {
+      .text(' • Багт оруулах хувь нэмэр: ', {
         continued: true,
       })
       .font(fontNormal)
       .text(value.contribution);
     doc
       .font(fontBold)
-      .text('Бусад хүмүүс таныг тодорхойлохдоо: ', {
+      .text(' •  Бусад хүмүүс таныг тодорхойлохдоо: ', {
         continued: true,
       })
       .font(fontNormal)
@@ -364,9 +445,9 @@ export class Belbin {
       );
 
       doc
-        .moveTo(x + i * width + i * 22 + marginX, y + 32)
+        .moveTo(x + i * width + i * 22 + marginX + (i + 1) * 11, y + 32)
         .strokeColor(colors.red)
-        .lineTo(x + i * width + i * 22 + marginX + width - 44, y + 32)
+        .lineTo(x + i * width + i * 22 + marginX + width - 66, y + 32)
         .stroke();
       let h = y + 40;
       for (const [k, v] of Object.entries(value.values)) {
@@ -393,6 +474,23 @@ export class Belbin {
           .text('+', (i + 1) * width + i * 22 + marginX, y + 30);
       }
     }
+
+    doc.y += 10;
+
+    doc.font(fontBold).fontSize(24);
+    doc.text('=', {
+      align: 'center',
+    });
+    doc.y += 10;
+    doc.text('Өндөр бүтээмж, чанартай гүйцэтгэл', {
+      align: 'center',
+    });
+    doc.y += 15;
+    doc
+      .font(fontNormal)
+      .text(
+        ' • Багийн гүйцэтгэлийг ялгарахуйц үр дүнтэй, үр ашигтай байлгахын тулд 9 дүрүүдийн тэнцвэртэй байдлыг хангах эсвэл тохиромжтой хольцыг бүрдүүлэх нь хамгийн чухал.\n • Аль нэг дүрийг бусдаас нь чухалчилж үзэх, эсвэл нэг дүрийг нөгөө дүрээр орлуулах зэрэг нь буруу бөгөөд үр дүнтэй багийн ажиллагааг бий болгож чадахгүй. Тиймээс 9 дүр тус бүрийг чухалчлан авч үзэх нь оновчтой.',
+      );
   }
 
   public async template(
@@ -586,5 +684,170 @@ export class Belbin {
     doc.y += ((doc.page.width - 250) / 340) * 258;
     doc.y += 22;
     this.crew(doc);
+    footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Белбиний тестийг ашигласнаар...');
+    doc
+      .fillColor(colors.black)
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .text('Багт авчрах үр дүн');
+    doc.y += 15;
+    doc
+      .font(fontNormal)
+      .text(
+        'Багийн ажиллагаа гэдэг дан ганц үр дүнд чиглэсэн бус багийн гишүүдийг хувь хүн талаас нь хөгжүүлэх механизм бүхий бүлэглэл байх хэрэгтэй. Өөрийн болон бусад багийн гишүүдийн багт гүйцэтгэх үүрэг, багийн дүрийг тодорхойлсноор багийн гишүүдийг хөгжүүлэх, гүйцэтгэлийг сайжруулах боломж бүрдэнэ.',
+      );
+    doc.y += 20;
+    doc.text(
+      ' • Багийн гүйцэтгэл хамгийн үр дүнтэй, өндөр хэмжээнд байхаар багаа бүрдүүлэх.\n • Одоогийн багийн гишүүдийг хөгжүүлэх, чиглүүлэх.\n • Мултифункционал буюу тал талын чадвар бүхий баг бүрдэнэ.',
+    );
+    doc.y += 25;
+
+    const iconWidth = (doc.page.width - marginX * 2) / 9;
+    [
+      'plant',
+      'monitor',
+      'specialist',
+      'shaper',
+      'implementer',
+      'completer',
+      'coordinator',
+      'teamworker',
+      'resource',
+    ].map((icon, i) =>
+      doc.image(assetPath(`icons/belbin/${icon}`), i * iconWidth, doc.y, {
+        width: iconWidth - 15,
+      }),
+    );
+    doc.y += 25;
+    doc
+      .fillColor(colors.black)
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .text('Ажилтны оролцоо, ажлын идэвхийг сайжруулна');
+    doc
+      .font(fontNormal)
+      .text(
+        'Хувь хүмүүст ажлын байран дах зан төлөвийн давуу талыг тодорхойлж өгнө. Хүн бүрт чадвар, мэдлэг, туршлагын хувьд өөрийн гэсэн давуу тал байдаг. Түүнийгээ ажлын байранд давуу талаа болгон ашиглаж чаддаг байх нь чухал. Судалгаагаар өөрийн онцлог, давуу талаа ашиглаж чаддаг ажилтнууд давуу талаа ашиглаж чаддаггүй ажилтнуудаас 6 дахин илүүтэй ажилдаа дурлаж ажилладаг болохыг тогтоосон байдаг. Белбиний тестийг ашигласнаар:',
+      );
+    doc.y += 20;
+    doc.text(
+      ' • Хүмүүст давуу талаа олж мэдэхэд нь тусална.\n • Ажлын байран дээрх дүр болон хувийн давуу талаа хоршуулан ашиглах боломжтой гэдгийг ойлгоно.\n • Бусдын давуу талыг багийн гүйцэтгэлийг сайжруулахад хэрхэн ашиглаж болохыг ойлгоно.\n • Ажил, үүрэг даалгавар оноож өгөхдөө багийн гишүүдийн онцлог, давуу талуудыг бодитойгоор үнэлж тохирох дүрийг хуваарилах боломжийг олгоно.\n • Хүмүүсийн давуу талыг ашиглахын ач холбогдлыг ойлгож, хэрэгжүүлдэг болно.',
+    );
+    footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Белбиний тестийг ашигласнаар...');
+    doc
+      .fillColor(colors.black)
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .text('Зөрчилдөөний удирдлага');
+    doc.y += 15;
+
+    doc
+      .font(fontNormal)
+      .text(
+        'Аливаа зөрчилдөөн үүсэх хамгийн гол шалтгаан нь хүмүүс хоорондын үл ойлголцол байдаг бөгөөд уг зөрчилдөөн төрөл бүрийн хэлбэрээр илэрдэг. Ёс суртахуунгүй үйлдэл гаргах, ажлын бүтээмж буурах, ажил таслалт ихсэх зэрэг нь цөм зөрчилдөөний хэлбэрүүд юм. Белбиний тестээр дамжуулан багийн дүрүүдийг тодорхойлсноор тухайн багийн гишүүнтэй холбоотой хувийн асуудлыг хөндөх, нөхцөл байдлыг муутгах зэрэг эрсдэлүүдээс сэргийлэх боломжтой юм.',
+      );
+    doc.y += 20;
+    doc.text(
+      ' • Белбин болон хүмүүс хоорондын зөрчилдөөн – Хувь хүмүүс тус бүрийн дүрийг тодорхойлсноор багт үүсч болох үл ойлголцол, зөрчилдөөн зэргийг урьдчилан таамаглаж, сэргийлэх боломжтой болно.\n • Белбин болон баг хоорондын зөрчилдөөн – Заримдаа багийн гишүүд хэт их деталчилсан мэдээлэлд анхаараад том зургаа мартах гээд байдаг хандлага ажиглагддаг. Мөн багууд хоорондоо хэт их өрсөлдөж бие биенийхээ гүйцэтгэл, үр дүнг үл ойшоох, няцаах тохиолдол цөөнгүй байдаг бөгөөд энэ нь баг, газар, хэлтэс хооронд үйл ойлголцол, зөрчилдөөн үүсгээд зогсохгүй байгууллагын үр дүнтэй, бүтээмжтэй байдалд сөргөөр нөлөөлдөг аюултай.',
+    );
+    doc.y += 25;
+
+    [
+      'plant',
+      'monitor',
+      'specialist',
+      'shaper',
+      'implementer',
+      'completer',
+      'coordinator',
+      'teamworker',
+      'resource',
+    ].map((icon, i) =>
+      doc.image(assetPath(`icons/belbin/${icon}`), i * iconWidth, doc.y, {
+        width: iconWidth - 15,
+      }),
+    );
+    doc.y += 25;
+    doc
+      .fillColor(colors.black)
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .text('Манлайллыг хөгжүүлнэ');
+
+    doc
+      .font(fontNormal)
+      .text(
+        '“Өөрийн бусдаас ялгарах хувь хүний шинж чанаруудаа таньж мэдсэн удирдагчид хамгийн итгэл даахуйц манлайлагч, удирдагчид байдаг. Тэд сул талаасаа айж ичдэггүй учраас өөрсдийн арга барилаа тухайн нөхцөл байдалд хэрхэн тааруулж дасан зохицохоо мэддэг, ойлгодог хүмүүс юм”. Лондонгийн бизнесийн сургуулийн Байгууллагын зан төлөвийн профессор: Роб Гофи',
+      );
+    doc.y += 20;
+    doc.text(
+      ' • Белбиний багийн дүрийг тодорхойлох тестээр дамжуулан давуу болон сул талаа тодорхойлох боломжтой бөгөөд ингэснээр тухайн ажилтан үүссэн нөхцөл байдал, ажлын орчинд дасан зохицож үр дүнтэй, өндөр бүтээмжтэй ажиллах боломж бүрдэх юм.',
+    );
+    footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Дүрүүдийг ашиглан амжилтад хүрэх нь');
+    doc
+      .font(fontNormal)
+      .text(
+        ' • Ажилчдын албан тушаалд бус багт оруулж буй хувь нэмэрт үндэслэн багийг бүрдүүлэх боломж бүрдэнэ\n • Багийн гишүүд өөрийн зан төлөвөө таньж мэдэх, түүнийгээ бизнесийн хэрэгцээ, шаардлага болон нөхцөл байдалд нийцүүлэх • Тухайн ажил, үүрэг даалгаврыг зөв буюу зохих чадвар, зан төлөв бүхий ажилтан гүйцэтгэснээрээ багийн гүйцэтгэл, ажиллагаа сайжрах • Багийн гишүүд хоорондын харилцаа хэт хувийн бус багийн үр дүнд чиглэсэн болно • Баримтанд суурилсан мэдээлэлтэй шийдвэр гаргалт нь зөн совин эсвэл таамаглал дээр тулгуурлахаас илүү дээр байдаг • Хувь хүмүүсийн зан төлөвийн давуу болон сул талуудыг илүү нарийвчлан судлах, тодорхойлох боломж бүрдэнэ.',
+      );
+
+    // gap 16
+
+    const resultWidth = (doc.page.width - marginX * 2) / 3;
+    for (let i = 0; i < Belbin.success.length; i++) {
+      Object.entries(Belbin.success[i].agents).map(([k, v]) => {
+        doc.image(
+          assetPath('icons/belbin/' + v.icon),
+          doc.page.width - marginX - 100,
+          marginY,
+          {
+            width: 47,
+          },
+        );
+        doc.font(fontBold).fillColor(v.color).text(k.toUpperCase());
+      });
+      doc
+        .moveTo(x, y)
+        .strokeColor(colors.red)
+        .lineTo(doc.page.width - marginX, y)
+        .stroke();
+      doc.fillColor(colors.black).text(Belbin.success[i].title);
+    }
+
+    for (let i = 0; i < results.length; i++) {
+      doc.font(fontBold).fontSize(fz.sm);
+      let x = doc.x;
+      let y = doc.y + Math.floor(i / 3) * fz.md;
+      const text = `${results[i].key} ${firstLetterUpper(results[i].name)}`;
+      const textWidth = doc.widthOfString(text);
+      doc
+        .fillColor(results[i].color)
+        .text(
+          `${results[i].key}`,
+          x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
+          y,
+          {
+            continued: true,
+          },
+        );
+      doc.font(fontNormal).text(`${firstLetterUpper(results[i].name)}`);
+    }
+
+    doc.addPage();
+    let head = true;
+    for (let i = 0; i < results.length; i++) {
+      if (agents.filter((agent) => agent.key == results[i].key).length == 0) {
+        if (head) {
+          header(doc, firstname, lastname, results[i].title);
+          head = false;
+        }
+        this.agent(doc, results[i], firstname, lastname);
+      }
+    }
   }
 }
