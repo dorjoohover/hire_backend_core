@@ -349,7 +349,7 @@ export class Belbin {
       const title = value.title;
       doc.fontSize(fz.sm).font(fontBold).fillColor(colors.purple);
       const titleWidth = doc.widthOfString(title);
-      doc.text(title, x + i * width + i * 22 - titleWidth / 2, y, {
+      doc.text(title, x + i * width + i * 22 - titleWidth / 2 + width / 2, y, {
         width: width - 44,
         align: 'center',
       });
