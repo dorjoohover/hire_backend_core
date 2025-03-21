@@ -1,6 +1,22 @@
-import { colors } from 'src/app/exam/reports/formatter';
+import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
+import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
+import { ResultEntity } from 'src/app/exam/entities/result.entity';
+import {
+  assetPath,
+  colors,
+  firstLetterUpper,
+  fontBold,
+  fontNormal,
+  footer,
+  fz,
+  header,
+  marginX,
+  marginY,
+} from 'src/app/exam/reports/formatter';
+import { VisualizationService } from 'src/app/exam/visualization.service';
 
 export class Belbin {
+  constructor(private vis: VisualizationService) {}
   static about =
     'Энэхүү багт гүйцэтгэх үүргийг тодорхойлох тестийн тайлан нь таны үнэлгээний үр дүнд суурилсан болно. Энэ тайлангаас та дараах зүйлсийг мэдэх боломжтой.\nҮүнд:\n\tТаны багт гүйцэтгэх голлох дүр\n\tБагт оруулж буй хувь нэмэр, таны гүйцэтгэж буй багийн дүр';
   static advice =
@@ -31,6 +47,7 @@ export class Belbin {
       color: '',
       fill: '',
       icon: '',
+      agent: '',
     };
 
     const value = v.toLowerCase();
@@ -50,6 +67,7 @@ export class Belbin {
         color: colors.sun,
         fill: colors.sun,
         icon: 'plant',
+        agent: 'Бодолд төвлөрсөн дүрүүд',
       };
     }
     if (value == 'monitor/evaluator')
@@ -68,6 +86,7 @@ export class Belbin {
         color: colors.gray,
         fill: colors.gray,
         icon: 'monitor',
+        agent: 'Бодолд төвлөрсөн дүрүүд',
       };
     if (value == 'specialist')
       res = {
@@ -86,6 +105,7 @@ export class Belbin {
         color: colors.moss,
         fill: colors.moss,
         icon: 'specialist',
+        agent: 'Бодолд төвлөрсөн дүрүүд',
       };
     if (value == 'shaper')
       res = {
@@ -104,6 +124,7 @@ export class Belbin {
         color: colors.red,
         fill: colors.rust,
         icon: 'shaper',
+        agent: 'Үйлдэлд төвлөрсөн дүрүүд',
       };
     if (value == 'implementer')
       res = {
@@ -122,6 +143,7 @@ export class Belbin {
         color: colors.steel,
         fill: colors.steel,
         icon: 'implementer',
+        agent: 'Үйлдэлд төвлөрсөн дүрүүд',
       };
     if (value == 'completer/finisher')
       res = {
@@ -140,6 +162,7 @@ export class Belbin {
         color: colors.brown,
         fill: colors.brown,
         icon: 'completer',
+        agent: 'Үйлдэлд төвлөрсөн дүрүүд',
       };
     if (value == 'coordinator')
       res = {
@@ -158,6 +181,7 @@ export class Belbin {
         color: colors.sky,
         fill: colors.sky,
         icon: 'coordinator',
+        agent: 'Хүмүүст төвлөрсөн дүрүүд',
       };
 
     if (value == 'team worker')
@@ -177,6 +201,7 @@ export class Belbin {
         color: colors.leaf,
         fill: colors.leaf,
         icon: 'teamworker',
+        agent: 'Хүмүүст төвлөрсөн дүрүүд',
       };
     if (value == 'resource investigator')
       res = {
@@ -195,7 +220,244 @@ export class Belbin {
         color: colors.purple,
         fill: colors.purple,
         icon: 'resource',
+        agent: 'Хүмүүст төвлөрсөн дүрүүд',
       };
     return res;
+  }
+
+  // template
+
+  public async agent(doc: PDFKit.PDFDocument, agent: string) {
+    const value = this.result(agent);
+    const image = value.icon;
+    let y = doc.y;
+    let x = doc.x + marginX;
+    doc.lineWidth(5);
+    doc
+      .moveTo(x, y)
+      .strokeColor(value.fill)
+      .lineTo(doc.page.width - marginX, y)
+      .stroke();
+    y += 12;
+    doc.image(assetPath(`icons/belbin/${image}`), x, y, {
+      width: 30,
+    });
+    x += 36;
+
+    doc.font(fontBold).fontSize(fz.sm).fillColor(value.color).text(agent, x, y);
+    doc.text(firstLetterUpper(value.name), x, y + 14);
+    doc.y = y;
+    const agentWidth = doc.text(value.agent, {
+      align: 'right',
+      width: 200,
+    });
+    x = marginX;
+    doc.y += 10;
+    doc.font(fontNormal).fillColor(colors.black).text(value.description);
+    doc
+      .font(fontBold)
+      .text('Шинж чанар: ', {
+        continued: true,
+      })
+      .font(fontNormal)
+      .text(value.character);
+    doc
+      .font(fontBold)
+      .text('Дуртай зүйлс: ', {
+        continued: true,
+      })
+      .font(fontNormal)
+      .text(value.hobby);
+    doc
+      .font(fontBold)
+      .text('Багт оруулах хувь нэмэр: ', {
+        continued: true,
+      })
+      .font(fontNormal)
+      .text(value.contribution);
+    doc
+      .font(fontBold)
+      .text('Бусад хүмүүс таныг тодорхойлохдоо: ', {
+        continued: true,
+      })
+      .font(fontNormal)
+      .text(value.describe);
+  }
+
+  public async template(
+    doc: PDFKit.PDFDocument,
+    result: ResultEntity,
+    date: Date,
+    firstname: string,
+    lastname: string,
+    assessment: AssessmentEntity,
+  ) {
+    // doc.addPage();
+    const name = firstname ?? lastname ?? '';
+    header(doc, firstname, lastname, result.assessmentName);
+    doc
+      .font(fontBold)
+      .fillColor(colors.black)
+      .fontSize(14)
+      .text('Юуг хэмжих вэ?');
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(assessment.description)
+      .moveDown(2);
+    doc.font(fontBold).fontSize(14).text('Тайлангийн тухайд');
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(Belbin.about)
+      .moveDown(2);
+    doc.font(fontBold).fontSize(14).text('Зөвлөмж, тодруулга');
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(Belbin.advice)
+      .moveDown(2);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Белбиний багийн 9 дүр');
+    // 9 characters
+    const w = (doc.page.width - marginX * 2) / 3;
+    let v = doc.y;
+    const height = (doc.page.height - marginY * 2 - 150) / 3;
+    for (let i = 0; i < Belbin.values.length; i++) {
+      const value = this.result(Belbin.values[i]);
+      const image = value.icon;
+      let ml = marginX + (i % 3) * w;
+      let mt = v + Math.floor(i / 3) * height;
+      doc.lineWidth(5);
+      doc
+        .moveTo(ml, mt)
+        .strokeColor(value.fill)
+        .lineTo(ml + w, mt)
+        .stroke();
+      mt += 12;
+      doc.image(assetPath(`icons/belbin/${image}`), ml, mt, {
+        width: 30,
+      });
+      ml += 36;
+      doc
+        .font(fontBold)
+        .fontSize(fz.sm)
+        .fillColor(value.color)
+        .text(Belbin.values[i], ml, mt, {
+          width: w - 30,
+        })
+        .text(firstLetterUpper(value.name), ml, mt + 13, {
+          width: w - 30,
+        });
+      mt += 15;
+      doc
+        .fontSize(11)
+        .fillColor(colors.black)
+        .text('Шинж чанар:', ml, mt + 23);
+      mt += 39;
+      doc.font(fontNormal).text(value.character, ml, mt, {
+        width: w - 30,
+      });
+      const characterHeight = doc.heightOfString(value.character, {
+        width: w - 30,
+      });
+      mt += 10 + characterHeight;
+      doc.roundedRect(ml, mt, 50, 20, 20).fill(value.fill);
+      doc.font(fontBold).fillColor('#ffffff');
+      const keyWidth = doc.widthOfString(value.key);
+      doc.text(value.key.toUpperCase(), ml + 25 - keyWidth / 2, mt + 6);
+    }
+
+    doc.lineWidth(1);
+    footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Үр дүн');
+
+    doc
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .text(firstLetterUpper(name))
+      .font(fontNormal)
+      .text(' таны багт гүйцэтгэдэг дүр')
+      .moveDown();
+    const details: ResultDetailEntity[] = result.details;
+    const indicator = [];
+    const data = [];
+    const results = [];
+    const max = details.reduce(
+      (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
+      details[0],
+    );
+    for (const detail of details) {
+      const result = this.result(detail.value);
+      indicator.push({
+        name: result.name,
+        max: +max.cause,
+      });
+      data.push(+detail.cause);
+      results.push({ ...result, point: +detail.cause });
+    }
+    let y = doc.y;
+    const pie = await this.vis.createRadar(indicator, data);
+    doc.image(pie, marginX / 2 + doc.page.width / 8, y - 10, {
+      width: (doc.page.width * 3) / 4 - marginX * 2,
+    });
+    const width = (doc.page.width / 8) * 5;
+    let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
+    y = doc.y;
+    const pointSize = (width / 20) * 7;
+    const indexSize = (width / 20) * 1;
+    const nameSize = (width / 20) * 12;
+    doc.rect(x, doc.y, width, 16).fill(colors.orange).fillColor(colors.black);
+    doc.font(fontBold).fillColor(colors.black).text(`№`, x, y);
+
+    const nameWidth = doc.widthOfString('9 дүр');
+    doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
+    const pointWidth = doc.widthOfString(`Оноо`);
+    doc.text(
+      `Оноо`,
+      x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
+      y,
+    );
+    const agents = [];
+    results.map((res, i) => {
+      y = doc.y;
+      const bold =
+        i < 2 ||
+        (+results[i - results.length - 1].point == +results[i].point &&
+          i < 2 - i - results.length);
+      if (bold) agents.push(res.value);
+      const color = bold ? colors.orange : colors.black;
+
+      doc
+        .font(bold ? fontBold : fontNormal)
+        .fillColor(color)
+        .text(`${i + 1}.`, x, y);
+      const name = `${res.key.toUpperCase()} - ${firstLetterUpper(res.name)}`;
+      const nameWidth = doc.widthOfString(name);
+      doc.text(name, x + indexSize + nameSize / 2 - nameWidth / 2, y);
+      const pointWidth = doc.widthOfString(`${res.point}`);
+      doc
+        .rect(x + indexSize + nameSize, y - 2, pointSize, 16)
+        .fill(colors.orange)
+        .fillColor('#ffffff');
+      doc.text(
+        `${res.point}`,
+        x + indexSize + nameSize + pointSize / 2 - pointWidth / 2,
+        y,
+      );
+    });
+    footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Таны багт гүйцэтгэдэг дүрүүд');
+    for (const agent of agents) {
+      this.agent(doc, agent);
+    }
+
+    footer(doc);
   }
 }
