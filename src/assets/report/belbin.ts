@@ -732,6 +732,7 @@ export class Belbin {
       .font(fontBold)
       .fontSize(fz.sm)
       .text('Ажилтны оролцоо, ажлын идэвхийг сайжруулна');
+    doc.y += 25;
     doc
       .font(fontNormal)
       .text(
@@ -788,7 +789,7 @@ export class Belbin {
       .font(fontBold)
       .fontSize(fz.sm)
       .text('Манлайллыг хөгжүүлнэ');
-
+    doc.y += 25;
     doc
       .font(fontNormal)
       .text(
@@ -819,7 +820,7 @@ export class Belbin {
       Object.entries(Belbin.success[i].agents).map(([k, v], index) => {
         doc.image(
           assetPath('icons/belbin/' + v.icon),
-          resultWidth / 2 - 29 + resultWidth * (i % 3) + index * 18,
+          resultWidth / 2 - 29 + resultWidth * (i % 3) + index * 65,
           y,
           {
             width: 47,
@@ -852,7 +853,7 @@ export class Belbin {
       doc
         .moveTo(x + resultWidth / 2 + i * resultWidth - 42, y + 70)
         .strokeColor(colors.red)
-        .lineTo(x + resultWidth + 84, y + 70)
+        .lineTo(x + resultWidth / 2 + i * resultWidth - 42 + 84, y + 70)
         .stroke();
 
       doc
