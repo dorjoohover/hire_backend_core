@@ -35,7 +35,32 @@ export class Belbin {
     'Resource Investigator',
   ];
 
-  static agents = {};
+  static crewValues = [
+    {
+      title: 'Бодолд төвлөрсөн дүрүүд',
+      values: {
+        PL: 'Сэтгэгч',
+        ME: 'Шинжээч',
+        SP: 'Мэргэжилтэн',
+      },
+    },
+    {
+      title: 'Үйлдэлд төвлөрсөн дүрүүд',
+      values: {
+        SH: 'Хэлбэржүүлэгч',
+        IMP: 'Хэрэгжүүлэгч',
+        CF: 'Дуусгагч',
+      },
+    },
+    {
+      title: 'Хүмүүст төвлөрсөн дүрүүд',
+      values: {
+        CO: 'Зохицуулагч',
+        TW: 'Багийн тоглогч',
+        RI: 'Санаачлагч',
+      },
+    },
+  ];
 
   public result(v: string) {
     let res = {
@@ -276,9 +301,9 @@ export class Belbin {
       .text(value.value, x, y);
     doc.text(firstLetterUpper(value.name), x, y + 14);
     doc.y = y;
-    doc.text(value.agent, doc.page.width - 150 - marginX, doc.y, {
+    doc.text(value.agent, doc.page.width - 100 - marginX, doc.y, {
       align: 'right',
-      width: 150,
+      width: 100,
     });
     x = marginX;
     doc.y += 24;
@@ -313,6 +338,45 @@ export class Belbin {
       .font(fontNormal)
       .text(value.describe);
     doc.y += 25;
+  }
+
+  public async crew(doc: PDFKit.PDFDocument) {
+    let y = doc.y;
+    const width = (doc.page.width - marginX * 2 - 44) / 3;
+    let x = marginX;
+    for (let i = 0; i < Belbin.crewValues.length; i++) {
+      const value = Belbin.crewValues[i];
+      const title = value.title;
+      doc.fontSize(fz.sm).font(fontBold).fillColor(colors.purple);
+      const titleWidth = doc.widthOfString(title);
+      doc.text(title, x + i * width + i * 22 + titleWidth / 2, y, {
+        width: width - 44,
+      });
+
+      doc
+        .moveTo(x + 25 + i * width + i * 22 + marginX, y)
+        .strokeColor(colors.red)
+        .lineTo(x + 25 + i * width + i * 22 + marginX + 84, y)
+        .stroke();
+      let h = y + 40;
+      for (const [k, v] of Object.entries(value.values)) {
+        const textWidth = doc.widthOfString(`${k.toUpperCase()} ${v}`);
+        doc
+          .font(fontBold)
+          .text(k.toUpperCase(), x + width / 2 + textWidth / 2, y, {
+            continued: true,
+          })
+          .font(fontNormal)
+          .text(` ${v}`);
+        h += 15;
+      }
+      if (i < 2) {
+        doc
+          .fontSize(24)
+          .font(fontBold)
+          .text('+', (i + 1) * width + i * 22, y + 30);
+      }
+    }
   }
 
   public async template(
@@ -491,7 +555,17 @@ export class Belbin {
     for (const agent of agents) {
       this.agent(doc, agent, firstname, lastname);
     }
-
     footer(doc);
+    doc.addPage();
+    header(doc, firstname, lastname, 'Баг доторх дүрүүд');
+    doc
+      .fillColor(colors.black)
+      .fontSize(fz.sm)
+      .text('Белбиний 9 дүрийг дараах 3 ангилалд авч үздэг.');
+    doc.image(assetPath('icons/agent'), 125, doc.y, {
+      width: doc.page.width - 250,
+    });
+    doc.y += ((doc.page.width - 250) / 340) * 258;
+    doc.y += 22;
   }
 }

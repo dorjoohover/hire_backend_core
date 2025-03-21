@@ -19,6 +19,8 @@ export const colors = {
   moss: '#BFBB98',
   rust: '#C24533',
   leaf: '#82B464',
+  lime: '#36B445',
+  tangerine: '#F05A27',
 };
 
 export const fz = {
