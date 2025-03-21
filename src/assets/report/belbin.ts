@@ -230,6 +230,7 @@ export class Belbin {
   // template
 
   public async agent(doc: PDFKit.PDFDocument, agent: string) {
+    console.log(agent)
     const value = this.result(agent);
     const image = value.icon;
     let y = doc.y;
@@ -457,6 +458,7 @@ export class Belbin {
     doc.addPage();
     header(doc, firstname, lastname, 'Таны багт гүйцэтгэдэг дүрүүд');
     for (const agent of agents) {
+      console.log(agent)
       this.agent(doc, agent);
     }
 
