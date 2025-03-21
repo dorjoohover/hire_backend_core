@@ -436,11 +436,15 @@ export class Belbin {
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
     doc.image(pie, 75, y - 10, {
-      width: doc.page.width - 75,
+      width: doc.page.width - 150,
     });
+    console.log(doc.y);
     doc.y += (doc.page.width / 425) * 310;
+
     const width = (doc.page.width / 8) * 5;
     let x = doc.x + (doc.page.width / 8) * 1.5 - marginX;
+
+    console.log(doc.y);
     y = doc.y + 25;
     const pointSize = (width / 20) * 7;
     const indexSize = (width / 20) * 1;
