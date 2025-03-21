@@ -430,9 +430,10 @@ export class Belbin {
     const agents = [];
     results.map((res, i) => {
       y = doc.y;
-
+      console.log(points.includes(+res.point))
       const bold = points.includes(+res.point);
-
+      console.log(res)
+      console.log(res.value)
       if (bold) agents.push(res.value);
       const color = bold ? colors.orange : colors.black;
 
