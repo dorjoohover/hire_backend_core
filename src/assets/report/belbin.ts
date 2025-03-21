@@ -229,9 +229,23 @@ export class Belbin {
 
   // template
 
-  public async agent(doc: PDFKit.PDFDocument, agent: string) {
-    console.log(agent)
-    const value = this.result(agent);
+  public async agent(
+    doc: PDFKit.PDFDocument,
+    value: {
+      name: string;
+      key: string;
+      description: string;
+      hobby: string;
+      contribution: string;
+      describe: string;
+      character: string;
+      color: string;
+      fill: string;
+      icon: string;
+      agent: string;
+      value: string;
+    },
+  ) {
     const image = value.icon;
     let y = doc.y;
     let x = doc.x + marginX;
@@ -247,7 +261,11 @@ export class Belbin {
     });
     x += 36;
 
-    doc.font(fontBold).fontSize(fz.sm).fillColor(value.color).text(agent, x, y);
+    doc
+      .font(fontBold)
+      .fontSize(fz.sm)
+      .fillColor(value.color)
+      .text(value.value, x, y);
     doc.text(firstLetterUpper(value.name), x, y + 14);
     doc.y = y;
     const agentWidth = doc.text(value.agent, {
@@ -402,7 +420,7 @@ export class Belbin {
         max: +max.cause,
       });
       data.push(+detail.cause);
-      results.push({ ...result, point: +detail.cause });
+      results.push({ ...result, point: +detail.cause, value: detail.value });
     }
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
@@ -430,11 +448,10 @@ export class Belbin {
     const agents = [];
     results.map((res, i) => {
       y = doc.y;
-      console.log(points.includes(+res.point))
+      console.log(points.includes(+res.point));
       const bold = points.includes(+res.point);
-      console.log(res)
-      console.log(res.value)
-      if (bold) agents.push(res.value);
+
+      if (bold) agents.push(res);
       const color = bold ? colors.orange : colors.black;
 
       doc
@@ -459,7 +476,7 @@ export class Belbin {
     doc.addPage();
     header(doc, firstname, lastname, 'Таны багт гүйцэтгэдэг дүрүүд');
     for (const agent of agents) {
-      console.log(agent)
+      console.log(agent);
       this.agent(doc, agent);
     }
 
