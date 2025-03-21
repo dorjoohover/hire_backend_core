@@ -364,9 +364,9 @@ export class Belbin {
       );
 
       doc
-        .moveTo(x + i * width + (i + 1) * 22 + marginX, y + 32)
+        .moveTo(x + i * width + i * 22 + marginX, y + 32)
         .strokeColor(colors.red)
-        .lineTo(x + i * width + i * 22 + marginX + width - 88, y + 32)
+        .lineTo(x + i * width + i * 22 + marginX + width - 44, y + 32)
         .stroke();
       let h = y + 40;
       for (const [k, v] of Object.entries(value.values)) {
@@ -390,7 +390,7 @@ export class Belbin {
           .fontSize(24)
           .fillColor(colors.black)
           .font(fontBold)
-          .text('+', (i + 1) * width + (i + 1) * 22 + marginX, y + 30);
+          .text('+', (i + 1) * width + i * 22 + marginX, y + 30);
       }
     }
   }
