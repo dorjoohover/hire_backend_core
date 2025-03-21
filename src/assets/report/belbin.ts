@@ -349,21 +349,22 @@ export class Belbin {
       const title = value.title;
       doc.fontSize(fz.sm).font(fontBold).fillColor(colors.purple);
       const titleWidth = doc.widthOfString(title);
-      doc.text(title, x + i * width + i * 22 + titleWidth / 2, y, {
+      doc.text(title, x + i * width + i * 22 - titleWidth / 2, y, {
         width: width - 44,
+        align: 'center',
       });
 
       doc
-        .moveTo(x + 25 + i * width + i * 22 + marginX, y)
+        .moveTo(x + 25 + i * width + i * 22 + marginX, y + 32)
         .strokeColor(colors.red)
-        .lineTo(x + 25 + i * width + i * 22 + marginX + 84, y)
+        .lineTo(x + 25 + i * width + i * 22 + marginX + 84, y + 32)
         .stroke();
       let h = y + 40;
       for (const [k, v] of Object.entries(value.values)) {
         const textWidth = doc.widthOfString(`${k.toUpperCase()} ${v}`);
         doc
           .font(fontBold)
-          .text(k.toUpperCase(), x + width / 2 + textWidth / 2, y, {
+          .text(k.toUpperCase(), x + width / 2 + textWidth / 2, h, {
             continued: true,
           })
           .font(fontNormal)
@@ -569,6 +570,6 @@ export class Belbin {
     });
     doc.y += ((doc.page.width - 250) / 340) * 258;
     doc.y += 22;
-    this.crew(doc)
+    this.crew(doc);
   }
 }
