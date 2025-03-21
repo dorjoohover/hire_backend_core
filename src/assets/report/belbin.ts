@@ -301,9 +301,9 @@ export class Belbin {
       .text(value.value, x, y);
     doc.text(firstLetterUpper(value.name), x, y + 14);
     doc.y = y;
-    doc.text(value.agent, doc.page.width - 100 - marginX, doc.y, {
+    doc.text(value.agent, doc.page.width - 120 - marginX, doc.y, {
       align: 'right',
-      width: 100,
+      width: 120,
     });
     x = marginX;
     doc.y += 24;
@@ -561,11 +561,14 @@ export class Belbin {
     doc
       .fillColor(colors.black)
       .fontSize(fz.sm)
+      .font(fontNormal)
       .text('Белбиний 9 дүрийг дараах 3 ангилалд авч үздэг.');
+    doc.y += 20;
     doc.image(assetPath('icons/belbin/agent'), 125, doc.y, {
       width: doc.page.width - 250,
     });
     doc.y += ((doc.page.width - 250) / 340) * 258;
     doc.y += 22;
+    this.crew(doc)
   }
 }
