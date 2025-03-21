@@ -440,7 +440,7 @@ export class Belbin {
         x + i * width + i * 22 - (titleWidth - 44) / 2 + width / 2,
         y,
         {
-          width: width - 44,
+          width: width - 40,
           align: 'center',
         },
       );
@@ -773,11 +773,16 @@ export class Belbin {
       'teamworker',
       'resource',
     ].map((icon, i) =>
-      doc.image(assetPath(`icons/belbin/${icon}`), i * iconWidth, doc.y, {
-        width: iconWidth - 15,
-      }),
+      doc.image(
+        assetPath(`icons/belbin/${icon}`),
+        marginX + i * iconWidth,
+        doc.y,
+        {
+          width: iconWidth - 15,
+        },
+      ),
     );
-    doc.y += 25;
+    doc.y = doc.y + 10 + iconWidth;
     doc
       .fillColor(colors.black)
       .font(fontBold)
@@ -807,14 +812,14 @@ export class Belbin {
     // gap 16
 
     const resultWidth = (doc.page.width - marginX * 2) / 3;
+    y = doc.y;
     for (let i = 0; i < Belbin.success.length; i++) {
       doc.x = marginX;
       let x = doc.x;
-      let y = doc.y;
       Object.entries(Belbin.success[i].agents).map(([k, v], index) => {
         doc.image(
           assetPath('icons/belbin/' + v.icon),
-          resultWidth / 2 - 29 + resultWidth * (i % 3),
+          resultWidth / 2 - 29 + resultWidth * (i % 3) + index * 18,
           y,
           {
             width: 47,
@@ -824,13 +829,18 @@ export class Belbin {
         const keyWidth = doc.widthOfString(`${k.toUpperCase()}`);
         doc.text(
           k.toUpperCase(),
-          x + resultWidth / 2 - 29 + resultWidth * (i % 3) - keyWidth / 2,
+          x +
+            resultWidth / 2 -
+            29 +
+            resultWidth * (i % 3) -
+            keyWidth / 2 +
+            index * 40,
           y + 50,
         );
         if (index == 0) {
           doc
             .font(fontBold)
-            .fontSize(fz.sm)
+            .fontSize(22)
             .fillColor(v.color)
             .text(
               '+',
@@ -840,13 +850,26 @@ export class Belbin {
         }
       });
       doc
-        .moveTo(x + resultWidth / 2 + i * resultWidth - 42, y)
+        .moveTo(x + resultWidth / 2 + i * resultWidth - 42, y + 70)
         .strokeColor(colors.red)
-        .lineTo(x + resultWidth + 84, y)
+        .lineTo(x + resultWidth + 84, y + 70)
         .stroke();
-      doc.fillColor(colors.black).text(Belbin.success[i].title);
+
+      doc
+        .fillColor(colors.black)
+        .text(
+          Belbin.success[i].title,
+          x + resultWidth / 2 + i * resultWidth - 42,
+          y + 76,
+          {
+            align: 'center',
+            width: 84,
+          },
+        );
+      if (i % 3 == 2) y = doc.y + 25;
     }
     doc.x = marginX;
+    doc.y += 40;
     for (let i = 0; i < results.length; i++) {
       doc.font(fontBold).fontSize(fz.sm);
       let x = doc.x;
@@ -867,13 +890,9 @@ export class Belbin {
     }
 
     doc.addPage();
-    let head = true;
+    // let head = true;
     for (let i = 0; i < results.length; i++) {
       if (agents.filter((agent) => agent.key == results[i].key).length == 0) {
-        if (head) {
-          header(doc, firstname, lastname, results[i].agent);
-          head = false;
-        }
         this.agent(
           doc,
           results[i],
