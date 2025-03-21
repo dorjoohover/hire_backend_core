@@ -352,13 +352,16 @@ export class Belbin {
       const value = Belbin.crewValues[i];
       const title = value.title;
       doc.fontSize(fz.sm).font(fontBold).fillColor(value.color);
-      const titleWidth = doc.widthOfString(title, {
-        width: width - 44,
-      });
-      doc.text(title, x + i * width + i * 22 - titleWidth / 2 + width / 2, y, {
-        width: width - 44,
-        align: 'center',
-      });
+      const titleWidth = doc.widthOfString(title);
+      doc.text(
+        title,
+        x + i * width + i * 22 - (titleWidth - 44) / 2 + width / 2,
+        y,
+        {
+          width: width - 44,
+          align: 'center',
+        },
+      );
 
       doc
         .moveTo(x + i * width + i * 22 + marginX, y + 32)
