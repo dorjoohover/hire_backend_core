@@ -813,6 +813,7 @@ export class Belbin {
     // gap 16
 
     const resultWidth = (doc.page.width - marginX * 2) / 3;
+    doc.y += 20;
     y = doc.y;
     for (let i = 0; i < Belbin.success.length; i++) {
       doc.x = marginX;
@@ -835,17 +836,17 @@ export class Belbin {
             29 +
             resultWidth * (i % 3) -
             keyWidth / 2 +
-            index * 40,
+            index * 58,
           y + 50,
         );
         if (index == 0) {
           doc
             .font(fontBold)
             .fontSize(22)
-            .fillColor(v.color)
+            .fillColor(colors.black)
             .text(
               '+',
-              x + resultWidth / 2 - 29 + resultWidth * (i % 3),
+              resultWidth / 2 + 29 + resultWidth * (i % 3) + index * 65,
               y + 50,
             );
         }
@@ -864,7 +865,7 @@ export class Belbin {
           y + 76,
           {
             align: 'center',
-            width: 84,
+            width: 80,
           },
         );
       if (i % 3 == 2) y = doc.y + 25;
