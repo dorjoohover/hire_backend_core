@@ -911,12 +911,12 @@ export class Belbin {
       .lineTo(doc.page.width - marginX, doc.y)
       .stroke();
     doc.y += 20;
-    y = doc.y;
+    y = doc.y + (doc.page.height - doc.y - 54) / 2;
     x = marginX;
     await Promise.all(
       Object.entries(Belbin.successShort).map(([k, v], i) => {
         doc.font(fontBold).fontSize(fz.sm);
-        let h = y + Math.floor(i / 3) * fz.md;
+        let h = y + Math.floor(i / 3) * fz.lg;
         const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
         const textWidth = doc.widthOfString(text);
 
