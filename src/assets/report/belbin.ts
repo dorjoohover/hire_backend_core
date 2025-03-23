@@ -913,24 +913,26 @@ export class Belbin {
     doc.y += 20;
     y = doc.y;
     x = marginX;
-    Object.entries(Belbin.successShort).map(([k, v], i) => {
-      doc.font(fontBold).fontSize(fz.sm);
-      const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
-      const textWidth = doc.widthOfString(text);
-      console.log(v, k);
-      console.log(x, y)
-      doc
-        .fillColor(v.color)
-        .text(
-          `${k.toUpperCase()} `,
-          x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
-          y + i == 3 ? fz.md * 4 : 0,
-          {
-            continued: true,
-          },
-        );
-      doc.font(fontNormal).text(`${firstLetterUpper(v.name)}`);
-    });
+    await Promise.all(
+      Object.entries(Belbin.successShort).map(([k, v], i) => {
+        doc.font(fontBold).fontSize(fz.sm);
+        const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
+        const textWidth = doc.widthOfString(text);
+        console.log(v, k);
+        console.log(x, y);
+        doc
+          .fillColor(v.color)
+          .text(
+            `${k.toUpperCase()} `,
+            x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
+            y + i == 3 ? fz.md * 4 : 0,
+            {
+              continued: true,
+            },
+          );
+        doc.font(fontNormal).text(`${firstLetterUpper(v.name)}`);
+      }),
+    );
 
     doc.addPage();
     // let head = true;
