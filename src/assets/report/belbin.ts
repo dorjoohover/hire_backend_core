@@ -893,11 +893,11 @@ export class Belbin {
         .fillColor(colors.black)
         .text(
           Belbin.success[i].title,
-          x + resultWidth * (i % 3) + resultWidth / 2 - 43,
+          x + resultWidth * (i % 3) + resultWidth / 2 - 50,
           y + 76,
           {
             align: 'center',
-            width: 86,
+            width: 100,
             lineBreak: true,
           },
         );
@@ -911,10 +911,10 @@ export class Belbin {
       .lineTo(doc.page.width - marginX, doc.y)
       .stroke();
     doc.y += 20;
+    y = doc.y;
+    x = doc.x;
     Object.entries(Belbin.successShort).map(([k, v], i) => {
       doc.font(fontBold).fontSize(fz.sm);
-      let x = doc.x;
-      let y = doc.y + Math.floor(i / 3) * fz.md;
       const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
       const textWidth = doc.widthOfString(text);
       console.log(v, k);
@@ -923,7 +923,7 @@ export class Belbin {
         .text(
           `${k.toUpperCase()} `,
           x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
-          y,
+          y + i == 3 ? fz.md * 4 : 0,
           {
             continued: true,
           },
