@@ -33,6 +33,11 @@ export class UserController {
   create(@Body() dto: CreateUserDto) {
     return this.userService.addUser(dto);
   }
+  @Roles(Role.super_admin)
+  @Get('admin/:id/:role')
+  addAdmin(@Param('id') id: string, @Param('role') role: string) {
+    return this.userService.update(+id, { email: null, role: +role });
+  }
 
   @Post('password')
   @ApiBearerAuth('access-token')
@@ -46,7 +51,7 @@ export class UserController {
         'Хуучин нууц үг тохирохгүй байна.',
         HttpStatus.BAD_REQUEST,
       );
-    await this.userService.updatePassword(user.email, dto.password)
+    await this.userService.updatePassword(user.email, dto.password);
   }
 
   @Public()

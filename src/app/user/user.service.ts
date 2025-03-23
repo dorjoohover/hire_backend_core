@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
+import { Role } from 'src/auth/guards/role/role.enum';
 const saltOrRounds = 1;
 
 @Injectable()
@@ -132,7 +133,11 @@ export class UserService {
     return await this.dao.getByEmail(dto);
   }
   public async update(id: number, dto: CreateUserDto) {
-    return await this.dao.update({ ...dto, id: id });
+    const { email, ...body } = dto;
+
+    return email == null
+      ? await this.dao.update({ ...body, id: id })
+      : await this.dao.update({ ...body, email, id: id });
   }
 
   public async remove(id: number) {
