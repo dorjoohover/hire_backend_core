@@ -911,7 +911,7 @@ export class Belbin {
       .lineTo(doc.page.width - marginX, doc.y)
       .stroke();
     doc.y += 20;
-    y = doc.y + (doc.page.height - doc.y - 54) / 2;
+    y = doc.y + (doc.page.height - doc.y - 154) / 2;
     x = marginX;
     await Promise.all(
       Object.entries(Belbin.successShort).map(([k, v], i) => {
