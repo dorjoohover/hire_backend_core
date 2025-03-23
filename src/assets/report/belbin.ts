@@ -916,7 +916,7 @@ export class Belbin {
     await Promise.all(
       Object.entries(Belbin.successShort).map(([k, v], i) => {
         doc.font(fontBold).fontSize(fz.sm);
-        let h = y + (i / 3) * fz.md * 4;
+        let h = y + Math.floor(i / 3) * fz.md * 4;
         const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
         const textWidth = doc.widthOfString(text);
 
