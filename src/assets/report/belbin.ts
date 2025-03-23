@@ -916,16 +916,16 @@ export class Belbin {
     await Promise.all(
       Object.entries(Belbin.successShort).map(([k, v], i) => {
         doc.font(fontBold).fontSize(fz.sm);
+        let h = y + (i / 3) * fz.md * 4;
         const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
         const textWidth = doc.widthOfString(text);
-        console.log(v, k);
-        console.log(x, y);
+
         doc
           .fillColor(v.color)
           .text(
             `${k.toUpperCase()} `,
             x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
-            y + (i / 3 == 1 ? fz.md * 4 : 0),
+            h,
             {
               continued: true,
             },
