@@ -912,12 +912,13 @@ export class Belbin {
       .stroke();
     doc.y += 20;
     y = doc.y;
-    x = doc.x;
+    x = marginX;
     Object.entries(Belbin.successShort).map(([k, v], i) => {
       doc.font(fontBold).fontSize(fz.sm);
       const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
       const textWidth = doc.widthOfString(text);
       console.log(v, k);
+      console.log(x, y)
       doc
         .fillColor(v.color)
         .text(
