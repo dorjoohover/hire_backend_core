@@ -916,7 +916,7 @@ export class Belbin {
     await Promise.all(
       Object.entries(Belbin.successShort).map(([k, v], i) => {
         doc.font(fontBold).fontSize(fz.sm);
-        let h = y + Math.floor(i / 3) * fz.md * 4;
+        let h = y + Math.floor(i / 3) * fz.md;
         const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
         const textWidth = doc.widthOfString(text);
 
@@ -934,8 +934,6 @@ export class Belbin {
       }),
     );
 
-    doc.addPage();
-    // let head = true;
     for (let i = 0; i < results.length; i++) {
       if (agents.filter((agent) => agent.key == results[i].key).length == 0) {
         this.agent(
