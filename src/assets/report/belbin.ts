@@ -925,7 +925,7 @@ export class Belbin {
           .text(
             `${k.toUpperCase()} `,
             x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
-            y + i == 3 ? fz.md * 4 : y,
+            y + (i / 3 == 1 ? fz.md * 4 : 0),
             {
               continued: true,
             },
