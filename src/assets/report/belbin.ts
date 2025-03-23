@@ -821,7 +821,7 @@ export class Belbin {
       Object.entries(Belbin.success[i].agents).map(([k, v], index) => {
         doc.image(
           assetPath('icons/belbin/' + v.icon),
-          resultWidth / 2 - 29 + resultWidth * (i % 3) + index * 65,
+          x + resultWidth / 2 - 29 + resultWidth * (i % 3) + index * 65,
           y,
           {
             width: 47,
@@ -837,7 +837,7 @@ export class Belbin {
             resultWidth * (i % 3) -
             keyWidth / 2 +
             index * 58,
-          y + 50,
+          y + 53,
         );
         if (index == 0) {
           doc
@@ -846,8 +846,8 @@ export class Belbin {
             .fillColor(colors.black)
             .text(
               '+',
-              resultWidth / 2 + 29 + resultWidth * (i % 3) + index * 65,
-              y + 50,
+              resultWidth / 2 + resultWidth * (i % 3) + index * 65,
+              y + 40,
             );
         }
       });
@@ -857,6 +857,7 @@ export class Belbin {
         .lineTo(x + resultWidth / 2 + i * resultWidth - 42 + 84, y + 70)
         .stroke();
 
+      console.log(Belbin.success[i].title);
       doc
         .fillColor(colors.black)
         .text(
@@ -865,13 +866,14 @@ export class Belbin {
           y + 76,
           {
             align: 'center',
-            width: 80,
+            width: 82,
           },
         );
       if (i % 3 == 2) y = doc.y + 25;
     }
     doc.x = marginX;
     doc.y += 40;
+    console.log(results);
     for (let i = 0; i < results.length; i++) {
       doc.font(fontBold).fontSize(fz.sm);
       let x = doc.x;
@@ -881,7 +883,7 @@ export class Belbin {
       doc
         .fillColor(results[i].color)
         .text(
-          `${results[i].key}`,
+          `${results[i].key.toUpperCase()} `,
           x + resultWidth * (i % 3) + resultWidth / 2 - textWidth / 2,
           y,
           {
