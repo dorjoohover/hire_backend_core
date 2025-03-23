@@ -878,31 +878,26 @@ export class Belbin {
         if (index == 0) {
           doc
             .font(fontBold)
-            .fontSize(22)
+            .fontSize(fz.sm)
             .fillColor(colors.black)
-            .text(
-              '+',
-              x + resultWidth * (i % 3) + resultWidth / 2 - 11,
-              y + 45,
-            );
+            .text('+', x + resultWidth * (i % 3) + resultWidth / 2 - 9, y + 45);
         }
       });
       doc
         .moveTo(x + resultWidth * (i % 3) + resultWidth / 2 - 42, y + 70)
         .strokeColor(colors.red)
-        .lineTo(x + resultWidth * (i % 3) + resultWidth / 2 + 84, y + 70)
+        .lineTo(x + resultWidth * (i % 3) + resultWidth / 2 + 42, y + 70)
         .stroke();
 
-      console.log(Belbin.success[i].title, y);
       doc
         .fillColor(colors.black)
         .text(
           Belbin.success[i].title,
-          x + resultWidth * (i % 3) + resultWidth / 2 - 41,
+          x + resultWidth * (i % 3) + resultWidth / 2 - 43,
           y + 76,
           {
             align: 'center',
-            width: 82,
+            width: 86,
             lineBreak: true,
           },
         );
@@ -922,6 +917,7 @@ export class Belbin {
       let y = doc.y + Math.floor(i / 3) * fz.md;
       const text = `${k.toUpperCase()} ${firstLetterUpper(v.name)}`;
       const textWidth = doc.widthOfString(text);
+      console.log(v, k);
       doc
         .fillColor(v.color)
         .text(
