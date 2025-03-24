@@ -83,7 +83,7 @@ export class UserServiceController {
   @Get('user/:id')
   @ApiParam({ name: 'id' })
   findById(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.findByUser(+id, +user['id'], user['email']);
+    return this.userServiceService.findByUser(+id, +user['id']);
   }
 
   @Get('find/:id')
