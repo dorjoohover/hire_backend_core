@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Not, Repository } from 'typeorm';
+import { DataSource, IsNull, Not, Repository } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { PaymentStatus } from 'src/base/constants';
@@ -28,7 +28,7 @@ export class UserServiceDao {
       where: {
         id,
       },
-      relations: ['assessment']
+      relations: ['assessment'],
     });
     res.status = status;
     await this.db.save(res);
@@ -57,7 +57,7 @@ export class UserServiceDao {
     await this.db.save(res);
   };
 
-  findByUser = async (assId: number, id: number) => {
+  findByUser = async (assId: number, id: number, service: number) => {
     // const responses = await this.dao.findByUser(assId, id);
     // const res = [];
     // for (const response of responses) {
@@ -75,6 +75,7 @@ export class UserServiceDao {
     // return res;
     return await this.db.find({
       where: {
+        id: service == 0 ? Not(IsNull()) : service,
         user: {
           id: id,
         },
