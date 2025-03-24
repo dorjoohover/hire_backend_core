@@ -82,7 +82,7 @@ export class UserServiceDao {
           id: assId == 0 ? Not(assId) : assId,
         },
       },
-      relations: ['assessment', 'exams'],
+      relations: ['assessment', 'exams', 'user'],
     });
   };
 }

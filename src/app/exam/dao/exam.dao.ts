@@ -99,13 +99,13 @@ export class ExamDao {
     return await this.db.find({
       where: {
         service: {
-          id: In(id),
+          id: id.length == 0 ? Not(IsNull()) : In(id),
           user: {
             id: user,
           },
         },
       },
-      relations: ['assessment'],
+      relations: ['assessment', 'service'],
     });
   };
   findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
