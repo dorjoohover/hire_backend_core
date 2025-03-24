@@ -109,3 +109,9 @@ export const OrganizationExampleDto = {
   lastname: 'hire',
   firstname: 'mn',
 };
+
+
+export class EmailSend {
+  @ApiProperty()
+  email: string;
+}

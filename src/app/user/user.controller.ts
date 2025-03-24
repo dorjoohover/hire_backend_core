@@ -12,7 +12,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateOtp, CreateUserDto, PasswordDto } from './dto/create-user.dto';
+import {
+  CreateOtp,
+  CreateUserDto,
+  EmailSend,
+  PasswordDto,
+} from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
@@ -39,6 +44,11 @@ export class UserController {
     return this.userService.update(+id, { email: null, role: +role });
   }
 
+  @Post('email')
+  @Public()
+  send(@Body() dto: EmailSend) {
+    return this.userService.sendConfirmMail(dto.email);
+  }
   @Post('password')
   @ApiBearerAuth('access-token')
   async sendOpt(@Body() dto: CreateOtp, @Request() { user }) {

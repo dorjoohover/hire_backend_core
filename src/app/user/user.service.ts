@@ -42,11 +42,20 @@ export class UserService {
     return res;
   }
   public async addUser(dto: CreateUserDto) {
+    let user = await this.dao.getByEmail(
+      dto.organizationRegisterNumber
+        ? dto.organizationRegisterNumber
+        : dto.email,
+    );
     let password = null;
+
     if (dto.password) {
       password = await bcrypt.hash(dto.password, saltOrRounds);
     }
     if (dto.organizationRegisterNumber) {
+      if (user) {
+        throw new HttpException('Бүртгэлтэй байна.', HttpStatus.BAD_REQUEST);
+      }
       if (
         !dto.organizationPhone ||
         !dto.organizationName ||
