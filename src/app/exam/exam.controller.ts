@@ -107,7 +107,7 @@ export class ExamController {
 
   @Post('user')
   findByUser(@Body() dto: ExamUser, @Request() { user }) {
-    return this.examService.findByUser(dto.id, user['id']);
+    return this.examService.findByUser(dto.id, user['email']);
   }
 
   @Patch(':id')

@@ -511,8 +511,8 @@ export class ExamService extends BaseService {
     return await this.dao.findByService(service);
   }
 
-  public async findByUser(serviceId: number[], id: number) {
-    let res = await this.dao.findByUser(serviceId, id, 0);
+  public async findByUser(serviceId: number[], email: string) {
+    let res = await this.dao.findByUser(serviceId, email, 0);
     const formatted = [];
     for (const r of res) {
       const { assessment, ...body } = r;
