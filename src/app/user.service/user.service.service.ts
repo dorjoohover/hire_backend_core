@@ -129,11 +129,11 @@ export class UserServiceService extends BaseService {
       ex.push(exams);
       res.push({ ...response, exams: examResults });
     }
-    console.log(ex.map(e => e.user?.id))
+    console.log(ex.map(e => e.user))
     const filtered = data.filter(
       (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
     );
-    console.log(filtered.map(f => f.user?.id))
+    console.log(filtered.map(f => f.user))
 
     const invited = await Promise.all(
       filtered.map(async (f) => {
