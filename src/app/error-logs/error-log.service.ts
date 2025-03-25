@@ -21,6 +21,7 @@ export class ErrorLogService {
       const errorEntry = this.errorLogRepository.create({
         message: message,
         name: exception.name,
+
         stack: exception.stack,
         url: request?.url || 'Unknown',
         method: request?.method || 'Unknown',

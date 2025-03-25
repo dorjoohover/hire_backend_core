@@ -1,4 +1,4 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { useContainer, ValidationError } from 'class-validator';
@@ -6,6 +6,7 @@ import { setupSwagger } from './config/swagger';
 import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
 import { json, urlencoded } from 'express';
 import { ErrorLogService } from './app/error-logs/error-log.service';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -31,6 +32,8 @@ async function bootstrap() {
       },
     }),
   );
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, errorLogService))
   setupSwagger(app);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   process.on('uncaughtException', async (error) => {

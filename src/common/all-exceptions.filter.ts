@@ -29,11 +29,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       if (exception instanceof HttpException) {
         status = exception.getStatus();
-        message = exception.getResponse() as string;
+        message = exception.message as string;
       } else if (exception instanceof Error) {
         message = exception.message;
       }
       // Log error in PostgreSQL with IP
+
       await this.errorLogService.logError(
         exception,
         message,
