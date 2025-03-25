@@ -108,7 +108,7 @@ export class ExamDao {
           },
         },
       },
-      relations: ['assessment', 'service'],
+      relations: ['assessment', 'service', 'user'],
     });
   };
   findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
