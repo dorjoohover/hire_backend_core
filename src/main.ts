@@ -5,7 +5,7 @@ import { useContainer, ValidationError } from 'class-validator';
 import { setupSwagger } from './config/swagger';
 import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
 import { json, urlencoded } from 'express';
-import { ErrorLogService } from './app/logs/log.service';
+import { ErrorLogService } from './app/logs/error-log.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

@@ -7,7 +7,8 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { AppLogger } from '../base/logger';
-import { ErrorLogService } from 'src/app/logs/log.service';
+import { ErrorLogService } from 'src/app/logs/error-log.service';
+import { Request } from 'express';
 const logger = new AppLogger();
 
 @Catch(Error)
@@ -22,7 +23,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     try {
       const request = ctx.getRequest<Request>();
-      const clientIp = (request.headers['x-forwarded-for'] as string) || '';
+      const clientIp = request.ip || '';
 
       // Log error in PostgreSQL with IP
       await this.errorLogService.logError(exception, clientIp, request);
