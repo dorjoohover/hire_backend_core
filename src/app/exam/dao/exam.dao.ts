@@ -95,9 +95,12 @@ export class ExamDao {
     });
   };
 
-  findByUser = async (id: number[], user: number) => {
+  findByUser = async (id: number[], user: number, assId: number) => {
     return await this.db.find({
       where: {
+        assessment: {
+          id: assId == 0 ? Not(IsNull()) : assId,
+        },
         service: {
           id: id.length == 0 ? Not(IsNull()) : In(id),
           user: {
