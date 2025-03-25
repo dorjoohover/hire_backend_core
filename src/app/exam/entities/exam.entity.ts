@@ -10,6 +10,7 @@ import {
 import { ExamDetailEntity } from './exam.detail.entity';
 import { UserAnswerEntity } from 'src/app/user.answer/entities/user.answer.entity';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
+import { UserEntity } from 'src/app/user/entities/user.entity';
 
 @Entity('exam')
 export class ExamEntity {
@@ -60,4 +61,6 @@ export class ExamEntity {
   details: ExamDetailEntity[];
   @OneToMany(() => UserAnswerEntity, (userAns) => userAns.exam)
   userAnswers: UserAnswerEntity[];
+  @ManyToOne(() => UserEntity, (user) => user.exams)
+  user: UserEntity; 
 }
