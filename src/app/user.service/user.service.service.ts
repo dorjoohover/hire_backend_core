@@ -127,8 +127,9 @@ export class UserServiceService extends BaseService {
           ...exam,
           result: result,
         });
+        ex.push(exam);
       }
-      ex.push(exams);
+      
       res.push({ ...body, user, exams: examResults });
     }
     const filtered = data.filter(
