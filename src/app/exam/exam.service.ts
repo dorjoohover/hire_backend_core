@@ -139,6 +139,9 @@ export class ExamService extends BaseService {
         firstname: exam?.firstname ?? user?.firstname,
         email: user?.email,
         phone: user?.phone,
+        user: {
+          id: user.id,
+        },
       });
       await this.resultDao.create({
         assessment: exam.assessment.id,
@@ -270,6 +273,9 @@ export class ExamService extends BaseService {
         firstname: user?.firstname,
         email: user?.email,
         phone: user?.phone,
+        user: {
+          id: user.id,
+        },
       });
       return {
         agent,

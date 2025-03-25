@@ -134,8 +134,14 @@ export class UserServiceService extends BaseService {
     const filtered = data.filter(
       (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
     );
-    console.log(ex.length, 'ex');
-    console.log(filtered.length, 'filtered');
+    console.log(
+      ex.map((e) => e.code),
+      'ex',
+    );
+    console.log(
+      filtered.map((f) => f.code),
+      'filtered',
+    );
     // console.log(filtered.map(f => f.user))
 
     const invited = await Promise.all(
