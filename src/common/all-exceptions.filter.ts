@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { AppLogger } from '../base/logger';
-import { ErrorLogService } from 'src/app/logs/error-log.service';
+import { ErrorLogService } from 'src/app/error-logs/error-log.service';
 import { Request } from 'express';
 const logger = new AppLogger();
 
