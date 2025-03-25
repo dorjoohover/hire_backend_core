@@ -24,11 +24,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
     try {
       const request = ctx.getRequest<Request>();
       const clientIp = request.ip || '';
+      let status = 500;
+      let message = 'Internal server error';
 
+      if (exception instanceof HttpException) {
+        status = exception.getStatus();
+        message = exception.getResponse() as string;
+      } else if (exception instanceof Error) {
+        message = exception.message;
+      }
       // Log error in PostgreSQL with IP
-      await this.errorLogService.logError(exception, clientIp, request);
+      await this.errorLogService.logError(
+        exception,
+        message,
+        status,
+        clientIp,
+        request,
+      );
       logger.error({
-        message: exception.message,
+        message: message,
         event: exception.name,
         client: ctx.getRequest()?.user,
         stack: exception.stack,

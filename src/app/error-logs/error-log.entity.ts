@@ -24,6 +24,8 @@ export class ErrorLog {
 
   @Column({ nullable: true })
   method?: string;
+  @Column({ nullable: true })
+  status?: number;
 
   @Column({ nullable: true })
   ip?: string;
