@@ -75,6 +75,7 @@ export class AuthService {
         });
       } else {
         result = {
+          id: res.id,
           firstname: res?.firstname,
           lastname: res?.lastname,
           role: res.role,
