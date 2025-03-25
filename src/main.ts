@@ -5,6 +5,7 @@ import { useContainer, ValidationError } from 'class-validator';
 import { setupSwagger } from './config/swagger';
 import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
 import { json, urlencoded } from 'express';
+import { ErrorLogService } from './app/logs/log.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,6 +15,8 @@ async function bootstrap() {
     origin: '*',
   });
   app.setGlobalPrefix('/api/v1');
+  const errorLogService = app.get(ErrorLogService);
+
   // app.useGlobalGuards(new JwtAuthGuard());
 
   // app.use(json({ limit: '50mb' }));
@@ -30,7 +33,15 @@ async function bootstrap() {
   );
   setupSwagger(app);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
+  process.on('uncaughtException', async (error) => {
+    console.error('Uncaught Exception:', error);
+    await errorLogService.logError(error);
+  });
 
+  process.on('unhandledRejection', async (reason) => {
+    console.error('Unhandled Rejection:', reason);
+    await errorLogService.logError(reason as Error);
+  });
   await app.listen(3000, '0.0.0.0');
   // await app.listen(3001, '0.0.0.0');
 }

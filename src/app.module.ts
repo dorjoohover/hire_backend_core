@@ -22,6 +22,7 @@ import { FormuleModule } from './app/formule/formule.module';
 import { EmailModule } from './auth/email.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 import { BlogModule } from './app/blog/blog.module';
+import { ErrorLogModule } from './app/logs/log.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { BlogModule } from './app/blog/blog.module';
     FeedbackModule,
     FormuleModule,
     UserAnswerModule,
+    ErrorLogModule,
     UserModule,
     UserServiceModule,
   ],
