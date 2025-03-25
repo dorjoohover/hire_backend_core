@@ -35,12 +35,20 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   process.on('uncaughtException', async (error) => {
     console.error('Uncaught Exception:', error);
-    await errorLogService.logError(error);
+    await errorLogService.logError(
+      error,
+      error.message ?? 'uncaughtException',
+      501,
+    );
   });
 
   process.on('unhandledRejection', async (reason) => {
     console.error('Unhandled Rejection:', reason);
-    await errorLogService.logError(reason as Error);
+    await errorLogService.logError(
+      reason as Error,
+      (reason as Error).message ?? 'unhandledRejection',
+      500,
+    );
   });
   await app.listen(3000, '0.0.0.0');
   // await app.listen(3001, '0.0.0.0');
