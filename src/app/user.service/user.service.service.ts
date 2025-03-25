@@ -116,8 +116,6 @@ export class UserServiceService extends BaseService {
     const res = [];
     const ex = [];
     const data = await this.examDao.findByUser([], email, assId);
-    console.log(data.length, 'data');
-    console.log(responses.length, 'data');
     for (const response of responses) {
       const { exams, user, ...body } = response;
       const examResults = [];
@@ -129,21 +127,12 @@ export class UserServiceService extends BaseService {
         });
         ex.push(exam);
       }
-      
+
       res.push({ ...body, user, exams: examResults });
     }
     const filtered = data.filter(
       (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
     );
-    console.log(
-      ex.map((e) => e.code),
-      'ex',
-    );
-    console.log(
-      filtered.map((f) => f.code),
-      'filtered',
-    );
-    // console.log(filtered.map(f => f.user))
 
     const invited = await Promise.all(
       filtered.map(async (f) => {

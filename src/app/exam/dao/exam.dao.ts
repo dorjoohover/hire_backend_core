@@ -106,7 +106,7 @@ export class ExamDao {
           id: id.length == 0 ? Not(IsNull()) : In(id),
         },
       },
-      relations: ['assessment', 'service', 'user'],
+      relations: ['assessment', 'service', 'service.user'],
     });
   };
   findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
