@@ -535,7 +535,7 @@ export class ExamService extends BaseService {
         return {
           ...r,
           user,
-          buyer: r.service.user,
+          buyer: r.service?.user,
           result,
         };
       }),
