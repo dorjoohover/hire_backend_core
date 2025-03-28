@@ -71,11 +71,18 @@ export class PaymentService extends BaseService {
   ) {
     let transactions = [];
     let payments = [];
+    let transactionCount = 0,
+      paymentCount = 0;
     const userInfo = await this.userDao.getUserInfo(userId);
     if (!userInfo)
       throw new HttpException('Хэрэглэгч олдсонгүй', HttpStatus.BAD_REQUEST);
     if (Admins.includes(+user['role'])) {
-      const res = await this.transactionDao.findAll(page, limit, userId);
+      const [res, count] = await this.transactionDao.findAll(
+        page,
+        limit,
+        userId,
+      );
+      transactionCount = count;
       for (const transaction of res) {
         const serviceId = transaction.service.id;
         const exams = await this.examDao.findByService(serviceId);
@@ -102,7 +109,7 @@ export class PaymentService extends BaseService {
       }
     }
 
-    const res = await this.dao.findAll(
+    const [res, count] = await this.dao.findAll(
       Admins.includes(+user['role'])
         ? userId
           ? userInfo.role
@@ -112,6 +119,7 @@ export class PaymentService extends BaseService {
       limit,
       Admins.includes(+user['role']) ? userId : user['id'],
     );
+    paymentCount = count;
     for (const payment of res) {
       payments.push({
         message: payment.message,
@@ -121,7 +129,16 @@ export class PaymentService extends BaseService {
         admin: user['role'] == Role.client ? null : payment.charger,
       });
     }
-    return { transactions, payments };
+    return {
+      transactions: {
+        data: transactions,
+        total: transactionCount,
+      },
+      payments: {
+        data: payments,
+        total: paymentCount,
+      },
+    };
   }
 
   findOne(id: number) {

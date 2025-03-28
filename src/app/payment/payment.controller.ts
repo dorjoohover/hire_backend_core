@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   Request,
-  Query,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import {
@@ -16,7 +15,7 @@ import {
   DateDto,
 } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
-import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 
@@ -31,23 +30,19 @@ export class PaymentController {
   // }
 
   // @Roles(Role.super_admin, Role.tester, Role.admin)
-  @Get('/view')
-  @ApiQuery({ name: 'page' })
-  @ApiQuery({ name: 'id' })
-  @ApiQuery({ name: 'limit' })
-  @ApiQuery({ name: 'role' })
+  @Get('/view/:role/:id/:page/:limit')
+  @ApiParam({ name: 'page' })
+  @ApiParam({ name: 'id' })
+  @ApiParam({ name: 'limit' })
+  @ApiParam({ name: 'role' })
   findAll(
-    @Query('page') page: string,
-    @Query('id') id: string,
-    @Query('limit') limit: string,
-    @Query('role') role: string,
+    @Param('page') page: string,
+    @Param('id') id: string,
+    @Param('limit') limit: string,
+    @Param('role') role: string,
     @Request() { user },
   ) {
-    let r, p, l;
-    !role ? (r = 0) : (r = +role);
-    !page ? (p = 1) : (p = +page);
-    !limit ? (l = 10) : (l = +limit);
-    return this.paymentService.findAll(r, p, l, user, +id);
+    return this.paymentService.findAll(+role, +page, +limit, user, +id);
   }
 
   @Roles(Role.super_admin, Role.tester, Role.admin)

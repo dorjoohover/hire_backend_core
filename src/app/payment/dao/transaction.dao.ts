@@ -71,7 +71,7 @@ export class TransactionDao {
   };
 
   findAll = async (page: number, limit: number, user: number) => {
-    return await this.db.find({
+    return await this.db.findAndCount({
       where: {
         createdUser: user == 0 ? Not(0) : user,
       },

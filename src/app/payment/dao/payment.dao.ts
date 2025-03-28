@@ -42,7 +42,7 @@ export class PaymentDao {
     user: number,
     date?: DateDto,
   ) => {
-    return await this.db.find({
+    return await this.db.findAndCount({
       where: {
         user: {
           role: role == 0 ? Not(role) : role,
