@@ -43,7 +43,6 @@ export class PaymentDao {
     user: number,
     dto?: AdminDto,
   ) => {
-    console.log(dto, role, user);
 
     return await this.db.findAndCount({
       where: {
@@ -57,9 +56,7 @@ export class PaymentDao {
             : Not(IsNull()),
         totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
         method: dto.payment ? In([dto.payment, 4]) : Not(0),
-        // assessment: {
-        //   id: dto.assessmentId ? dto.assessmentId : Not(IsNull()),
-        // },
+        assessment: dto.assessmentId ? { id: dto.assessmentId } : Not(0),
       },
       relations: ['user', 'charger', 'assessment'],
       take: limit,
