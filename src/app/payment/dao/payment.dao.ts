@@ -9,7 +9,7 @@ import {
   Repository,
 } from 'typeorm';
 import { PaymentEntity } from '../entities/payment.entity';
-import { CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
+import { AdminDto, CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class PaymentDao {
     page: number,
     limit: number,
     user: number,
-    date?: DateDto,
+    dto?: AdminDto,
   ) => {
     return await this.db.findAndCount({
       where: {
@@ -49,10 +49,14 @@ export class PaymentDao {
           id: user == 0 ? Not(0) : user,
         },
         createdAt:
-          date?.endDate && date?.startDate
-            ? Between(date.startDate, date.endDate)
+          dto?.endDate && dto?.startDate
+            ? Between(dto.startDate, dto.endDate)
             : Not(IsNull()),
         totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
+        method: dto.payment ? dto.payment : Not(IsNull()),
+        assessment: {
+          id: dto.assessmentId ? dto.assessmentId : Not(IsNull()),
+        },
       },
       relations: ['user', 'charger', 'assessment'],
       take: limit,
@@ -63,20 +67,36 @@ export class PaymentDao {
     });
   };
 
-  findAdmin = async (date: DateDto) => {
+  findAdmin = async (dto: AdminDto) => {
     const res = this.db
       .createQueryBuilder('payment')
       .select('payment.method', 'method')
       .addSelect('SUM(payment."totalPrice")', 'total');
 
-    if (date.endDate && date.startDate) {
-      res.where(
-        'payment."createdAt" <= :end AND payment."createdAt" >= :start',
-        {
-          end: date.endDate,
-          start: date.startDate,
-        },
-      );
+    if (dto.endDate && dto.startDate) {
+      res.andWhere('payment."createdAt" BETWEEN :start AND :end', {
+        start: dto.startDate,
+        end: dto.endDate,
+      });
+    }
+
+    if (dto.assessmentId) {
+      res.andWhere('payment."assessmentId" = :id', {
+        id: dto.assessmentId,
+      });
+    }
+
+    if (dto.role) {
+      res.innerJoin('users', 'user', 'payment."userId" = user.id');
+      res.andWhere('user.role = :role', {
+        role: dto.role,
+      });
+    }
+
+    if (dto.payment) {
+      res.andWhere('payment.method = :payment', {
+        payment: dto.payment,
+      });
     }
 
     res.groupBy('payment.method');

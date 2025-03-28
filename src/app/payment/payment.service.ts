@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { CreatePaymentDto, DateDto } from './dto/create-payment.dto';
+import { AdminDto, CreatePaymentDto, DateDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentDao } from './dao/payment.dao';
 import { TransactionDao } from './dao/transaction.dao';
@@ -51,9 +51,15 @@ export class PaymentService extends BaseService {
     }
   }
 
-  public async findAdmin(date: DateDto, page: number, limit: number) {
-    const totalPrice = await this.dao.findAdmin(date);
-    const [payment, count] = await this.dao.findAll(0, page, limit, 0, date);
+  public async findAdmin(dto: AdminDto, page: number, limit: number) {
+    const totalPrice = await this.dao.findAdmin(dto);
+    const [payment, count] = await this.dao.findAll(
+      dto.role ? dto.role : 0,
+      page,
+      limit,
+      0,
+      dto,
+    );
 
     return {
       totalPrice,

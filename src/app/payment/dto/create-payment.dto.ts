@@ -37,3 +37,12 @@ export class DateDto {
   @ApiProperty({ type: Date })
   endDate: Date;
 }
+
+export class AdminDto extends DateDto {
+  @ApiProperty()
+  role: number;
+  @ApiProperty()
+  assessmentId: number;
+  @ApiProperty()
+  payment: number;
+}

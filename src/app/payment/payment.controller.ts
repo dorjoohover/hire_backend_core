@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import {
+  AdminDto,
   ChargePaymentDto,
   CreatePaymentDto,
   DateDto,
@@ -50,7 +51,7 @@ export class PaymentController {
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })
   findAdmin(
-    @Body() dto: DateDto,
+    @Body() dto: AdminDto,
     @Param('page') page: number,
     @Param('limit') limit: number,
   ) {
