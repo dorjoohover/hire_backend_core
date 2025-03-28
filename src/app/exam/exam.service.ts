@@ -527,7 +527,7 @@ export class ExamService extends BaseService {
     return formatted;
   }
   public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
-    let res = await this.dao.findByAdmin(dto, page, limit);
+    let [res, count] = await this.dao.findByAdmin(dto, page, limit);
     res = await Promise.all(
       res.map(async (r) => {
         const us = await this.userDao.getByEmail(r.email);
@@ -540,7 +540,10 @@ export class ExamService extends BaseService {
         };
       }),
     );
-    return res;
+    return {
+      data: res,
+      total: count,
+    };
   }
   remove(id: number) {
     return `This action removes a #${id} exam`;

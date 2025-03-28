@@ -125,7 +125,7 @@ export class ExamDao {
       whereCondition.email = Like(`%${dto.email}%`);
     }
 
-    return await this.db.find({
+    return await this.db.findAndCount({
       where: whereCondition,
       take: limit,
       skip: (page - 1) * limit,

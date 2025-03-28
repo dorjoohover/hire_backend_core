@@ -23,7 +23,7 @@ export class BlogService {
     page: number,
     user?: number,
   ) {
-    return await this.db.find({
+    const [data, total] = await this.db.findAndCount({
       where: {
         category: type == 0 ? Not(type) : type,
         user: {
@@ -33,6 +33,10 @@ export class BlogService {
       skip: (page - 1) * limit,
       take: limit,
     });
+    return {
+      data,
+      total,
+    };
   }
 
   public async findOne(id: number) {

@@ -28,13 +28,22 @@ export class FeedbackController {
   @ApiParam({ name: 'assessment' })
   @ApiParam({ name: 'page' })
   @ApiParam({ name: 'limit' })
-  findAll(
+  async findAll(
     @Param('type') type: number,
     @Param('assessment') assessment: number,
     @Param('page') page: number,
     @Param('limit') limit: number,
   ) {
-    return this.feedbackService.findAll(type, assessment, page, limit);
+    const [res, count] = await this.feedbackService.findAll(
+      type,
+      assessment,
+      page,
+      limit,
+    );
+    return {
+      data: res,
+      total: count,
+    };
   }
   @Public()
   @Get('status/:assessment')

@@ -34,7 +34,7 @@ export class FeedbackService extends BaseService {
     page: number,
     limit: number,
   ) {
-    return await this._db.find({
+    return await this._db.findAndCount({
       where: {
         type,
         assessment: {
