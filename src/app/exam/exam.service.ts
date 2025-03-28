@@ -527,20 +527,15 @@ export class ExamService extends BaseService {
     return formatted;
   }
   public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
-    let res: any = await this.dao.findByAdmin(dto, page, limit);
+    let res = await this.dao.findByAdmin(dto, page, limit);
     res = await Promise.all(
       res.map(async (r) => {
         const us = await this.userDao.getByEmail(r.email);
         const result = await this.resultDao.findOne(r.code);
-        const { service, ...body } = r;
-        let { user, ...serviceBody } = service;
-        console.log(service);
-        const { password, ...userData } = user;
         return {
-          ...body,
+          ...r,
           user: us,
-          buyer: userData,
-          service: serviceBody,
+          buyer: r.service?.user,
           result,
         };
       }),
