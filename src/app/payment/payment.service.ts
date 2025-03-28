@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreatePaymentDto, DateDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentDao } from './dao/payment.dao';
@@ -72,6 +72,8 @@ export class PaymentService extends BaseService {
     let transactions = [];
     let payments = [];
     const userInfo = await this.userDao.getUserInfo(userId);
+    if (!userInfo)
+      throw new HttpException('Хэрэглэгч олдсонгүй', HttpStatus.BAD_REQUEST);
     if (Admins.includes(+user['role'])) {
       const res = await this.transactionDao.findAll(page, limit, userId);
       for (const transaction of res) {
