@@ -43,6 +43,7 @@ export class PaymentDao {
     user: number,
     dto?: AdminDto,
   ) => {
+    console.log(dto, role, user)
     return await this.db.findAndCount({
       where: {
         user: {
