@@ -534,6 +534,7 @@ export class ExamService extends BaseService {
         const result = await this.resultDao.findOne(r.code);
         const { service, ...body } = r;
         let { user, ...serviceBody } = service;
+        console.log(service);
         const { password, ...userData } = user;
         return {
           ...body,
