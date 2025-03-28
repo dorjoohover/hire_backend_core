@@ -56,7 +56,7 @@ export class PaymentDao {
             : Not(IsNull()),
         totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
         method: dto.payment ? In([dto.payment, 4]) : Not(0),
-        // assessment: dto.assessmentId ? { id: dto.assessmentId } : Not(0),
+        assessment: dto.assessmentId ? { id: dto.assessmentId } : Not(''),
       },
       relations: ['user', 'charger', 'assessment'],
       take: limit,
