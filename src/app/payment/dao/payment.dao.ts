@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   Between,
   DataSource,
+  In,
   IsNull,
   LessThan,
   MoreThan,
@@ -53,7 +54,7 @@ export class PaymentDao {
             ? Between(dto.startDate, dto.endDate)
             : Not(IsNull()),
         totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
-        method: dto.payment ? dto.payment : Not(IsNull()),
+        method: dto.payment ? In([dto.payment, 4]) : Not(IsNull()),
         assessment: {
           id: dto.assessmentId ? dto.assessmentId : Not(IsNull()),
         },
@@ -94,7 +95,7 @@ export class PaymentDao {
     }
 
     if (dto.payment) {
-      res.andWhere('payment.method = :payment', {
+      res.andWhere('payment.method = :payment or payment.method = 4', {
         payment: dto.payment,
       });
     }
