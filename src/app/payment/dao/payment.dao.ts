@@ -43,7 +43,7 @@ export class PaymentDao {
     user: number,
     dto?: AdminDto,
   ) => {
-    const where = dto.assessmentId
+    const where = dto?.assessmentId
       ? {
           user: {
             role: role == 0 ? Not(role) : role,

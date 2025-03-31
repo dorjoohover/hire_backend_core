@@ -44,7 +44,7 @@ export class ExamDao {
 
   updateDate = async (id: number, dto: UpdateDateDto) => {
     await this.db.update(id, {
-      startDate: dto.startDate,
+      // startDate: dto.startDate,
       endDate: dto.endDate,
     });
   };
