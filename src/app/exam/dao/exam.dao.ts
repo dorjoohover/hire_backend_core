@@ -43,10 +43,13 @@ export class ExamDao {
   };
 
   updateDate = async (id: number, dto: UpdateDateDto) => {
-    await this.db.update(id, {
+    console.log(dto.endDate);
+    const res = await this.db.preload({
+      id,
       // startDate: dto.startDate,
       endDate: dto.endDate,
     });
+    if (res) await this.db.save(res);
   };
 
   updateByCode = async (
