@@ -1701,7 +1701,7 @@ export class DISC {
     Achiever: 'Зүтгэгч',
     Investigator: 'Шинжээч',
     'Result-Oriented': 'Үр дүнг чухалчлагч',
-    'Objective-Thinker': 'Бодитой сэтгэгч',
+    'Objective Thinker': 'Бодитой сэтгэгч',
     Developer: 'Хөгжүүлэгч',
     Agent: 'Итгэмжлэгдсэн хүн',
     Counselor: 'Зөвлөгч',
