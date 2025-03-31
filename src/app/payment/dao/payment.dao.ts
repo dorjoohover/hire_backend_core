@@ -67,7 +67,7 @@ export class PaymentDao {
               ? Between(dto.startDate, dto.endDate)
               : Not(IsNull()),
           totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
-          method: dto.payment ? In([dto.payment, 4]) : Not(0),
+          method: dto?.payment ? In([dto.payment, 4]) : Not(0),
         };
     return await this.db.findAndCount({
       where: where,
