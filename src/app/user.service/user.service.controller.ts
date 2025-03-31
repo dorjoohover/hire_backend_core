@@ -91,11 +91,11 @@ export class UserServiceController {
     return this.userServiceService.findOne(+id);
   }
 
-  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
-  @Patch('date/:id')
-  update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
-    return this.userServiceService.update(+id, dto);
-  }
+  // @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  // @Patch('date/:id')
+  // update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
+  //   return this.userServiceService.update(+id, dto);
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

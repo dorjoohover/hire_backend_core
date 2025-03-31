@@ -24,6 +24,7 @@ import fs from 'fs';
 import { UserEntity } from '../user/entities/user.entity';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -91,6 +92,12 @@ export class ExamController {
   @Get('service/:id')
   findByService(@Param('id') id: string) {
     return this.examService.findExamByService(+id);
+  }
+
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Patch('date/:code')
+  updateDate(@Param('code') code: string, @Body() dto: UpdateDateDto) {
+    return this.examService.updateDate(+code, dto);
   }
 
   @Roles(Role.admin, Role.tester, Role.super_admin)

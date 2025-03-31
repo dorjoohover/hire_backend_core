@@ -31,6 +31,7 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { Belbin } from 'src/assets/report/belbin';
+import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -516,7 +517,9 @@ export class ExamService extends BaseService {
   public async findExamByService(service: number) {
     return await this.dao.findByService(service);
   }
-
+  public async updateDate(id: number, dto: UpdateDateDto) {
+    await this.dao.updateDate(id, dto);
+  }
   public async findByUser(serviceId: number[], email: string) {
     let res = await this.dao.findByUser(serviceId, email, 0);
     const formatted = [];
