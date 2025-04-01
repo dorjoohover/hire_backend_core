@@ -5,8 +5,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UpdateUserServiceDto extends PartialType(CreateUserServiceDto) {}
 
 export class UpdateDateDto {
-  @ApiProperty()
-  startDate: Date;
+  // @ApiProperty()
+  // startDate: Date;
   @ApiProperty()
   endDate: Date;
 }

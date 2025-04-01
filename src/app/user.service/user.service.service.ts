@@ -247,13 +247,7 @@ export class UserServiceService extends BaseService {
     return await this.dao.findOne(id);
   }
 
-  public async update(id: number, dto: UpdateDateDto) {
-    const res = await this.dao.findOne(id);
-    const exams = res.exams;
-    for (const exam of exams) {
-      await this.examDao.updateDate(exam.id, dto);
-    }
-  }
+  
 
   remove(id: number) {
     return `This action removes a #${id} userService`;

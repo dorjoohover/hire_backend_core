@@ -46,7 +46,7 @@ export class UserServiceDao {
       where: {
         id: id,
       },
-      relations: ['assessment', 'user'],
+      relations: ['assessment', 'user', 'exams'],
     });
   };
 
