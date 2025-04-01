@@ -14,9 +14,12 @@ import {
   fz,
   header,
   home,
+  info,
   lh,
   marginX,
   marginY,
+  title,
+  title10,
 } from './reports/formatter';
 import { SinglePdf } from './reports/single.pdf';
 import { AssessmentEntity } from '../assessment/entities/assessment.entity';
@@ -47,23 +50,35 @@ export class PdfService {
     firstname: string,
     lastname: string,
     date: Date,
+    exam: ExamEntity,
   ) {
+    title10(doc, result.firstname, result.lastname, result.assessmentName);
+    info(
+      doc,
+      exam.assessment.author,
+      exam.assessment.description,
+      exam.assessment.measure,
+      exam.assessment.usage,
+    );
+
     doc
-      .font(fontBold)
+      .font('fontBold')
       .fontSize(16)
       .fillColor(colors.orange)
-      .text('Үр дүн', marginX, doc.y);
+      .text('Үр дүн', marginX, doc.y + 10);
     doc
-      .moveTo(30, doc.y)
+      .moveTo(40, doc.y + 2)
       .strokeColor(colors.orange)
-      .lineTo(75, doc.y)
+      .lineTo(100, doc.y + 2)
       .stroke()
       .moveDown();
+
+    doc.y;
 
     await this.single.default(doc, result);
     footer(doc);
     doc.addPage();
-    header(doc, firstname, lastname, result.assessmentName);
+    title10(doc, result.firstname, result.lastname, result.assessmentName);
 
     await this.single.examQuartile(doc, result);
     footer(doc);
@@ -544,8 +559,6 @@ export class PdfService {
       .text(`${result.segment ?? ''}`);
   }
 
- 
-
   async generateImage(html: string) {
     const image = await nodeHtmlToImage({
       html: html.toString(),
@@ -581,11 +594,22 @@ export class PdfService {
     const normal = fs.readFileSync(
       path.join(__dirname, '../../../src/assets/fonts/Gilroy-Medium.ttf'),
     );
+    const medium = fs.readFileSync(
+      path.join(__dirname, '../../../src/assets/fonts/Gilroy-Bold.ttf'),
+    );
     const bold = fs.readFileSync(
       path.join(__dirname, '../../../src/assets/fonts/Gilroy-ExtraBold.ttf'),
     );
+    const black = fs.readFileSync(
+      path.join(__dirname, '../../../src/assets/fonts/Gilroy-Black.ttf'),
+    );
     doc.registerFont(fontNormal, normal);
+    doc.registerFont('fontNormal', normal);
+    doc.registerFont('fontMedium', medium);
     doc.registerFont(fontBold, bold);
+    doc.registerFont('fontBold', bold);
+    doc.registerFont('fontBlack', black);
+
     home(doc, lastname, firstname, title);
     doc.addPage();
     return doc;
@@ -606,63 +630,8 @@ export class PdfService {
     try {
       doc.pipe(out);
       const date = new Date(exam.userStartDate);
-      if (exam.assessment.report != ReportType.BELBIN) {
-        header(doc, firstname, lastname, result.assessmentName);
-        let y = doc.y;
-        let x = doc.x;
-        let iconSize = 16;
-        // doc
-        //   .roundedRect(
-        //     x - padding,
-        //     y - padding,
-        //     textWidth + padding * 2,
-        //     textHeight + padding * 2,
-        //     cornerRadius,
-        //   )
-        //   .fill('#ff0000');
-
-        // doc
-        //   .fillColor('#ffffff') // Text color (white)
-        //   .text(text, x, y);
-        // doc.image(assetPath('icons/category'), x, y, { width: iconSize });
-        doc.image(assetPath('icons/book'), x, y, { width: iconSize - 4 });
-        doc
-          .font(fontNormal)
-          .fillColor(colors.orange)
-          .fontSize(12)
-          .text(exam.assessment.author, x + iconSize, y)
-          .moveDown(1);
-
-        doc
-          .fillColor(colors.black)
-          .fontSize(12)
-          .text(exam.assessment.description, x, doc.y)
-          .moveDown();
-        y = doc.y;
-        doc.image(assetPath('icons/eye'), x, y, { width: iconSize });
-        doc
-          .font(fontBold)
-          .fillColor(colors.black)
-          .fontSize(14)
-          .text('Хэмжих зүйлс', x + iconSize + 2, y);
-        doc
-          .fontSize(12)
-          .font(fontNormal)
-          .text(exam.assessment.measure, x, doc.y)
-          .moveDown(1);
-        y = doc.y;
-        doc.image(assetPath('icons/bag'), x, y, { width: iconSize });
-        doc
-          .font(fontBold)
-          .fillColor(colors.black)
-          .fontSize(14)
-          .text('Хэрэглээ', x + iconSize + 2, y);
-        doc.fontSize(12).font(fontNormal).text(exam.assessment.usage, x, doc.y);
-        doc.moveDown(1);
-      }
-
       if (exam.assessment.report == ReportType.CORRECT)
-        await this.singleTemplate(doc, result, firstname, lastname, date);
+        await this.singleTemplate(doc, result, firstname, lastname, date, exam);
       if (exam.assessment.report == ReportType.DISC) {
         await this.discTemplate(
           doc,

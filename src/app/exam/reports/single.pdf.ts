@@ -37,18 +37,18 @@ export class SinglePdf {
     doc
       .font(fontBold)
       .fillColor(colors.black)
-      .fontSize(14)
+      .fontSize(12)
       .text(name, marginX, y, { align: 'left' });
 
-    doc.font(fontBold).fontSize(20).fillColor(colors.black);
+    doc.font('fontBlack').fontSize(15).fillColor(colors.black);
     const widthOfMax = doc.widthOfString(`/${max}`);
-    doc.text(`/${max}`, x - marginX, y - 3, {
+    doc.text(`/${max}`, x - marginX, y - 1.5, {
       align: 'right',
     });
 
     const widthOfValue = doc.widthOfString(`${value}`);
     doc
-      .fontSize(24)
+      .fontSize(20)
       .fillColor(colors.orange)
       .text(
         `${value}`,
@@ -60,7 +60,7 @@ export class SinglePdf {
       );
     doc
       .roundedRect(doc.page.width - 150 - marginX, y + 3, 80, 8, 10)
-      .fill(colors.grey);
+      .fill(colors.nonprogress);
     doc
       .roundedRect(
         doc.page.width - 150 - marginX,
@@ -76,12 +76,12 @@ export class SinglePdf {
       .lineTo(doc.page.width - marginX, doc.y)
       .stroke();
 
-    doc.fontSize(14).moveDown();
+    doc.fontSize(12).moveDown(1);
     return;
   }
 
   list(doc: PDFKit.PDFDocument, title: string, value: string) {
-    doc.font(fontNormal).fillColor(colors.black).fontSize(14);
+    doc.font(fontNormal).fillColor(colors.black).fontSize(12);
     const y = doc.y;
     doc.text(title, doc.x, y, {
       bulletRadius: 0.01,
@@ -101,33 +101,73 @@ export class SinglePdf {
 
       let y = doc.y;
       const pie = await this.vis.doughnut(
-        colors.grey,
-        colors.orange,
+        colors.nonprogress,
         result.total,
         result.point,
       );
       const width = (doc.page.width - marginX * 2) / 2;
       doc.image(pie, doc.x, y, { width: width });
 
-      doc.font(fontNormal).fillColor(colors.black).fontSize(14);
+      const percentage = Math.round((result.point / result.total) * 100);
+      const percentageText = `${percentage}%`;
+
+      doc.fontSize(28);
+      const numberWidth = doc.widthOfString(`${percentage}`);
+
+      doc.fontSize(21);
+      const percentWidth = doc.widthOfString('%');
+
+      const totalWidth = numberWidth + percentWidth;
+      const xPosition = doc.x + width / 2 - totalWidth / 2;
+      const yPosition = y + width / 2 - 38;
+
+      doc
+        .font('fontBlack')
+        .fillColor(colors.orange)
+        .fontSize(28)
+        .text(`${percentage}`, xPosition, yPosition, { continued: true })
+        .fontSize(21)
+        .text('%', doc.x, yPosition + 5);
+
+      doc
+        .image(
+          assetPath('icons/clock'),
+          doc.page.width - marginX * 1.5 - 5,
+          y - 5,
+          {
+            width: 24,
+            align: 'right',
+          },
+        )
+        .moveDown(1);
+
+      doc.y;
+
+      doc.font(fontNormal).fillColor(colors.black).fontSize(12);
       const durationWidth = doc.widthOfString(
         `Тестийг ${result.duration == 0 ? 1 : result.duration} минутад гүйцэтгэсэн`,
       );
       doc
-        .text('Тестийг ', doc.page.width - marginX - durationWidth - 4, y, {
-          continued: true,
-        })
-        .font(fontBold)
+        .text(
+          'Тестийг ',
+          doc.page.width - marginX - durationWidth - 4,
+          y + 27,
+          {
+            continued: true,
+          },
+        )
+        .font('fontBlack')
         .fillColor(colors.orange)
-        .fontSize(18)
-        .text(`${result.duration == 0 ? 1 : result.duration} `, doc.x, y - 2, {
+        .fontSize(15)
+        .text(`${result.duration == 0 ? 1 : result.duration} `, doc.x, y + 25, {
           continued: true,
         })
         .font(fontNormal)
         .fillColor(colors.black)
-        .fontSize(14)
-        .text('минутад гүйцэтгэсэн', doc.x, y)
-        .fontSize(14);
+        .fontSize(12)
+        .text('минутад гүйцэтгэсэн', doc.x, y + 27)
+        .fontSize(12)
+        .moveDown(0.2);
       // if (duration && duration != 0) {
       const possibleWidth = doc.widthOfString(
         `(Боломжит ${duration ?? 0} минут)`,
@@ -139,28 +179,28 @@ export class SinglePdf {
           doc.y,
           { continued: true },
         )
-        .font(fontBold)
-        .fontSize(18)
+        .font('fontBlack')
+        .fontSize(15)
         .text(`${duration ?? 0} `, doc.x, doc.y - 2, { continued: true })
         .font(fontNormal)
         .fillColor(colors.black)
-        .fontSize(14)
+        .fontSize(12)
         .text('минут)', doc.x, doc.y + 2)
-        .moveDown(1);
+        .moveDown(0.7);
       // }
       doc
         .moveTo(doc.page.width - marginX - 75, doc.y)
-        .strokeColor(colors.red)
+        .strokeColor(colors.orange)
         .lineTo(doc.page.width - marginX, doc.y)
         .stroke()
-        .moveDown();
+        .moveDown(0.7);
       doc.text('Нийт оноо', { align: 'right' });
 
-      doc.font(fontBold).fontSize(32);
+      doc.font('fontBlack').fontSize(28);
       const widthResult = doc.widthOfString(`${result.point}`);
-      doc.fontSize(24);
+      doc.fontSize(21);
       const widthTotal = doc.widthOfString(`/${result.total}`);
-      doc.fontSize(32);
+      doc.fontSize(28);
       y = doc.y;
       doc
         .fillColor(colors.orange)
@@ -174,15 +214,12 @@ export class SinglePdf {
           },
         );
       doc
-        .fontSize(24)
+        .fontSize(21)
         .fillColor(colors.black)
-        .text(`/${result.total}`, doc.x + 2, y + 4, {
+        .text(`/${result.total}`, doc.x + 2, y + 5, {
           continued: false,
         });
       doc.moveDown(1);
-      // if (assessment.partialScore) {
-
-      // }
 
       y = doc.y;
       // doc
@@ -252,28 +289,21 @@ export class SinglePdf {
       }
       return (count / data.length) * 100;
     }
-    // data
+
     const dataset = await this.result.findQuartile(result.assessment);
-    console.log(dataset);
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
 
-    // Compute percentiles
-    // const p0 = dataset[Math.floor(0 * dataset.length)];
-    // const p25 = dataset[Math.floor(0.25 * dataset.length)];
-    // const p50 = dataset[Math.floor(0.5 * dataset.length)];
-    // const p75 = dataset[Math.floor(0.75 * dataset.length)];
-    // const p100 = dataset[dataset.length - 1];
     const dataPoints = [];
     for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
       dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
     }
 
     const percent = Math.round(percentile(dataset, result.point));
-
-    // dataset.sort((a, b) => a - b); // Sort data
     const max = Math.max(...dataset);
-    const width = doc.page.width - marginX - marginX;
+
+    const width = doc.page.width - marginX * 2;
+
     const buffer = await this.vis.createChart(
       dataPoints,
       dataPoints[0]?.[0] ?? 0,
@@ -281,44 +311,110 @@ export class SinglePdf {
       normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
       result.point,
       percent,
-      // [p0, p25, p50, p75, p100],
     );
-    doc.image(buffer, { width: width, height: (width / 515) * 250 });
-    doc.moveDown(1);
-    let y = doc.y + (width / 515) * 250;
-    doc
-      .fillColor(colors.black)
-      .font(fontNormal)
-      .fontSize(14)
-      .text('Нийт ', width / 2, y, {
-        continued: true,
-      })
-      .font(fontBold)
-      .text(firstLetterUpper(result.assessmentName), {
-        continued: true,
-      })
-      .font(fontNormal)
-      .text(' гүйцэтгэгчдийн', { continued: true })
-      .font(fontBold)
-      .fontSize(20)
-      .fillColor(colors.orange);
-    y = doc.y;
 
-    doc.text(`${percent}%`, { continued: true }).fontSize(14);
-    doc.y += 6;
-    doc.fillColor(colors.black).font(fontNormal).text('-г давсан');
-    doc.moveDown(3);
+    doc.image(buffer, marginX, doc.y + 10, {
+      width: width,
+      height: (width / 900) * 450,
+    });
+
+    const currentY = doc.y + (width / 900) * 450 + 20;
+
+    const sectionName = result.assessmentName;
+    const total = 'Нийт';
+    const name = `${sectionName}`;
+
+    const totalWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(total);
+
+    const nameWidth = doc
+      .font(fontBold)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(name);
+
+    const row1Width = totalWidth + nameWidth + 8;
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(total, doc.page.width - marginX - row1Width, currentY);
+
     doc
       .font(fontBold)
-      .fontSize(16)
-      .fillColor(colors.orange)
-      .text('Дэлгэрэнгүй үр дүн', marginX, doc.y);
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(
+        name,
+        doc.page.width - marginX - row1Width + totalWidth + 3,
+        currentY,
+      );
+    const percentPrefix = 'гүйцэтгэгчдийн ';
+    const percentText = `${percent}%`;
+    const percentSuffix = '-г давсан';
+
+    const prefixWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(percentPrefix);
+
+    const percentWidth = doc
+      .font('fontBlack')
+      .fontSize(18)
+      .fillColor('#F36421')
+      .widthOfString(percentText);
+
+    const suffixWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(percentSuffix);
+
+    const row2TotalWidth = prefixWidth + percentWidth + suffixWidth + 10;
+
+    let textX = doc.page.width - marginX - row2TotalWidth;
+
     doc
-      .moveTo(30, doc.y)
-      .strokeColor(colors.orange)
-      .lineTo(75, doc.y)
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(percentPrefix, textX, currentY + 18);
+
+    textX += prefixWidth + 3;
+    doc
+      .font('fontBlack')
+      .fontSize(18)
+      .fillColor('#F36421')
+      .text(percentText, textX, currentY + 14);
+
+    textX += percentWidth + 1;
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(percentSuffix, textX, currentY + 18);
+
+    doc.y = currentY + 50;
+
+    doc
+      .font('fontBlack')
+      .fontSize(16)
+      .fillColor('#F36421')
+      .text('Дэлгэрэнгүй үр дүн', marginX, doc.y);
+
+    doc
+      .moveTo(marginX, doc.y + 2)
+      .strokeColor('#F36421')
+      .lineTo(marginX + 70, doc.y + 2)
       .stroke()
       .moveDown();
+
     const res = await this.answer.partialCalculator(result.code);
     res.map((v, i) => {
       this.section(doc, v.categoryName, v.totalPoint, v.point);
