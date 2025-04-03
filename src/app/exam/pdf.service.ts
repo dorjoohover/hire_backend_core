@@ -91,26 +91,47 @@ export class PdfService {
     firstname: string,
     lastname: string,
     code: number,
+    assessment: AssessmentEntity,
   ) {
-    doc.addPage();
     const name = result?.firstname ?? result?.lastname ?? '';
+    header(doc, firstname, lastname);
+    title(doc, result.assessmentName);
+    info(
+      doc,
+      assessment.author,
+      assessment.description,
+      assessment.measure,
+      assessment.usage,
+    );
+    doc
+      .font('fontBlack')
+      .fontSize(16)
+      .fillColor('#F36421')
+      .text('Оршил', marginX, doc.y);
 
-    header(doc, firstname, lastname, 'Оршил');
+    doc
+      .moveTo(marginX, doc.y + 2)
+      .strokeColor('#F36421')
+      .lineTo(marginX + 70, doc.y + 2)
+      .stroke()
+      .moveDown();
+
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .lineGap(lh.md)
       .fillColor(colors.black)
-      .text(DISC.preface);
+      .text(DISC.preface, { align: 'justify' });
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Таны DiSC график');
     doc
       .font(fontNormal)
       .fillColor(colors.black)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .text(
         'Таны өгсөн хариултанд үндэслэн дискийн 4 төрлөөс танд давамгайлж буй хэв шинжийг доорх DiSC графикт харууллаа. Энэхүү тайлангийн бүлэг бүрийн тайлбарууд эдгээр оноонуудад суурилсан болно. Та уг тайлангаас өөрийн хамгийн өндөр үзүүлэлт бүхий дискийн төрөл, түүний боломжит давуу болон сул талууд, мөн таныг илэрхийлэх загварын Хувь хүний хэв шинжтэй танилцах болно. ',
+        { align: 'justify' },
       )
       .moveDown();
     doc
@@ -118,7 +139,7 @@ export class PdfService {
         width: doc.page.width / 2 - marginX,
         height: doc.page.width / 2 - marginX,
       })
-      .moveDown();
+      .moveDown(1.5);
     doc
       .font(fontBold)
       .text(name, doc.x, doc.y + doc.page.width / 2 - marginX, {
@@ -127,15 +148,15 @@ export class PdfService {
       .font(fontNormal)
       .text(' таны хувь хүний хэв шинж: ', { continued: true })
       .fillColor(colors.orange)
-      .font(fontBold)
+      .font('fontBlack')
       .text(`${DISC.enMn[result.value]} (${result.value})`);
     const style = DISC.values[result.result.toLowerCase()];
     doc
       .font(fontNormal)
       .fillColor(colors.black)
       .text(
-        'Ажлын орчны талаарх таны хандлага, түүнийг хяналтандаа байлгадаг түвшинг тодорхойлох асуумжид таны өгсөн хариултыг шинжлэхэд та ',
-        { continued: true },
+        '\nАжлын орчны талаарх таны хандлага, түүнийг хяналтандаа байлгадаг түвшинг тодорхойлох асуумжид таны өгсөн хариултыг шинжлэхэд та ',
+        { continued: true, align: 'justify' },
       )
       .font(fontBold)
       .text(
@@ -145,12 +166,16 @@ export class PdfService {
         },
       )
       .font(fontNormal)
-      .text(` хэв маягтай хүн юм байна.`, { continued: true })
+      .text(` хэв маягтай хүн юм байна. `, {
+        continued: true,
+        align: 'justify',
+      })
       .font(fontBold)
       .text(`${style.text}`, { continued: true })
       .font(fontNormal)
       .text(
         ` шинжийг илэрхийлэх ерөнхий тайлбарыг уншиж таны зан төлөвтэй хэр тохирч байгааг сонирхоно уу. Бусад шинжүүдийн талаархи тайлбарыг 12-р хуудаснаас уншиж танилцахыг таньд зөвлөж байна. `,
+        { align: 'justify' },
       );
     footer(doc);
     doc.addPage();
@@ -163,7 +188,7 @@ export class PdfService {
     // let result = ''
 
     doc
-      .font(fontBold)
+      .font('fontBlack')
       .fontSize(fz.sm)
       .text(`${style.text} (${result.result.toUpperCase()})`);
     doc.moveDown();
@@ -171,9 +196,12 @@ export class PdfService {
     // const character =
     //   DISC.characterDescription[(style?.[0] ?? '  ').substring(0, 1).toLowerCase()];
     doc
-      .font(fontNormal)
+      .font(fontBold)
+      .fontSize(12)
       .fillColor(colors.black)
-      .text(name + character);
+      .text(name + ' ', { continued: true })
+      .font(fontNormal)
+      .text(character, { align: 'justify' });
     footer(doc);
 
     const details: ResultDetailEntity[] = result.details;
@@ -197,22 +225,24 @@ export class PdfService {
         'Үе шат II: Таныг тодорхойлох онцлог шинжүүд',
       );
       doc
-        .font(fontBold)
+        .font('fontBlack')
         .fillColor(color.value)
         .fontSize(fz.sm)
         .text(i.toUpperCase(), {
           continued: true,
         })
-        .fillColor(colors.black)
+        .fillColor(color.value)
         .text(' шинж чанар');
 
       const value = DISC.values[i.toLowerCase()];
 
       doc
         .font(fontNormal)
-        .fontSize(fz.sm)
+        .fontSize(12)
+        .fillColor(colors.black)
         .text(
           `Асуумжинд өгсөн хариултанд үндэслэн таны ${firstLetterUpper(value.text)} ${i.toUpperCase()} байдлыг дараах тайлбаруудаар тодорхойлж болох юм. Та өөрийн санал нийлж буй давуу талуудаа харандаагаар дугуйлж, анхаарвал зохих зан төлөвүүдийг тодруулна уу.`,
+          { align: 'justify' },
         )
         .moveDown();
 
@@ -225,7 +255,7 @@ export class PdfService {
           doc.addPage();
           header(doc, firstname, lastname);
         }
-        doc.image(assetPath('icons/disc_2_' + color.key), doc.x, doc.y, {
+        doc.image(assetPath('icons/disc_2_' + color.key), doc.x, doc.y - 2, {
           width: 16,
           height: 16,
         });
@@ -240,7 +270,7 @@ export class PdfService {
         doc
           .font(fontNormal)
           .fillColor(colors.black)
-          .text(text?.value)
+          .text(text?.value, { align: 'justify' })
           .moveDown();
       }
       footer(doc);
@@ -251,131 +281,152 @@ export class PdfService {
 
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .fillColor(colors.black)
       .text(
         `Давамгайлагч, Нөлөөлөгч, Нягт нямбай, Туйлбартай гэсэн үндсэн 4 шинжийн үзүүлэлтүүд нийлж хувь хүнийг тодорхойлох өвөрмөц хэв шинжийг бий болгодог. Судлаачид нийтлэг ажиглагддаг онцлог 15 хэв шинжийг илрүүлсэн. Онолын бөгөөд практикийн нэмэлт судалгааны дүнд тэдгээр хэв шинжүүдийн онцлогуудыг тодорхойлжээ. Эдгээр онцлогуудыг мэдсэнээр та өөрийгөө илүү ихээр танин мэдэх болно. \n\nАсуумжинд өгсөн хариултын дагуу та `,
-        { continued: true },
+        { continued: true, align: 'justify' },
       )
       .font(fontBold)
-      .fontSize(fz.lg)
-      .text(`${DISC.enMn[result.value]} `, doc.x, doc.y - 3, {
+      .fontSize(12)
+      .text(`${DISC.enMn[result.value]} `, doc.x, doc.y, {
         continued: true,
       })
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .text(
         ` хэв шинжийн бүлэгт хамаарч байна. Доорх тайлбаруудыг уншиж таны зан төлөвтэй тохирч буй хэсгүүдэд анхаарал хандуулна уу.`,
         doc.x,
-        doc.y + 3,
+        doc.y,
       );
     doc.moveDown();
     doc
-      .font(fontBold)
+      .font('fontBlack')
       .fontSize(fz.sm)
       .fillColor(colors.orange)
       .text(name + ' таны мотиваци')
-      .moveDown();
+      .moveDown(0.75);
     // !
     const disc = this.disc.step3(name, firstLetterUpper(result.value));
     doc
       .font(fontNormal)
       .fillColor(colors.black)
-      .fontSize(fz.sm)
-      .text(disc.motivation);
+      .fontSize(12)
+      .text(disc.motivation, { align: 'justify' });
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Үе шат III: Таны хувь хүний хэв шинж ');
 
     doc
-      .font(fontBold)
+      .font('fontBlack')
       .fillColor(colors.orange)
       .fontSize(fz.sm)
-      .text(name + ' таны ажлын дадал зуршил');
+      .text(name + ' таны ажлын дадал зуршил')
+      .moveDown(0.75);
     // !
-    doc.font(fontNormal).fillColor(colors.black).text(disc.habit);
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(disc.habit, { align: 'justify' });
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Үе шат III: Таны хувь хүний хэв шинж');
     doc
-      .font(fontBold)
+      .font('fontBlack')
       .fontSize(fz.sm)
       .fillColor(colors.orange)
-      .text(name + ' таныг тольдвол;');
+      .text(name + ' таныг тольдвол;')
+      .moveDown(0.75);
     // !
-    doc.font(fontNormal).fillColor(colors.black).fontSize(12).text(disc.self);
+    doc
+      .font(fontNormal)
+      .fillColor(colors.black)
+      .fontSize(12)
+      .text(disc.self, { align: 'justify' });
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'ДиСК загвар');
     doc
       .font(fontNormal)
       .fillColor(colors.black)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .text(
-        'DiSC Давамгайлах (D), Нөлөөлөх (I), Туйлбартай (S), мөн Нягт нямбай (C) гэсэн дөрвөн  шинжийг дөрвөн талт хүснэгтэн загвараар тайлбарладаг. Зарим хүмүүст зөвхөн нэг төрлийн хэв шинж илэрдэг бол заримд хоёр, эсвэл бүр гурван хэв шинж ч  илэрч болно.\nТаны Диск загвар бусад хүмүүсийнхээс хэр их ялгаатай бол? Дискийн бусад загваруудтай адил төстэй ямар шинж байна вэ? Эдгээр асуултуудыг ойлгоход доорх Диск загвар танд туслана. Доорх хүснэгтэнд зэрэгцээ байрлах дискийн зан төлвийн төрлүүд нь өөр хоорондоо ямар нэгэн ижил төстэй шинжтэй. Таны харж байгаагаар C болон S төрлийн хүмүүс нь ажлын орчиндоо өөрсдийгөө нөлөөлөл багатай хэмээн үнэлдэг нь харагдаж байна. Тэд өөрийгөө бусдад нөлөөлөх чадвар багатай гэж боддог тул эргэн тойрныхоо хүмүүст илүү уусах хандлагатай байдаг. Нөгөө талдаа D болон I төрлийн хүмүүс нь өөрсдийгөө ажлын орчндоо нөлөөлөл ихтэй байдаг гэж үздэг тул илүү өөртөө итгэлтэй байх хандлагатай. Түүнчлэн, D болон C төрлийн хүмүүс ажлын орчиноо таагүй (хаалттай, эсэргүүцэж) хэмээн хүлээж авдаг бол I болон S төрлийн хүмүүс эсрэгээрээ илүү таатай (нөхөрсөг, дэмжлэг үзүүлдэг) хэмээн хүлээж авдаг.',
-      );
+        'DiSC Давамгайлах (D), Нөлөөлөх (I), Туйлбартай (S), мөн Нягт нямбай (C) гэсэн дөрвөн  шинжийг дөрвөн талт хүснэгтэн загвараар тайлбарладаг. Зарим хүмүүст зөвхөн нэг төрлийн хэв шинж илэрдэг бол заримд хоёр, эсвэл бүр гурван хэв шинж ч  илэрч болно.\n\nТаны Диск загвар бусад хүмүүсийнхээс хэр их ялгаатай бол? Дискийн бусад загваруудтай адил төстэй ямар шинж байна вэ? Эдгээр асуултуудыг ойлгоход доорх Диск загвар танд туслана. Доорх хүснэгтэнд зэрэгцээ байрлах дискийн зан төлвийн төрлүүд нь өөр хоорондоо ямар нэгэн ижил төстэй шинжтэй. Таны харж байгаагаар C болон S төрлийн хүмүүс нь ажлын орчиндоо өөрсдийгөө нөлөөлөл багатай хэмээн үнэлдэг нь харагдаж байна. Тэд өөрийгөө бусдад нөлөөлөх чадвар багатай гэж боддог тул эргэн тойрныхоо хүмүүст илүү уусах хандлагатай байдаг. Нөгөө талдаа D болон I төрлийн хүмүүс нь өөрсдийгөө ажлын орчндоо нөлөөлөл ихтэй байдаг гэж үздэг тул илүү өөртөө итгэлтэй байх хандлагатай. Түүнчлэн, D болон C төрлийн хүмүүс ажлын орчиноо таагүй (хаалттай, эсэргүүцэж) хэмээн хүлээж авдаг бол I болон S төрлийн хүмүүс эсрэгээрээ илүү таатай (нөхөрсөг, дэмжлэг үзүүлдэг) хэмээн хүлээж авдаг.',
+        { align: 'justify' },
+      )
+      .moveDown(1.5);
     const x = doc.x;
-    doc.text(
-      ' Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
-      x + doc.page.width / 3,
-      doc.y,
-      {
-        align: 'justify',
-        width: doc.page.width / 3 - marginX - marginX,
-      },
-    );
+    doc
+      .fontSize(12)
+      .text(
+        'Өөрийгөө хүрээлэн буй орчноосоо илүү хүчирхэг гэж ойлгодог',
+        x + doc.page.width / 3,
+        doc.y,
+        {
+          align: 'justify',
+          width: doc.page.width / 3 - marginX - marginX,
+        },
+      );
     let y = doc.y;
-    doc.text(
-      'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
-      x,
-      y + doc.page.width / 6,
-      {
-        align: 'justify',
-        width: doc.page.width / 3 - marginX - marginX,
-      },
-    );
-    doc.text(
-      'Хүрээлэн буй орчноо таатай гэж ойлгодог',
-      (doc.page.width / 3) * 2 + marginX,
-      y + doc.page.width / 6,
-      {
-        align: 'justify',
-        width: doc.page.width / 3 - marginX - marginX,
-      },
-    );
+    doc
+      .fontSize(12)
+      .text(
+        'Хүрээлэн буй орчноо таагүй гэж ойлгодог',
+        x,
+        y + doc.page.width / 6,
+        {
+          align: 'justify',
+          width: doc.page.width / 3 - marginX - marginX,
+        },
+      );
+    doc
+      .fontSize(12)
+      .text(
+        'Хүрээлэн буй орчноо таатай гэж ойлгодог',
+        (doc.page.width / 3) * 2 + marginX,
+        y + doc.page.width / 6,
+        {
+          align: 'justify',
+          width: doc.page.width / 3 - marginX - marginX,
+        },
+      );
     doc
       .image(assetPath('report/disc/graph'), doc.page.width / 3, y, {
         width: doc.page.width / 3,
       })
-      .moveDown();
-    doc.text(
-      'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
-      x + doc.page.width / 3,
-      doc.y + doc.page.width / 12,
-      {
-        align: 'justify',
-        width: doc.page.width / 3 - marginX - marginX,
-      },
-    );
+      .moveDown(0.75);
+    doc
+      .fontSize(12)
+      .text(
+        'Хүрээлэн буй орчныг өөрөөсөө илүү хүчирхэг гэж ойлгодог',
+        x + doc.page.width / 3,
+        doc.y + doc.page.width / 12,
+        {
+          align: 'justify',
+          width: doc.page.width / 3 - marginX - marginX,
+        },
+      );
     footer(doc);
     doc.addPage();
     header(doc, firstname, lastname, 'Оноо ба өгөгдлийн шинжилгээ');
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .fillColor(colors.black)
       .text(
         'Энэхүү хураангуй нь таны хувь хүний тайлан хэрхэн боловсруулагдсан болохыг харуулж байна. Асуумжийн “байнга”, “бараг үгүй” гэсэн сонголтуудад таны хариулсан үр дүнд үндэслэн өгөгдлийн шинжилгээ хийсэн. Мөн таны хамгийн өндөр оноо авсан DiSC төрөл, хүчний индексийн оноо, хувь хүний хэв шинжийг тодорхойлсон.',
+        { align: 'justify' },
       )
-      .moveDown(2);
+      .moveDown(1.5);
 
     doc
-      .font(fontBold)
-      .fontSize(fz.lg)
+      .font('fontBlack')
+      .fontSize(16)
       .fillColor(colors.orange)
       .text('Хариултын дэлгэрэнгүй');
     doc
-      .moveTo(30, doc.y)
+      .moveTo(40, doc.y)
       .strokeColor(colors.orange)
       .lineTo(75, doc.y)
       .stroke()
@@ -531,32 +582,33 @@ export class PdfService {
     }
     doc.x = marginX;
     doc.y = doc.y + 50;
-    doc.font(fontBold).fontSize(fz.lg).fillColor(colors.orange).text('Тайлбар');
+    doc.font('fontBlack').fontSize(16).fillColor(colors.orange).text('Тайлбар');
     doc
-      .moveTo(30, doc.y)
+      .moveTo(40, doc.y)
       .strokeColor(colors.orange)
       .lineTo(75, doc.y)
       .stroke()
-      .moveDown();
+      .moveDown(1);
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .fillColor(colors.black)
       .text('Танд зонхилж буй шинж: ', { continued: true })
       .font(fontBold)
       .text(`${firstLetterUpper(style.text)} (${result.result.toUpperCase()})`);
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .text('Хувь хүний хэв шинж: ', { continued: true })
       .font(fontBold)
       .text(`${DISC.enMn[result.value]}`);
     doc
       .font(fontNormal)
-      .fontSize(fz.sm)
+      .fontSize(12)
       .text('Сегментийн тоо: ', { continued: true })
       .font(fontBold)
       .text(`${result.segment ?? ''}`);
+    footer(doc);
   }
 
   async generateImage(html: string) {
@@ -640,6 +692,7 @@ export class PdfService {
           firstname,
           lastname,
           exam.code,
+          exam.assessment,
         );
       }
 

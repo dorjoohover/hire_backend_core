@@ -4,12 +4,12 @@ export const colors = {
   black: '#231F20',
   orange: '#F36421',
   red: '#ED1C45',
-  redSecondary: '#D6483E',
+  redSecondary: '#F9372A',
   grey: '#ccc',
   light: '#e2e2e2',
-  green: '#518138',
+  green: '#409414',
   yellow: '#EDA600',
-  blue: '#2DA9FF',
+  blue: '#008AEA',
   purple: '#A93D73',
   brown: '#834731',
   sky: '#91AFD2',
@@ -167,8 +167,6 @@ export const title = (
 
       doc.x = textX;
       doc.y = currentY + 40;
-    } else {
-      doc.moveDown(1.5);
     }
   }
 };
