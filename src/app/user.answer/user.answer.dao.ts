@@ -92,7 +92,7 @@ export class UserAnswerDao {
       .where('"userAnswer"."code" = :id', { id });
 
     if (type == ReportType.CORRECTCOUNT) {
-      res.andWhere('userAnswer.point != 0');
+      res.andWhere('userAnswer.correct = true');
     }
 
     return await res
