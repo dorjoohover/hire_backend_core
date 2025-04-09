@@ -60,25 +60,23 @@ export class ExamController {
     @Param('code') code: string,
     @Request() { user },
   ) {
-    const role = user?.['role'];
-    let filePath: any;
-    try {
-      filePath = await this.examService.getPdf(+code, role);
 
+    const role = user?.['role'];
+    try {
+      const doc = await this.examService.getPdf(+code, role);
+
+      // const fileName = encodeURIComponent('Value Report.pdf');
       res.setHeader('Content-disposition', 'attachment; filename=output.pdf');
       res.setHeader('Content-type', 'application/pdf');
-
-      res.sendFile(filePath, { root: process.cwd() }, (err) => {
-        if (err) {
-          console.error(err);
-        }
-        fs.unlinkSync(filePath); // Remove the temporary PDF file
-      });
-      // return res.redirect('https://hire.mn');
+      doc.pipe(res);
+      doc.end();
     } catch (err) {
       console.log('Error generating PDF:', err);
       throw err;
     }
+ 
+
+  
   }
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })

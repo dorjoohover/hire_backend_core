@@ -23,6 +23,12 @@ import { EmailModule } from './auth/email.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 import { BlogModule } from './app/blog/blog.module';
 import { ErrorLogModule } from './app/error-logs/error-log.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { EbarimtController } from './app/ebarimt/ebarimt.controller';
+import { EbarimtService } from './app/ebarimt/ebarimt.service';
+import { EbarimtListener } from './app/ebarimt/ebarimt.listener';
+import { BullModule } from '@nestjs/bullmq';
+import { EbarimtModule } from './app/ebarimt/ebarim.module';
 
 @Module({
   imports: [
@@ -30,6 +36,14 @@ import { ErrorLogModule } from './app/error-logs/error-log.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
+
+    BullModule.forRoot({
+      connection: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+    EbarimtModule,
     DatabaseModule,
     BlogModule,
     BaseModule,
@@ -47,10 +61,11 @@ import { ErrorLogModule } from './app/error-logs/error-log.module';
     UserModule,
     UserServiceModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, EbarimtController],
   providers: [
     AppService,
-
+    EbarimtService,
+    EbarimtListener,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

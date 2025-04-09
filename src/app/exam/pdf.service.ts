@@ -544,8 +544,6 @@ export class PdfService {
       .text(`${result.segment ?? ''}`);
   }
 
- 
-
   async generateImage(html: string) {
     const image = await nodeHtmlToImage({
       html: html.toString(),
@@ -596,15 +594,12 @@ export class PdfService {
     const lastname = result?.lastname ?? '';
     // const buffer2: any = await this.generateImage(htmlCode);
     // console.log(buffer2);
-    const filePath = './chart.pdf';
-    const out = fs.createWriteStream(filePath);
     const doc = await this.createDefaultPdf(
       result?.lastname ?? '',
       result?.firstname ?? '',
       result.assessmentName,
     );
     try {
-      doc.pipe(out);
       const date = new Date(exam.userStartDate);
       if (exam.assessment.report != ReportType.BELBIN) {
         header(doc, firstname, lastname, result.assessmentName);
@@ -684,14 +679,7 @@ export class PdfService {
           exam.assessment,
         );
       }
-      doc.end();
-
-      await new Promise((resolve, reject) => {
-        out.on('finish', resolve);
-        out.on('error', reject);
-      });
-
-      return filePath;
+      return doc;
     } catch (error) {
       console.log(error);
       throw new Error('Failed to generate PDF');

@@ -40,6 +40,7 @@ export const assetPath = (p: string) => {
   const imagePath = path.join(__dirname, `../../../../src/assets/${p}.png`);
   return fs.readFileSync(imagePath);
 };
+
 export const header = (
   doc: PDFKit.PDFDocument,
   firstname: string,

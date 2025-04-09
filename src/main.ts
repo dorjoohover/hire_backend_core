@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
 import { json, urlencoded } from 'express';
 import { ErrorLogService } from './app/error-logs/error-log.service';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -53,6 +54,15 @@ async function bootstrap() {
       500,
     );
   });
+  // app.connectMicroservice({
+  //   transport: Transport.REDIS,
+  //   options: {
+  //     host: 'localhost',
+  //     port: 6379,
+  //   },
+  // });
+
+  // await app.startAllMicroservices();
   await app.listen(3000, '0.0.0.0');
   // await app.listen(3001, '0.0.0.0');
 }
