@@ -30,6 +30,7 @@ export class VisualizationService {
         : index <= 0
           ? data[0]
           : data[index];
+    console.log(coordinate[1]);
 
     const echartOption = {
       backgroundColor: '#ffffff',
@@ -118,7 +119,7 @@ export class VisualizationService {
             },
             data: [
               {
-                coord: [coordinate[0], coordinate[1] + 0.002],
+                coord: [coordinate[0], coordinate[1] + 0.002 * coordinate[1]],
               },
             ],
           },
