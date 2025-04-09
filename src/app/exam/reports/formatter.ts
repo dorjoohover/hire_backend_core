@@ -1,5 +1,7 @@
 import fs from 'fs';
+import * as QRCode from 'qrcode';
 import path from 'path';
+import { createCanvas } from 'canvas';
 export const colors = {
   black: '#231F20',
   orange: '#F36421',
@@ -43,6 +45,29 @@ export const assetPath = (p: string) => {
   return fs.readFileSync(imagePath);
 };
 
+export function generateQRCodeSync(url: string): Buffer {
+  try {
+    const canvas = createCanvas(200, 200);
+
+    QRCode.toCanvas(canvas, url, {
+      errorCorrectionLevel: 'Q',
+      version: 2,
+      margin: 1,
+      color: {
+        dark: '#FFFFFF',
+        light: '#RRGGBBAA',
+      },
+      scale: 2,
+    });
+
+    return canvas.toBuffer('image/png');
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    const fallbackCanvas = createCanvas(1, 1);
+    return fallbackCanvas.toBuffer('image/png');
+  }
+}
+
 export const header = (
   doc: PDFKit.PDFDocument,
   firstname: string,
@@ -70,14 +95,23 @@ export const header = (
   const char =
     firstname && firstname.length > 0 ? firstname.charAt(0).toUpperCase() : '';
 
+  const circleCenterX = marginX + 85 + 32;
+  const circleCenterY = marginY + 9;
+  const charBoxSize = 16; // same as radius to get visually balanced padding
+
   doc
     .fillColor(colors.orange)
     .font(fontBold)
     .fontSize(16)
-    .text(char, marginX + 85 + 32 - 6, marginY + 2, {
-      width: 12,
-      align: 'center',
-    });
+    .text(
+      char,
+      circleCenterX - charBoxSize / 2,
+      circleCenterY - charBoxSize / 2,
+      {
+        width: charBoxSize,
+        align: 'center',
+      },
+    );
 
   doc
     .fillColor(colors.black)
@@ -319,6 +353,7 @@ export const home = (
   lastname: string,
   firstname: string,
   title: string,
+  code: number,
 ) => {
   let grad = doc.linearGradient(0, 0, doc.page.height, doc.page.height);
   grad.stop(0, colors.orange).stop(1, '#EF3638');
@@ -372,6 +407,21 @@ export const home = (
   doc
     .font('fontMedium')
     .text(dateFormatter(date), marginX, doc.page.height - marginY - 20);
+
+  try {
+    const qrCodeBuffer = generateQRCodeSync(`hire.mn/pdf/${code}`);
+
+    const qrCodeSize = 70;
+    const qrCodeX = doc.page.width - marginX - qrCodeSize;
+    const qrCodeY = doc.page.height - marginY - qrCodeSize;
+
+    doc.image(qrCodeBuffer, qrCodeX, qrCodeY, {
+      width: qrCodeSize,
+      height: qrCodeSize,
+    });
+  } catch (error) {
+    console.error('Failed to generate QR code:', error);
+  }
 
   doc.image(
     assetPath('icons/quarter'),

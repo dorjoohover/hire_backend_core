@@ -281,4 +281,148 @@ export class VisualizationService {
       console.log(error);
     }
   }
+
+  async bar(categories, values) {
+    const canvasWidth = 1800;
+    const canvasHeight = 700;
+
+    const maxValue = Math.max(...values);
+
+    const option = {
+      title: {
+        show: false,
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow',
+        },
+      },
+      grid: {
+        left: '42%',
+        right: '3%',
+        top: 20,
+        bottom: 80,
+        containLabel: false,
+      },
+      xAxis: {
+        type: 'value',
+        show: false,
+        min: 0,
+        max: maxValue,
+        splitLine: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+      },
+      yAxis: {
+        type: 'category',
+        data: categories,
+        axisLabel: {
+          fontFamily: 'Gilroy-SemiBold',
+          fontSize: 30,
+          color: '#231F20',
+          padding: [0, 20, 0, 0],
+          align: 'right',
+          inside: false,
+          position: 'left',
+        },
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: colors.gray,
+          },
+        },
+        axisTick: { show: false },
+        inverse: false,
+        boundaryGap: [0, 0],
+        splitArea: {
+          show: false,
+        },
+      },
+      series: [
+        {
+          type: 'bar',
+          barWidth: 35,
+          barGap: '0%',
+          barCategoryGap: '1%',
+          data: values,
+          itemStyle: {
+            color: '#F36421',
+            borderRadius: [0, 20, 20, 0],
+          },
+        },
+      ],
+      graphic: [
+        {
+          type: 'line',
+          right: '3%',
+          top: 20,
+          shape: {
+            x1: 0,
+            y1: 0,
+            x2: 0,
+            y2: canvasHeight - 100,
+          },
+          style: {
+            stroke: colors.gray,
+            lineWidth: 1.5,
+          },
+        },
+        {
+          type: 'line',
+          left: '3%',
+          bottom: 60,
+          shape: {
+            x1: 0,
+            y1: 0,
+            x2: '94%',
+            y2: 0,
+          },
+          style: {
+            stroke: colors.gray,
+            lineWidth: 1.5,
+          },
+        },
+        {
+          type: 'text',
+          right: 0,
+          bottom: 20,
+          style: {
+            text: 'Хамгийн их хэмжээ',
+            font: '24px Gilroy-SemiBold',
+            fill: colors.gray,
+            textAlign: 'right',
+          },
+        },
+        {
+          type: 'text',
+          left: '25%',
+          bottom: 20,
+          style: {
+            text: 'Хамгийн бага хэмжээ',
+            font: '24px Gilroy-SemiBold',
+            fill: colors.gray,
+            textAlign: 'right',
+          },
+        },
+      ],
+    };
+
+    const canvas = createCanvas(canvasWidth, canvasHeight);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(3, 3);
+    ctx.imageSmoothingEnabled = true;
+
+    const chart = echarts.init(canvas as any, null, {
+      width: canvasWidth,
+      height: canvasHeight,
+    });
+
+    chart.setOption(option);
+
+    return canvas.toBuffer('image/png', {
+      compressionLevel: 0,
+      resolution: 300,
+    });
+  }
 }

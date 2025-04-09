@@ -403,7 +403,7 @@ export class SinglePdf {
     doc.y = currentY + 50;
 
     doc
-      .font('fontBlack')
+      .font('fontBold')
       .fontSize(16)
       .fillColor('#F36421')
       .text('Дэлгэрэнгүй үр дүн', marginX, doc.y);
@@ -411,7 +411,7 @@ export class SinglePdf {
     doc
       .moveTo(marginX, doc.y + 2)
       .strokeColor('#F36421')
-      .lineTo(marginX + 70, doc.y + 2)
+      .lineTo(75, doc.y + 2)
       .stroke()
       .moveDown();
 

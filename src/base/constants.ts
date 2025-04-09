@@ -52,6 +52,8 @@ export const ReportType = {
   DISC: 20,
   MBTI: 30,
   BELBIN: 40,
+  GENOS: 50,
+  NARC: 60,
 };
 export const BlogType = {
   BLOG: 10,
