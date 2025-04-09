@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { UserAnswerEntity } from './entities/user.answer.entity';
 import { CreateUserAnswerDto } from './dto/create-user.answer.dto';
+import { ReportType } from 'src/base/constants';
 
 @Injectable()
 export class UserAnswerDao {
@@ -67,6 +68,7 @@ export class UserAnswerDao {
 
   partialCalculator = async (
     id: number,
+    type: number,
   ): Promise<
     {
       categoryName: string;
@@ -78,7 +80,10 @@ export class UserAnswerDao {
       .createQueryBuilder('userAnswer')
       .select('category.name', 'categoryName')
       .addSelect('category.totalPoint', 'totalPoint')
-      .addSelect('SUM(userAnswer.point)', 'point')
+      .addSelect(
+        `${type == ReportType.CORRECTCOUNT ? 'COUNT' : 'SUM'}(userAnswer.point)`,
+        'point',
+      )
       .innerJoin(
         'questionCategory',
         'category',

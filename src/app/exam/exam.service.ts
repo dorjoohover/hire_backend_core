@@ -151,7 +151,9 @@ export class ExamService extends BaseService {
         duration: diff,
         firstname: exam?.firstname ?? user.firstname,
         lastname: exam?.lastname ?? user.lastname,
-        type: exam.assessment.report,
+        type: res[0]?.formula?.toLowerCase().includes('sum')
+          ? ReportType.CORRECT
+          : ReportType.CORRECTCOUNT,
         limit: exam.assessment.duration,
         total: exam.assessment.totalPoint,
         point: res[0].point,

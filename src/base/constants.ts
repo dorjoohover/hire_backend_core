@@ -49,6 +49,7 @@ export const AssessmentType = {
 
 export const ReportType = {
   CORRECT: 10,
+  CORRECTCOUNT: 11,
   DISC: 20,
   MBTI: 30,
   BELBIN: 40,

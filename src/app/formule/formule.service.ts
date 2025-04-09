@@ -99,6 +99,7 @@ export class FormuleService extends BaseService {
           point: sum,
           aCate: aCate?.name ?? aCate,
           parent: aCate.parent,
+          formula: formula.aggregations
         };
       }),
     );

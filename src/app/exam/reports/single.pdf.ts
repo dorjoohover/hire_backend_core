@@ -415,9 +415,10 @@ export class SinglePdf {
       .stroke()
       .moveDown();
 
-    const res = await this.answer.partialCalculator(result.code);
+    const res = await this.answer.partialCalculator(result.code, result.type);
     res.map((v, i) => {
-      console.log(v)
+      console.log(v);
+
       this.section(doc, v.categoryName, v.totalPoint, v.point);
     });
   }
