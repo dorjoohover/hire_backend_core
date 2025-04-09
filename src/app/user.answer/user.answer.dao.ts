@@ -76,7 +76,7 @@ export class UserAnswerDao {
       totalPoint: number;
     }[]
   > => {
-    const res = await this.db
+    const res = this.db
       .createQueryBuilder('userAnswer')
       .select('category.name', 'categoryName')
       .addSelect('category.totalPoint', 'totalPoint')
@@ -89,12 +89,16 @@ export class UserAnswerDao {
         'category',
         'category.id = "userAnswer"."questionCategoryId"',
       )
-      .where('"userAnswer"."code" = :id', { id })
+      .where('"userAnswer"."code" = :id', { id });
+
+    if (type == ReportType.CORRECTCOUNT) {
+      res.andWhere('userAnswer.point != 0');
+    }
+
+    return await res
       .groupBy('category.name')
       .addGroupBy('category.totalPoint')
       .getRawMany();
-
-    return res;
   };
 
   findAll = async () => {
