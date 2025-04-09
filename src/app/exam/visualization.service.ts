@@ -121,7 +121,7 @@ export class VisualizationService {
               {
                 coord: [
                   coordinate[0],
-                  coordinate[1] + 0.002 * coordinate[1] * 2,
+                  coordinate[1] + 0.002 * coordinate[1] * 20,
                 ],
               },
             ],
