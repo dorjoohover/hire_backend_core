@@ -51,7 +51,7 @@ export function generateQRCodeSync(url: string): Buffer {
 
     QRCode.toCanvas(canvas, url, {
       errorCorrectionLevel: 'Q',
-      version: 3,
+      version: 10,
       margin: 1,
       color: {
         dark: '#FFFFFF',
