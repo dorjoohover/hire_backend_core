@@ -54,15 +54,6 @@ async function bootstrap() {
       500,
     );
   });
-  // app.connectMicroservice({
-  //   transport: Transport.REDIS,
-  //   options: {
-  //     host: 'localhost',
-  //     port: 6379,
-  //   },
-  // });
-
-  // await app.startAllMicroservices();
   await app.listen(3000, '0.0.0.0');
   // await app.listen(3001, '0.0.0.0');
 }

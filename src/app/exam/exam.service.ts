@@ -56,7 +56,7 @@ export class ExamService extends BaseService {
     const res = await this.dao.findByCode(id);
     if (!res.visible && role == Role.client) {
       throw new HttpException(
-        'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
+        'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
         HttpStatus.FORBIDDEN,
       );
     }
@@ -330,6 +330,89 @@ export class ExamService extends BaseService {
       );
       return {
         agent: max.category,
+        details,
+      };
+    }
+    if (type == ReportType.GENOS) {
+      let details: ResultDetailDto[] = [];
+      for (const r of res) {
+        const cate = r['aCate'];
+        const point = r['point'];
+        details.push({
+          cause: point,
+          value: cate,
+        });
+      }
+      const max = details.reduce(
+        (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
+        details[0],
+      );
+      await this.resultDao.create(
+        {
+          assessment: exam.assessment.id,
+          assessmentName: exam.assessment.name,
+          code: exam.code,
+          duration: diff,
+          firstname: exam?.firstname ?? user.firstname,
+          lastname: exam?.lastname ?? user.lastname,
+          type: exam.assessment.report,
+          limit: exam.assessment.duration,
+          total: exam.assessment.totalPoint,
+          result: max.value + 'чадвар',
+          value: max.category,
+        },
+        details,
+      );
+      return {
+        agent: max.category,
+        details,
+      };
+    }
+
+    if (type == ReportType.NARC) {
+      let details: ResultDetailDto[] = [];
+      let total = 0;
+      for (const r of res) {
+        const cate = r['aCate'];
+        const count = r['point'];
+
+        total += count;
+
+        details.push({
+          cause: count,
+          value: cate,
+        });
+      }
+      const max = details.reduce(
+        (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
+        details[0],
+      );
+
+      const result =
+        exam.assessment.totalPoint / 2 <= total
+          ? 'Нарциссистик зан төлөвтэй'
+          : 'Нарциссистик зан төлөвгүй';
+
+      await this.resultDao.create(
+        {
+          assessment: exam.assessment.id,
+          assessmentName: exam.assessment.name,
+          code: exam.code,
+          duration: diff,
+          firstname: exam?.firstname ?? user.firstname,
+          lastname: exam?.lastname ?? user.lastname,
+          type: exam.assessment.report,
+          limit: exam.assessment.duration,
+          total: exam.assessment.totalPoint,
+          result: result,
+          value: total.toString(),
+        },
+        details,
+      );
+      return {
+        total,
+        result,
+        all: exam.assessment.totalPoint,
         details,
       };
     }

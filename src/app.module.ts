@@ -37,13 +37,13 @@ import { EbarimtModule } from './app/ebarimt/ebarim.module';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
 
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
-    }),
-    EbarimtModule,
+    // BullModule.forRoot({
+    //   connection: {
+    //     host: 'localhost',
+    //     port: 6379,
+    //   },
+    // }),
+    // EbarimtModule,
     DatabaseModule,
     BlogModule,
     BaseModule,
@@ -61,11 +61,11 @@ import { EbarimtModule } from './app/ebarimt/ebarim.module';
     UserModule,
     UserServiceModule,
   ],
-  controllers: [AppController, EbarimtController],
+  controllers: [AppController, ],
   providers: [
     AppService,
-    EbarimtService,
-    EbarimtListener,
+    // EbarimtService,
+    // EbarimtListener,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

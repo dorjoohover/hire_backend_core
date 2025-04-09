@@ -30,6 +30,7 @@ export class BlogService {
           id: user ? user : Not(-1),
         },
       },
+      relations: ['user'],
       skip: (page - 1) * limit,
       take: limit,
     });
@@ -44,6 +45,7 @@ export class BlogService {
       where: {
         id,
       },
+      relations: ['user'],
     });
   }
 
