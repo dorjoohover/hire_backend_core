@@ -15,6 +15,9 @@ export class TokenInfo {
   }
 }
 
+export const LOCAL = 'http://localhost:7080/';
+
+
 export class Utils {
   static generateId(): string {
     return uuidv4().replace(/-/g, '');

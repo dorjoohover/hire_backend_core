@@ -29,6 +29,7 @@ import { EbarimtService } from './app/ebarimt/ebarimt.service';
 import { EbarimtListener } from './app/ebarimt/ebarimt.listener';
 import { BullModule } from '@nestjs/bullmq';
 import { EbarimtModule } from './app/ebarimt/ebarim.module';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -36,12 +37,14 @@ import { EbarimtModule } from './app/ebarimt/ebarim.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
+    MongooseModule.forRoot(process.env.BARIMT_URL as string),
 
     // BullModule.forRoot({
     //   connection: {
     //     host: 'localhost',
     //     port: 6379,
     //   },
+    
     // }),
     // EbarimtModule,
     DatabaseModule,
@@ -61,7 +64,7 @@ import { EbarimtModule } from './app/ebarimt/ebarim.module';
     UserModule,
     UserServiceModule,
   ],
-  controllers: [AppController, ],
+  controllers: [AppController],
   providers: [
     AppService,
     // EbarimtService,
