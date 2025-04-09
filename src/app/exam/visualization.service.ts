@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { createCanvas } from 'canvas';
+import { createCanvas, registerFont } from 'canvas';
 import * as echarts from 'echarts';
 import { Belbin } from 'src/assets/report/belbin';
-import { colors, fontBold } from './reports/formatter';
+import { colors, fontBold, fontNormal } from './reports/formatter';
 import { width } from 'pdfkit/js/page';
-
 @Injectable()
 export class VisualizationService {
   // Currently I am not using any data to generate chart just harcoded values.
-
+  constructor() {
+    registerFont('src/assets/fonts/Gilroy-ExtraBold.ttf', {
+      family: fontBold,
+    });
+    registerFont('src/assets/fonts/Gilroy-Medium.ttf', {
+      family: fontNormal,
+    });
+  }
   async createChart(
     data: number[][],
     min: number,
