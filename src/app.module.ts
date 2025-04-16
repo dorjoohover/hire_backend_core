@@ -30,6 +30,7 @@ import { EbarimtListener } from './app/ebarimt/ebarimt.listener';
 import { BullModule } from '@nestjs/bullmq';
 import { EbarimtModule } from './app/ebarimt/ebarim.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { BarimtModule } from './app/barimt/barimt.module';
 
 @Module({
   imports: [
@@ -44,10 +45,11 @@ import { MongooseModule } from '@nestjs/mongoose';
     //     host: 'localhost',
     //     port: 6379,
     //   },
-    
+
     // }),
     // EbarimtModule,
     DatabaseModule,
+    BarimtModule,
     BlogModule,
     BaseModule,
     EmailModule,

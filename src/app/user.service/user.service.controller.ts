@@ -66,6 +66,13 @@ export class UserServiceController {
       };
     }
   }
+
+  @Get('ebarimt/:id')
+  @ApiParam({ name: 'id' })
+  getEbarimt(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.getEbarimt(+user['id'], +id, user['email']);
+  }
+
   @Get('checkPayment/:id/:code')
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'id' })
@@ -74,6 +81,7 @@ export class UserServiceController {
     @Param('code') code: string,
     @Request() { user },
   ) {
+    console.log(id, code);
     return this.userServiceService.checkPayment(+id, code, +user['id']);
   }
   @Get()

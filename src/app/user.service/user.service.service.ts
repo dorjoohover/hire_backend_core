@@ -23,6 +23,7 @@ import { Role } from 'src/auth/guards/role/role.enum';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { ResultDao } from '../exam/dao/result.dao';
+import { BarimtService } from '../barimt/barimt.service';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -37,6 +38,7 @@ export class UserServiceService extends BaseService {
     private mailer: MailerService,
     private qpay: QpayService,
     private result: ResultDao,
+    private barimt: BarimtService,
   ) {
     super();
   }
@@ -82,9 +84,12 @@ export class UserServiceService extends BaseService {
       invoice,
     };
   }
-
+  public async getEbarimt(id: number, service: number, email: string) {
+    await this.barimt.getBarimt(id, service, email);
+  }
   public async checkPayment(id: number, code: string, user: number) {
     const payment = await this.qpay.checkPayment(code);
+
     if (payment.paid_amount) {
       const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
       await this.paymentDao.create({
@@ -104,6 +109,37 @@ export class UserServiceService extends BaseService {
         },
         2,
       );
+      const barimt = this.barimt.restReceipt(
+        {
+          billIdSuffix: code.toString(),
+          reportMonth: null,
+          receipts: [
+            {
+              items: [
+                {
+                  name: service.assessment.name,
+                  qty: service.count,
+                  unitPrice: service.assessment.price,
+                  totalCityTax: 2,
+                  totalVAT: 10,
+                },
+              ],
+            },
+          ],
+          payments: [
+            {
+              code: 'BANK_TRANSFER',
+              status: 'PAID',
+              paidAmount: payment.paid_amount,
+            },
+          ],
+        },
+        service.user,
+        payment.paid_amount,
+        service.id,
+      );
+      console.log(barimt);
+
       return true;
     }
     return false;
@@ -246,8 +282,6 @@ export class UserServiceService extends BaseService {
   public async findOne(id: number) {
     return await this.dao.findOne(id);
   }
-
-  
 
   remove(id: number) {
     return `This action removes a #${id} userService`;

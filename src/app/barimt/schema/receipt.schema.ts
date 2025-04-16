@@ -21,6 +21,10 @@ export class Receipt {
   // qrData: string;
   @Prop({ type: String })
   status: string;
+  @Prop({ type: Number })
+  userId: number;
+  @Prop({ type: Number })
+  service: number;
   @Prop({ type: String })
   date: Date;
   @Prop({ type: Boolean })

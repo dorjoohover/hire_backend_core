@@ -16,6 +16,8 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 import { ExamService } from '../exam/exam.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import { UserDao } from '../user/user.dao';
+import { BarimtService } from '../barimt/barimt.service';
 
 @Injectable()
 export class UserAnswerService extends BaseService {

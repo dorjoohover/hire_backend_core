@@ -29,6 +29,10 @@ import { jwtConstants } from 'src/auth/constants';
 import { DISC } from 'src/assets/report/disc';
 import { ResultDao } from '../exam/dao/result.dao';
 import { Belbin } from 'src/assets/report/belbin';
+import { BarimtService } from '../barimt/barimt.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Receipt, ReceiptSchema } from '../barimt/schema/receipt.schema';
+import { User, UserSchema } from '../barimt/schema/user.schema';
 
 @Module({
   imports: [
@@ -37,6 +41,10 @@ import { Belbin } from 'src/assets/report/belbin';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
+    MongooseModule.forFeature([
+      { name: Receipt.name, schema: ReceiptSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
   ],
   controllers: [UserServiceController],
   providers: [
@@ -45,6 +53,7 @@ import { Belbin } from 'src/assets/report/belbin';
     DISC,
     ResultDao,
     Belbin,
+    BarimtService,
     TransactionDao,
     ExamService,
     UserDao,
