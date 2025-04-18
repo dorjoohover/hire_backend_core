@@ -74,6 +74,12 @@ export const FeedbackType = {
   // togsgold awah
   RESULT: 20,
 };
+export const ContactType = {
+  SUPPLIER: 10,
+  PARTNER: 20,
+  FEEDBACK: 30,
+  OTHER: 40,
+};
 
 export const FeedbackStatus = {
   GOOD: 10,

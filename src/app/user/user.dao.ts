@@ -100,11 +100,18 @@ export class UserDao {
 
   getByEmail = async (email: string) => {
     if (!email) return null;
+    let where;
+    where = {
+      email: email,
+    };
+    if (!isNaN(parseInt(email))) {
+      where = {
+        id: +email,
+      };
+    }
     const res = await this._db.findOne({
       where: [
-        {
-          email: email,
-        },
+        where,
         {
           organizationRegisterNumber: email,
         },

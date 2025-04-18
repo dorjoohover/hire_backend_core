@@ -8,21 +8,26 @@ import {
   Request,
 } from '@nestjs/common';
 import { FeedbackService } from './feedback.service';
-import { CreateFeedbackDto } from './dto/create-feedback.dto';
+import { ContactDto, CreateFeedbackDto } from './dto/create-feedback.dto';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { ContactDao } from './contact.dao';
 
 @ApiTags('Feedback')
 @Controller('feedback')
 @ApiBearerAuth('access-token')
 export class FeedbackController {
-  constructor(private readonly feedbackService: FeedbackService) {}
+  constructor(private readonly feedbackService: FeedbackService, private readonly contact: ContactDao) {}
 
   @Post()
   create(@Body() createFeedbackDto: CreateFeedbackDto, @Request() { user }) {
     return this.feedbackService.create(createFeedbackDto, +user['id']);
   }
-
+  @Public()
+  @Post('contact')
+  createContact(@Body() dto: ContactDto) {
+    return this.contact.create(dto)
+  }
   @Get('all/:assessment/:type/:page/:limit')
   @ApiParam({ name: 'type' })
   @ApiParam({ name: 'assessment' })
