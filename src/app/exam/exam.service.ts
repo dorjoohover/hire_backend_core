@@ -618,10 +618,9 @@ export class ExamService extends BaseService {
     let [res, count] = await this.dao.findByAdmin(dto, page, limit);
     res = await Promise.all(
       res.map(async (r) => {
-        console.log(r);
-        const us = await this.userDao.getByEmail(
-           r.email,
-        );
+        let us = r.user;
+        if (r.email != null && us == null)
+          us = await this.userDao.getByEmail(r.email);
         const result = await this.resultDao.findOne(r.code);
         return {
           ...r,
