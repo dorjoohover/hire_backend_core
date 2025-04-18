@@ -12,6 +12,8 @@ import { ContactDto, CreateFeedbackDto } from './dto/create-feedback.dto';
 import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { ContactDao } from './contact.dao';
+import { Role } from 'src/auth/guards/role/role.enum';
+import { Roles } from 'src/auth/guards/role/role.decorator';
 
 @ApiTags('Feedback')
 @Controller('feedback')
@@ -27,6 +29,13 @@ export class FeedbackController {
   @Post('contact')
   createContact(@Body() dto: ContactDto) {
     return this.contact.create(dto)
+  }
+
+
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Get('contact')
+  getContact() {
+    return this.contact.getAll()
   }
   @Get('all/:assessment/:type/:page/:limit')
   @ApiParam({ name: 'type' })

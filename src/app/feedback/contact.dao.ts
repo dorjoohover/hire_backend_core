@@ -20,4 +20,11 @@ export class ContactDao extends BaseService {
     });
     await this._db.save(res);
   }
+  public async getAll() {
+    const [res, count] = await this._db.findAndCount();
+    return {
+      data: res,
+      count,
+    };
+  }
 }
