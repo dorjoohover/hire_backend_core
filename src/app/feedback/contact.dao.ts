@@ -21,7 +21,11 @@ export class ContactDao extends BaseService {
     await this._db.save(res);
   }
   public async getAll() {
-    const [res, count] = await this._db.findAndCount();
+    const [res, count] = await this._db.findAndCount({
+      order: {
+        createdAt: 'desc',
+      },
+    });
     return {
       data: res,
       count,
