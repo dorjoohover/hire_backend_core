@@ -132,7 +132,7 @@ export class ExamDao {
       where: whereCondition,
       take: limit,
       skip: (page - 1) * limit,
-      relations: ['assessment', 'service', 'service.user'],
+      relations: ['assessment', 'service', 'service.user', 'user'],
       order: {
         createdAt: 'DESC',
       },
