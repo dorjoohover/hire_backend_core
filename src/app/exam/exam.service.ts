@@ -619,7 +619,7 @@ export class ExamService extends BaseService {
     res = await Promise.all(
       res.map(async (r) => {
         let us = r.user;
-        console.log(r.user, r.email);
+        console.log(r.code, r.user, r.email);
         if (r.email != null && us == null)
           us = await this.userDao.getByEmail(r.email);
         const result = await this.resultDao.findOne(r.code);
