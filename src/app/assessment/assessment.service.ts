@@ -8,11 +8,13 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
 import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
 import { UserDao } from '../user/user.dao';
 import { AssessmentEntity } from './entities/assessment.entity';
+import { UserServiceDao } from '../user.service/user.service.dao';
 
 @Injectable()
 export class AssessmentService {
   constructor(
     private dao: AssessmentDao,
+    private userServiceDao: UserServiceDao,
     private levelDao: AssessmentLevelDao,
     private categoryDao: AssessmentCategoryService,
     private answerCategory: QuestionAnswerCategoryDao,
@@ -49,9 +51,9 @@ export class AssessmentService {
       ass.map(async (as) => {
         const user = await this.getUser(as);
         const category = await this.categoryDao.findOne(as.category.id);
-
+        const count = await this.userServiceDao.countByAssessment(as.id);
         return {
-          data: as,
+          data: { ...as, count },
           user: user,
           category: category,
         };

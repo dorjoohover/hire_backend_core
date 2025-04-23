@@ -12,11 +12,13 @@ import { AssessmentCategoryService } from '../assessment.category/assessment.cat
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { QuestionDao } from '../question/dao/question.dao';
+import { UserServiceDao } from '../user.service/user.service.dao';
 
 @Module({
   controllers: [AssessmentController, AssessmentLevelController],
   providers: [
     AssessmentService,
+    UserServiceDao,
     AssessmentDao,
     AssessmentLevelService,
     AssessmentCategoryService,

@@ -23,6 +23,17 @@ export class UserServiceDao {
     return res;
   };
 
+  countByAssessment = async (id: number) => {
+    const res = await this.db.count({
+      where: {
+        assessment: {
+          id,
+        },
+      },
+    });
+    return res;
+  };
+
   updateStatus = async (id: number, status: number) => {
     const res = await this.db.findOne({
       where: {
