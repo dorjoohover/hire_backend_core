@@ -215,13 +215,20 @@ export class UserServiceService extends BaseService {
       );
     const code = Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
-        const res = await this.examService.create({
-          endDate: dto.endDate,
-          service: dto.service,
-          created: service.user?.id,
-          startDate: dto.startDate,
-          assessment: service.assessment,
-        });
+        const res = await this.examService.create(
+          {
+            endDate: dto.endDate,
+            service: dto.service,
+            created: service.user?.id,
+            startDate: dto.startDate,
+            assessment: service.assessment,
+          },
+          service.user
+            ? service.user.role == Role.client
+              ? service.user
+              : null
+            : null,
+        );
         return res;
       }),
     );
