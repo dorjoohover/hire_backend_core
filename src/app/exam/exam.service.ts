@@ -95,7 +95,13 @@ export class ExamService extends BaseService {
     try {
       const result = await this.resultDao.findOne(id);
       const exam = await this.dao.findByCode(id);
-      if (!result && !exam.visible && user.role == Role.client && !calculate)
+      if (
+        exam?.visible != undefined &&
+        !result &&
+        !exam.visible &&
+        user.role == Role.client &&
+        !calculate
+      )
         throw new HttpException(
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
