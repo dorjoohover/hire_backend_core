@@ -70,7 +70,7 @@ export class UserServiceController {
   @Get('ebarimt/:id')
   @ApiParam({ name: 'id' })
   getEbarimt(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.getEbarimt(+user['id'], +id, user['email']);
+    return this.userServiceService.getEbarimt(+id, user['email']);
   }
 
   @Get('checkPayment/:id/:code')

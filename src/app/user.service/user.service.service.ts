@@ -84,12 +84,11 @@ export class UserServiceService extends BaseService {
       invoice,
     };
   }
-  public async getEbarimt(id: number, service: number, email: string) {
-    await this.barimt.getBarimt(id, service, email);
+  public async getEbarimt(id: number, email: string) {
+    await this.barimt.getBarimt(id, email);
   }
   public async checkPayment(id: number, code: string, user: number) {
     const payment = await this.qpay.checkPayment(code);
-
     if (payment.paid_amount) {
       const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
       await this.paymentDao.create({
@@ -111,7 +110,7 @@ export class UserServiceService extends BaseService {
       );
       const barimt = this.barimt.restReceipt(
         {
-          billIdSuffix: code.toString(),
+          billIdSuffix: service.id.toString(),
           reportMonth: null,
           receipts: [
             {
@@ -138,7 +137,6 @@ export class UserServiceService extends BaseService {
         payment.paid_amount,
         service.id,
       );
-      console.log(barimt);
 
       return true;
     }

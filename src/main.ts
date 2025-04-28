@@ -3,11 +3,8 @@ import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { useContainer, ValidationError } from 'class-validator';
 import { setupSwagger } from './config/swagger';
-import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
-import { json, urlencoded } from 'express';
 import { ErrorLogService } from './app/error-logs/error-log.service';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
-import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -34,7 +31,9 @@ async function bootstrap() {
     }),
   );
   const httpAdapterHost = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, errorLogService))
+  app.useGlobalFilters(
+    new AllExceptionsFilter(httpAdapterHost, errorLogService),
+  );
   setupSwagger(app);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   process.on('uncaughtException', async (error) => {
@@ -54,7 +53,7 @@ async function bootstrap() {
       500,
     );
   });
-  await app.listen(3000, '0.0.0.0');
-  // await app.listen(4000, '0.0.0.0');
+  // await app.listen(3000, '0.0.0.0');
+  await app.listen(4000, '0.0.0.0');
 }
 bootstrap();

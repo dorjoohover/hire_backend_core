@@ -1,17 +1,20 @@
 import { Controller, Get, Post, Req } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { BarimtService } from './barimt.service';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Request } from 'express';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 export interface CustomRequest extends Request {
   token?: string;
   expiredIn?: number;
 }
 
-ApiTags('ebarimt');
+@ApiTags('ebarimt')
 @Controller('barimt')
+@ApiBearerAuth('access-token')
 export class BarimtController {
   constructor(private service: BarimtService) {}
   @Public()
@@ -26,19 +29,18 @@ export class BarimtController {
   @Public()
   @Get()
   async get() {
-    let dto = ''
+    let dto = '';
     // return await this.service.restReceipt(dto)
   }
-  // @Cron(CronExpression.EVERY_DAY_AT_1AM)
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Get('send')
+  @Roles(Role.super_admin)
   async automatSender() {
-    await this.service.sendData();
+    return await this.service.sendData();
   }
 
-  
   @Public()
   @Get('info')
   async getInfo() {
-    return await this.service.getInformation()
+    return await this.service.getinformation();
   }
 }

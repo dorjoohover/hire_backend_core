@@ -35,6 +35,8 @@ export class AssessmentEntity {
   @Column()
   price: number;
   @Column({ nullable: true })
+  exampleReport: string;
+  @Column({ nullable: true })
   status: number;
   @Column({ default: false })
   timeout: boolean;

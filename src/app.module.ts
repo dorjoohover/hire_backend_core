@@ -23,13 +23,7 @@ import { EmailModule } from './auth/email.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 import { BlogModule } from './app/blog/blog.module';
 import { ErrorLogModule } from './app/error-logs/error-log.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { EbarimtController } from './app/ebarimt/ebarimt.controller';
-import { EbarimtService } from './app/ebarimt/ebarimt.service';
-import { EbarimtListener } from './app/ebarimt/ebarimt.listener';
-import { BullModule } from '@nestjs/bullmq';
-import { EbarimtModule } from './app/ebarimt/ebarim.module';
-import { MongooseModule } from '@nestjs/mongoose';
+
 import { BarimtModule } from './app/barimt/barimt.module';
 
 @Module({
@@ -38,7 +32,6 @@ import { BarimtModule } from './app/barimt/barimt.module';
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
-    MongooseModule.forRoot(process.env.BARIMT_URL as string),
 
     // BullModule.forRoot({
     //   connection: {

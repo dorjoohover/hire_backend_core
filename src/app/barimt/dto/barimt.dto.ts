@@ -83,7 +83,7 @@ export class BarimtDto {
 
 export class BarimtResponseDto {
   // ddtd
-  id: string;
+  ddtd: string;
   // posid
   posId: number;
   // status
@@ -91,7 +91,7 @@ export class BarimtResponseDto {
   // message
   message: string;
   // qrData
-  qrData: string;
+  qrData?: string;
   // sugalaanii dugaar
   lottery: string;
   // barimt hewlesen ognoo date
@@ -99,6 +99,9 @@ export class BarimtResponseDto {
   //
   easy: string;
   //
+  totalAmount: string;
+  tin: string;
+  noat: number;
   receipts: BarimtRecceiptResponseDto[];
 }
 

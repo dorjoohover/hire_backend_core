@@ -29,6 +29,8 @@ export class CreateAssessmentDto {
   @ApiProperty()
   report?: number;
   @ApiProperty()
+  exampleReport?: string;
+  @ApiProperty()
   questionShuffle?: boolean;
   @ApiProperty()
   answerShuffle?: boolean;
