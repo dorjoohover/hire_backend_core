@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CreateQuestionAnswerDto } from '../dto/create-question.answer.dto';
 import { QuestionAnswerEntity } from '../entities/question.answer.entity';
+import { QuestionType } from 'src/base/constants';
 
 @Injectable()
 export class QuestionAnswerDao {
@@ -125,7 +126,7 @@ export class QuestionAnswerDao {
       where: {
         id: id,
       },
-      relations: ['category'],
+      relations: ['category', 'question'],
     });
   };
   clear = async () => {

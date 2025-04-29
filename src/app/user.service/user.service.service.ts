@@ -108,35 +108,35 @@ export class UserServiceService extends BaseService {
         },
         2,
       );
-      const barimt = this.barimt.restReceipt(
-        {
-          billIdSuffix: service.id.toString(),
-          reportMonth: null,
-          receipts: [
-            {
-              items: [
-                {
-                  name: service.assessment.name,
-                  qty: service.count,
-                  unitPrice: service.assessment.price,
-                  totalCityTax: 2,
-                  totalVAT: 10,
-                },
-              ],
-            },
-          ],
-          payments: [
-            {
-              code: 'BANK_TRANSFER',
-              status: 'PAID',
-              paidAmount: payment.paid_amount,
-            },
-          ],
-        },
-        service.user,
-        payment.paid_amount,
-        service.id,
-      );
+      // const barimt = this.barimt.restReceipt(
+      //   {
+      //     billIdSuffix: service.id.toString(),
+      //     reportMonth: null,
+      //     receipts: [
+      //       {
+      //         items: [
+      //           {
+      //             name: service.assessment.name,
+      //             qty: service.count,
+      //             unitPrice: service.assessment.price,
+      //             totalCityTax: 2,
+      //             totalVAT: 10,
+      //           },
+      //         ],
+      //       },
+      //     ],
+      //     payments: [
+      //       {
+      //         code: 'BANK_TRANSFER',
+      //         status: 'PAID',
+      //         paidAmount: payment.paid_amount,
+      //       },
+      //     ],
+      //   },
+      //   service.user,
+      //   payment.paid_amount,
+      //   service.id,
+      // );
 
       return true;
     }

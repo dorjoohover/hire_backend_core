@@ -14,6 +14,8 @@ export class CreateQuestionAnswerDto {
   @ApiProperty()
   correct: boolean;
   @ApiProperty()
+  reverse?: boolean;
+  @ApiProperty()
   id?: number;
 
   category?: number | string;

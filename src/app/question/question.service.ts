@@ -77,6 +77,7 @@ export class QuestionService {
         file: answer.answer?.file,
         question: questionId,
         correct: answer.answer?.correct,
+        reverse: answer.answer.reverse,
       };
       const category = answer.answer?.category;
       const cate =
@@ -85,6 +86,7 @@ export class QuestionService {
           : typeof category === 'number'
             ? category
             : (await this.questionAnswerCategoryDao.findByName(category)).id;
+
       const answerId =
         answer.answer?.id != null
           ? await this.questionAnswerDao.updateOne(answer.answer.id, {

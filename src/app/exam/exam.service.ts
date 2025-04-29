@@ -110,6 +110,7 @@ export class ExamService extends BaseService {
         return {
           // calculate: result.,
           visible: exam.visible,
+          icons: exam.assessment?.icons,
           value: result,
         };
 
@@ -121,6 +122,7 @@ export class ExamService extends BaseService {
         return {
           calculate,
           visible: exam.visible,
+          icons: exam.assessment?.icons,
         };
       }
     } catch (error) {
