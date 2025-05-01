@@ -1349,11 +1349,12 @@ export class PdfService {
     const firstname = result?.firstname ?? '';
     const lastname = result?.lastname ?? '';
     // const buffer2: any = await this.generateImage(htmlCode);
+    console.log(result)
     // console.log(buffer2);
     const doc = await this.createDefaultPdf(
       result?.lastname ?? '',
       result?.firstname ?? '',
-      result.assessmentName,
+      result?.assessmentName,
       result.code,
     );
     try {

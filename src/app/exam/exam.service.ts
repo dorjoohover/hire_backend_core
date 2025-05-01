@@ -91,7 +91,8 @@ export class ExamService extends BaseService {
     try {
       const result = await this.resultDao.findOne(id);
       const exam = await this.dao.findByCode(id);
-      const user = exam.user;
+      let user = exam.user;
+      if (user == null) user = await this.userDao.getByEmail(exam.email);
       if (
         exam?.visible != undefined &&
         !result &&
@@ -139,6 +140,7 @@ export class ExamService extends BaseService {
         Date.parse(exam.userStartDate?.toString())) /
         60000,
     );
+    console.log(user);
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         lastname: exam?.lastname ?? user?.lastname,
@@ -148,6 +150,20 @@ export class ExamService extends BaseService {
         user: {
           id: user.id,
         },
+      });
+      console.log({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: diff,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: res[0]?.formula?.toLowerCase().includes('sum')
+          ? ReportType.CORRECT
+          : ReportType.CORRECTCOUNT,
+        limit: exam.assessment.duration,
+        total: exam.assessment.totalPoint,
+        point: res[0].point,
       });
       await this.resultDao.create({
         assessment: exam.assessment.id,
