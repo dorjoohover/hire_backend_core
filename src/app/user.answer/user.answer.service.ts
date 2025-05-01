@@ -88,7 +88,7 @@ export class UserAnswerService extends BaseService {
               : await this.questionAnswerDao.findOne(answer.answer);
 
             const point =
-              !answer.matrix &&
+              answer.matrix === undefined &&
               (answerCategory as QuestionAnswerEntity).reverse === true
                 ? answerCategory.question.maxValue - answer.point + 1
                 : (answer.point ??

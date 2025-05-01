@@ -87,14 +87,11 @@ export class ExamService extends BaseService {
   }
 
   // onoo bujaats ywuulah
-  public async calculateExamById(
-    id: number,
-    calculate = false,
-    user?: UserEntity,
-  ) {
+  public async calculateExamById(id: number, calculate = false) {
     try {
       const result = await this.resultDao.findOne(id);
       const exam = await this.dao.findByCode(id);
+      const user = exam.user;
       if (
         exam?.visible != undefined &&
         !result &&
@@ -111,7 +108,7 @@ export class ExamService extends BaseService {
           // calculate: result.,
           visible: exam.visible,
           icons: exam.assessment?.icons,
-          value: result,
+          value: exam.visible ? result : null,
         };
 
       const formule = exam.assessment.formule;
