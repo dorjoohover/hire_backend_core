@@ -122,7 +122,6 @@ export class UserAnswerService extends BaseService {
         const response = await this.examService.calculateExamById(
           dto.data[0].code,
           true,
-          user,
         );
 
         if (response.visible)
