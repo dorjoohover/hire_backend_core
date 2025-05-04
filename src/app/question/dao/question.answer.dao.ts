@@ -45,7 +45,7 @@ export class QuestionAnswerDao {
         res.file == dto.file &&
         dto.category == res.category?.id;
       if (update) return id;
-
+      console.log(id, dto.reverse)
       await this.db.update(id, {
         ...dto,
         category: {
