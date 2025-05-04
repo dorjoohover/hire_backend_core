@@ -23,6 +23,8 @@ export class FeedbackEntity {
   status: number;
   @ManyToOne(() => UserEntity, (service) => service.feedbacks)
   user: UserEntity;
-  @ManyToOne(() => AssessmentEntity, (service) => service.feedbacks)
+  @ManyToOne(() => AssessmentEntity, (service) => service.feedbacks, {
+    onDelete: 'CASCADE',
+  })
   assessment: AssessmentEntity;
 }

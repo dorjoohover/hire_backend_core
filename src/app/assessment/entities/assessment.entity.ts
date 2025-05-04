@@ -104,6 +104,7 @@ export class AssessmentEntity {
   @OneToMany(() => ExamEntity, (question) => question.assessment, {
     nullable: true,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   exams: ExamEntity[];
   @OneToMany(() => UserServiceEntity, (service) => service.assessment, {
@@ -113,6 +114,7 @@ export class AssessmentEntity {
   @OneToMany(() => FeedbackEntity, (service) => service.assessment, {
     nullable: true,
     onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
   })
   feedbacks: FeedbackEntity[];
 }
