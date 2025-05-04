@@ -45,7 +45,6 @@ export class QuestionAnswerDao {
         res.file == dto.file &&
         dto.category == res.category?.id && dto.reverse == res.reverse;
       if (update) return id;
-      console.log(id, dto.reverse)
       await this.db.update(id, {
         ...dto,
         category: {
@@ -72,6 +71,7 @@ export class QuestionAnswerDao {
         value: true,
         orderNumber: true,
         file: true,
+        reverse: true
       },
       where: {
         question: { id: id },

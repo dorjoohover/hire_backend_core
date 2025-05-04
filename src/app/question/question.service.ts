@@ -70,7 +70,6 @@ export class QuestionService {
     type: number,
   ) {
     for (const answer of answers) {
-      console.log(answer.answer)
       const answerBody = {
         value: answer.answer?.value,
         point: answer.answer?.point,
