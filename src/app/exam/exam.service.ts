@@ -188,7 +188,7 @@ export class ExamService extends BaseService {
       const defaultData = order.map((letter) => ({ aCate: letter, point: 0 }));
       const mergedData = defaultData.map(
         (item) =>
-          res.find((obj) => obj['aCate'].toLowerCase() === item.aCate) || item,
+          res.find((obj) => obj['aCate']?.toLowerCase() === item.aCate) || item,
       );
       let index = {
         d: [],
@@ -211,7 +211,7 @@ export class ExamService extends BaseService {
       for (const r of mergedData) {
         let inten = -1,
           total = '';
-        const aCate = r.aCate.toLowerCase();
+        const aCate = r.aCate?.toLowerCase();
         const cate = DISC.graph3[aCate];
         const point = +r['point'];
         if (cate != null) {
@@ -322,7 +322,7 @@ export class ExamService extends BaseService {
       for (const v of Belbin.values) {
         const include =
           details.filter(
-            (detail) => detail.value.toLowerCase() == v.toLowerCase(),
+            (detail) => detail.value?.toLowerCase() == v?.toLowerCase(),
           ).length != 0;
         if (!include)
           details.push({
