@@ -43,7 +43,7 @@ export class QuestionAnswerDao {
         dto.correct == res.correct &&
         res.orderNumber == dto.orderNumber &&
         res.file == dto.file &&
-        dto.category == res.category?.id;
+        dto.category == res.category?.id && dto.reverse == res.reverse;
       if (update) return id;
       console.log(id, dto.reverse)
       await this.db.update(id, {
