@@ -117,13 +117,17 @@ export const header = (
     .fillColor(colors.black)
     .font(fontNormal)
     .fontSize(fz.sm)
-    .text(lastname ?? '', marginX + 145, marginY - 3 + (firstname ? 0 : 12));
+    .text(
+      lastname ?? 'Шалгуулагч',
+      marginX + 145,
+      marginY - 3 + (firstname ? 0 : 12),
+    );
 
   doc
     .fillColor(colors.black)
     .fontSize(fz.sm)
     .font(fontBold)
-    .text(firstname ?? '', marginX + 145, marginY + 11 - (lastname ? 0 : 12));
+    .text(firstname ?? '', marginX + 145, marginY + 11);
   doc.x = marginX;
   doc.y = doc.y + 40;
 
@@ -409,7 +413,7 @@ export const home = (
     .text(dateFormatter(date), marginX, doc.page.height - marginY - 20);
 
   try {
-    const qrCodeBuffer = generateQRCodeSync(`hire.mn/pdf/${code}`);
+    const qrCodeBuffer = generateQRCodeSync(`hire.mn/result/${code}`);
 
     const qrCodeSize = 70;
     const qrCodeX = doc.page.width - marginX - qrCodeSize;

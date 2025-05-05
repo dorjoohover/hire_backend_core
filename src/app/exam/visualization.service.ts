@@ -295,7 +295,7 @@ export class VisualizationService {
     const canvasWidth = 1800;
     const canvasHeight = 700;
 
-    const maxValue = Math.max(...values);
+    const maxValue = 1;
 
     const option = {
       title: {
@@ -308,7 +308,7 @@ export class VisualizationService {
         },
       },
       grid: {
-        left: '42%',
+        left: '47%',
         right: '3%',
         top: 20,
         bottom: 80,
@@ -351,7 +351,7 @@ export class VisualizationService {
       series: [
         {
           type: 'bar',
-          barWidth: 35,
+          barWidth: 30,
           barGap: '0%',
           barCategoryGap: '1%',
           data: values,
