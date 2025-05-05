@@ -80,28 +80,28 @@ export class ExamController {
     const filePath = join(this.cachePath, filename);
     const role = user?.['role'];
 
-    // // Step 1: Check local cache
-    // if (existsSync(filePath)) {
-    //   const stats = statSync(filePath);
-    //   const fileAge = Date.now() - stats.mtimeMs;
-    //   const daysOld = fileAge / (1000 * 60 * 60 * 24);
+    // Step 1: Check local cache
+    if (existsSync(filePath)) {
+      const stats = statSync(filePath);
+      const fileAge = Date.now() - stats.mtimeMs;
+      const daysOld = fileAge / (1000 * 60 * 60 * 24);
 
-    //   if (daysOld <= 30) {
-    //     res.setHeader('Content-Type', 'application/pdf');
-    //     res.setHeader(
-    //       'Content-Disposition',
-    //       `attachment; filename="${filename}"`,
-    //     );
-    //     return createReadStream(filePath).pipe(res);
-    //   } else {
-    //     unlinkSync(filePath); // delete old cache
-    //   }
-    // }
+      if (daysOld <= 30) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${filename}"`,
+        );
+        return createReadStream(filePath).pipe(res);
+      } else {
+        unlinkSync(filePath); // delete old cache
+      }
+    }
 
     // Step 2: Try to download from S3
-    // const s3Url = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${filename}`;
+    const s3Url = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${filename}`;
     try {
-      // const s3Res = await axios.get(s3Url, { responseType: 'stream' });
+      const s3Res = await axios.get(s3Url, { responseType: 'stream' });
       const writer = createWriteStream(filePath);
 
       res.setHeader('Content-Type', 'application/pdf');
@@ -110,8 +110,8 @@ export class ExamController {
         `attachment; filename="${filename}"`,
       );
 
-      // s3Res.data.pipe(writer);
-      // s3Res.data.pipe(res);
+      s3Res.data.pipe(writer);
+      s3Res.data.pipe(res);
 
       writer.on('finish', () => {
         console.log('PDF downloaded from S3 and saved locally');
