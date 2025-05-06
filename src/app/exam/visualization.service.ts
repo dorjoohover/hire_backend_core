@@ -291,128 +291,110 @@ export class VisualizationService {
     }
   }
 
-  async bar(categories, values) {
+  async bar(userValue, maxValue, globalAverage) {
     const canvasWidth = 1800;
-    const canvasHeight = 700;
+    const canvasHeight = 130;
 
-    const maxValue = 1;
+    const normalizedUserValue = userValue / maxValue;
+    const emptyPortion = (maxValue - userValue) / maxValue;
+    const normalizedGlobalAvg = globalAverage / maxValue;
+
+    const avgPositionInPixels = normalizedGlobalAvg * canvasWidth;
+    const barYCenter = canvasHeight / 2;
+    const lineLength = 30;
 
     const option = {
-      title: {
-        show: false,
-      },
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'shadow',
-        },
-      },
+      title: { show: false },
+      tooltip: { show: false },
+
       grid: {
-        left: '47%',
-        right: '3%',
-        top: 20,
-        bottom: 80,
+        left: '0%',
+        right: '0%',
+        top: 0,
+        bottom: 0,
         containLabel: false,
       },
       xAxis: {
         type: 'value',
         show: false,
         min: 0,
-        max: maxValue,
+        max: 1,
         splitLine: { show: false },
         axisLine: { show: false },
         axisTick: { show: false },
       },
       yAxis: {
         type: 'category',
-        data: categories,
-        axisLabel: {
-          fontFamily: 'Gilroy-SemiBold',
-          fontSize: 30,
-          color: '#231F20',
-          padding: [0, 20, 0, 0],
-          align: 'right',
-          inside: false,
-          position: 'left',
-        },
-        axisLine: {
-          show: true,
-          lineStyle: {
-            color: colors.gray,
-          },
-        },
-        axisTick: { show: false },
-        inverse: false,
-        boundaryGap: [0, 0],
-        splitArea: {
-          show: false,
-        },
+        show: false,
+        data: [''],
       },
       series: [
         {
           type: 'bar',
-          barWidth: 30,
-          barGap: '0%',
-          barCategoryGap: '1%',
-          data: values,
+          stack: 'total',
+          barWidth: 35,
+          data: [normalizedUserValue],
           itemStyle: {
-            color: '#F36421',
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#F36421' },
+              { offset: 1, color: '#ED1C45' },
+            ]),
+            borderRadius: [20, 0, 0, 20],
+          },
+          z: 2,
+        },
+        {
+          type: 'bar',
+          stack: 'total',
+          barWidth: 30,
+          data: [emptyPortion],
+          itemStyle: {
+            color: '#E5E5E5',
             borderRadius: [0, 20, 20, 0],
           },
+          z: 1,
+        },
+        {
+          type: 'custom',
+          renderItem: function (params, api) {
+            const avgPosition = normalizedGlobalAvg;
+            const avgPoint = api.coord([avgPosition, 0]);
+
+            return {
+              type: 'group',
+              children: [
+                {
+                  type: 'line',
+                  shape: {
+                    x1: avgPoint[0],
+                    y1: barYCenter - lineLength / 2 - 10,
+                    x2: avgPoint[0],
+                    y2: barYCenter + lineLength / 2 + 10,
+                  },
+                  style: {
+                    stroke: '#000',
+                    lineWidth: 2,
+                  },
+                },
+              ],
+            };
+          },
+          data: [normalizedUserValue],
+          z: 3,
         },
       ],
       graphic: [
         {
-          type: 'line',
-          right: '3%',
-          top: 20,
-          shape: {
-            x1: 0,
-            y1: 0,
-            x2: 0,
-            y2: canvasHeight - 100,
-          },
-          style: {
-            stroke: colors.gray,
-            lineWidth: 1.5,
-          },
-        },
-        {
-          type: 'line',
-          left: '3%',
-          bottom: 60,
-          shape: {
-            x1: 0,
-            y1: 0,
-            x2: '94%',
-            y2: 0,
-          },
-          style: {
-            stroke: colors.gray,
-            lineWidth: 1.5,
-          },
-        },
-        {
           type: 'text',
-          right: 0,
-          bottom: 20,
+          left: avgPositionInPixels + 'px',
+          top: barYCenter + lineLength / 2 + 13,
           style: {
-            text: 'Хамгийн их хэмжээ',
-            font: '24px Gilroy-SemiBold',
-            fill: colors.gray,
-            textAlign: 'right',
+            text: `Дундаж: ${globalAverage.toFixed(2)}`,
+            font: '24px Gilroy-Medium',
+            fill: '#333',
+            textAlign: 'center',
           },
-        },
-        {
-          type: 'text',
-          left: '25%',
-          bottom: 20,
-          style: {
-            text: 'Хамгийн бага хэмжээ',
-            font: '24px Gilroy-SemiBold',
-            fill: colors.gray,
-            textAlign: 'right',
-          },
+          bounding: 'raw',
         },
       ],
     };
