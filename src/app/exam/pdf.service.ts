@@ -916,7 +916,7 @@ export class PdfService {
       .lineGap(lh.md)
       .fillColor(colors.black)
       .text(
-        'Нарциссизм (Narcissism) гэдэг нь хүний зан төлөвт илэрдэг өөрийгөө хэт их хайрлах, дөвийлгөн үзэх үзлийг хэлнэ. Нэршлийн хувьд эртний Грекийн домгоос үүдэлтэй бөгөөд Нарциссус (Narcissus) гэх нэгэн үзэсгэлэн төгөлдөр эр өөрийн төрхийг усны тусгалд харж дурласан гэх түүх байдаг. Үүнээс үүдэлтэйгээр нарцисизмын үзэл бий болсон түүхтэй.\n\nНарциссизм буюу өөрийгөө хэт их хайрлах, дөвийлгөж үзэх үзлийг нийтээр буруу гэж хүлээн зөвшөөрөх хандлага түгээмэл байдаг. Харин сүүлийн жилүүдэд “аливаа нэг хүнд, ялангуяа удирдах албан тушаалтанд тодорхой хэмжээний нарциссизм байх нь оновчтой” гэсэн асуудлыг дэвшүүлэх болжээ.',
+        'Нарциссизм нь нэршлийн хувьд эртний Грекийн домгоос үүдэлтэй бөгөөд Нарциссус (Narcissus) гэх нэгэн үзэсгэлэн төгөлдөр эр өөрийн төрхийг усны тусгалд харж дурласан гэх түүх байдаг. Үүнээс үүдэлтэйгээр нарцисизмын үзэл бий болсон түүхтэй.\n\nНарциссизм буюу өөрийгөө хэт их хайрлах, дөвийлгөж үзэх үзлийг нийтээр буруу гэж хүлээн зөвшөөрөх хандлага түгээмэл байдаг. Харин сүүлийн жилүүдэд “аливаа нэг хүнд, ялангуяа удирдах албан тушаалтанд тодорхой хэмжээний нарциссизм байх нь оновчтой” гэсэн асуудлыг дэвшүүлэх болжээ.\n\nАливаа хүний нарциссизмын үзэл 7 зан төлөвийн хүчин зүйлээс үүдэлтэй болохыг аналитик сэтгэл судлалын гол төлөөлөгч Карл Густав Юунг судалж тодорхойлсон байдаг. Карл Юунг (Carl Jung) нь дан ганц нарциссизмын оноог авч үзэхээс гадна бие хүний зан төлөвийн хүчин зүйл тус бүрээр нь салгаж шинжлэх нь илүү оновчтой болохыг тодорхойлж "Ашигч байдал", "Сэтгэл хөдлөл, дутагдлаа нууж чаддаггүй байдал", "Нэр хүнд, бүрэн эрх", "Ямба, эрх мэдэл", "Бусдаас давуу байдал", "Өөртөө сэтгэл ханамжтай байдал", "Бардам зан, хийрхэл" хэмээх 7 зан төлөвийн хүчин зүйлсийг боловсруулжээ.',
         { align: 'justify' },
       );
     footer(doc);
@@ -928,6 +928,19 @@ export class PdfService {
       .fontSize(13)
       .text('Таны нарциссизмын оноо')
       .moveDown(0.5);
+
+    let levelLabel = '';
+
+    if (Number(result.value) <= 9) {
+      levelLabel = 'Бага түвшин';
+    } else if (Number(result.value) <= 15) {
+      levelLabel = 'Дундаж түвшин';
+    } else if (Number(result.value) <= 20) {
+      levelLabel = 'Харьцангуй өндөр түвшин';
+    } else {
+      levelLabel = 'Үнэмлэхүй өндөр түвшин';
+    }
+
     doc.font('fontBlack').fontSize(28);
     doc.fillColor(colors.orange).text(`${result.value ?? ''}`, {
       continued: true,
@@ -935,15 +948,7 @@ export class PdfService {
     doc
       .fontSize(21)
       .fillColor(colors.black)
-      .text(`/${result.total}`, doc.x, doc.y + 5, {
-        continued: true,
-      });
-
-    doc
-      .fontSize(12)
-      .font(fontNormal)
-      .fillColor(colors.black)
-      .text('  буюу  ', doc.x, doc.y + 6.25, {
+      .text(`/${result.total}` + ' = ', doc.x, doc.y + 5, {
         continued: true,
       });
     doc
@@ -953,8 +958,20 @@ export class PdfService {
       .text(
         `${(parseInt(result.value) / result.total).toFixed(2)}%`,
         doc.x,
-        doc.y - 6.25,
+        doc.y,
+        { continued: true },
       )
+      .fontSize(12)
+      .font(fontNormal)
+      .fillColor(colors.black)
+      .text('  буюу  ', doc.x, doc.y + 6.25, {
+        continued: true,
+      })
+      .font('fontBlack')
+      .fontSize(16);
+    doc
+      .fillColor(colors.orange)
+      .text(levelLabel.toUpperCase(), doc.x, doc.y - 3.25)
       .moveDown(0.5);
     doc
       .font(fontNormal)
@@ -962,47 +979,73 @@ export class PdfService {
       .lineGap(lh.md)
       .fillColor(colors.black)
       .text(
-        'Аливаа хүний нарциссизмын үзэл дараах 6 зан төлөвийн хүчин зүйлээс үүдэлтэй болохыг аналитик сэтгэл судлалын гол төлөөлөгч Карл Густав Юунг судалж тодорхойлжээ. Таны нарциссизмын тестийн үр дүнг дээрх 6 хүчин зүйлсэд хуваан авч үзсэн графикийг дор харууллаа. Карл Юунг (Carl Jung): Дан ганц нарциссизмын оноог авч үзэхээс гадна бие хүний зан төлөвийн хүчин зүйл тус бүрээр нь салгаж шинжлэх нь илүү оновчтой болохыг тодорхойлж дараах 6 зан төлөвийн хүчин зүйлсийг боловсруулжээ. Дараах 6  бөгөөд таны нарциссизмын хэмжээг 6 хүчин зүйл тус бүрээр хуваан авч үзвэл:',
+        'Карл Юунгийн боловсруулсан 7 хүчин зүйл тус бүрээр таны нарциссизмын оноог хүн амын нийтлэг дундажтай харьцуулахад:',
         { align: 'justify' },
-      );
-
-    const categories = result.details.map((detail) => detail.value);
-    const values = result.details.map((detail) => detail.cause);
-
-    const buffer = await this.vis.bar(categories, values);
-    const imgWidth = doc.page.width - marginX * 2;
-    const imgHeight = (700 / 1800) * imgWidth;
-
-    doc
-      .image(buffer, marginX, doc.y + 15, {
-        width: imgWidth,
-        height: imgHeight,
-      })
+      )
       .moveDown(1);
 
+    const categories = result.details.map((detail) => detail.value);
+    const numberedCategories = result.details.map(
+      (detail, index) => `${index + 1}. ${detail.value}`,
+    );
+
+    const values = result.details.map((detail) => Number(detail.cause));
+    const divisors = [5, 7, 8, 6, 5, 6, 3];
+    const averages = [1.47, 2.21, 4.16, 1.67, 2.54, 2.09, 1.37];
+
+    for (let index = 0; index < numberedCategories.length; index++) {
+      const category = numberedCategories[index];
+
+      if (index > 0) {
+        doc.moveDown(3.2);
+      }
+
+      doc
+        .font(fontBold)
+        .fontSize(12)
+        .fillColor(colors.black)
+        .text(category + ' ', { continued: true })
+        .font('fontBlack')
+        .fillColor(colors.orange)
+        .text(String(values[index]) + '/', { continued: true })
+        .fillColor(colors.black)
+        .text(String(divisors[index]));
+
+      doc.moveDown(-0.8);
+
+      const buffer = await this.vis.bar(
+        values[index],
+        divisors[index],
+        averages[index],
+      );
+
+      doc.image(buffer, {
+        width: doc.page.width - marginX * 2,
+        height: (130 / 1800) * (doc.page.width - marginX * 2),
+      });
+    }
+
     let descriptionText =
-      'Дээрх график нь танд буй дээрх 6 хүчин зүйлс хэр их нарциссизмд автаж буйг харуулж байгаа бөгөөд ';
+      'Дээрх график нь танд буй дээрх 7 хүчин зүйлс хэр их нарциссизмд автаж буйг харуулж байгаа бөгөөд ';
 
     const numericValues = values.map((val) =>
       typeof val === 'string' ? parseFloat(val) : val,
     );
-    const maxValue = Math.max(...numericValues);
-    const halfMax = maxValue / 2;
     const categoryStates = [];
 
-    const reversedCategories = [...categories].reverse();
-
-    reversedCategories.forEach((category, index) => {
+    categories.forEach((category, index) => {
       const value = numericValues[index];
+      const average = averages[index];
       let state;
+
       if (value === 0) {
-        state = 'нарциссизмд огт автаагүй';
-      } else if (value < halfMax) {
-        state = 'нарциссизмд автсан байдал бага';
-      } else if (value === halfMax) {
+        state = 'огт автаагүй';
+      } else if (value < average - 0.6) {
+        state = 'автсан байдал бага';
+      } else if (value <= average + 0.6) {
         state = 'дундаж хэмжээтэй';
       } else {
-        state = 'нарциссизмд автсан байдал их';
+        state = 'автсан байдал их';
       }
 
       categoryStates.push({
@@ -1040,7 +1083,7 @@ export class PdfService {
       .font(fontBold)
       .fillColor(colors.black)
       .fontSize(13)
-      .text('Графикийн тайлбар', marginX, doc.y + 225)
+      .text('Графикийн тайлбар', marginX, doc.y + 58)
       .moveDown(0.5);
     doc
       .font(fontNormal)
@@ -1065,7 +1108,6 @@ export class PdfService {
         [
           'Тавьсан зорилгодоо хүрэхийн тулд бусдаас илт ялгарахуйц тууштай зүтгэдэг.',
           'Алсын хараатай. Тэд аливаа зүйлийн цаад учир, гарах үр дүн зэргийг тооцоолохдоо гарамгай. Нарциссист удирдагчдийн хамгийн том давуу тал нь аливааг томоор нь харж компанийг үргэлж шинэ, шинэлэг зүгт хөтөлж чаддагт оршдог.',
-          'Энгийн хүмүүс аливаа зүйлийг байгаагаар нь харж “яагаад?” гэх асуултыг тавьдаг бол Нарциссист хүмүүс тухайн зүйлийг өмнө нь хэзээ ч байгаагүй өнцгөөс харж “яагаад болохгүй гэж?” гэсэн асуултыг тавьдаг (George Benard Shaw).',
           'Бусдаас илүү эрч хүчтэй, бусдад юу таалагдах, юу таалагдахгүйг сайн мэддэг.',
           'Нарциссист хүмүүс өөрийг нь хүндэлдэг, үнэлдэг хүмүүсийг өөрийн хүрээлэлдээ байлгах хандлагатай байдаг. Өөрөөр хэлбэл тэд эерэг орчин, эерэг уур амьсгал бий болгож чаддаг.',
           'Тэд хэрэггүй зүйлсэд цаг зав, мөнгө үрээд байдаггүй. Нарциссистуудын хийж буй үйлдэл, товлож буй уулзалт бүр ямар нэг байдлаар тэдэнд өөрсдөд нь ашигтай байдаг.',
@@ -1099,27 +1141,10 @@ export class PdfService {
       .fontSize(12)
       .list(
         [
-          'Шүүмжлэлийг эмзэгээр хүлээж авах хандлагатай. Нарциссист хүмүүс шүүмжлэл хүлээж авах дургуй байдаг учраас ямар нэг шүүмжлэл тэдэнд хүндээр тусах нь элбэг. Тэд шүүмжлэлийг тэдний дүр төрх, үзэл бодолруу ирж буй дайралт гэж хүлээж авдаг бөгөөд тэдний үзүүлэх хариу үйлдэл нь дүр төрх, үзэл бодлоо хамгаалахад чиглэгдсэн байдаг ажээ.',
-          'Тэд бол муу сонсогчид. Нарциссист удирдагчид шүүмжлүүлэх дургүй байх тохиолдол цөөнгүй байдаг учраас тэдэнд үнэтэй шүүмж өгч буй хүнийг төдийлэн чих тавин сонсохгүй байх магадлал өндөр. Нарциссист удирдагчдын хувьд бусдыг сайтар сонсдог байх нь чухал.',
-        ],
-        doc.x + 20,
-        doc.y,
-        {
-          bulletRadius: 1.5,
-          align: 'justify',
-        },
-      );
-    footer(doc);
-    doc.addPage();
-    header(doc, firstname, lastname, 'Нарциссизмын ЭЭЭ буюу 3Э');
-    doc
-      .font(fontNormal)
-      .fontSize(12)
-      .fillColor(colors.black)
-      .list(
-        [
-          'Бусдыг хайхардаггүй. Нарциссист удирдагчид бизнесийн шийдвэр гаргахдаа хувийн амьдрал, өрөвч сэтгэл зэргийг ажил, үүргээсээ сайтар ялгаж, салгаж чаддаг. Компанийн зүгээс гаргахад хүндрэлтэй шийдвэрүүд(хамтын ажиллагааны гэрээг цуцлах, цомхотгол хийх г.м)-ийг тэдэнд даалгавал тэд уг шийдвэрийг ямар нэг стрессгүйгээр амархан гаргаж чадна. Энэ нь компанийн хувьд сайн ч Нарциссист удирдагчийн хувийн нэр хүнд, дүр төрхөд сөргөөр нөлөөлөх магдадлал маш өндөр юм.',
-          'Ментор хийхдээ дурамжхан. Ихэнх нарциссистууд бие даасан, бусдаас ангид байхыг илүүд үздэг учраас хэн нэгэнд зөвлөгөө өгөх, зөвлөх багш байх зэрэгт таагүй ханддаг. Нарциссистууд амжилтаа 100% дан ганц өөрийн чадлаараа бий болгосон гэж боддог бөгөөд бусад хүмүүс ч мөн адил өөрөө бий болгох хэрэгтэй гэж үздэг учраас тэдэнд бусдад зааж зөвлөөд байх сонирхол маш бага байдаг ажээ.',
+          'Шүүмжлэлийг эмзэгээр хүлээж авах хандлагатай.',
+          'Тэд бол муу сонсогчид.',
+          'Бусдыг хайхардаггүй. Нарциссист удирдагчид бизнесийн шийдвэр гаргахдаа хувийн амьдрал, өрөвч сэтгэл зэргийг ажил, үүргээсээ сайтар ялгаж, салгаж чаддаг.',
+          'Ментор хийхдээ дурамжхан.',
         ],
         doc.x + 20,
         doc.y,
@@ -1133,18 +1158,16 @@ export class PdfService {
       .font(fontBold)
       .fillColor(colors.black)
       .fontSize(13)
-      .text('Нарциссизмын эрсдэлтэй талууд', marginX, doc.y)
+      .text('Нарциссизмын эргэлзээтэй талууд', marginX, doc.y)
       .moveDown(0.5);
     doc
       .font(fontNormal)
       .fontSize(12)
       .list(
         [
-          'Өрсөлдөх хүсэл, тэмүүлэлтэй. Хүн бүр хийж буй зүйлдээ хамгийн шилдэг нь байхыг эрмэлздэг бол нарциссистуудын хувьд хийж буй бүхий л зүйлдээ хамгийн шилдэг нь байх ёстой гэж боддог. Нэг талаас ажлын гүйцэтгэлийг нэмэгдүүлэх, амжилт гаргах хүчтэй өдөөгч хүчин зүйл байж болох ч нарциссистуудын дотор орших аливаад шилдэг нь байж байнга ялж байхыг хүсдэг хүсэл нь бусдын дургуйцлыг хүргэж цаашлаад дайсан бий болгодог ч аюулыг дагуулж байдаг.',
+          'Өрсөлдөх хүсэл, тэмүүлэлтэй.',
           'Тэд өөр өнцгөөс харахдаа гарамгай.',
           'Нөгөө талаас нарциссизм ихтэй хүмүүс эхэн үедээ бусдад мундагаар ойлгогдож сайшаагдах боловч цаг өнгөрөх тусам нарциссизм ихтэй хүмүүс эргэн тойрноо залхааж эхлэх хандлага байдаг.',
-          '“They are good at taking on different appearances. They will do or say what other people want to hear and then often do the opposite.”',
-          'They are seldom stopped at the gate, but they can do a lot of harm to an organization once they are hired,” she said. - Rick Nauert PhD',
         ],
         doc.x + 20,
         doc.y,
@@ -1171,7 +1194,7 @@ export class PdfService {
     doc.image(assetPath(`icons/narc3`), marginX, doc.y + 110, {
       width: doc.page.width - marginX * 2,
     });
-    doc.image(assetPath(`icons/narc1`), marginX, doc.y + 200, {
+    doc.image(assetPath(`icons/narc1`), marginX, doc.y + 220, {
       width: doc.page.width - marginX * 2,
     });
     doc
@@ -1181,10 +1204,10 @@ export class PdfService {
       .text(
         'Уг тестийг бөглөсөн нийт хүмүүсийн ерөнхий дундаж оноо 15.3 байдаг бол харин алдартан, олны танил хүмүүсийн дундаж оноо 17.8 байдаг ажээ.',
         marginX,
-        doc.y + 410,
+        doc.y + 400,
         { align: 'justify' },
       )
-      .moveDown(0.5);
+      .moveDown(1);
     doc.image(assetPath(`icons/narc4`), {
       width: doc.page.width - marginX * 2,
     });
@@ -1243,40 +1266,6 @@ export class PdfService {
           'АНУ-ын бүхий л ерөнхийлөгч нарциссистууд байсан.',
           'Удирдах төвшний нарциссизмыг судалж аливаа хүнд тодорхой хэмжээний нарциссизм байх нь удирдах албан тушаалд хүрэхэд нөлөөлдөг болохыг тогтоожээ.',
           'Нарциссизм болон харизм (charisma) хоорондоо салшгүй холбоотой байдаг.',
-        ],
-        doc.x + 20,
-        doc.y,
-        {
-          bulletRadius: 1.5,
-          align: 'justify',
-        },
-      );
-    footer(doc);
-
-    doc.addPage();
-    header(doc, firstname, lastname, 'Зөвлөмж');
-    doc
-      .font(fontNormal)
-      .fontSize(12)
-      .fillColor(colors.black)
-      .text(
-        'Нарциссизм өндөртэй буюу нарциссист байна гэдэг нь шууд утгаараа амиа бодсон, бусдыг ашигласан, хүйтэн сэтгэлтэй байна гэсэн үг биш юм. Өөрийгөө харах өнцгийг үл ялиг өөрчлөхөд мэдэгдэхүйц эерэг үр дүнгүүд илэрч, төсөөлөөгүй үр дүнгүүд бий болдогийг та өөрийн биеэр мэдрэх боломжтой (Whitbourne, 2012). Нарциссизмын үзлийг тухайн хүний өөртөө итгэх итгэлтэй шууд холбон авч үзэж болно. Нарциссизмын хэмжээ бага байх нь өөртөө итгэх итгэл бага буйг илэрхийлэх ч эсэргээрээ нарциссизмын хэмжээ зохистой хэмжээнээс хэтэрвээс өөрт болон орчин тойрондоо сөрөг үр дагавартай байдаг учир нарциссизмын хэмжээг тодорхой төвшинд барьж байх нь чухал юм. Нарциссизмын хэмжээг тодорхой төвшинд барих зөвлөмжүүд:',
-        { align: 'justify' },
-      )
-      .moveDown(0.5);
-    doc
-      .font(fontNormal)
-      .fontSize(12)
-      .list(
-        [
-          'Scores of Followers – Being a visionary doesn’t get you very far unless you have people who believe in your vision and want to see it realized. If all it took to succeed was the ability to have visions than I’m sure we would have many more CEO’s that wore tie-dyes and Birkenstocks to work instead of suites and ties. Luckily for narcissists, their natural charisma and way with words tend to attract a following.',
-          'Удирдах албан тушаалтны хувьд хүлцэнгүй ба...... хэрэгтэй. Хэрвээ та төрөлхийн удирдах чадвартай... хэн нь ч манлайлах, толгойлоход бэлэн биш байгаа тохиолдолд та удирдлагыг гартаа авч манлайлаж чаддаг байх хэрэгтэй. Хэн нэгэнд саад болоогүй л бол удирдлагыг игэж гартаа авах нь зүгээр. ',
-          'Нарциссизм ихтэй хүмүүс бусдын юу мэдэрч буйгаар үл хамааран өөрийн сэтгэл хөдлөлдөө уягдах гээд байдаг тал бий. Нарциссизмыг өөрт ашигтаа байдлаар ашиглаж чаддаг гарамгай нарциссистууд ч уг цаг ямагт өөрийгөө хянаж үг хэлээ цэнэж байдаг.',
-          'Өөрсдийн нарициссист найзууддаа... Өөрийн нарциссизмын хэмжээг мэддэг, түүнийгээ удирдаж чаддаг байх нь хувь хүн өөрийн сул талаа, ашигтай байдал болгон эргүүлж чаддаг байх давуу талтай юм. ',
-          'Regardless of whether or not there is a narcissism epidemic, it is clear that the antidote to narcissism is empathy.',
-          'Solicit input and practice active listening.',
-          'Set aside your agenda and become more aware of the other person’s feelings and your own feelings in the moment.',
-          'Consider how you can affirm, encourage, and support others.',
         ],
         doc.x + 20,
         doc.y,
@@ -1349,7 +1338,7 @@ export class PdfService {
     const firstname = result?.firstname ?? '';
     const lastname = result?.lastname ?? '';
     // const buffer2: any = await this.generateImage(htmlCode);
-    console.log(result)
+    console.log(result);
     // console.log(buffer2);
     const doc = await this.createDefaultPdf(
       result?.lastname ?? '',
