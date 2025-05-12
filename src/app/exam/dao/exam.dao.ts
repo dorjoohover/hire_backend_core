@@ -143,7 +143,7 @@ export class ExamDao {
       where: {
         code: code,
       },
-      relations: ['assessment', 'service', 'user'],
+      relations: ['assessment', 'service', 'user', 'service.user'],
     });
     return res;
   };

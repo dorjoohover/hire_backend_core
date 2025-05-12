@@ -246,6 +246,19 @@ export class UserServiceService extends BaseService {
             phone: email.phone,
             visible: email.visible,
           });
+          const exam = await this.examDao.findByCode(email.code)
+          const date = new Date(exam.endDate)
+          const year = date.getFullYear()
+          let month =  `${date.getMonth() + 1}`
+          if(+month < 10) month = `0${month}`
+          let day = `${date.getDate()}`
+          if(+day < 10) day = `0${day}`
+          let hour = `${date.getHours()}`
+          if(+hour < 10) hour = `0${hour}`
+          let minute = `${date.getMinutes()}`
+          if(+minute < 10) minute = `0${minute}`
+          let second = `${date.getSeconds()}`
+          if(+second < 10) second = `0${second}`
           await this.mailer.sendMail({
             to: email.email,
             subject: 'Танд тестийн урилга ирлээ',
@@ -313,12 +326,12 @@ export class UserServiceService extends BaseService {
                           </tr>
                           <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                                <br/>Эрхэм <strong>${email.lastname} ${email.firstname}</strong> танд <strong>Байгууллагын нэр</strong> байгууллагаас <strong style="color: #ff5000;">Тестийн нэр</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://hire.mn/exam/${email.code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
+                                <br/>Эрхэм <strong>${email.lastname} ${email.firstname}</strong> танд <strong>${exam.service.user?.organizationName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${exam.service.assessment.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://hire.mn/exam/${email.code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
                             </td>
                           </tr>
                            <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                            <br/>Тест, үнэлгээний линк ОН оны САР сарын ӨДӨР өдрийн ЦАГ:ЦАГ цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
+                            <br/>Тест, үнэлгээний линк ${year} оны ${month} сарын ${date} өдрийн ${hour} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
                             </td>
                           </tr>
                           <tr>
