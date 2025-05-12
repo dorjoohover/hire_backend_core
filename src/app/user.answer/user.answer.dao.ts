@@ -137,10 +137,10 @@ export class UserAnswerDao {
       },
     });
   };
-  findByQuestion = async (id: number, code: number) => {
+  findByQuestionCategory = async (id: number, code: number) => {
     return await this.db.findOne({
       where: {
-        question: {
+        questionCategory: {
           id,
         },
         code,
