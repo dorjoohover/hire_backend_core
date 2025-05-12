@@ -210,7 +210,7 @@ export class ExamService extends BaseService {
         result: result,
         value: res[0].point.toString(),
       });
-      return res[0].point;
+      return { point: res[0].point };
     }
     if (type == ReportType.DISC) {
       const order = ['d', 'i', 's', 'c'];
