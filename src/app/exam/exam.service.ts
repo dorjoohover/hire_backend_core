@@ -186,6 +186,17 @@ export class ExamService extends BaseService {
         total: exam.assessment.totalPoint,
         point: res[0].point,
       });
+
+      const result =
+        res[0].point <= 4
+          ? 'Бараг байхгүй'
+          : res[0].point <= 9
+            ? 'Энгийн, сэтгэл гутрал бараг үгүй'
+            : res[0].point <= 14
+              ? 'Хөнгөн сэтгэл гутрал'
+              : res[0].point <= 19
+                ? 'Дунд зэргийн сэтгэл гутрал'
+                : 'Дундаас дээш зэргийн сэтгэл гутрал';
       await this.resultDao.create({
         assessment: exam.assessment.id,
         assessmentName: exam.assessment.name,
@@ -196,7 +207,8 @@ export class ExamService extends BaseService {
         type: exam.assessment.report,
         limit: exam.assessment.duration,
         total: exam.assessment.totalPoint,
-        point: res[0].point,
+        result: result,
+        value: res[0].point.toString(),
       });
       return res[0].point;
     }
@@ -431,11 +443,11 @@ export class ExamService extends BaseService {
       );
 
       const result =
-        exam.assessment.totalPoint <= 9
+        total <= 9
           ? 'Бага түвшин'
-          : exam.assessment.totalPoint <= 15
+          : total <= 15
             ? 'Дундаж түвшин'
-            : exam.assessment.totalPoint <= 20
+            : total <= 20
               ? 'Харьцангуй өндөр түвшин'
               : 'Үнэмлэхүй өндөр түвшин';
 
@@ -520,7 +532,7 @@ export class ExamService extends BaseService {
         questions[0].id,
         res.code,
       );
-      console.log(userAnswer)
+      console.log(userAnswer);
       if (!userAnswer) {
         categoryIndex = i;
         break;
@@ -532,7 +544,7 @@ export class ExamService extends BaseService {
       categories.slice(categoryIndex).map((cate) => cate.id),
     );
     let currentCategory = allCategories[0];
-    console.log('current', currentCategory)
+    console.log('current', currentCategory);
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
@@ -591,7 +603,7 @@ export class ExamService extends BaseService {
         result.category,
         res.service.id,
       );
-      
+
       return {
         questions: result.questions,
         category: result.category,
