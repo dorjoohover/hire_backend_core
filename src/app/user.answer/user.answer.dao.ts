@@ -91,9 +91,9 @@ export class UserAnswerDao {
       )
       .where('"userAnswer"."code" = :id', { id });
 
-    if (type == ReportType.CORRECTCOUNT) {
-      res.andWhere('userAnswer.correct = true');
-    }
+    // if (type == ReportType.CORRECTCOUNT) {
+    //   res.andWhere('userAnswer.correct = true');
+    // }
 
     return await res
       .groupBy('category.name')
