@@ -81,50 +81,50 @@ export class ExamController {
     const role = user?.['role'];
 
     // Step 1: Check local cache
-    if (existsSync(filePath)) {
-      const stats = statSync(filePath);
-      const fileAge = Date.now() - stats.mtimeMs;
-      const daysOld = fileAge / (1000 * 60 * 60 * 24);
+    // if (existsSync(filePath)) {
+    //   const stats = statSync(filePath);
+    //   const fileAge = Date.now() - stats.mtimeMs;
+    //   const daysOld = fileAge / (1000 * 60 * 60 * 24);
 
-      if (daysOld <= 30) {
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${filename}"`,
-        );
-        return createReadStream(filePath).pipe(res);
-      } else {
-        unlinkSync(filePath); // delete old cache
-      }
-    }
+    //   if (daysOld <= 30) {
+    //     res.setHeader('Content-Type', 'application/pdf');
+    //     res.setHeader(
+    //       'Content-Disposition',
+    //       `attachment; filename="${filename}"`,
+    //     );
+    //     return createReadStream(filePath).pipe(res);
+    //   } else {
+    //     unlinkSync(filePath); // delete old cache
+    //   }
+    // }
 
     // Step 2: Try to download from S3
-    const s3Url = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${filename}`;
-    try {
-      const s3Res = await axios.get(s3Url, { responseType: 'stream' });
-      const writer = createWriteStream(filePath);
+    // const s3Url = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${filename}`;
+    // try {
+    //   const s3Res = await axios.get(s3Url, { responseType: 'stream' });
+    //   const writer = createWriteStream(filePath);
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${filename}"`,
-      );
+    //   res.setHeader('Content-Type', 'application/pdf');
+    //   res.setHeader(
+    //     'Content-Disposition',
+    //     `attachment; filename="${filename}"`,
+    //   );
 
-      s3Res.data.pipe(writer);
-      s3Res.data.pipe(res);
+    //   s3Res.data.pipe(writer);
+    //   s3Res.data.pipe(res);
 
-      writer.on('finish', () => {
-        console.log('PDF downloaded from S3 and saved locally');
-      });
+    //   writer.on('finish', () => {
+    //     console.log('PDF downloaded from S3 and saved locally');
+    //   });
 
-      writer.on('error', (err) => {
-        console.error('Error writing to file from S3:', err);
-      });
+    //   writer.on('error', (err) => {
+    //     console.error('Error writing to file from S3:', err);
+    //   });
 
-      return;
-    } catch (s3Err) {
-      console.warn('S3 download failed, generating new PDF:', s3Err.message);
-    }
+    //   return;
+    // } catch (s3Err) {
+    //   console.warn('S3 download failed, generating new PDF:', s3Err.message);
+    // }
 
     // Step 3: Generate new PDF
     try {
