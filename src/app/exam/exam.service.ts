@@ -521,7 +521,7 @@ export class ExamService extends BaseService {
         res.code,
       );
       console.log(userAnswer)
-      if (!userAnswer) {
+      if (userAnswer == null) {
         categoryIndex = i;
         break;
       }
