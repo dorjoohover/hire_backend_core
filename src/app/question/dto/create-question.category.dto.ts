@@ -19,6 +19,8 @@ export class CreateQuestionCategoryDto {
 
   @ApiProperty()
   assessment: number;
+  @ApiProperty()
+  sliced: boolean;
   createdUser?: number;
   @ApiProperty()
   id?: number;

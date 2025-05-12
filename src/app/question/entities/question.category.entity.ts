@@ -27,6 +27,8 @@ export class QuestionCategoryEntity {
   totalPoint: number;
   @Column({ nullable: true })
   duration: number;
+  @Column({ default: false })
+  sliced: boolean;
 
   @Column({ nullable: true })
   orderNumber: number;
