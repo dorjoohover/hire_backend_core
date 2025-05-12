@@ -492,6 +492,7 @@ export class ExamService extends BaseService {
   // category questioncount der asuudaltai bga
   public async updateByCode(code: number, category?: number) {
     const res = await this.dao.findByCode(code);
+    console.log(category);
 
     if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
     if (res.endDate && res.startDate && res.endDate < new Date())
@@ -527,13 +528,12 @@ export class ExamService extends BaseService {
     );
     let categoryIndex = 0;
     for (let i = 0; i < categoriesByAssessment.length; i++) {
-      const { questions } = categoriesByAssessment[i];
-      const userAnswer = await this.userAnswer.findByQuestion(
-        questions[0].id,
+      const userAnswer = await this.userAnswer.findByQuestionCategory(
+        categoriesByAssessment[i].id,
         res.code,
       );
-      console.log(userAnswer);
-      if (!userAnswer) {
+
+      if (userAnswer == null) {
         categoryIndex = i;
         break;
       }

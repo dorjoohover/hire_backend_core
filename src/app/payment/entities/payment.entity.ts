@@ -31,6 +31,7 @@ export class PaymentEntity {
   charger: UserEntity;
   @ManyToOne(() => AssessmentEntity, (user) => user.payments, {
     nullable: true,
+    onDelete: 'CASCADE'
   })
   assessment: AssessmentEntity;
   @OneToMany(() => TransactionEntity, (transaction) => transaction.payment, {
