@@ -531,7 +531,7 @@ export class ExamService extends BaseService {
       categories.slice(categoryIndex).map((cate) => cate.id),
     );
     let currentCategory = allCategories[0];
-
+    console.log('current', currentCategory)
     if (res.userStartDate == null && category === undefined) {
       currentCategory = categories[0].id;
       await this.dao.update(res.id, {
