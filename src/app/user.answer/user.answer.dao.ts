@@ -98,6 +98,7 @@ export class UserAnswerDao {
     return await res
       .groupBy('category.name')
       .addGroupBy('category.totalPoint')
+      .addGroupBy('"userAnswer"."questionCategoryId"')
       .getRawMany();
   };
 
