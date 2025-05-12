@@ -17,7 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           },
         },
         defaults: {
-          from: 'info@hire.mn',
+          from: '"Hire.mn" <info@hire.mn>',
         },
       }),
     }),

@@ -36,7 +36,7 @@ export class VisualizationService {
       grid: {
         left: 75,
         right: 75,
-        top: 60,
+        top: 180,
         bottom: 90,
         containLabel: false,
       },

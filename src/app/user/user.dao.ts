@@ -24,7 +24,7 @@ export class UserDao {
     const res = await this._db.findOne({ where: b });
     if (!res)
       throw new HttpException(
-        'Бүртгэлгүй хэрэглэгч байна',
+        'Бүртгэлгүй хэрэглэгч байна.',
         HttpStatus.UNAUTHORIZED,
       );
     if (!res.emailVerified) await this._db.save({ ...res, ...body });

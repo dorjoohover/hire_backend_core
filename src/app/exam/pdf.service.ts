@@ -156,13 +156,11 @@ export class PdfService {
       .strokeColor(colors.grey ?? '#999999')
       .stroke();
 
-    doc.moveDown(1);
-
     await this.single.examQuartileGraph(doc, result);
     doc
       .font(fontBold)
       .fontSize(13)
-      .text('Зөвлөмж', marginX, doc.y - 10)
+      .text('Зөвлөмж', marginX, doc.y)
       .moveDown(0.5);
 
     doc
