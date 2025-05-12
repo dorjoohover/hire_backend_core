@@ -209,6 +209,7 @@ export class ExamService extends BaseService {
         total: exam.assessment.totalPoint,
         result: result,
         value: res[0].point.toString(),
+        point: res[0].point,
       });
       return { point: res[0].point };
     }
