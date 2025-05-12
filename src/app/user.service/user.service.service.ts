@@ -259,7 +259,7 @@ export class UserServiceService extends BaseService {
           if(+minute < 10) minute = `0${minute}`
           let second = `${date.getSeconds()}`
           if(+second < 10) second = `0${second}`
-          console.log(exam.service)
+          console.log(exam)
           await this.mailer.sendMail({
             to: email.email,
             subject: 'Танд тестийн урилга ирлээ',
