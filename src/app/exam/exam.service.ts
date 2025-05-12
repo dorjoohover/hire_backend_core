@@ -520,6 +520,7 @@ export class ExamService extends BaseService {
         questions[0].id,
         res.code,
       );
+      console.log(userAnswer)
       if (!userAnswer) {
         categoryIndex = i;
         break;
@@ -590,13 +591,7 @@ export class ExamService extends BaseService {
         result.category,
         res.service.id,
       );
-      console.log({
-        questions: result.questions,
-        category: result.category,
-        categories: allCategories.slice(1),
-        assessment: res.assessment,
-        token,
-      })
+      
       return {
         questions: result.questions,
         category: result.category,
