@@ -106,7 +106,7 @@ export const header = (
     .text(
       char,
       circleCenterX - charBoxSize / 2,
-      circleCenterY - charBoxSize / 2,
+      circleCenterY - charBoxSize / 2 + 1.5,
       {
         width: charBoxSize,
         align: 'center',
@@ -118,7 +118,7 @@ export const header = (
     .font(fontNormal)
     .fontSize(fz.sm)
     .text(
-      lastname ?? 'Шалгуулагч',
+      !lastname || lastname.trim() === '' ? 'Шалгуулагч' : lastname,
       marginX + 145,
       marginY - 3 + (firstname ? 0 : 12),
     );
@@ -321,35 +321,40 @@ export const info = (
     })
     .moveDown(1);
   y = doc.y;
-  doc
-    .font(fontBold)
-    .fillColor(colors.black)
-    .fontSize(13)
-    .text('Хэмжих зүйлс', x, y)
-    .moveDown(0.5);
-  doc
-    .fontSize(12)
-    .font(fontNormal)
-    .text(measure, x, doc.y, {
-      align: 'justify',
-      width: doc.page.width - marginX * 2,
-    })
-    .moveDown(1);
-  y = doc.y;
-  doc
-    .font(fontBold)
-    .fillColor(colors.black)
-    .fontSize(13)
-    .text('Хэрэглээ', x, y)
-    .moveDown(0.5);
-  doc
-    .fontSize(12)
-    .font(fontNormal)
-    .text(usage, x, doc.y, {
-      align: 'justify',
-      width: doc.page.width - marginX * 2,
-    });
-  doc.moveDown(1);
+  if (measure) {
+    doc
+      .font(fontBold)
+      .fillColor(colors.black)
+      .fontSize(13)
+      .text('Хэмжих зүйлс', x, y)
+      .moveDown(0.5);
+    doc
+      .fontSize(12)
+      .font(fontNormal)
+      .text(measure, x, doc.y, {
+        align: 'justify',
+        width: doc.page.width - marginX * 2,
+      })
+      .moveDown(1);
+    y = doc.y;
+  }
+
+  if (usage) {
+    doc
+      .font(fontBold)
+      .fillColor(colors.black)
+      .fontSize(13)
+      .text('Хэрэглээ', x, y)
+      .moveDown(0.5);
+    doc
+      .fontSize(12)
+      .font(fontNormal)
+      .text(usage, x, doc.y, {
+        align: 'justify',
+        width: doc.page.width - marginX * 2,
+      });
+    doc.moveDown(1);
+  }
 };
 
 export const home = (

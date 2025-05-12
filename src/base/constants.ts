@@ -55,6 +55,7 @@ export const ReportType = {
   BELBIN: 40,
   GENOS: 50,
   NARC: 60,
+  SETGEL: 70,
 };
 export const BlogType = {
   BLOG: 10,

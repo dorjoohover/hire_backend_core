@@ -181,6 +181,25 @@ export class ExamService extends BaseService {
       });
       return res[0].point;
     }
+    if (type == ReportType.SETGEL) {
+      console.log({
+        total: exam.assessment.totalPoint,
+        point: res[0].point,
+      });
+      await this.resultDao.create({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: diff,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: exam.assessment.report,
+        limit: exam.assessment.duration,
+        total: exam.assessment.totalPoint,
+        point: res[0].point,
+      });
+      return res[0].point;
+    }
     if (type == ReportType.DISC) {
       const order = ['d', 'i', 's', 'c'];
       let response = '',
@@ -412,9 +431,13 @@ export class ExamService extends BaseService {
       );
 
       const result =
-        exam.assessment.totalPoint / 2 <= total
-          ? 'Нарциссистик зан төлөвтэй'
-          : 'Нарциссистик зан төлөвгүй';
+        exam.assessment.totalPoint <= 9
+          ? 'Бага түвшин'
+          : exam.assessment.totalPoint <= 15
+            ? 'Дундаж түвшин'
+            : exam.assessment.totalPoint <= 20
+              ? 'Харьцангуй өндөр түвшин'
+              : 'Үнэмлэхүй өндөр түвшин';
 
       await this.resultDao.create(
         {

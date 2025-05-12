@@ -84,6 +84,99 @@ export class PdfService {
     footer(doc);
   }
 
+  async setgelTemplate(
+    doc: PDFKit.PDFDocument,
+    result: ResultEntity,
+    firstname: string,
+    lastname: string,
+    date: Date,
+    exam: ExamEntity,
+  ) {
+    header(doc, firstname, lastname);
+    title(doc, result.assessmentName);
+    info(doc, exam.assessment.author, exam.assessment.description);
+    doc
+      .font('fontBold')
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Үр дүн', marginX, doc.y + 10);
+    doc
+      .moveTo(40, doc.y + 2)
+      .strokeColor(colors.orange)
+      .lineTo(100, doc.y + 2)
+      .stroke()
+      .moveDown();
+    const pageWidth = doc.page.width;
+    const margin = doc.page.margins.left;
+    const contentWidth = pageWidth - margin * 2;
+
+    const leftWidth = contentWidth * 0.8;
+    const rightX = margin + leftWidth + 10;
+    const lineX = margin + leftWidth + 40;
+    const rightBlockX = rightX + 10;
+
+    const startY = doc.y;
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(
+        'Таны сэтгэл ханамж, амьдралын идэвх, нойр, хоолны дуршил, анхаарал төвлөрөл, өөрийгөө үнэлэх байдал зэрэг сэтгэл гутралын 9 үндсэн шинж тэмдгийг хэмжвэл:',
+        margin,
+        startY,
+        { width: leftWidth, align: 'justify' },
+      );
+
+    const leftBottomY = doc.y;
+
+    const rightStartY = startY;
+
+    doc
+      .fillColor(colors.black)
+      .font(fontNormal)
+      .fontSize(12)
+      .text('Оноо', rightBlockX, rightStartY, { align: 'right' });
+
+    doc
+      .fillColor(colors.orange)
+      .font('fontBlack')
+      .fontSize(28)
+      .text(`${result.point ?? ''}`, rightBlockX, doc.y, { align: 'right' });
+
+    const rightBottomY = doc.y;
+
+    const lineTop = Math.min(leftBottomY, rightBottomY, startY);
+    const lineBottom = Math.max(leftBottomY, rightBottomY - 5);
+
+    doc
+      .moveTo(lineX, lineTop)
+      .lineTo(lineX, lineBottom)
+      .lineWidth(1)
+      .strokeColor(colors.grey ?? '#999999')
+      .stroke();
+
+    doc.moveDown(1);
+
+    await this.single.examQuartileGraph(doc, result);
+    doc
+      .font(fontBold)
+      .fontSize(13)
+      .text('Зөвлөмж', marginX, doc.y - 10)
+      .moveDown(0.5);
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .lineGap(lh.md)
+      .fillColor(colors.black)
+      .text(
+        'Хэрэв та 10-с дээш оноо авсан бол мэргэжлийн тусламж, үйлчилгээнд хамрагдахыг зөвлөж байна.',
+        { align: 'justify' },
+      );
+    footer(doc);
+  }
+
   async discTemplate(
     doc: PDFKit.PDFDocument,
     result: ResultEntity,
@@ -948,7 +1041,7 @@ export class PdfService {
     doc
       .fontSize(21)
       .fillColor(colors.black)
-      .text(`/${result.total}` + ' = ', doc.x, doc.y + 5, {
+      .text(`/${result.total}` + ' ~ ', doc.x, doc.y + 5, {
         continued: true,
       });
     doc
@@ -990,8 +1083,8 @@ export class PdfService {
     );
 
     const values = result.details.map((detail) => Number(detail.cause));
-    const divisors = [5, 7, 8, 6, 5, 6, 3];
-    const averages = [1.47, 2.21, 4.16, 1.67, 2.54, 2.09, 1.37];
+    const divisors = [8, 7, 6, 6, 5, 5, 3];
+    const averages = [4.16, 2.21, 2.09, 1.67, 1.47, 2.54, 1.37];
 
     for (let index = 0; index < numberedCategories.length; index++) {
       const category = numberedCategories[index];
@@ -1113,7 +1206,7 @@ export class PdfService {
           'Тэд хэрэггүй зүйлсэд цаг зав, мөнгө үрээд байдаггүй. Нарциссистуудын хийж буй үйлдэл, товлож буй уулзалт бүр ямар нэг байдлаар тэдэнд өөрсдөд нь ашигтай байдаг.',
           'Эрсдэлтэй алхам гаргах нь амжилтад хүргэдэг гэдгийг сайтар мэддэг.',
         ],
-        doc.x + 20,
+        doc.x,
         doc.y,
         {
           bulletRadius: 1.5,
@@ -1146,7 +1239,7 @@ export class PdfService {
           'Бусдыг хайхардаггүй. Нарциссист удирдагчид бизнесийн шийдвэр гаргахдаа хувийн амьдрал, өрөвч сэтгэл зэргийг ажил, үүргээсээ сайтар ялгаж, салгаж чаддаг.',
           'Ментор хийхдээ дурамжхан.',
         ],
-        doc.x + 20,
+        doc.x,
         doc.y,
         {
           bulletRadius: 1.5,
@@ -1169,7 +1262,7 @@ export class PdfService {
           'Тэд өөр өнцгөөс харахдаа гарамгай.',
           'Нөгөө талаас нарциссизм ихтэй хүмүүс эхэн үедээ бусдад мундагаар ойлгогдож сайшаагдах боловч цаг өнгөрөх тусам нарциссизм ихтэй хүмүүс эргэн тойрноо залхааж эхлэх хандлага байдаг.',
         ],
-        doc.x + 20,
+        doc.x,
         doc.y,
         {
           bulletRadius: 1.5,
@@ -1267,7 +1360,7 @@ export class PdfService {
           'Удирдах төвшний нарциссизмыг судалж аливаа хүнд тодорхой хэмжээний нарциссизм байх нь удирдах албан тушаалд хүрэхэд нөлөөлдөг болохыг тогтоожээ.',
           'Нарциссизм болон харизм (charisma) хоорондоо салшгүй холбоотой байдаг.',
         ],
-        doc.x + 20,
+        doc.x,
         doc.y,
         {
           bulletRadius: 1.5,
@@ -1350,6 +1443,8 @@ export class PdfService {
       const date = new Date(exam.userStartDate);
       if (exam.assessment.report == ReportType.CORRECT)
         await this.singleTemplate(doc, result, firstname, lastname, date, exam);
+      if (exam.assessment.report == ReportType.SETGEL)
+        await this.setgelTemplate(doc, result, firstname, lastname, date, exam);
       if (exam.assessment.report == ReportType.DISC) {
         await this.discTemplate(
           doc,
