@@ -326,12 +326,12 @@ export class UserServiceService extends BaseService {
                           </tr>
                           <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                                <br/>Эрхэм <strong>${email.lastname} ${email.firstname}</strong> танд <strong>${exam.service.user?.organizationName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${exam.service.assessment.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://hire.mn/exam/${email.code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
+                                <br/>Эрхэм <strong>${email.lastname} ${email.firstname}</strong> танд <strong>${exam.service.user?.organizationName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${exam?.assessment?.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://hire.mn/exam/${email.code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
                             </td>
                           </tr>
                            <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                            <br/>Тест, үнэлгээний линк ${year} оны ${month} сарын ${date} өдрийн ${hour} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
+                            <br/>Тест, үнэлгээний линк ${year} оны ${month} сарын ${day} өдрийн ${hour} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
                             </td>
                           </tr>
                           <tr>
