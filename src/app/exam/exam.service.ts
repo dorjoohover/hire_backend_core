@@ -213,6 +213,34 @@ export class ExamService extends BaseService {
       });
       return { point: res[0].point };
     }
+    if (type == ReportType.EMPATHY) {
+      console.log({
+        total: exam.assessment.totalPoint,
+        point: res[0].point,
+      });
+
+      const result =
+        res[0].point <= 44
+          ? 'Эмпатийн түвшин сул'
+          : res[0].point <= 54
+            ? 'Эмпатийн оноо тогтвортой түвшинд'
+            : 'Өндөр түвшний эмпатийн мэдрэмжтэй';
+      await this.resultDao.create({
+        assessment: exam.assessment.id,
+        assessmentName: exam.assessment.name,
+        code: exam.code,
+        duration: diff,
+        firstname: exam?.firstname ?? user.firstname,
+        lastname: exam?.lastname ?? user.lastname,
+        type: exam.assessment.report,
+        limit: exam.assessment.duration,
+        total: exam.assessment.totalPoint,
+        result: result,
+        value: res[0].point.toString(),
+        point: res[0].point,
+      });
+      return { point: res[0].point };
+    }
     if (type == ReportType.DISC) {
       const order = ['d', 'i', 's', 'c'];
       let response = '',

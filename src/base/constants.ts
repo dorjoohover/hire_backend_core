@@ -56,6 +56,7 @@ export const ReportType = {
   GENOS: 50,
   NARC: 60,
   SETGEL: 70,
+  EMPATHY: 80,
 };
 export const BlogType = {
   BLOG: 10,

@@ -90,11 +90,14 @@ export class UserAnswerService extends BaseService {
             const point =
               answer.matrix === null &&
               (answerCategory as QuestionAnswerEntity).reverse === true
-                ? answerCategory.question.maxValue - answer.point + 1
+                ? Number(answerCategory.question.maxValue) -
+                  Number(answer.point) +
+                  Number(answerCategory.question.minValue)
                 : (answer.point ??
                   (answer.matrix
                     ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
                     : await this.questionAnswerDao.findOne(answer.answer)));
+
             const body: CreateUserAnswerDto = {
               ...d,
               startDate: dto.startDate,

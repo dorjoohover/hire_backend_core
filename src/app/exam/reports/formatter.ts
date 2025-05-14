@@ -38,6 +38,7 @@ export const fz = {
 
 export const lh = {
   md: 1.2,
+  lg: 1.4,
 };
 
 export const assetPath = (p: string) => {
@@ -353,8 +354,9 @@ export const info = (
         align: 'justify',
         width: doc.page.width - marginX * 2,
       });
-    doc.moveDown(1);
   }
+
+  doc.moveDown(1);
 };
 
 export const home = (
