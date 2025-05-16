@@ -757,6 +757,7 @@ export class PdfService {
       .fillColor(colors.orange)
       .font('fontBlack')
       .text(`${DISC.enMn[result.value]} (${result.value})`);
+    console.log(result.result.toLowerCase());
     const style = DISC.values[result.result.toLowerCase()];
     doc
       .font(fontNormal)
@@ -767,7 +768,7 @@ export class PdfService {
       )
       .font(fontBold)
       .text(
-        `${firstLetterUpper(style.text)} (${result.result.toUpperCase()}) `,
+        `${firstLetterUpper(style?.text)} (${result.result.toUpperCase()}) `,
         {
           continued: true,
         },
