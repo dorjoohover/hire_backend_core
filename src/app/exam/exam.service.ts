@@ -32,6 +32,7 @@ import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { Belbin } from 'src/assets/report/belbin';
 import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
+import { maxDigitDISC } from './reports/formatter';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -134,6 +135,7 @@ export class ExamService extends BaseService {
     user: UserEntity,
     id: number,
   ) {
+    console.log(res)
     const type = exam.assessment.report;
     const diff = Math.floor(
       (Date.parse(exam.userEndDate?.toString()) -
@@ -263,11 +265,7 @@ export class ExamService extends BaseService {
         c: 0,
       };
 
-      const maxValue = Math.max(...res.map((r) => +r['point']));
-      const values = res
-        .filter((r) => +r['point'] == maxValue)
-        .map((r) => r['aCate'])
-        .join('');
+      
       for (const r of mergedData) {
         let inten = -1,
           total = '';
@@ -333,7 +331,7 @@ export class ExamService extends BaseService {
           });
         }
       }
-
+      const values = maxDigitDISC(response)
       await this.resultDao.create(
         {
           assessment: exam.assessment.id,

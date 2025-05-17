@@ -45,7 +45,15 @@ export const assetPath = (p: string) => {
   const imagePath = path.join(__dirname, `../../../../src/assets/${p}.png`);
   return fs.readFileSync(imagePath);
 };
-
+export function maxDigitDISC(n: string) {
+  const label = "disc"; // map of letters
+  const digits = String(n).split('').map(Number);
+  const maxDigit = Math.max(...digits);
+  const indices = digits
+    .map((d, i) => d === maxDigit ? i : -1)
+    .filter(i => i !== -1);
+  return label.slice(0, indices.length);
+}
 export function generateQRCodeSync(url: string): Buffer {
   try {
     const canvas = createCanvas(200, 200);
