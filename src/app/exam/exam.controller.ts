@@ -8,6 +8,7 @@ import {
   Delete,
   Request,
   Res,
+  Req,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import {
@@ -78,70 +79,31 @@ export class ExamController {
   ) {
     const filename = `report-${code}.pdf`;
     const filePath = join(this.cachePath, filename);
-    const role = user?.['role'];
+    const role = user?.['role']; // from passport or middleware
 
-    // Step 1: Check local cache
-    // if (existsSync(filePath)) {
-    //   const stats = statSync(filePath);
-    //   const fileAge = Date.now() - stats.mtimeMs;
-    //   const daysOld = fileAge / (1000 * 60 * 60 * 24);
-
-    //   if (daysOld <= 30) {
-    //     res.setHeader('Content-Type', 'application/pdf');
-    //     res.setHeader(
-    //       'Content-Disposition',
-    //       `attachment; filename="${filename}"`,
-    //     );
-    //     return createReadStream(filePath).pipe(res);
-    //   } else {
-    //     unlinkSync(filePath); // delete old cache
-    //   }
-    // }
-
-    // Step 2: Try to download from S3
-    // const s3Url = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_BUCKET_NAME}/${filename}`;
-    // try {
-    //   const s3Res = await axios.get(s3Url, { responseType: 'stream' });
-    //   const writer = createWriteStream(filePath);
-
-    //   res.setHeader('Content-Type', 'application/pdf');
-    //   res.setHeader(
-    //     'Content-Disposition',
-    //     `attachment; filename="${filename}"`,
-    //   );
-
-    //   s3Res.data.pipe(writer);
-    //   s3Res.data.pipe(res);
-
-    //   writer.on('finish', () => {
-    //     console.log('PDF downloaded from S3 and saved locally');
-    //   });
-
-    //   writer.on('error', (err) => {
-    //     console.error('Error writing to file from S3:', err);
-    //   });
-
-    //   return;
-    // } catch (s3Err) {
-    //   console.warn('S3 download failed, generating new PDF:', s3Err.message);
-    // }
-
-    // Step 3: Generate new PDF
     try {
-      const doc = await this.examService.getPdf(+code, role); // Returns PDFKit document
-      const pass = new PassThrough();
-      const fileWriter = createWriteStream(filePath);
+      const doc = await this.examService.getPdf(+code, role); // PDFKit document
 
+      // Create three output channels
+      const fileWriter = createWriteStream(filePath);
+      const resStream = new PassThrough(); // to pipe to HTTP response
+      const s3Stream = new PassThrough(); // to upload to S3
+
+      // Pipe once, split to others
+      doc.pipe(resStream); // stream output into resStream only once
+      doc.end();
+
+      // Pipe the pass-through to multiple places
+      resStream.pipe(res); // 1. To user response
+      resStream.pipe(fileWriter); // 2. Save locally
+      resStream.pipe(s3Stream); // 3. Upload to S3
+
+      // Set headers before piping
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="${filename}"`,
       );
-
-      doc.pipe(pass);
-      doc.pipe(res);
-      doc.pipe(fileWriter);
-      doc.end();
 
       // Upload to S3
       const s3 = new AWS.S3({
@@ -154,23 +116,24 @@ export class ExamController {
         {
           Bucket: process.env.AWS_BUCKET_NAME,
           Key: filename,
-          Body: pass,
+          Body: s3Stream,
           ContentType: 'application/pdf',
         },
         (err, data) => {
           if (err) {
             console.error('S3 upload error:', err);
           } else {
-            console.log('PDF uploaded to S3:', data.Location);
+            console.log('Uploaded to S3:', data.Location);
           }
         },
       );
     } catch (err) {
-      console.error('Error generating PDF:', err);
-      res.status(500).send('Failed to generate PDF');
+      console.error('Error generating or streaming PDF:', err);
+      if (!res.headersSent) {
+        res.status(500).send('Failed to generate PDF');
+      }
     }
   }
-
   @Public()
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })
