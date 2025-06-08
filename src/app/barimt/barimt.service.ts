@@ -133,9 +133,12 @@ export class BarimtService {
           },
         },
       );
-      const data: BarimtResponseDto = res.data;
+      console.log(res)
+      const data: BarimtResponseDto = await res.data;
+      console.log('data',data)
       if (data?.status != 'SUCCESS') throw new HttpException('', 500);
-      await this.sendEmail(user.email, data, data?.qrData);
+      console.log(data.noat);
+      this.sendEmail(user.email, data, data?.qrData);
       return {
         ...data,
       };
@@ -160,23 +163,48 @@ export class BarimtService {
   // }
 
   async sendEmail(email: string, dto: any, qrdata?: string) {
+    console.log(dto);
     await this.mailer.sendMail({
       to: email,
       subject: 'И-баримт хүлээн авах',
-      html: `<div>
-   ${qrdata ? '<img src="cid:qrCode" alt="Qrcode" width="200" height="200" />' : ''}
-    <p>Сугалаа:${dto.lottery}</p>
-    <p>Үнйин дүн:${dto.totalAmount}₮</p>
-    <p>НӨАТ:${dto.noat}₮</p>
-    ${dto.tax && `<p>НХАТ:${dto.tax}₮</p>`}
-    <p>ДДТД:${dto.ddtd}</p>
-    <p>Нэр:${dto.name}</p>
-    <p>ТТД:${dto.tin}</p>
-    <p>Огноо:${dto.date}</p>
-    <p>Асууж, тодруулах зүйл байвал <a href=mailto:info@hire.mn>info@hire.mn</a> хаягаар, <a href=tel:976-9909 9371>976-9909 9371</a> дугаараар холбогдоорой. </p>
-     <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
-     <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
-     </div>`,
+      html: `
+    <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
+      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px;">
+        ${
+          qrdata
+            ? `
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="cid:qrCode" alt="QR Code"
+               style="width: 300px; height: 300px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;" />
+        </div>`
+            : ''
+        }
+        <h2 style="color: #333333; margin-bottom: 16px;">И-баримтын мэдээлэл</h2>
+        <p style="margin: 8px 0;"><strong>Сугалаа:</strong> ${dto.lottery}</p>
+        <p style="margin: 8px 0;"><strong>Үнийн дүн:</strong> ${dto.totalAmount}₮</p>
+        <p style="margin: 8px 0;"><strong>НӨАТ:</strong> ${dto.noat}₮</p>
+        ${dto.tax ? `<p style="margin: 8px 0;"><strong>НХАТ:</strong> ${dto.tax}₮</p>` : ''}
+        <p style="margin: 8px 0;"><strong>ДДТД:</strong> ${dto.ddtd}</p>
+        <p style="margin: 8px 0;"><strong>ТТД (Татварын дугаар):</strong> ${dto.tin}</p>
+        <p style="margin: 8px 0;"><strong>Огноо:</strong> ${dto.date}</p>
+        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 14px; color: #555555; margin-bottom: 16px;">
+          Асууж, тодруулах зүйл байвал
+          <a href="mailto:info@hire.mn" style="color: #1a73e8; text-decoration: none;">info@hire.mn</a> болон
+          <a href="tel:97699099371" style="color: #1a73e8; text-decoration: none;">976-9909 9371</a> холбогдоно уу.
+        </p>
+        <p style="font-size: 14px; color: #555555; margin-bottom: 16px;">
+          Манайхаар үйлчлүүлсэнд баярлалаа.
+        </p>
+        <p style="font-size: 12px; color: #999999; line-height: 1.4;">
+          Шуудангийн хаяг:<br/>
+          Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5,<br/>
+          СЭЗИС, Б байр, 7-р давхар, 13381<br/>
+          Ш/Н: Улаанбаатар-49
+        </p>
+      </div>
+    </div>
+  `,
       attachments: qrdata
         ? [
             {

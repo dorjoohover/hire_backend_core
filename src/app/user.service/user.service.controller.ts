@@ -82,7 +82,7 @@ export class UserServiceController {
     @Request() { user },
   ) {
     console.log(id, code);
-    return this.userServiceService.checkPayment(+id, code, +user['id']);
+    return this.userServiceService.checkPayment(+id, code, +user['id'], user['email']);
   }
   @Get()
   findAll() {
