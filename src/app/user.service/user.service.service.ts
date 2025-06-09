@@ -95,6 +95,7 @@ export class UserServiceService extends BaseService {
     user: number,
     email: string,
   ) {
+    console.log(id, code)
     const payment = code == 'NONE' ? 1 : await this.qpay.checkPayment(code);
     if (payment == 1) {
       await this.getEbarimt(id, email);
