@@ -75,7 +75,7 @@ export class UserServiceController {
   @Delete('ebarimt/:id')
   @ApiParam({ name: 'id' })
   deleteEbarimt(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.deleteEbarimt(+id, user['email']);
+    return this.userServiceService.deleteEbarimt(+id);
   }
 
   @Get('checkPayment/:id/:code')
@@ -87,7 +87,12 @@ export class UserServiceController {
     @Request() { user },
   ) {
     console.log(id, code);
-    return this.userServiceService.checkPayment(+id, code, +user['id'], user['email']);
+    return this.userServiceService.checkPayment(
+      +id,
+      code,
+      +user['id'],
+      user['email'],
+    );
   }
   @Get()
   findAll() {

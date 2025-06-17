@@ -89,9 +89,8 @@ export class UserServiceService extends BaseService {
     console.log(id);
     return await this.barimt.getBarimt(id, email);
   }
-  public async deleteEbarimt(id: number, email: string) {
-    console.log(id);
-    await this.barimt.deleteReceipt(id);
+  public async deleteEbarimt(id: number, ) {
+    return await this.barimt.deleteReceipt(id);
   }
   public async checkPayment(
     id: number,
