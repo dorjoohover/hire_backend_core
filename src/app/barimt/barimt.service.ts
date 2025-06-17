@@ -284,7 +284,7 @@ export class BarimtService {
     }
   }
 
-  async deleteReceipt(id: string, d: string) {
+  async deleteReceipt(id: number, d: string) {
     // Баримт хэвлэсэн огноо "yyyy-MM-dd HH:mm:ss" форматтай огноо
     const date = format(new Date(d), 'yyyy-MM-dd HH:mm:ss');
     try {
