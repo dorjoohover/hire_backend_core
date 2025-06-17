@@ -63,12 +63,14 @@ export class BarimtService {
           },
         },
       );
+      console.log(res)
 
       const tokenData = res.data;
       this.accessToken = tokenData.accessToken;
       this.expiresAt = now + tokenData.expiredIn * 1000;
       return this.accessToken;
     } catch (error) {
+      console.log(error);
       this.accessToken = null;
       this.expiresAt = 0;
       const axiosError = error as AxiosError;
@@ -133,9 +135,9 @@ export class BarimtService {
           },
         },
       );
-      console.log(res)
+      console.log(res);
       const data: BarimtResponseDto = await res.data;
-      console.log('data',data)
+      console.log('data', data);
       if (data?.status != 'SUCCESS') throw new HttpException('', 500);
       console.log(data.noat);
       this.sendEmail(user.email, data, data?.qrData);

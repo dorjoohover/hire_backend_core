@@ -72,6 +72,11 @@ export class UserServiceController {
   getEbarimt(@Param('id') id: string, @Request() { user }) {
     return this.userServiceService.getEbarimt(+id, user['email']);
   }
+  @Delete('ebarimt/:id')
+  @ApiParam({ name: 'id' })
+  deleteEbarimt(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.deleteEbarimt(+id, user['email']);
+  }
 
   @Get('checkPayment/:id/:code')
   @ApiParam({ name: 'code' })
