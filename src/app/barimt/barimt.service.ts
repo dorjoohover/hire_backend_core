@@ -306,6 +306,7 @@ export class BarimtService {
     } catch (error) {
       // return
       console.log(error);
+      console.log(error.message)
     }
   }
 }
