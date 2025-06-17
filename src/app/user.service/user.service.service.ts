@@ -86,12 +86,12 @@ export class UserServiceService extends BaseService {
     };
   }
   public async getEbarimt(id: number, email: string) {
-    console.log(id)
+    console.log(id);
     return await this.barimt.getBarimt(id, email);
   }
   public async deleteEbarimt(id: number, email: string) {
-    console.log(id)
-    await this.barimt.deleteReceipt(id, email);
+    console.log(id);
+    await this.barimt.deleteReceipt(id);
   }
   public async checkPayment(
     id: number,
@@ -99,7 +99,7 @@ export class UserServiceService extends BaseService {
     user: number,
     email: string,
   ) {
-    console.log(id, code)
+    console.log(id, code);
     const payment = code == 'NONE' ? 1 : await this.qpay.checkPayment(code);
     if (payment == 1) {
       return await this.getEbarimt(id, email);

@@ -242,7 +242,7 @@ export class BarimtService {
           HttpStatus.NOT_FOUND,
         );
       }
-      this.sendEmail(email, barimt);
+      // this.sendEmail(email, barimt);
       return barimt;
     } catch (error) {
       console.log(error);
@@ -285,17 +285,18 @@ export class BarimtService {
     }
   }
 
-  async deleteReceipt(id: number, d: string) {
+  async deleteReceipt(id: number) {
     // Баримт хэвлэсэн огноо "yyyy-MM-dd HH:mm:ss" форматтай огноо
-    const date = format(new Date(d), 'yyyy-MM-dd HH:mm:ss');
+    const { token } = await this.loginEbarimt();
     try {
       const response = await axios.delete(`${process.env.BARIMT_KEY}receipt`, {
         data: {
           id,
-          date,
         },
         headers: {
           Accept: 'application/json',
+          'x-api-key': process.env.BARIMT_KEY,
+          Authorization: `Bearer ${token}`,
         },
       });
       console.log(response.data);
