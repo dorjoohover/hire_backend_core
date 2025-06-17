@@ -87,7 +87,7 @@ export class UserServiceService extends BaseService {
   }
   public async getEbarimt(id: number, email: string) {
     console.log(id)
-    await this.barimt.getBarimt(id, email);
+    return await this.barimt.getBarimt(id, email);
   }
   public async deleteEbarimt(id: number, email: string) {
     console.log(id)
@@ -102,7 +102,7 @@ export class UserServiceService extends BaseService {
     console.log(id, code)
     const payment = code == 'NONE' ? 1 : await this.qpay.checkPayment(code);
     if (payment == 1) {
-      await this.getEbarimt(id, email);
+      return await this.getEbarimt(id, email);
     }
     if (payment.paid_amount) {
       const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
