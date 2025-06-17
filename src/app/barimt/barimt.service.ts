@@ -289,6 +289,7 @@ export class BarimtService {
     // Баримт хэвлэсэн огноо "yyyy-MM-dd HH:mm:ss" форматтай огноо
     const { token } = await this.loginEbarimt();
     try {
+      console.log(`${process.env.BARIMT_KEY}`)
       const response = await axios.delete(`${process.env.BARIMT_KEY}receipt`, {
         data: {
           id,
