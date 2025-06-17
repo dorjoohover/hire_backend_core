@@ -300,8 +300,11 @@ export class BarimtService {
         },
       });
       console.log(response.data);
-      return response.data
+      if (response.data.data.statusCode == 500) {
+        return response.data.data.message;
+      }
     } catch (error) {
+      // return
       console.log(error);
     }
   }
