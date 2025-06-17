@@ -63,7 +63,7 @@ export class BarimtService {
           },
         },
       );
-      console.log(res)
+      console.log(res);
 
       const tokenData = res.data;
       this.accessToken = tokenData.accessToken;
@@ -242,7 +242,8 @@ export class BarimtService {
           HttpStatus.NOT_FOUND,
         );
       }
-      await this.sendEmail(email, barimt);
+      this.sendEmail(email, barimt);
+      return barimt;
     } catch (error) {
       console.log(error);
     }
