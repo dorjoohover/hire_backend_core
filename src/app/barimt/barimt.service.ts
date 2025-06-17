@@ -290,7 +290,7 @@ export class BarimtService {
     const { token } = await this.loginEbarimt();
     try {
       console.log(`${process.env.BARIMT_KEY}`)
-      const response = await axios.delete(`${process.env.BARIMT_KEY}receipt`, {
+      const response = await axios.delete(`${process.env.BARIMT_URL}receipt`, {
         data: {
           id,
         },
