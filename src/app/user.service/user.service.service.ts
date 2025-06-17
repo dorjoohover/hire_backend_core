@@ -89,7 +89,7 @@ export class UserServiceService extends BaseService {
     console.log(id);
     return await this.barimt.getBarimt(id, email);
   }
-  public async deleteEbarimt(id: number, ) {
+  public async deleteEbarimt(id: number) {
     return await this.barimt.deleteReceipt(id);
   }
   public async checkPayment(
@@ -109,7 +109,7 @@ export class UserServiceService extends BaseService {
         method: PaymentType.QPAY,
         totalPrice: payment.paid_amount,
         user: user,
-        message: 'Худалдан авалт хийсэн.',
+        message: `Худалдан авалт хийсэн.-${service.id}`,
         assessment: service.assessment.id,
       });
       await this.transactionDao.create(
