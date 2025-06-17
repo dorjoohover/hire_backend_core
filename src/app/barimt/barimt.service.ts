@@ -299,7 +299,7 @@ export class BarimtService {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data);
+      console.log(response.data.data);
       if (response.data.data.statusCode == 500) {
         return response.data.data.message;
       }
