@@ -30,14 +30,18 @@ export class QpayController {
     return this.service.checkPayment(id);
   }
   @Public()
-  @Get('callback')
-  async handleCallback(@Query('qpay_payment_id') id: string): Promise<any> {
+  @Get('callback/:invoice')
+  @ApiParam({ name: 'invoice' })
+  async handleCallback(
+    @Query('qpay_payment_id') id: string,
+    @Param('invoice') invoice: string,
+  ): Promise<any> {
     this.logger.log('Received QPay callback:', id);
-
+    console.log(invoice);
     // Баталгаажуулах (optional)
     const result = await this.service.getInvoice(id);
-    console.log(result)
-    if (result?.paid_amount > 0) {
+    console.log(result);
+    if (result?.payment_status === 'PAID') {
       // 📌 Энд таны бизнесийн логик: төлбөрийн статус хадгалах, хэрэглэгчт мэдэгдэх гэх мэт
       this.logger.log(`Invoice ${id} is paid. Amount: ${result.paid_amount}`);
     } else {

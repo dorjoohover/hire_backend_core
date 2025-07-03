@@ -113,7 +113,7 @@ export class QpayService {
         allow_exceed: false,
         maximum_amount: null,
         note: null,
-        callback_url: process.env.QPAY_CALLBACK,
+        callback_url: `${process.env.QPAY_CALLBACK}/${invoiceId}`,
       });
 
       return res;
