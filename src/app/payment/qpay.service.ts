@@ -124,15 +124,9 @@ export class QpayService {
   }
 
   // ✅ Invoice харах
-  async getInvoice(invoiceId: string) {
+  async getInvoice(id: string) {
     try {
-      const res = this.requestWithToken('POST', 'payment/list', {
-        merchant_id: 'da870def-3f07-42b0-bfc3-6cfd6d6c8d22',
-        offset: {
-          page_number: 1,
-          page_limit: 100,
-        },
-      });
+      const res = this.requestWithToken('GET', `payment/${id}`, {});
       return res;
     } catch (error) {}
   }
