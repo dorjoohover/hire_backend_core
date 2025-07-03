@@ -1,10 +1,11 @@
 // src/qpay/qpay.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
-
 @Injectable()
 export class QpayService {
+  private readonly logger = new Logger(QpayService.name);
+
   private baseUrl = 'https://merchant.qpay.mn/v2/';
   private accessToken: string;
   private refreshToken: string;
@@ -113,7 +114,7 @@ export class QpayService {
         allow_exceed: false,
         maximum_amount: null,
         note: null,
-        callback_url: `${process.env.QPAY_CALLBACK}/${invoiceId}`,
+        callback_url: `${process.env.QPAY_CALLBACK}/${invoiceId}/${userId}`,
       });
 
       return res;
@@ -125,8 +126,11 @@ export class QpayService {
   // ✅ Invoice харах
   async getInvoice(id: string) {
     try {
-      const res = this.requestWithToken('GET', `payment/${id}`, {});
-      return res;
+      const res = await this.requestWithToken('GET', `payment/${id}`, {});
+      return {
+        status: res.payment_status,
+        amount: res.payment_amount,
+      };
     } catch (error) {}
   }
 

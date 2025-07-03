@@ -83,7 +83,7 @@ export class ExamService extends BaseService {
   public endExam = async (code: number, calculate = false) => {
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
-    this.getPdf(code, Role.client);
+    this.getPdf(code, Role.admin);
     return res;
   };
 

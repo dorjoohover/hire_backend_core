@@ -83,5 +83,6 @@ import { FileService } from 'src/file.service';
     QpayService,
     SinglePdf,
   ],
+  exports: [UserServiceService],
 })
 export class UserServiceModule {}

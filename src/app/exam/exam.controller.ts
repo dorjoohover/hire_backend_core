@@ -8,7 +8,6 @@ import {
   Delete,
   Request,
   Res,
-  Req,
 } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import {
@@ -21,14 +20,7 @@ import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Response } from 'express';
-import fs, {
-  createReadStream,
-  createWriteStream,
-  existsSync,
-  mkdirSync,
-  statSync,
-  unlinkSync,
-} from 'fs';
+import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { UserEntity } from '../user/entities/user.entity';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -36,7 +28,6 @@ import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { PassThrough } from 'stream';
 import AWS from 'aws-sdk';
 import { join } from 'path';
-import axios from 'axios';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {

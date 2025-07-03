@@ -60,11 +60,7 @@ export class UserServiceService extends BaseService {
     );
     let invoice = null;
     if (price > 0) {
-      invoice = await this.qpay.createInvoice(
-        price,
-        res.id,
-        +user['id'],
-      );
+      invoice = await this.qpay.createInvoice(price, res.id, +user['id']);
     }
     if (+user['role'] == Role.organization) {
       await this.transactionDao.create(
@@ -92,6 +88,67 @@ export class UserServiceService extends BaseService {
   public async deleteEbarimt(id: number) {
     return await this.barimt.deleteReceipt(id);
   }
+
+  public async updateStatus(user: number, amount: number, id: number) {
+    const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
+    await this.paymentDao.create({
+      method: PaymentType.QPAY,
+      totalPrice: amount,
+      user: user,
+      message: `Худалдан авалт хийсэн.-${service.id}`,
+      assessment: service.assessment.id,
+    });
+    await this.transactionDao.create(
+      {
+        assessment: service.assessment.id,
+        price: amount,
+        count: -1,
+        service: service.id,
+        user: user,
+      },
+      2,
+    );
+    if (service.assessment.price && service.assessment.price > 0) {
+      this.barimt.restReceipt(
+        {
+          billIdSuffix: service.id.toString(),
+          reportMonth: null,
+          receipts: [
+            {
+              items: [
+                {
+                  name: service.assessment.name,
+                  qty: service.count,
+                  unitPrice: service.assessment.price,
+                  totalCityTax: 2,
+                  totalVAT: 10,
+                  classificationCode: service.assessment.classificationCode,
+                },
+              ],
+            },
+          ],
+          payments: [
+            {
+              code: 'BANK_TRANSFER',
+              status: 'PAID',
+              paidAmount: amount,
+            },
+          ],
+        },
+        service.user,
+        amount,
+        service.id,
+      );
+    }
+  }
+
+  public async checkCallback(user: number, id: string, invoice: number) {
+    const res = await this.qpay.getInvoice(id);
+    console.log(res.status);
+    if (res.status === 'PAID') {
+      await this.updateStatus(user, res.amount, invoice);
+    }
+  }
   public async checkPayment(
     id: number,
     code: string,
@@ -104,56 +161,7 @@ export class UserServiceService extends BaseService {
       return await this.getEbarimt(id, email);
     }
     if (payment.paid_amount) {
-      const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
-      await this.paymentDao.create({
-        method: PaymentType.QPAY,
-        totalPrice: payment.paid_amount,
-        user: user,
-        message: `Худалдан авалт хийсэн.-${service.id}`,
-        assessment: service.assessment.id,
-      });
-      await this.transactionDao.create(
-        {
-          assessment: service.assessment.id,
-          price: payment.paid_amount,
-          count: -1,
-          service: service.id,
-          user: user,
-        },
-        2,
-      );
-      if (service.assessment.price && service.assessment.price > 0) {
-        const barimt = this.barimt.restReceipt(
-          {
-            billIdSuffix: service.id.toString(),
-            reportMonth: null,
-            receipts: [
-              {
-                items: [
-                  {
-                    name: service.assessment.name,
-                    qty: service.count,
-                    unitPrice: service.assessment.price,
-                    totalCityTax: 2,
-                    totalVAT: 10,
-                    classificationCode: service.assessment.classificationCode,
-                  },
-                ],
-              },
-            ],
-            payments: [
-              {
-                code: 'BANK_TRANSFER',
-                status: 'PAID',
-                paidAmount: payment.paid_amount,
-              },
-            ],
-          },
-          service.user,
-          payment.paid_amount,
-          service.id,
-        );
-      }
+      await this.updateStatus(user, payment.paid_amount, id);
       return true;
     }
     return false;
