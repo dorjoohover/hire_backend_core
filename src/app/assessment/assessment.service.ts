@@ -9,6 +9,8 @@ import { AssessmentCategoryService } from '../assessment.category/assessment.cat
 import { UserDao } from '../user/user.dao';
 import { AssessmentEntity } from './entities/assessment.entity';
 import { UserServiceDao } from '../user.service/user.service.dao';
+import { Meta } from 'src/base/base.interface';
+import { AssessmentStatus } from 'src/base/constants';
 
 @Injectable()
 export class AssessmentService {
@@ -42,6 +44,24 @@ export class AssessmentService {
   }
   public async createLevel(dto: CreateAssessmentLevelDto) {
     return await this.levelDao.create(dto);
+  }
+
+  public async findHomePage() {
+    const newAss = (await this.dao.find(1, 3, true, 0)).items;
+    const highlight = (
+      await this.dao.find(1, 3, true, AssessmentStatus.HIGHLIGHTED)
+    ).items;
+    const demand = await this.userServiceDao.countDemand(3);
+    const demandItems = await Promise.all(
+      demand.map(async (d) => {
+        return await this.dao.findOne(d.assessmentId);
+      }),
+    );
+    return {
+      new: newAss,
+      highlight: highlight,
+      demand: demandItems,
+    };
   }
 
   public async findAll() {

@@ -1,18 +1,89 @@
-import { HttpService } from '@nestjs/axios';
+// src/qpay/qpay.service.ts
 import { Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { useQpay } from '@mnpay/qpay';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class QpayService {
-  private readonly baseUrl = 'https://merchant.qpay.mn/v2'; // Update to the correct QPay API base URL
-  private token = null;
-  constructor(private readonly httpService: HttpService) {}
+  private baseUrl = 'https://merchant.qpay.mn/v2/';
+  private accessToken: string;
+  private refreshToken: string;
+  private expiresIn: Date;
 
-  async getAccessToken() {
-    if (this.token != null) return this.token;
+  constructor(private readonly httpService: HttpService) {}
+  private async refreshAccessToken() {
+    const response = await firstValueFrom(
+      this.httpService.post(
+        `${this.baseUrl}auth/refresh`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${this.refreshToken}`,
+          },
+        },
+      ),
+    );
+
+    const data = response.data;
+    this.accessToken = data.access_token;
+    this.refreshToken = data.refresh_token;
+    this.expiresIn = new Date(Date.now() + data.expires_in * 1000);
+  }
+
+  private async ensureValidToken() {
+    if (!this.accessToken || new Date() > this.expiresIn) {
+      if (this.refreshToken) {
+        await this.refreshAccessToken();
+      } else {
+        await this.authenticate();
+      }
+    }
+  }
+
+  private async requestWithToken<T = any>(
+    method: 'GET' | 'POST',
+    endpoint: string,
+    data: any = {},
+  ): Promise<T> {
+    await this.ensureValidToken(); // check expiry first
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.request({
+          method,
+          url: `${this.baseUrl}${endpoint}`,
+          data,
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }),
+      );
+      return response.data;
+    } catch (error) {
+      console.log(error.response.data.message);
+      if (error.response?.status === 401) {
+        await this.refreshAccessToken();
+        const retryResponse = await firstValueFrom(
+          this.httpService.request({
+            method,
+            url: `${this.baseUrl}${endpoint}`,
+            data,
+            headers: {
+              Authorization: `Bearer ${this.accessToken}`,
+            },
+          }),
+        );
+        return retryResponse.data;
+      }
+
+      throw error;
+    }
+  }
+  private async authenticate() {
     const response = await this.httpService
       .post(
-        `${this.baseUrl}/auth/token`,
+        `${this.baseUrl}auth/token`,
         {},
         {
           auth: {
@@ -22,63 +93,60 @@ export class QpayService {
         },
       )
       .toPromise();
-    this.token = response.data.access_token;
-    return response.data.access_token;
+    this.accessToken = response.data.access_token;
+    this.refreshToken = response.data.refresh_token;
+    this.expiresIn = new Date(Date.now() + response.data.expires_in * 1000);
   }
 
-  async createPayment(amount: number, invoiceId: string, userId: number) {
+  // ✅ Invoice үүсгэх
+  async createInvoice(amount: number, invoiceId: number, userId: number) {
     try {
-      const accessToken = await this.getAccessToken();
+      const res = this.requestWithToken('POST', 'invoice', {
+        invoice_code: 'AXIOM_INC_INVOICE',
+        sender_invoice_no: `${invoiceId}`,
+        sender_branch_code: 'hire',
+        invoice_receiver_code: `${userId}`,
+        amount,
+        invoice_description: 'Тест худалдан авлаа.',
+        invoice_due_date: null,
+        allow_partial: false,
+        minimum_amount: null,
+        allow_exceed: false,
+        maximum_amount: null,
+        note: null,
+        callback_url: process.env.QPAY_CALLBACK,
+      });
 
-      const response = await this.httpService
-        .post(
-          `${this.baseUrl}/invoice`,
-          {
-            invoice_code: 'AXIOM_INC_INVOICE',
-            sender_invoice_no: `${invoiceId}`,
-            sender_branch_code: 'hire',
-            invoice_receiver_code: `${userId}`,
-            amount,
-            invoice_description: 'Тест худалдан авлаа.',
-            invoice_due_date: null,
-            allow_partial: false,
-            minimum_amount: null,
-            allow_exceed: false,
-            maximum_amount: null,
-            note: null,
-            callback_url: 'http://srv666826.hstgr.cloud/api/v1/qpay/callback',
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
-        )
-        .toPromise();
-
-      return response.data;
+      return res;
     } catch (error) {
       console.log(error);
     }
   }
 
-  async checkPayment(id: string) {
-    const accessToken = await this.getAccessToken();
-    const response = await lastValueFrom(
-      this.httpService.post(
-        `${this.baseUrl}/payment/check`,
-        {
-          object_type: 'INVOICE',
-          object_id: id,
+  // ✅ Invoice харах
+  async getInvoice(invoiceId: string) {
+    try {
+      const res = this.requestWithToken('POST', 'payment/list', {
+        merchant_id: 'da870def-3f07-42b0-bfc3-6cfd6d6c8d22',
+        offset: {
+          page_number: 1,
+          page_limit: 100,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      ),
-    );
-    return response.data;
+      });
+      return res;
+    } catch (error) {}
+  }
+
+  // ✅ Төлбөр шалгах
+  async checkPayment(invoiceId: string) {
+    const res = this.requestWithToken('POST', '/payment/check', {
+      object_type: 'INVOICE',
+      object_id: invoiceId,
+      offset: {
+        page_number: 1,
+        page_limit: 100,
+      },
+    });
+    return res;
   }
 }

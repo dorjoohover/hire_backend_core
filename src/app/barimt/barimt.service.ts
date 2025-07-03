@@ -104,7 +104,7 @@ export class BarimtService {
               name: r.name,
               barCode: null,
               barCodeType: 10,
-              classificationCode: '8122100',
+              classificationCode: r.classificationCode,
               // "taxProductCode": "string",
               measureUnit: 'багц',
               qty: r.qty,

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0",
+    "@mnpay/qpay": "^0.1.9",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/bullmq": "^11.0.2",

@@ -20,13 +20,20 @@ import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { jwtConstants } from 'src/auth/constants';
-import { DISC } from 'src/assets/report/disc';
+import {
+  Belbin,
+  DISC,
+  Empathy,
+  Genos,
+  Narc,
+  Setgel,
+  SingleTemplate,
+} from 'src/assets/report/index';
 import { ResultDao } from './dao/result.dao';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { PaymentDao } from '../payment/dao/payment.dao';
-import { Belbin } from 'src/assets/report/belbin';
-
+import { FileService } from 'src/file.service';
 @Module({
   imports: [
     JwtModule.register({
@@ -45,6 +52,12 @@ import { Belbin } from 'src/assets/report/belbin';
     QuestionService,
     VisualizationService,
     DISC,
+    Genos,
+    Empathy,
+    Narc,
+    FileService,
+    Setgel,
+    SingleTemplate,
     ResultDao,
     TransactionDao,
     UserServiceDao,

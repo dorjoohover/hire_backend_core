@@ -121,11 +121,8 @@ export class UserAnswerService extends BaseService {
         );
       }
       if (dto.end) {
-        await this.examDao.endExam(dto.data[0].code);
-        const response = await this.examService.calculateExamById(
-          dto.data[0].code,
-          true,
-        );
+        const code = dto.data[0].code;
+        const response = await this.examService.endExam(code, true);
 
         if (response.visible)
           await this.mailService.sendMail({

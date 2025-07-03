@@ -3,16 +3,23 @@ import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { DataSource, Not, Repository } from 'typeorm';
 import { BlogEntity } from './entities/blog.entity';
+import { FileService } from 'src/file.service';
 
 @Injectable()
 export class BlogService {
   private db: Repository<BlogEntity>;
 
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private fileService: FileService,
+  ) {
     this.db = this.dataSource.getRepository(BlogEntity);
   }
   public async create(dto: CreateBlogDto, user: number) {
-    const res = this.db.create({ ...dto, user: { id: user } });
+    const res = this.db.create({
+      ...dto,
+      user: { id: user },
+    });
     await this.db.save(res);
     return res.id;
   }

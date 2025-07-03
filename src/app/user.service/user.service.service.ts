@@ -60,10 +60,10 @@ export class UserServiceService extends BaseService {
     );
     let invoice = null;
     if (price > 0) {
-      invoice = await this.qpay.createPayment(
+      invoice = await this.qpay.createInvoice(
         price,
-        res.id.toString(),
-        user['id'],
+        res.id,
+        +user['id'],
       );
     }
     if (+user['role'] == Role.organization) {
@@ -136,6 +136,7 @@ export class UserServiceService extends BaseService {
                     unitPrice: service.assessment.price,
                     totalCityTax: 2,
                     totalVAT: 10,
+                    classificationCode: service.assessment.classificationCode,
                   },
                 ],
               },
