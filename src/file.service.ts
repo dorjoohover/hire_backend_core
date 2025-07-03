@@ -57,7 +57,7 @@ export class FileService {
     ct?: string,
   ): Promise<string[]> {
     try {
-      console.log('uploading');
+      console.log('uploading', files);
       const results: string[] = [];
       if (files.length == 0) {
         const buffer = await this.streamToBuffer(pt);
