@@ -25,22 +25,27 @@ export class FileService {
   }
 
   async upload(key: string, ct: string, body) {
-    await this.s3
-      .upload({
-        Bucket: this.bucketName,
-        Key: key,
-        Body: body,
-        ContentType: ct,
-      })
-      .promise();
+    try {
+      console.log(key);
+      await this.s3
+        .upload({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: body,
+          ContentType: ct,
+        })
+        .promise();
 
-    // Optional: Save locally
-    const localFilePath = join(this.localPath, key);
-    writeFileSync(localFilePath, body);
+      // Optional: Save locally
+      const localFilePath = join(this.localPath, key);
+      writeFileSync(localFilePath, body);
 
-    // Add public S3 URL
-    const fileUrl = `${key}`;
-    return fileUrl;
+      // Add public S3 URL
+      const fileUrl = `${key}`;
+      return fileUrl;
+    } catch (error) {
+      console.log(error);
+    }
   }
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
