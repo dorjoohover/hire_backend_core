@@ -42,6 +42,14 @@ export class FileService {
     const fileUrl = `${key}`;
     return fileUrl;
   }
+  private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  const chunks: any[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk) => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+}
   async processMultipleImages(
     files: Express.Multer.File[],
     pt?: PassThrough,
@@ -51,7 +59,8 @@ export class FileService {
     try {
       const results: string[] = [];
       if (files.length == 0) {
-        const res = await this.upload(key, ct, pt);
+         const buffer = await this.streamToBuffer(pt);
+        const res = await this.upload(key, ct, buffer);
         results.push(res);
       }
       for (const file of files) {
