@@ -36,7 +36,7 @@ export class QpayController {
 
     // Баталгаажуулах (optional)
     const result = await this.service.getInvoice(id);
-
+    console.log(result)
     if (result?.paid_amount > 0) {
       // 📌 Энд таны бизнесийн логик: төлбөрийн статус хадгалах, хэрэглэгчт мэдэгдэх гэх мэт
       this.logger.log(`Invoice ${id} is paid. Amount: ${result.paid_amount}`);
