@@ -67,13 +67,11 @@ export class ExamService extends BaseService {
     const result = await this.resultDao.findOne(id);
     const doc = await this.pdfService.createPdfInOneFile(result, res);
     const resStream = new PassThrough();
-    const s3Stream = new PassThrough();
     doc.pipe(resStream);
     doc.end();
-    resStream.pipe(s3Stream);
     this.fileService.processMultipleImages(
       [],
-      s3Stream,
+      resStream,
       `report-${id}.pdf`,
       'application/pdf',
     );
