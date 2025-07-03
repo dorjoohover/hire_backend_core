@@ -1,7 +1,6 @@
 // src/qpay/qpay.service.ts
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { useQpay } from '@mnpay/qpay';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
