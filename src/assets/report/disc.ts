@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
 import { assetPath, colors, firstLetterUpper, fontBold, fontNormal, footer, fz, header, info, lh, marginX, title } from 'src/app/exam/reports/formatter';
-
+@Injectable()
 export class DISC {
   static pattern = {
     Undershift: [

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
 import {
@@ -12,7 +13,7 @@ import {
   title,
 } from 'src/app/exam/reports/formatter';
 import { SinglePdf } from 'src/app/exam/reports/single.pdf';
-
+@Injectable()
 export class Setgel {
   constructor(private single: SinglePdf) {}
 

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
 import {
@@ -13,7 +14,7 @@ import {
   info,
 } from 'src/app/exam/reports/formatter';
 import { VisualizationService } from 'src/app/exam/visualization.service';
-
+@Injectable()
 export class Narc {
   constructor(private vis: VisualizationService) {}
 
