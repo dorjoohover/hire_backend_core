@@ -17,7 +17,7 @@ export function deleteOldestFiles(folderPath: string, maxMB: number) {
   });
 
   let folderSize = getFolderSizeMB(folderPath);
-  if (folderSize <= maxMB) return;
+  // if (folderSize <= maxMB) return;
 
   files.sort((a, b) => a.time - b.time); // oldest first
 
@@ -25,6 +25,6 @@ export function deleteOldestFiles(folderPath: string, maxMB: number) {
     const filePath = join(folderPath, file.name);
     unlinkSync(filePath);
     folderSize = getFolderSizeMB(folderPath);
-    if (folderSize <= maxMB) break;
+    // if (folderSize <= maxMB) break;
   }
 }

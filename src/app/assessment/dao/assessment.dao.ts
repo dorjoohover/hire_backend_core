@@ -26,7 +26,7 @@ export class AssessmentDao {
 
       take: limit,
       order: {
-        createdAt: sort ? 'ASC' : 'DESC',
+        createdAt: !sort ? 'ASC' : 'DESC',
       },
     });
 
