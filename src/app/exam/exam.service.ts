@@ -162,14 +162,12 @@ export class ExamService extends BaseService {
     user: UserEntity,
     id: number,
   ) {
-    console.log(res);
     const type = exam.assessment.report;
     const diff = Math.floor(
       (Date.parse(exam.userEndDate?.toString()) -
         Date.parse(exam.userStartDate?.toString())) /
         60000,
     );
-    console.log(user);
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         lastname: exam?.lastname ?? user?.lastname,
@@ -180,20 +178,7 @@ export class ExamService extends BaseService {
           id: user.id,
         },
       });
-      console.log({
-        assessment: exam.assessment.id,
-        assessmentName: exam.assessment.name,
-        code: exam.code,
-        duration: diff,
-        firstname: exam?.firstname ?? user.firstname,
-        lastname: exam?.lastname ?? user.lastname,
-        type: res[0]?.formula?.toLowerCase().includes('sum')
-          ? ReportType.CORRECT
-          : ReportType.CORRECTCOUNT,
-        limit: exam.assessment.duration,
-        total: exam.assessment.totalPoint,
-        point: res[0].point,
-      });
+
       await this.resultDao.create({
         assessment: exam.assessment.id,
         assessmentName: exam.assessment.name,
@@ -243,11 +228,6 @@ export class ExamService extends BaseService {
       return { point: res[0].point };
     }
     if (type == ReportType.EMPATHY) {
-      console.log({
-        total: exam.assessment.totalPoint,
-        point: res[0].point,
-      });
-
       const result =
         res[0].point <= 44
           ? 'Эмпатийн түвшин сул'

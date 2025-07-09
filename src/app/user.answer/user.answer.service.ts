@@ -168,7 +168,7 @@ export class UserAnswerService extends BaseService {
   }
 
   private async endExam(code: number, email: string, id: number, name: string) {
-    console.log('start');
+    console.log('start', name);
     const response = await this.examService.endExam(code, true);
 
     if (response.visible) {

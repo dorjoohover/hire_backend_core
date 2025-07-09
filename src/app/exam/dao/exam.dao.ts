@@ -160,7 +160,7 @@ export class ExamDao {
     const res = await this.db.query(q).then((d) => d[0]);
 
     const query = `select id, name from "assessment" where id = ${res.assessment}`;
-    const assessment = await this.assessmentDao.query(query);
+    const assessment = await this.assessmentDao.query(query)[0];
     return {
       ...res,
       assessment,
