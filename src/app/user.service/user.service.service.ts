@@ -132,6 +132,9 @@ export class UserServiceService extends BaseService {
               code: 'BANK_TRANSFER',
               status: 'PAID',
               paidAmount: amount,
+              data: {
+                easy: true
+              }
             },
           ],
         },

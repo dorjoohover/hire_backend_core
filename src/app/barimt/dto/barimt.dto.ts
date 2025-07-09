@@ -47,7 +47,7 @@ export class PaymentDto {
   //   Төлбөрийн хэлбэрийн төлөв PAID
   status: string;
   paidAmount: number;
-  //   data: {};
+    data: any;
 }
 
 export class BarimtDto {
