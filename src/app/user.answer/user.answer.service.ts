@@ -150,8 +150,8 @@ export class UserAnswerService extends BaseService {
         this.endExam(
           code,
           user.email,
-          exam.assessment.id,
-          exam.assessment.name,
+          exam.assessment?.id ?? exam.assessment[0].id,
+          exam.assessment?.name ?? exam.assessment[0].name,
         );
       }
 
