@@ -47,6 +47,7 @@ export class UserAnswerService extends BaseService {
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
       const exam = await this.examDao.findByCodeOnly(dto.data[0].code);
+      console.log(exam);
       if (!exam) throw message('Тест олдсонгүй');
 
       for (const d of dto.data) {
