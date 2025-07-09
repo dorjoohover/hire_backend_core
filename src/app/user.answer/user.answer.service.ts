@@ -251,7 +251,7 @@ export class UserAnswerService extends BaseService {
                           <tr>
                             <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                               <p style="margin: 0 0 15px 0;">
-                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=https://hire.mn/test/${id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/file/report-${code}.png>энд дарж</a> татаж авна уу.
+                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=https://hire.mn/test/${id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/file/report-${code}.pdf>энд дарж</a> татаж авна уу.
                               </p>
                             </td>
                           </tr>
