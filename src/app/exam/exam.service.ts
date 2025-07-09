@@ -85,7 +85,7 @@ export class ExamService extends BaseService {
     return res.visible;
   };
   public endExam = async (code: number, calculate = false) => {
-    new Promise((resolve) => setTimeout(resolve, 10000));
+    // new Promise((resolve) => setTimeout(resolve, 10000));
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
     this.getPdf(code, Role.admin);
