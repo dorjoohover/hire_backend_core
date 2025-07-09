@@ -43,7 +43,8 @@ export class QuestionAnswerDao {
         dto.correct == res.correct &&
         res.orderNumber == dto.orderNumber &&
         res.file == dto.file &&
-        dto.category == res.category?.id && dto.reverse == res.reverse;
+        dto.category == res.category?.id &&
+        dto.reverse == res.reverse;
       if (update) return id;
       await this.db.update(id, {
         ...dto,
@@ -71,7 +72,7 @@ export class QuestionAnswerDao {
         value: true,
         orderNumber: true,
         file: true,
-        reverse: true
+        reverse: true,
       },
       where: {
         question: { id: id },
@@ -128,6 +129,16 @@ export class QuestionAnswerDao {
       },
       relations: ['category', 'question'],
     });
+  };
+
+  findOneOnly = async (id: number) => {
+    return await this.db.findOne({
+      where: { id },
+    });
+  };
+
+  query = async (q: string) => {
+    return await this.db.query(q);
   };
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();

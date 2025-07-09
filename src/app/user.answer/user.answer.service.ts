@@ -38,31 +38,27 @@ export class UserAnswerService extends BaseService {
     device: string,
     user?: any,
   ) {
+    const res = [];
+    const message = (msg: string) =>
+      new HttpException(msg, HttpStatus.BAD_REQUEST);
+    console.log(dto);
     try {
-      let message = '';
-      let status = HttpStatus.BAD_REQUEST;
-      const res = [];
-      const exam = await this.examDao.findByCode(dto.data[0].code);
+      // Validate input
+      if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
+
+      const exam = await this.examDao.findByCodeOnly(dto.data[0].code);
+      if (!exam) throw message('Тест олдсонгүй');
+
       for (const d of dto.data) {
-        if (!d.question) {
-          message = 'Асуулт байхгүй';
-          status = HttpStatus.BAD_REQUEST;
-          throw new HttpException(message, status);
-        }
+        if (!d.question) throw message('Асуулт байхгүй');
+        if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
-        if (!d.questionCategory) {
-          message = 'Асуултын ангилал байхгүй';
-          status = HttpStatus.BAD_REQUEST;
-          throw new HttpException(message, status);
-        }
+        const query = `select "minValue", "maxValue"  from question where id = ${d.question}`;
+        const question = await this.questionDao.query(query);
+        if (!question) throw message('Асуулт олдсонгүй');
 
-        const question = await this.questionDao.findOne(d.question);
-        if (!d || d == null) {
-          message = 'Оноогүй байна.';
-          status = HttpStatus.BAD_REQUEST;
-          throw new HttpException(message, status);
-        }
-        if (d.answers.length == 0) {
+        // No answer case
+        if (!d.answers || d.answers.length === 0) {
           const body: CreateUserAnswerDto = {
             ...d,
             startDate: dto.startDate,
@@ -73,63 +69,124 @@ export class UserAnswerService extends BaseService {
             answer: null,
             correct: false,
             matrix: null,
-            ip: ip,
+            ip,
             exam: exam.id,
-            device: device,
+            device,
+          };
+          const r = await this.dao.create(body);
+          res.push(r);
+          continue;
+        }
+
+        // Multiple answers
+        for (const answer of d.answers) {
+          let answerCategory = answer.matrix
+            ? await this.questionAnswerMatrixDao.query(
+                `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
+              )
+            : await this.questionAnswerDao.query(
+                `select reverse,correct,  "categoryId" from "questionAnswer" where id = ${answer.answer}`,
+              );
+          answerCategory = answerCategory[0];
+          let point: number;
+          if (
+            !answer.matrix &&
+            (answerCategory as QuestionAnswerEntity)?.reverse
+          ) {
+            point =
+              Number(question.maxValue) -
+              Number(answer.point) +
+              Number(question.minValue);
+            console.log('if', point);
+          } else {
+            let p;
+
+            if (answer.point != null) {
+              p = answer.point;
+            } else if (answer.matrix) {
+              const matrixResult = await this.questionAnswerMatrixDao.query(
+                `SELECT point FROM "questionAnswerMatrix" WHERE id = ${answer.matrix}`,
+              );
+              p = matrixResult[0]?.point;
+            } else {
+              const answerResult = await this.questionAnswerDao.query(
+                `SELECT point FROM "questionAnswer" WHERE id = ${answer.answer}`,
+              );
+              p = answerResult[0]?.point;
+            }
+
+            console.log(p);
+
+            point = typeof p === 'number' ? +p : +p;
+          }
+
+          const body: CreateUserAnswerDto = {
+            ...d,
+            startDate: dto.startDate,
+            answerCategory: answerCategory?.categoryId ?? null,
+            minPoint: question.minValue,
+            maxPoint: question.maxValue,
+            point,
+            answer: answer.answer,
+            correct: answer.matrix
+              ? null
+              : ((answerCategory as QuestionAnswerEntity)?.correct ?? null),
+            matrix: answer.matrix,
+            value: answer.value,
+            ip,
+            exam: exam.id,
+            device,
           };
           const r = await this.dao.create(body);
           res.push(r);
         }
-        await Promise.all(
-          d.answers.map(async (answer, i) => {
-            // if (i > 0) return;
-            let answerCategory = answer.matrix
-              ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
-              : await this.questionAnswerDao.findOne(answer.answer);
-
-            const point =
-              answer.matrix === null &&
-              (answerCategory as QuestionAnswerEntity).reverse === true
-                ? Number(answerCategory.question.maxValue) -
-                  Number(answer.point) +
-                  Number(answerCategory.question.minValue)
-                : (answer.point ??
-                  (answer.matrix
-                    ? await this.questionAnswerMatrixDao.findOne(answer.matrix)
-                    : await this.questionAnswerDao.findOne(answer.answer)));
-
-            const body: CreateUserAnswerDto = {
-              ...d,
-              startDate: dto.startDate,
-              answerCategory: answerCategory?.category?.id ?? null,
-              minPoint: question.minValue,
-              maxPoint: question.maxValue,
-              point: typeof point === 'number' ? +point : +point.point,
-              answer: answer.answer,
-              correct: answer.matrix
-                ? null
-                : ((point as QuestionAnswerEntity)?.correct ?? null),
-              matrix: answer.matrix,
-              value: answer.value,
-              ip: ip,
-              exam: exam.id,
-              device: device,
-            };
-            const r = await this.dao.create(body);
-            res.push(r);
-          }),
-        );
       }
+
+      // Тест дууссан эсэх
+      console.log(dto.end);
       if (dto.end) {
         const code = dto.data[0].code;
-        const response = await this.examService.endExam(code, true);
+        this.endExam(
+          code,
+          user.email,
+          exam.assessment.id,
+          exam.assessment.name,
+        );
+      }
 
-        if (response.visible)
-          await this.mailService.sendMail({
-            to: user.email,
-            subject: 'Таны тайлан бэлэн боллоо',
-            html: `
-            <!DOCTYPE html>
+      return res;
+    } catch (error) {
+      console.error('❌ Хэрэглэгчийн хариулт бүртгэх үед алдаа:', error);
+      throw error instanceof HttpException
+        ? error
+        : new HttpException(
+            'Дотоод серверийн алдаа',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+          );
+    }
+  }
+
+  private async endExam(code: number, email: string, id: number, name: string) {
+    console.log('start');
+    const response = await this.examService.endExam(code, true);
+
+    if (response.visible) {
+      await this.mailService.sendMail({
+        to: email,
+        subject: 'Таны тайлан бэлэн боллоо',
+        html: this.generateEmailTemplate(id, name, code),
+      });
+    }
+
+    return { visible: response.visible };
+  }
+  private generateEmailTemplate(
+    id: number,
+    name: string,
+    code: number,
+  ): string {
+    return `
+ <!DOCTYPE html>
             <html>
             <head>
               <meta charset="utf-8">
@@ -193,7 +250,7 @@ export class UserAnswerService extends BaseService {
                           <tr>
                             <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                               <p style="margin: 0 0 15px 0;">
-                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=https://hire.mn/test/${exam.assessment.id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${exam.assessment.name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/exam/pdf/${dto.data[0].code}>энд дарж</a> татаж авна уу.
+                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=https://hire.mn/test/${id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/file/report-${code}.png>энд дарж</a> татаж авна уу.
                               </p>
                             </td>
                           </tr>
@@ -230,23 +287,9 @@ export class UserAnswerService extends BaseService {
               </center>
             </body>
             </html>
-            `,
-          });
-        return !response.visible ? { visible: response.visible } : response;
-      }
-
-      // if (res.includes(undefined)) {
-      //   res.map(async (r) => {
-      //     if (r != undefined) await this.dao.deleteOne(r);
-      //   });
-      //   // throw new HttpException(message, status);
-      // }
-      // return res;
-    } catch (error) {
-      console.log(error);
-    }
+   
+  `;
   }
-
   public async calculate(dto: CalculateUserAnswerDto) {
     // const exam = await this.examDao.findOne(id)
     // const dto = JSON.parse(exam.assessment.function) as CalculateUserAnswerDto

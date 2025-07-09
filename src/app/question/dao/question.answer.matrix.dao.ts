@@ -72,6 +72,13 @@ export class QuestionAnswerMatrixDao {
     });
   };
 
+  findOneOnly = async (id: number) => {
+    return await this.db.findOne({ where: { id } });
+  };
+  query = async (q: string) => {
+    return await this.db.query(q);
+  };
+
   findByAnswer = async (id: number) => {
     return await this.db.find({
       where: {

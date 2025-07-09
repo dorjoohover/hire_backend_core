@@ -78,7 +78,14 @@ export class ExamService extends BaseService {
     return doc;
   }
 
+  public checkExam = async (code: number) => {
+    const res = await this.dao
+      .query(`select visible from exam where code = ${code}`)
+      .then((d) => d[0]);
+    return res.visible;
+  };
   public endExam = async (code: number, calculate = false) => {
+    new Promise((resolve) => setTimeout(resolve, 10000));
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
     this.getPdf(code, Role.admin);
@@ -536,105 +543,120 @@ export class ExamService extends BaseService {
   }
 
   // category questioncount der asuudaltai bga
-  public async updateByCode(code: number, category?: number) {
-    const res = await this.dao.findByCode(code);
+  public async updateByCode(code: number, con: boolean, category?: number) {
+    try {
+      const res = await this.dao.findByCode(code);
 
-    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    if (res.endDate && res.startDate && res.endDate < new Date())
-      throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
-    if (res.userEndDate != null)
-      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
-    // date false ued ehleh
-    // date true ued duusah esvel urgeljluuleh
-    const answers = await this.userAnswer.findByCode(code);
-    if (category == -1) {
-      await this.dao.update(res.id, {
-        ...res,
-        userEndDate: new Date(),
-      });
-      return;
-    }
-    let token = null;
-    const shuffle = res.assessment.questionShuffle;
-    const answerShuffle = res.assessment.answerShuffle;
-    // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-    //   (a) => a.id,
-    // );
-    let prevQuestions = [];
-    let allCategories = [];
-
-    const categoriesByAssessment =
-      await this.questionCategoryDao.findByAssessment(res.assessment.id);
-    let categories = await Promise.all(
-      categoriesByAssessment.map((c) => {
-        const { questions, ...body } = c;
-        return { ...body };
-      }),
-    );
-    let categoryIndex = 0;
-    for (let i = 0; i < categoriesByAssessment.length; i++) {
-      const userAnswer = await this.userAnswer.findByQuestionCategory(
-        categoriesByAssessment[i].id,
-        res.code,
-      );
-
-      if (userAnswer == null) {
-        categoryIndex = i;
-        break;
-      }
-    }
-
-    allCategories = await Promise.all(
-      categories.slice(categoryIndex).map((cate) => cate.id),
-    );
-    let currentCategory = allCategories[0];
-    if (res.userStartDate == null && category === undefined) {
-      currentCategory = categories[0].id;
-      await this.dao.update(res.id, {
-        ...res,
-        userStartDate: new Date(),
-      });
-      if (res.email && res.lastname && res.firstname) {
-        const user = await this.authService.forceLogin(
-          res.email,
-          res.phone,
-          res.lastname,
-          res.firstname,
+      if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
+      if (res.endDate && res.startDate && res.endDate < new Date())
+        throw new HttpException(
+          'Хугацаа дууссан байна.',
+          HttpStatus.BAD_REQUEST,
         );
-        token = user;
+      if (res.userEndDate != null)
+        throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
+      // date false ued ehleh
+      // date true ued duusah esvel urgeljluuleh
+      // const answers = await this.userAnswer.findByCode(code);
+      let categoryIndex = 0;
+
+      if (category == -1) {
+        await this.dao.update(res.id, {
+          ...res,
+          userEndDate: new Date(),
+        });
+        return;
       }
-    }
+      let token = null;
+      const shuffle = res.assessment.questionShuffle;
+      const answerShuffle = res.assessment.answerShuffle;
+      // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+      //   (a) => a.id,
+      // );
+      let prevQuestions = [];
+      let allCategories: number[] = [];
 
-    if (currentCategory) {
-      if (allCategories.length == 0)
-        allCategories = await Promise.all(
-          (
-            await this.questionCategoryDao.findByAssessment(
-              res.assessment.id,
-              currentCategory,
-            )
-          ).map((a) => a.id),
+      const categoriesByAssessment =
+        await this.questionCategoryDao.findByAssessment(res.assessment.id);
+      let categories = await Promise.all(
+        categoriesByAssessment.map((c) => {
+          const { questions, ...body } = c;
+          return { ...body };
+        }),
+      );
+      allCategories = await Promise.all(categories.map((cate) => cate.id));
+      console.log(allCategories);
+      let currentCategory = category ?? allCategories[0];
+      categoryIndex = allCategories.indexOf(currentCategory);
+      allCategories =
+        categoryIndex !== -1
+          ? allCategories.slice(categoryIndex)
+          : allCategories;
+      if (con) {
+        for (let i = 0; i < categoriesByAssessment.length; i++) {
+          const userAnswer = await this.userAnswer.findByQuestionCategory(
+            categoriesByAssessment[i].id,
+            res.code,
+          );
+
+          if (userAnswer == null) {
+            categoryIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (res.userStartDate == null && category === undefined) {
+        currentCategory = categories[0].id;
+        await this.dao.update(res.id, {
+          ...res,
+          userStartDate: new Date(),
+        });
+        if (res.email && res.lastname && res.firstname) {
+          const user = await this.authService.forceLogin(
+            res.email,
+            res.phone,
+            res.lastname,
+            res.firstname,
+          );
+          token = user;
+        }
+      }
+
+      if (currentCategory) {
+        if (allCategories.length == 0)
+          allCategories = await Promise.all(
+            (
+              await this.questionCategoryDao.findByAssessment(
+                res.assessment.id,
+                currentCategory,
+              )
+            ).map((a) => a.id),
+          );
+        const result = await this.getQuestions(
+          shuffle,
+          currentCategory,
+          answerShuffle,
+          prevQuestions,
         );
-      const result = await this.getQuestions(
-        shuffle,
-        currentCategory,
-        answerShuffle,
-        prevQuestions,
-      );
-      await this.createDetail(
-        result.questions,
-        res.id,
-        result.category,
-        res.service.id,
-      );
-
-      return {
-        questions: result.questions,
-        category: result.category,
-        categories: allCategories.slice(1),
-        assessment: res.assessment,
-        token,
-      };
+        await this.createDetail(
+          result.questions,
+          res.id,
+          result.category,
+          res.service.id,
+        );
+        console.log(allCategories, allCategories.slice(1), category);
+        return {
+          questions: result.questions,
+          category: result.category,
+          categories: allCategories.slice(1),
+          assessment: res.assessment,
+          token,
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
   }
   createDetail = async (

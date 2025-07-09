@@ -56,6 +56,7 @@ import { FileService } from 'src/file.service';
     Empathy,
     Narc,
     FileService,
+    AssessmentDao,
     Setgel,
     SingleTemplate,
     ResultDao,

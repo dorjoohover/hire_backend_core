@@ -130,6 +130,11 @@ export class QuestionDao {
     });
   };
 
+  query = async (q?: string) => {
+    let query = q ?? `select * from question where id = ${q}`;
+    return await this.db.query(query);
+  };
+
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };

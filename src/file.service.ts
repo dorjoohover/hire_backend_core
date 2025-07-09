@@ -83,32 +83,38 @@ export class FileService {
     }
   }
   async getFile(filename: string): Promise<StreamableFile> {
-    const filePath = join(this.localPath, filename);
+    try {
+      const filePath = join(this.localPath, filename);
 
-    if (!existsSync(filePath)) {
-      const file = await this.downloadFromS3(filename);
+      if (!existsSync(filePath)) {
+        const file = await this.downloadFromS3(filename);
+        console.log('file', file);
+        if (!file) {
+          throw new NotFoundException('File not found in S3');
+        }
 
-      if (!file) {
-        throw new NotFoundException('File not found in S3');
+        writeFileSync(filePath, file);
       }
 
-      writeFileSync(filePath, file);
+      const stream = createReadStream(filePath);
+      const mimeType = mime.lookup(filename) || 'application/octet-stream';
+
+      return new StreamableFile(stream, {
+        type: mimeType,
+        disposition: `inline; filename="${filename}"`,
+      });
+    } catch (error) {
+      throw error;
     }
-
-    const stream = createReadStream(filePath);
-    const mimeType = mime.lookup(filename) || 'application/octet-stream';
-
-    return new StreamableFile(stream, {
-      type: mimeType,
-      disposition: `inline; filename="${filename}"`,
-    });
   }
 
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
+      console.log(key);
       const object = await this.s3
         .getObject({ Bucket: this.bucketName, Key: key })
         .promise();
+      console.log(object);
       return object.Body as Buffer;
     } catch (err) {
       console.error('S3 download error:', err.message);

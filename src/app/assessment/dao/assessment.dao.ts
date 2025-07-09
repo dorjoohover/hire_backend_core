@@ -98,6 +98,10 @@ export class AssessmentDao {
     return res;
   };
 
+  query = async (query: string) => {
+    return await this.db.query(query);
+  };
+
   save = async (value: AssessmentEntity) => {
     await this.db.save(value);
   };
