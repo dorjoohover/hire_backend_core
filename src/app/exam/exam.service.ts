@@ -631,6 +631,7 @@ export class ExamService extends BaseService {
           category: result.category,
           categories: allCategories.slice(1),
           assessment: res.assessment,
+          visible: res.visible,
           token,
         };
       }

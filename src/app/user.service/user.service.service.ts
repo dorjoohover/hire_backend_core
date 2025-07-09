@@ -272,7 +272,7 @@ export class UserServiceService extends BaseService {
           });
           await this.mailer.sendMail({
             to: email.email,
-            subject: 'Тест өгөх эрх үүсэх',
+            subject: 'Танд тестийн урилга ирлээ',
             html: `<div>
          <p> Та <a href=https://hire.mn/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
 <p>Таны анхааралд:</p>

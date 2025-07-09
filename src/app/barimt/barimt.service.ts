@@ -114,6 +114,7 @@ export class BarimtService {
           }),
         };
       }),
+      easy: true,
       payments: dto.payments,
     };
     const { token } = await this.loginEbarimt();
