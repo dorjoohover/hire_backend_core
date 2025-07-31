@@ -81,7 +81,7 @@ export class UserAnswerDao {
       .select('category.name', 'categoryName')
       .addSelect('category.totalPoint', 'totalPoint')
       .addSelect(
-        `${type == ReportType.CORRECTCOUNT ? 'COUNT' : 'SUM'}(userAnswer.point)`,
+        `${type === ReportType.CORRECTCOUNT ? 'COUNT' : 'SUM'}(userAnswer.point)`,
         'point',
       )
       .innerJoin(
@@ -91,14 +91,13 @@ export class UserAnswerDao {
       )
       .where('"userAnswer"."code" = :id', { id });
 
-    // if (type == ReportType.CORRECTCOUNT) {
-    //   res.andWhere('userAnswer.correct = true');
-    // }
+    if (type === ReportType.CORRECTCOUNT) {
+      res.andWhere('"userAnswer"."correct" = true');
+    }
 
     return await res
       .groupBy('category.name')
       .addGroupBy('category.totalPoint')
-      .addGroupBy('"userAnswer"."questionCategoryId"')
       .getRawMany();
   };
 
