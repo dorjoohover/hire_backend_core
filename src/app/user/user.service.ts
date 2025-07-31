@@ -21,14 +21,14 @@ export class UserService {
       await this.mailService
         .sendMail({
           to: email,
-          subject: 'И-мейл хаяг баталгаажуулах тухай',
+          subject: 'И-мэйл хаяг баталгаажуулах тухай',
           html: `
           <!DOCTYPE html>
           <html>
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>И-мейл хаяг баталгаажуулах тухай</title>
+            <title>И-мэйл хаяг баталгаажуулах тухай</title>
             <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
             <style>
             body, h1, h2, h3, p, a, div {
@@ -37,7 +37,7 @@ export class UserService {
           </style>
           </head>
               <div style="display:none; max-height:0px; overflow:hidden; mso-hide:all; font-size:1px; color:#ffffff; line-height:1px;">
-Таны Hire.mn платформын бүртгэл хийгдэж байна. Линк дээр дарж и-мейл хаягаа баталгаажуулна уу.    ​
+Таны Hire.mn платформын бүртгэл хийгдэж байна. Линк дээр дарж и-мэйл хаягаа баталгаажуулна уу.    ​
 </div>
           <body style="margin: 0; padding: 0; min-width: 100%; margin-top: 10px; font-family: 'Montserrat', sans-serif;">
             <center style="width: 100%; table-layout: fixed; padding-bottom: 20px;">
@@ -92,7 +92,7 @@ export class UserService {
                         <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}>энд дарж</a> өөрийн и-мейл хаягаа баталгаажуулна уу.                            </p>
+Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}>энд дарж</a> өөрийн и-мэйл хаягаа баталгаажуулна уу.                            </p>
                           </td>
                         </tr>
                         <tr>

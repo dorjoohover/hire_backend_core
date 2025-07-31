@@ -58,7 +58,7 @@ export class AuthService {
     if (res && !res.emailVerified) {
       await this.usersService.sendConfirmMail(res.email);
       throw new HttpException(
-        'И-мейл хаягаа баталгаажуулна уу. Танд баталжуулах имейл илгээлээ.',
+        'И-мэйл хаягаа баталгаажуулна уу. Танд баталгаажуулах мэйл илгээлээ.',
         HttpStatus.FORBIDDEN,
       );
     }
