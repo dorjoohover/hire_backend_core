@@ -82,7 +82,6 @@ export class UserServiceService extends BaseService {
     };
   }
   public async getEbarimt(id: number, email: string) {
-    console.log(id);
     return await this.barimt.getBarimt(id, email);
   }
   public async deleteEbarimt(id: number) {
@@ -150,9 +149,10 @@ export class UserServiceService extends BaseService {
     console.log(res.status);
 
     if (res.status === 'PAID') {
+      const service = await this.dao.findOne(invoice);
       await this.updateStatus(user, res.amount, invoice);
+      await this.getEbarimt(service.id, service.user.email);
     }
-    // return await this.getEbarimt(id, email);
   }
   public async checkPayment(
     id: number,

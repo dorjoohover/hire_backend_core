@@ -127,7 +127,6 @@ export class QpayService {
   async getInvoice(id: string) {
     try {
       const res = await this.requestWithToken('GET', `payment/${id}`, {});
-      console.log(res)
       return {
         status: res.payment_status,
         amount: res.payment_amount,
