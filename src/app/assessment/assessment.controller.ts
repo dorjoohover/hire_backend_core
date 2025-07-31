@@ -36,6 +36,11 @@ export class AssessmentController {
     return this.assessmentService.findAll();
   }
   @Public()
+  @Get('home/page')
+  findHomePage() {
+    return this.assessmentService.findHomePage();
+  }
+  @Public()
   @Get(':id')
   @ApiParam({ name: 'id' })
   findOne(@Param('id') id: string) {

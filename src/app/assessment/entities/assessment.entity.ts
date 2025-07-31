@@ -5,14 +5,11 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
-  ManyToMany,
-  JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { LevelEntity } from './assessment.level.entity';
 import { QuestionCategoryEntity } from 'src/app/question/entities/question.category.entity';
-import { UserService } from 'src/app/user/user.service';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { QuestionAnswerCategoryEntity } from 'src/app/question/entities/question.answer.category.entity';
@@ -38,6 +35,8 @@ export class AssessmentEntity {
   exampleReport: string;
   @Column({ nullable: true })
   status: number;
+  @Column({ nullable: true })
+  classificationCode: string;
   @Column({ default: false })
   timeout: boolean;
   @Column()

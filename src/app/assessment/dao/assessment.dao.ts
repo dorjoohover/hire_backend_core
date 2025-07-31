@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Not, Repository } from 'typeorm';
 import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
 import { QuestionDao } from 'src/app/question/dao/question.dao';
+import { Meta } from 'src/base/base.interface';
 
 @Injectable()
 export class AssessmentDao {
@@ -14,6 +15,29 @@ export class AssessmentDao {
     this.db = this.dataSource.getRepository(AssessmentEntity);
   }
 
+  async find(page = 1, limit = 20, sort = true, status = 0): Promise<Meta> {
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await this.db.findAndCount({
+      where: {
+        status: status == 0 ? Not(status) : status,
+      },
+      skip,
+
+      take: limit,
+      order: {
+        createdAt: !sort ? 'ASC' : 'DESC',
+      },
+    });
+
+    return {
+      items,
+      total,
+      count: Math.ceil(total / limit),
+      page,
+      limit,
+    };
+  }
   create = async (dto: CreateAssessmentDto) => {
     const { answerCategories, ...body } = dto;
     const res = this.db.create({
@@ -72,6 +96,10 @@ export class AssessmentDao {
       ],
     });
     return res;
+  };
+
+  query = async (query: string) => {
+    return await this.db.query(query);
   };
 
   save = async (value: AssessmentEntity) => {

@@ -5,6 +5,7 @@ import { useContainer, ValidationError } from 'class-validator';
 import { setupSwagger } from './config/swagger';
 import { ErrorLogService } from './app/error-logs/error-log.service';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { LoggingInterceptor } from './base/logging.intercepter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -53,6 +54,7 @@ async function bootstrap() {
       500,
     );
   });
+  app.useGlobalInterceptors(new LoggingInterceptor());
   await app.listen(3000, '0.0.0.0');
   // await app.listen(4000, '0.0.0.0');
 }

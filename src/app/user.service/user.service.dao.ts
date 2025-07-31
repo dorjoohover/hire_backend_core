@@ -46,6 +46,18 @@ export class UserServiceDao {
     return res;
   };
 
+  countDemand = async (limit: number) => {
+    const result = await this.db
+      .createQueryBuilder('item')
+      .select('item.assessmentId', 'assessmentId')
+      .addSelect('SUM(count)', 'sum')
+      .groupBy('item.assessmentId')
+      .orderBy('sum', 'DESC')
+      .limit(limit)
+      .getRawMany();
+    return result;
+  };
+
   findAll = async () => {
     return await this.db.find({
       //   relations: [''],

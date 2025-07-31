@@ -32,8 +32,8 @@ export class BarimtController {
     let dto = '';
     // return await this.service.restReceipt(dto)
   }
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Get('send')
-  @Roles(Role.super_admin)
   async automatSender() {
     return await this.service.sendData();
   }

@@ -26,10 +26,18 @@ import { AuthService } from 'src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { jwtConstants } from 'src/auth/constants';
-import { DISC } from 'src/assets/report/disc';
+import {
+  Belbin,
+  DISC,
+  Empathy,
+  Genos,
+  Narc,
+  Setgel,
+  SingleTemplate,
+} from 'src/assets/report/index';
 import { ResultDao } from '../exam/dao/result.dao';
-import { Belbin } from 'src/assets/report/belbin';
 import { BarimtService } from '../barimt/barimt.service';
+import { FileService } from 'src/file.service';
 
 @Module({
   imports: [
@@ -44,6 +52,12 @@ import { BarimtService } from '../barimt/barimt.service';
     UserServiceService,
     UserServiceDao,
     DISC,
+    Genos,
+    FileService,
+    Empathy,
+    Narc,
+    Setgel,
+    SingleTemplate,
     ResultDao,
     Belbin,
     BarimtService,
@@ -69,5 +83,6 @@ import { BarimtService } from '../barimt/barimt.service';
     QpayService,
     SinglePdf,
   ],
+  exports: [UserServiceService],
 })
 export class UserServiceModule {}

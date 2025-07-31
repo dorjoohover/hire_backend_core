@@ -32,6 +32,11 @@ export const QuestionStatus = {
   DELETED: 20,
   PASSIVE: 30,
 };
+export const AssessmentStatus = {
+  ACTIVE: 10,
+  ARCHIVE: 20,
+  HIGHLIGHTED: 30,
+};
 
 export const QuestionType = {
   SINGLE: 10,

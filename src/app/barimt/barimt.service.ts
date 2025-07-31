@@ -104,7 +104,7 @@ export class BarimtService {
               name: r.name,
               barCode: null,
               barCodeType: 10,
-              classificationCode: '8122100',
+              classificationCode: '8311391',
               // "taxProductCode": "string",
               measureUnit: 'багц',
               qty: r.qty,
@@ -114,6 +114,7 @@ export class BarimtService {
           }),
         };
       }),
+      easy: true,
       payments: dto.payments,
     };
     const { token } = await this.loginEbarimt();
@@ -306,7 +307,7 @@ export class BarimtService {
     } catch (error) {
       // return
       console.log(error.message);
-      return 'Баримт олдсонгүй'
+      return 'Баримт олдсонгүй';
     }
   }
 }

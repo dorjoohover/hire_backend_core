@@ -3,11 +3,9 @@ import type {
   StyleDictionary,
   TDocumentDefinitions,
 } from 'pdfmake/interfaces';
-import { Formatter } from './formatter';
 
 const top: Content = {
   image: 'src/assets/top.png',
-  // width: ,
   absolutePosition: {
     x: 0,
     y: 0,
@@ -25,26 +23,6 @@ const icons = {
   time: 'src/assets/icons/time.png',
 };
 
-// const location = 'Улаанбаатар хот, ХанУул дүүрэг, 11-р хороо, Жардин хотхон';
-// const town = 'Jardin хотхон';
-// const type = 'Орон сууц';
-// const value = {
-//   min: 1200000,
-//   max: 2500000,
-//   avg: 1950000,
-//   area: 80,
-// };
-const oronSuutsniiUniinOsolt = 12;
-const hunAminOsoltHugjil = 3;
-const heregleeniiUniinIndex = 8;
-// const user = {
-//   name: 'Алтангэрэл ЭРДЭМСАЙХАН',
-//   email: 'erdemsaikhan.dev@gmail.com',
-//   phone: '+976-8899-2864',
-// };
-
-// const text =
-//   'Таны Улаанбаатар хот, Хан уул дүүрэг, 11-р хороо, 17020, Жардин хотхон, 120-р байр, 6 дугаар давхарын 3 өрөө 80м.кв орон сууцны өнөөгийн зах зээлийн үнэ 160,950,000.00 төгрөг орчмын үнэтэй байна.';
 const colors = {
   main: '#F36421',
   green: '#518138',
@@ -336,57 +314,7 @@ export const ImageReport = ({
         ],
       },
       {
-        canvas: [
-          // Base axis line
-          // {
-          //   type: 'line',
-          //   x1: 20,
-          //   y1: 220,
-          //   x2: 380,
-          //   y2: 220,
-          //   lineColor: 'black',
-          //   lineWidth: 1,
-          // },
-          // Filled region under curve (Approximated with multiple polylines)
-          // {
-          //   type: 'polyline',
-          //   points: [
-          //     { x: 20, y: 220 },
-          //     { x: 50, y: 200 },
-          //     { x: 90, y: 150 },
-          //     { x: 140, y: 100 },
-          //     { x: 190, y: 80 },
-          //     { x: 240, y: 100 },
-          //     { x: 290, y: 150 },
-          //     { x: 330, y: 200 },
-          //     { x: 380, y: 220 },
-          //   ],
-          //   color: colors.main,
-          //   lineWidth: 0,
-          // },
-          // Curve outline
-          // {
-          //   type: 'polyline',
-          //   points: [
-          //     { x: 20, y: 220 },
-          //     { x: 50, y: 200 },
-          //     { x: 90, y: 150 },
-          //     { x: 140, y: 100 },
-          //     { x: 190, y: 80 },
-          //     { x: 240, y: 100 },
-          //     { x: 290, y: 150 },
-          //     { x: 330, y: 200 },
-          //     { x: 380, y: 220 },
-          //   ],
-          //   lineColor: 'red',
-          //   lineWidth: 2,
-          // },
-          // Percent labels
-          // { type: 'text', text: '25%', x: 90, y: 225, fontSize: 10 },
-          // { type: 'text', text: '50%', x: 180, y: 225, fontSize: 10 },
-          // { type: 'text', text: '75%', x: 270, y: 225, fontSize: 10 },
-          // { type: 'text', text: '100%', x: 350, y: 225, fontSize: 10 },
-        ],
+        canvas: [],
       },
     ],
     styles: styles,

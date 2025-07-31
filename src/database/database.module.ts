@@ -15,7 +15,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             type: 'postgres',
             url: configService.get<string>('DATABASE_URL'), // Load from .env
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: true, 
+            synchronize: true,
+            // logging: ['query', 'error', 'warn'],
           });
 
           await dataSource.initialize();

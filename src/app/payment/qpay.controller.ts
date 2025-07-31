@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { QpayService } from './qpay.service';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
@@ -8,21 +16,16 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 @Controller('qpay')
 export class QpayController {
   constructor(private service: QpayService) {}
+  @Public()
   @Post()
-  create(@Body() dto: string) {
-    return this.service.createPayment(100, `1`, 0);
+  createInvoice(@Body() amount: number) {
+    const res = this.service.createInvoice(10, 89, 5000);
+    return res;
   }
-
+  @Public()
   @Get('check/:id')
   @ApiParam({ name: 'id' })
   check(@Param('id') id: string) {
     return this.service.checkPayment(id);
-  }
-  @Post('callback')
-  async handleCallback(@Body() payload: any) {
-    // Validate the callback
-    console.log('Payment Callback:', payload);
-
-    // Update payment status in your database
   }
 }

@@ -25,6 +25,7 @@ import { BlogModule } from './app/blog/blog.module';
 import { ErrorLogModule } from './app/error-logs/error-log.module';
 
 import { BarimtModule } from './app/barimt/barimt.module';
+import { FileService } from './file.service';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { BarimtModule } from './app/barimt/barimt.module';
   controllers: [AppController],
   providers: [
     AppService,
+    FileService,
     // EbarimtService,
     // EbarimtListener,
     {
