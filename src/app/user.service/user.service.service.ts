@@ -133,8 +133,8 @@ export class UserServiceService extends BaseService {
               status: 'PAID',
               paidAmount: amount,
               data: {
-                easy: true
-              }
+                easy: true,
+              },
             },
           ],
         },
@@ -148,9 +148,11 @@ export class UserServiceService extends BaseService {
   public async checkCallback(user: number, id: string, invoice: number) {
     const res = await this.qpay.getInvoice(id);
     console.log(res.status);
+    console.log(res);
     if (res.status === 'PAID') {
       await this.updateStatus(user, res.amount, invoice);
     }
+    // return await this.getEbarimt(id, email);
   }
   public async checkPayment(
     id: number,
