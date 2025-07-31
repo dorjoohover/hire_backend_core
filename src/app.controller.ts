@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiParam,
   ApiResponse,
+  ApiBearerAuth,
   ApiTags,
 } from '@nestjs/swagger';
 import { Public } from './auth/guards/jwt/jwt-auth-guard';
@@ -38,6 +39,7 @@ import { FileService } from './file.service';
 import { ADMIN } from './base/constants';
 import { ADMINS } from './auth/guards/role/role.decorator';
 @ApiTags('Main')
+@ApiBearerAuth('access-token')
 @Controller()
 export class AppController extends BaseService {
   constructor(

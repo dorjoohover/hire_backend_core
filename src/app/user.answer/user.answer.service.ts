@@ -90,6 +90,7 @@ export class UserAnswerService extends BaseService {
               );
           answerCategory = answerCategory[0];
           let point: number;
+          console.log(answerCategory)
           if (
             !answer.matrix &&
             (answerCategory as QuestionAnswerEntity)?.reverse
