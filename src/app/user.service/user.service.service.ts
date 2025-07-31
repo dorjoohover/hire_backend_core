@@ -107,8 +107,9 @@ export class UserServiceService extends BaseService {
       },
       2,
     );
+    console.log(service.assessment.price)
     if (service.assessment.price && service.assessment.price > 0) {
-      this.barimt.restReceipt(
+      await this.barimt.restReceipt(
         {
           billIdSuffix: service.id.toString(),
           reportMonth: null,
@@ -150,6 +151,7 @@ export class UserServiceService extends BaseService {
 
     if (res.status === 'PAID') {
       const service = await this.dao.findOne(invoice);
+      console.log(service.assessment)
       await this.updateStatus(user, res.amount, invoice);
       await this.getEbarimt(service.id, service.user.email);
     }
