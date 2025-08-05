@@ -57,9 +57,14 @@ export class AssessmentService {
         return await this.dao.findOne(d.assessmentId);
       }),
     );
+    const count = await this.dao.count();
+    const { users, orgs } = await this.userDao.countUsers();
     return {
       new: newAss,
       highlight: highlight,
+      users,
+      count,
+      orgs,
       demand: demandItems,
     };
   }

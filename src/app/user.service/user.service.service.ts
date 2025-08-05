@@ -107,41 +107,7 @@ export class UserServiceService extends BaseService {
       },
       2,
     );
-    console.log(service.assessment.price);
     if (service.assessment.price && service.assessment.price > 0) {
-      console.log(
-        {
-          billIdSuffix: service.id.toString(),
-          reportMonth: null,
-          receipts: [
-            {
-              items: [
-                {
-                  name: service.assessment.name,
-                  qty: service.count,
-                  unitPrice: service.assessment.price,
-                  totalCityTax: 2,
-                  totalVAT: 10,
-                  classificationCode: service.assessment.classificationCode,
-                },
-              ],
-            },
-          ],
-          payments: [
-            {
-              code: 'BANK_TRANSFER',
-              status: 'PAID',
-              paidAmount: amount,
-              data: {
-                easy: true,
-              },
-            },
-          ],
-        },
-        service.user,
-        amount,
-        service.id,
-      );
       await this.barimt.restReceipt(
         {
           billIdSuffix: service.id.toString(),
@@ -180,11 +146,9 @@ export class UserServiceService extends BaseService {
 
   public async checkCallback(user: number, id: string, invoice: number) {
     const res = await this.qpay.getInvoice(id);
-    console.log(res.status, id, invoice);
 
     if (res.status === 'PAID') {
       const service = await this.dao.findOne(invoice);
-      console.log(service.assessment);
       await this.updateStatus(user, +res.amount, invoice);
       await this.getEbarimt(service.id, service.user.email);
     }
@@ -195,7 +159,6 @@ export class UserServiceService extends BaseService {
     user: number,
     email: string,
   ) {
-    console.log(id, code);
     const payment = code == 'NONE' ? 1 : await this.qpay.checkPayment(code);
     if (payment == 1) {
       return await this.getEbarimt(id, email);

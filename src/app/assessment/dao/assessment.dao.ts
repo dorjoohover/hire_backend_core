@@ -38,6 +38,10 @@ export class AssessmentDao {
       limit,
     };
   }
+
+  public count = async () => {
+    return await this.db.count();
+  };
   create = async (dto: CreateAssessmentDto) => {
     const { answerCategories, ...body } = dto;
     const res = this.db.create({

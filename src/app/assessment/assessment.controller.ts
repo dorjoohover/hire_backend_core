@@ -40,6 +40,7 @@ export class AssessmentController {
   findHomePage() {
     return this.assessmentService.findHomePage();
   }
+
   @Public()
   @Get(':id')
   @ApiParam({ name: 'id' })

@@ -119,7 +119,6 @@ export class BarimtService {
     };
     const { token } = await this.loginEbarimt();
     // return token;
-    console.log(token, d);
     try {
       if (!d.receipts || d.receipts.length == 0)
         throw new HttpException('Мэдээлэл дутуу', HttpStatus.BAD_REQUEST);
@@ -137,9 +136,7 @@ export class BarimtService {
           },
         },
       );
-      console.log(res);
       const data: BarimtResponseDto = await res.data;
-      console.log('data', data);
       if (data?.status != 'SUCCESS') throw new HttpException('', 500);
       console.log(data.noat);
       this.sendEmail(user.email, data, data?.qrData);
