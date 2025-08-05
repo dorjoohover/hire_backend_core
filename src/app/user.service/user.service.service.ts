@@ -185,7 +185,7 @@ export class UserServiceService extends BaseService {
     if (res.status === 'PAID') {
       const service = await this.dao.findOne(invoice);
       console.log(service.assessment);
-      await this.updateStatus(user, res.amount, invoice);
+      await this.updateStatus(user, +res.amount, invoice);
       await this.getEbarimt(service.id, service.user.email);
     }
   }
