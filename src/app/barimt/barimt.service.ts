@@ -119,6 +119,7 @@ export class BarimtService {
     };
     const { token } = await this.loginEbarimt();
     // return token;
+    console.log(token, d);
     try {
       if (!d.receipts || d.receipts.length == 0)
         throw new HttpException('Мэдээлэл дутуу', HttpStatus.BAD_REQUEST);
