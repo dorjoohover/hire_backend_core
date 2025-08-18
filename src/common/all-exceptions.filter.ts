@@ -9,6 +9,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { AppLogger } from '../base/logger';
 import { ErrorLogService } from 'src/app/error-logs/error-log.service';
 import { Request } from 'express';
+import { FileErrorLogService } from 'src/base/error-log.service';
 const logger = new AppLogger();
 
 @Catch(Error)
@@ -16,6 +17,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
     private readonly errorLogService: ErrorLogService,
+    private readonly fileLog: FileErrorLogService,
   ) {}
 
   async catch(exception: Error, host: ArgumentsHost) {
@@ -34,14 +36,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = exception.message;
       }
       // Log error in PostgreSQL with IP
-
-      await this.errorLogService.logError(
-        exception,
-        message,
-        status,
-        clientIp,
-        request,
-      );
+      try {
+        if (message != 'Forbidden resource') {
+          await this.fileLog.log({
+            ts: new Date().toISOString(),
+            status,
+            message,
+            name: exception.name,
+            stack: exception.stack,
+            method: (request as any)?.method,
+            url: (request as any)?.url,
+            ip: (request as any)?.ip ?? '',
+            user: (request as any)?.user ?? undefined,
+          });
+        }
+      } catch (e) {
+        // файл бичих боломжгүй үед сүүлчийн аврал
+        console.error('[file-log-failed]', e);
+      }
+      // await this.errorLogService.logError(
+      //   exception,
+      //   message,
+      //   status,
+      //   clientIp,
+      //   request,
+      // );
       logger.error({
         message: message,
         event: exception.name,
