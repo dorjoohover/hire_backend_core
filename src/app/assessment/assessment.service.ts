@@ -11,6 +11,7 @@ import { AssessmentEntity } from './entities/assessment.entity';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { Meta } from 'src/base/base.interface';
 import { AssessmentStatus } from 'src/base/constants';
+import { ExamService } from '../exam/exam.service';
 
 @Injectable()
 export class AssessmentService {
@@ -21,6 +22,7 @@ export class AssessmentService {
     private categoryDao: AssessmentCategoryService,
     private answerCategory: QuestionAnswerCategoryDao,
     private userDao: UserDao,
+    private exam: ExamService
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
     const res = await this.dao.create({
@@ -59,11 +61,13 @@ export class AssessmentService {
     );
     const count = await this.dao.count();
     const { users, orgs } = await this.userDao.countUsers();
+    const exams = await this.exam.count()
     return {
       new: newAss,
       highlight: highlight,
       users,
       count,
+      exams,
       orgs,
       demand: demandItems,
     };

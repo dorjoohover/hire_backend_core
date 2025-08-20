@@ -155,7 +155,9 @@ export class ExamService extends BaseService {
       console.log(error);
     }
   }
-
+  public async count () {
+    return await this.dao.count()
+  }
   public async calculateByReportType(
     res: any,
     exam: ExamEntity,

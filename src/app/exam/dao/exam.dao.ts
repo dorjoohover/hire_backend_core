@@ -46,6 +46,10 @@ export class ExamDao {
     await this.db.save({ ...res, ...dto });
   };
 
+  count = async () => {
+    return await this.db.count();
+  };
+
   updateDate = async (code: number, dto: UpdateDateDto) => {
     await this.db.update(
       { code },
@@ -161,7 +165,7 @@ export class ExamDao {
 
     const query = `select id, name from "assessment" where id = ${res.assessment}`;
     const assessment = await this.assessmentDao.query(query);
-    console.log(assessment)
+    console.log(assessment);
     return {
       ...res,
       assessment,
