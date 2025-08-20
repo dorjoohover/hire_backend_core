@@ -22,7 +22,7 @@ export class AssessmentService {
     private categoryDao: AssessmentCategoryService,
     private answerCategory: QuestionAnswerCategoryDao,
     private userDao: UserDao,
-    private exam: ExamService
+    private exam: ExamService,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
     const res = await this.dao.create({
@@ -49,7 +49,13 @@ export class AssessmentService {
   }
 
   public async findHomePage() {
-    const newAss = (await this.dao.find(1, 3, true, 0)).items;
+    const newAss = await Promise.all(
+      (await this.dao.find(1, 3, true, 0)).items.map((a) => {
+        return {
+          data: a,
+        };
+      }),
+    );
     const highlight = (
       await this.dao.find(1, 3, true, AssessmentStatus.HIGHLIGHTED)
     ).items;
@@ -61,7 +67,7 @@ export class AssessmentService {
     );
     const count = await this.dao.count();
     const { users, orgs } = await this.userDao.countUsers();
-    const exams = await this.exam.count()
+    const exams = await this.exam.count();
     return {
       new: newAss,
       highlight: highlight,
