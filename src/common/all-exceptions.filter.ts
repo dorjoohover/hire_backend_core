@@ -37,7 +37,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
       // Log error in PostgreSQL with IP
       try {
-        if (message != 'Forbidden resource') {
+        if (message != 'Forbidden resource' && status != 404 && status != 400) {
           await this.fileLog.log({
             ts: new Date().toISOString(),
             status,

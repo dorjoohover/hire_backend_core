@@ -40,7 +40,7 @@ export class CreateAssessmentDto {
   questionCount?: number;
   createdUser: number;
   @ApiProperty()
-  level: number;
+  level: any;
   @ApiProperty()
   category: number;
 

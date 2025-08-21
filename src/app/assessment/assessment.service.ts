@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { AssessmentDao } from './dao/assessment.dao';
@@ -25,6 +25,12 @@ export class AssessmentService {
     private exam: ExamService,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
+    let level;
+    if (typeof dto.level === 'object') {
+      level = await this.levelDao.create(level);
+    } else {
+      level = dto.level;
+    }
     const res = await this.dao.create({
       ...dto,
       createdUser: user,
@@ -110,6 +116,8 @@ export class AssessmentService {
 
   public async findOne(id: number) {
     const res = await this.dao.findOne(id);
+
+    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
     const { answerCategories, category, questionCategories, ...question } = res;
     const cate = await this.categoryDao.findOne(res.category.id);
     const user = await this.getUser(res);
