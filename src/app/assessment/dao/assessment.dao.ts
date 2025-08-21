@@ -28,6 +28,7 @@ export class AssessmentDao {
       order: {
         createdAt: !sort ? 'ASC' : 'DESC',
       },
+      relations: ['category'],
     });
 
     return {

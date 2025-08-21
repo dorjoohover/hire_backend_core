@@ -7,7 +7,7 @@ import { ErrorLogService } from './app/error-logs/error-log.service';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { LoggingInterceptor } from './base/logging.intercepter';
 import { FileErrorLogService } from './base/error-log.service';
-
+import { json, urlencoded } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
@@ -21,8 +21,8 @@ async function bootstrap() {
 
   // app.useGlobalGuards(new JwtAuthGuard());
 
-  // app.use(json({ limit: '50mb' }));
-  // app.use(urlencoded({ extended: true, limit: '50mb' }));
+  app.use(json({ limit: '100mb' }));
+  app.use(urlencoded({ extended: true, limit: '100mb' }));
   app.useGlobalPipes(
     new ValidationPipe({
       exceptionFactory: (validationErrors: ValidationError[] = []) => {

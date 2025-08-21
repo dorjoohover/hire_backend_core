@@ -58,11 +58,16 @@ export class AssessmentService {
     );
     const highlight = (
       await this.dao.find(1, 3, true, AssessmentStatus.HIGHLIGHTED)
-    ).items;
+    ).items.map((a) => {
+      return { data: a };
+    });
     const demand = await this.userServiceDao.countDemand(3);
     const demandItems = await Promise.all(
       demand.map(async (d) => {
-        return await this.dao.findOne(d.assessmentId);
+        const res = await this.dao.findOne(d.assessmentId);
+        return {
+          data: res,
+        };
       }),
     );
     const count = await this.dao.count();
