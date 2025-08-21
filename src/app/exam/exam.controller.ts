@@ -56,10 +56,17 @@ export class ExamController {
   @Public()
   @Post('code/:continue')
   @ApiParam({ name: 'continue' })
-  async findByCode(@Param('continue') con: boolean, @Body() dto: FindExamByCodeDto) {
+  async findByCode(
+    @Param('continue') con: boolean,
+    @Body() dto: FindExamByCodeDto,
+  ) {
     try {
-      const res = await this.examService.updateByCode(dto.code, con, dto.category);
-      return res
+      const res = await this.examService.updateByCode(
+        dto.code,
+        con,
+        dto.category,
+      );
+      return res;
     } catch (error) {
       return {
         success: false,

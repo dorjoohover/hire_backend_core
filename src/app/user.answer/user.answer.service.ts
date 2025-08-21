@@ -171,7 +171,7 @@ export class UserAnswerService extends BaseService {
     console.log('start', name);
     const response = await this.examService.endExam(code, true);
 
-    if (response.visible) {
+    if (response?.visible) {
       await this.mailService.sendMail({
         to: email,
         subject: 'Таны тайлан бэлэн боллоо',
@@ -179,7 +179,7 @@ export class UserAnswerService extends BaseService {
       });
     }
 
-    return { visible: response.visible };
+    return { visible: response?.visible };
   }
   private generateEmailTemplate(
     id: number,
