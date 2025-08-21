@@ -190,6 +190,44 @@ export class QuestionService {
     }
   }
 
+  public async copy(categoryId: number, user: number) {
+    const assessmentRes = await this.assessmentDao.findOne(categoryId);
+    const assessment = await this.assessmentDao.create({
+      createdUser: user,
+      level: assessmentRes.level.id,
+      category: assessmentRes.category.id,
+      description: assessmentRes.description,
+      duration: assessmentRes.duration,
+      measure: assessmentRes.measure,
+      name: assessmentRes.name,
+      price: assessmentRes.price,
+      status: assessmentRes.status,
+      timeout: assessmentRes.timeout,
+      usage: assessmentRes.usage,
+      advice: assessmentRes.advice,
+      author: assessmentRes.author,
+      categoryShuffle: assessmentRes.categoryShuffle,
+      answerShuffle: assessmentRes.answerShuffle,
+      exampleReport: assessmentRes.exampleReport,
+      formule: assessmentRes.formule,
+      icons: assessmentRes.icons,
+      questionCount: assessmentRes.questionCount,
+      questionShuffle: assessmentRes.questionShuffle,
+      report: assessmentRes.report,
+      type: assessmentRes.type,
+    });
+    const questions = await this.questionDao.findQuestions(categoryId);
+    const questionCategories =
+      await this.questionCategoryDao.findByAssessmentId(categoryId);
+    const answerCategories =
+      await this.questionAnswerCategoryDao.findByAssessment(categoryId);
+    await Promise.all(
+      questions.map(async (q) => {
+        const answers = await this.questionAnswerDao.findByQuestionId(q.id);
+      }),
+    );
+  }
+
   public async deleteAnswer(dto: { data: number[] }, matrix: boolean) {
     try {
       matrix

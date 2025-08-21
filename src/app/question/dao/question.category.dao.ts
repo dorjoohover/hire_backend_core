@@ -9,9 +9,7 @@ import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
 @Injectable()
 export class QuestionCategoryDao {
   private db: Repository<QuestionCategoryEntity>;
-  constructor(
-    private dataSource: DataSource,
-  ) {
+  constructor(private dataSource: DataSource) {
     this.db = this.dataSource.getRepository(QuestionCategoryEntity);
   }
 
@@ -70,6 +68,16 @@ export class QuestionCategoryDao {
         id: id,
       },
       relations: ['assessment'],
+    });
+  };
+
+  findByAssessmentId = async (assessment: number) => {
+    return await this.db.find({
+      where: {
+        assessment: {
+          id: assessment,
+        },
+      },
     });
   };
 

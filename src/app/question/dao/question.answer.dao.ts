@@ -62,6 +62,17 @@ export class QuestionAnswerDao {
     }
   };
 
+  findByQuestionId = async (id: number) => {
+    const res = await this.db.find({
+      where: {
+        question: {
+          id: id,
+        },
+      },
+    });
+    return res;
+  };
+
   findByQuestion = async (id: number, shuffle: boolean, admin: boolean) => {
     let result = [];
     let res = await this.db.find({

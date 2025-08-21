@@ -4,6 +4,7 @@ import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
 import { QuestionDao } from 'src/app/question/dao/question.dao';
 import { Meta } from 'src/base/base.interface';
+import { AssessmentStatus } from 'src/base/constants';
 
 @Injectable()
 export class AssessmentDao {
@@ -20,7 +21,7 @@ export class AssessmentDao {
 
     const [items, total] = await this.db.findAndCount({
       where: {
-        status: status == 0 ? Not(status) : status,
+        status: status <= 0 ? Not(Math.abs(status)) : status,
       },
       skip,
 
@@ -41,13 +42,16 @@ export class AssessmentDao {
   }
 
   public count = async () => {
-    return await this.db.count();
+    return await this.db.count({
+      where: {
+        status: Not(AssessmentStatus.ARCHIVE),
+      },
+    });
   };
   create = async (dto: CreateAssessmentDto) => {
     const { answerCategories, ...body } = dto;
     const res = this.db.create({
       ...body,
-
       category: {
         id: dto.category,
       },

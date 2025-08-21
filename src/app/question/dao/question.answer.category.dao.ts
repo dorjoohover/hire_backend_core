@@ -60,8 +60,19 @@ export class QuestionAnswerCategoryDao {
       where: {
         id: id,
       },
-      relations: ['parent']
+      relations: ['parent'],
     });
+  };
+
+  findByAssessment = async (assessment: number) => {
+    const res = await this.db.find({
+      where: {
+        assessment: {
+          id: assessment,
+        },
+      },
+    });
+    return res;
   };
   findByName = async (name: string) => {
     const res = await this.db.findOne({

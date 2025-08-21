@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, IsNull, Not, Repository } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
-import { PaymentStatus } from 'src/base/constants';
+import { AssessmentStatus, PaymentStatus } from 'src/base/constants';
 
 @Injectable()
 export class UserServiceDao {
@@ -51,6 +51,7 @@ export class UserServiceDao {
       .createQueryBuilder('item')
       .select('item.assessmentId', 'assessmentId')
       .addSelect('SUM(count)', 'sum')
+      .where('item.status != :status', { status: AssessmentStatus.ARCHIVE })
       .groupBy('item.assessmentId')
       .orderBy('sum', 'DESC')
       .limit(limit)
