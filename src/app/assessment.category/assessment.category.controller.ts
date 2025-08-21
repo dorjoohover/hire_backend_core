@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Request,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
 import { AssessmentCategoryService } from './assessment.category.service';
 import {
   AssessmentCategoryExampleDto,
@@ -26,7 +16,6 @@ import {
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
-import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Assessment Category')
 @Controller('assessmentCategory')
@@ -85,13 +74,13 @@ export class AssessmentCategoryController {
     );
   }
 
+  @Roles(Role.super_admin, Role.tester, Role.admin)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assessmentCategoryService.remove(+id);
   }
-  @Roles(Role.super_admin, Role.tester, Role.admin)
-  @Delete()
-  delete() {
-    return this.assessmentCategoryService.delete();
-  }
+  // @Delete()
+  // delete() {
+  //   return this.assessmentCategoryService.delete();
+  // }
 }

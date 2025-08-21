@@ -44,7 +44,7 @@ export class AssessmentCategoryService extends BaseService {
       where: {
         id: id,
       },
-      relations: ['subcategories', 'parent',],
+      relations: ['subcategories', 'parent'],
     });
     return res;
   }
@@ -53,8 +53,11 @@ export class AssessmentCategoryService extends BaseService {
     return `This action updates a #${id} assessmentCategory`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} assessmentCategory`;
+  public async remove(id: number) {
+    const data = await this.findOne(id);
+    if (data) await this.db.remove(data);
+
+    // return `This action removes a #${id} assessmentCategory`;
   }
 
   public async delete() {
