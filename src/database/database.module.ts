@@ -16,7 +16,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             url: configService.get<string>('DATABASE_URL'), // Load from .env
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: true,
-            // logging: ['query', 'error', 'warn'],
+            extra: {
+              max: Number(process.env.DB_POOL_MAX ?? 10), // pool хэмжээ
+              idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
+              connectionTimeoutMillis: Number(
+                process.env.DB_CONN_TIMEOUT_MS ?? 5_000,
+              ),
+              keepAlive: true,
+              statement_timeout: Number(
+                process.env.DB_STATEMENT_TIMEOUT_MS ?? 30_000,
+              ),
+              query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 35_000),
+            },
+
           });
 
           await dataSource.initialize();
