@@ -134,6 +134,9 @@ export class AppController extends BaseService {
     const urls = await this.fileService.processMultipleImages(files);
     return { files: urls };
   }
+  @Get('/pdown') getPdown() {
+    return { ok: true };
+  }
   @Public()
   @Get('/file/:file')
   @ApiParam({ name: 'file' })

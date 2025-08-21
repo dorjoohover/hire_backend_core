@@ -51,7 +51,6 @@ export class UserServiceDao {
       .createQueryBuilder('item')
       .select('item.assessmentId', 'assessmentId')
       .addSelect('SUM(count)', 'sum')
-      .where('item.status != :status', { status: AssessmentStatus.ARCHIVE })
       .groupBy('item.assessmentId')
       .orderBy('sum', 'DESC')
       .limit(limit)
