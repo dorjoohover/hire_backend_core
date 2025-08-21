@@ -13,8 +13,10 @@ import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
+import { ExamModule } from '../exam/exam.module';
 
 @Module({
+  imports: [ExamModule],
   controllers: [AssessmentController, AssessmentLevelController],
   providers: [
     AssessmentService,

@@ -9,6 +9,9 @@ import { AssessmentCategoryService } from '../assessment.category/assessment.cat
 import { UserDao } from '../user/user.dao';
 import { AssessmentEntity } from './entities/assessment.entity';
 import { UserServiceDao } from '../user.service/user.service.dao';
+import { Meta } from 'src/base/base.interface';
+import { AssessmentStatus } from 'src/base/constants';
+import { ExamService } from '../exam/exam.service';
 
 @Injectable()
 export class AssessmentService {
@@ -19,6 +22,7 @@ export class AssessmentService {
     private categoryDao: AssessmentCategoryService,
     private answerCategory: QuestionAnswerCategoryDao,
     private userDao: UserDao,
+    private exam: ExamService,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
     const res = await this.dao.create({
@@ -42,6 +46,37 @@ export class AssessmentService {
   }
   public async createLevel(dto: CreateAssessmentLevelDto) {
     return await this.levelDao.create(dto);
+  }
+
+  public async findHomePage() {
+    const newAss = await Promise.all(
+      (await this.dao.find(1, 3, true, 0)).items.map((a) => {
+        return {
+          data: a,
+        };
+      }),
+    );
+    const highlight = (
+      await this.dao.find(1, 3, true, AssessmentStatus.HIGHLIGHTED)
+    ).items;
+    const demand = await this.userServiceDao.countDemand(3);
+    const demandItems = await Promise.all(
+      demand.map(async (d) => {
+        return await this.dao.findOne(d.assessmentId);
+      }),
+    );
+    const count = await this.dao.count();
+    const { users, orgs } = await this.userDao.countUsers();
+    const exams = await this.exam.count();
+    return {
+      new: newAss,
+      highlight: highlight,
+      users,
+      count,
+      exams,
+      orgs,
+      demand: demandItems,
+    };
   }
 
   public async findAll() {

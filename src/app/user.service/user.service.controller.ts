@@ -9,6 +9,7 @@ import {
   Request,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
 import {
@@ -72,6 +73,28 @@ export class UserServiceController {
   getEbarimt(@Param('id') id: string, @Request() { user }) {
     return this.userServiceService.getEbarimt(+id, user['email']);
   }
+  @Delete('ebarimt/:id')
+  @ApiParam({ name: 'id' })
+  deleteEbarimt(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.deleteEbarimt(+id);
+  }
+
+  @Public()
+  @Get('callback/:invoice/:user')
+  @ApiParam({ name: 'invoice' })
+  async handleCallback(
+    @Query('qpay_payment_id') id: string,
+    @Param('invoice') invoice: string,
+    @Param('user') user: string,
+  ): Promise<any> {
+    const res = await this.userServiceService.checkCallback(
+      +user,
+      id,
+      +invoice,
+    );
+
+    return res;
+  }
 
   @Get('checkPayment/:id/:code')
   @ApiParam({ name: 'code' })
@@ -82,7 +105,12 @@ export class UserServiceController {
     @Request() { user },
   ) {
     console.log(id, code);
-    return this.userServiceService.checkPayment(+id, code, +user['id'], user['email']);
+    return this.userServiceService.checkPayment(
+      +id,
+      code,
+      +user['id'],
+      user['email'],
+    );
   }
   @Get()
   findAll() {

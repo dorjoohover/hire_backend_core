@@ -63,12 +63,14 @@ export class BarimtService {
           },
         },
       );
+      console.log(res);
 
       const tokenData = res.data;
       this.accessToken = tokenData.accessToken;
       this.expiresAt = now + tokenData.expiredIn * 1000;
       return this.accessToken;
     } catch (error) {
+      console.log(error);
       this.accessToken = null;
       this.expiresAt = 0;
       const axiosError = error as AxiosError;
@@ -102,7 +104,7 @@ export class BarimtService {
               name: r.name,
               barCode: null,
               barCodeType: 10,
-              classificationCode: '8122100',
+              classificationCode: '8311391',
               // "taxProductCode": "string",
               measureUnit: 'багц',
               qty: r.qty,
@@ -112,6 +114,7 @@ export class BarimtService {
           }),
         };
       }),
+      easy: true,
       payments: dto.payments,
     };
     const { token } = await this.loginEbarimt();
@@ -133,9 +136,7 @@ export class BarimtService {
           },
         },
       );
-      console.log(res)
       const data: BarimtResponseDto = await res.data;
-      console.log('data',data)
       if (data?.status != 'SUCCESS') throw new HttpException('', 500);
       console.log(data.noat);
       this.sendEmail(user.email, data, data?.qrData);
@@ -240,7 +241,8 @@ export class BarimtService {
           HttpStatus.NOT_FOUND,
         );
       }
-      await this.sendEmail(email, barimt);
+      // this.sendEmail(email, barimt);
+      return barimt;
     } catch (error) {
       console.log(error);
     }
@@ -282,22 +284,28 @@ export class BarimtService {
     }
   }
 
-  async deleteReceipt(id: string, d: string) {
+  async deleteReceipt(id: number) {
     // Баримт хэвлэсэн огноо "yyyy-MM-dd HH:mm:ss" форматтай огноо
-    const date = format(new Date(d), 'yyyy-MM-dd HH:mm:ss');
+    const { token } = await this.loginEbarimt();
     try {
-      const response = await axios.delete(`${process.env.BARIMT_KEY}receipt`, {
+      const response = await axios.delete(`${process.env.BARIMT_URL}receipt`, {
         data: {
           id,
-          date,
         },
         headers: {
           Accept: 'application/json',
+          'x-api-key': process.env.BARIMT_KEY,
+          Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data);
+      console.log(response.data.data);
+      if (response.data.data.statusCode == 500) {
+        return response.data.data.message;
+      }
     } catch (error) {
-      console.log(error);
+      // return
+      console.log(error.message);
+      return 'Баримт олдсонгүй';
     }
   }
 }

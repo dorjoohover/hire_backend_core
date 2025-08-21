@@ -8,7 +8,8 @@ import { QpayService } from './qpay.service';
 import { QpayController } from './qpay.controller';
 import { HttpModule } from '@nestjs/axios';
 import { ExamDao } from '../exam/dao/exam.dao';
-
+import { AssessmentDao } from '../assessment/dao/assessment.dao';
+import { QuestionDao } from '../question/dao/question.dao';
 @Module({
   imports: [HttpModule],
   controllers: [PaymentController, QpayController],
@@ -19,6 +20,8 @@ import { ExamDao } from '../exam/dao/exam.dao';
     QpayService,
     TransactionDao,
     UserDao,
+    AssessmentDao,
+    QuestionDao,
   ],
 })
 export class PaymentModule {}

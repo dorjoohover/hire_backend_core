@@ -4,6 +4,7 @@ import { DataSource, Db, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Injectable()
 export class UserDao {
@@ -36,7 +37,22 @@ export class UserDao {
     await this._db.save(res);
     return res;
   };
-
+  public countUsers = async () => {
+    const users = await this._db.count({
+      where: {
+        role: Role.client,
+      },
+    });
+    const orgs = await this._db.count({
+      where: {
+        role: Role.organization,
+      },
+    });
+    return {
+      users,
+      orgs,
+    };
+  };
   updateByEmail = async (dto: {
     email: string;
     password?: string;

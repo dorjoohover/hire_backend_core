@@ -15,10 +15,10 @@ export class BaseService {
     const helper = Math.floor(count / limit);
     const pageCount = helper == 0 ? 1 : helper;
     const meta: Meta = {
-      totalCount: totalCount,
-      pageCount: pageCount,
-      currentPage: currentPage,
-      perPage: perPage,
+      total: totalCount,
+      count: pageCount,
+      page: currentPage,
+      limit: perPage,
     };
 
     result.meta = meta;

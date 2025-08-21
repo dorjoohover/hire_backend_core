@@ -1,10 +1,11 @@
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export interface Meta {
-  totalCount: number;
-  pageCount: number;
-  currentPage: number;
-  perPage: number;
+  count: number;
+  total: number;
+  page: number;
+  limit: number;
+  items?: any[];
 }
 
 export const EntityStatus = {

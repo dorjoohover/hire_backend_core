@@ -4,7 +4,6 @@ import {
   Get,
   Param,
   Post,
-  StreamableFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -12,11 +11,12 @@ import { AppService } from './app.service';
 import {
   ApiBody,
   ApiConflictResponse,
+  ApiConsumes,
   ApiCreatedResponse,
-  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiResponse,
+  ApiBearerAuth,
   ApiTags,
 } from '@nestjs/swagger';
 import { Public } from './auth/guards/jwt/jwt-auth-guard';
@@ -30,20 +30,20 @@ import {
 } from './auth/auth.dto';
 import {
   CreateUserDto,
-  OrganizationDto,
   OrganizationExampleDto,
-  UserDto,
   UserExampleDto,
 } from './app/user/dto/create-user.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
-import { createReadStream } from 'fs';
-import * as path from 'path';
+import { FileService } from './file.service';
+import { ADMIN } from './base/constants';
+import { ADMINS } from './auth/guards/role/role.decorator';
 @ApiTags('Main')
+@ApiBearerAuth('access-token')
 @Controller()
 export class AppController extends BaseService {
   constructor(
-    private readonly appService: AppService,
+    private readonly fileService: FileService,
     private readonly authService: AuthService,
   ) {
     super();
@@ -110,23 +110,34 @@ export class AppController extends BaseService {
       };
     }
   }
+
+  @ADMINS()
+  @ApiOperation({ summary: 'Upload multiple files to S3 and local' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
   @Post('upload')
   @UseInterceptors(FilesInterceptor('files', 8, { storage: memoryStorage() }))
-  async multiFileUpload(@UploadedFiles() file: Array<Express.Multer.File>) {
-    const processImage = await this.appService.processMultipleImages(file);
-
-    return { file: processImage };
+  async multiFileUploadS3(@UploadedFiles() files: Express.Multer.File[]) {
+    const urls = await this.fileService.processMultipleImages(files);
+    return { files: urls };
   }
   @Public()
   @Get('/file/:file')
   @ApiParam({ name: 'file' })
-  getFile(@Param('file') filename: string): StreamableFile {
-    const filePath = path.join('./uploads/', filename);
-    const file = createReadStream(filePath);
-
-    return new StreamableFile(file, {
-      type: 'image/png', // Replace with the correct MIME type of your file
-      disposition: `inline; filename="${filename}"`,
-    });
+  async getFile(@Param('file') filename: string) {
+    return await this.fileService.getFile(filename);
   }
 }

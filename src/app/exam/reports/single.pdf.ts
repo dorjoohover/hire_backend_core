@@ -418,6 +418,7 @@ export class SinglePdf {
       .moveDown();
 
     const res = await this.answer.partialCalculator(result.code, result.type);
+    console.log(res);
     res.map((v, i) => {
       console.log(v);
 

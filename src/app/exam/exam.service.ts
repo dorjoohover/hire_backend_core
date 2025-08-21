@@ -33,6 +33,8 @@ import { UserServiceDao } from '../user.service/user.service.dao';
 import { Belbin } from 'src/assets/report/belbin';
 import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { maxDigitDISC } from './reports/formatter';
+import { PassThrough } from 'stream';
+import { FileService } from 'src/file.service';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -49,6 +51,7 @@ export class ExamService extends BaseService {
     private transactionDao: TransactionDao,
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private fileService: FileService,
   ) {
     super();
   }
@@ -62,8 +65,32 @@ export class ExamService extends BaseService {
       );
     }
     const result = await this.resultDao.findOne(id);
-    return await this.pdfService.createPdfInOneFile(result, res);
+    const doc = await this.pdfService.createPdfInOneFile(result, res);
+    const resStream = new PassThrough();
+    doc.pipe(resStream);
+    doc.end();
+    this.fileService.processMultipleImages(
+      [],
+      resStream,
+      `report-${id}.pdf`,
+      'application/pdf',
+    );
+    return doc;
   }
+
+  public checkExam = async (code: number) => {
+    const res = await this.dao
+      .query(`select visible from exam where code = ${code}`)
+      .then((d) => d[0]);
+    return res.visible;
+  };
+  public endExam = async (code: number, calculate = false) => {
+    // new Promise((resolve) => setTimeout(resolve, 10000));
+    await this.dao.endExam(code);
+    const res = await this.calculateExamById(code, calculate);
+    this.getPdf(code, Role.admin);
+    return res;
+  };
 
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
@@ -128,21 +155,21 @@ export class ExamService extends BaseService {
       console.log(error);
     }
   }
-
+  public async count () {
+    return await this.dao.count()
+  }
   public async calculateByReportType(
     res: any,
     exam: ExamEntity,
     user: UserEntity,
     id: number,
   ) {
-    console.log(res)
     const type = exam.assessment.report;
     const diff = Math.floor(
       (Date.parse(exam.userEndDate?.toString()) -
         Date.parse(exam.userStartDate?.toString())) /
         60000,
     );
-    console.log(user);
     if (type == ReportType.CORRECT) {
       await this.dao.update(+id, {
         lastname: exam?.lastname ?? user?.lastname,
@@ -153,20 +180,7 @@ export class ExamService extends BaseService {
           id: user.id,
         },
       });
-      console.log({
-        assessment: exam.assessment.id,
-        assessmentName: exam.assessment.name,
-        code: exam.code,
-        duration: diff,
-        firstname: exam?.firstname ?? user.firstname,
-        lastname: exam?.lastname ?? user.lastname,
-        type: res[0]?.formula?.toLowerCase().includes('sum')
-          ? ReportType.CORRECT
-          : ReportType.CORRECTCOUNT,
-        limit: exam.assessment.duration,
-        total: exam.assessment.totalPoint,
-        point: res[0].point,
-      });
+
       await this.resultDao.create({
         assessment: exam.assessment.id,
         assessmentName: exam.assessment.name,
@@ -216,11 +230,6 @@ export class ExamService extends BaseService {
       return { point: res[0].point };
     }
     if (type == ReportType.EMPATHY) {
-      console.log({
-        total: exam.assessment.totalPoint,
-        point: res[0].point,
-      });
-
       const result =
         res[0].point <= 44
           ? 'Эмпатийн түвшин сул'
@@ -265,7 +274,6 @@ export class ExamService extends BaseService {
         c: 0,
       };
 
-      
       for (const r of mergedData) {
         let inten = -1,
           total = '';
@@ -331,7 +339,7 @@ export class ExamService extends BaseService {
           });
         }
       }
-      const values = maxDigitDISC(response)
+      const values = maxDigitDISC(response);
       await this.resultDao.create(
         {
           assessment: exam.assessment.id,
@@ -517,127 +525,121 @@ export class ExamService extends BaseService {
   }
 
   // category questioncount der asuudaltai bga
-  public async updateByCode(code: number, category?: number) {
-    const res = await this.dao.findByCode(code);
-    console.log(category);
+  public async updateByCode(code: number, con: boolean, category?: number) {
+    try {
+      const res = await this.dao.findByCode(code);
 
-    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
-    if (res.endDate && res.startDate && res.endDate < new Date())
-      throw new HttpException('Хугацаа дууссан байна.', HttpStatus.BAD_REQUEST);
-    if (res.userEndDate != null)
-      throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
-    // date false ued ehleh
-    // date true ued duusah esvel urgeljluuleh
-    const answers = await this.userAnswer.findByCode(code);
-    if (category == -1) {
-      await this.dao.update(res.id, {
-        ...res,
-        userEndDate: new Date(),
-      });
-      return;
-    }
-    let token = null;
-    const shuffle = res.assessment.questionShuffle;
-    const answerShuffle = res.assessment.answerShuffle;
-    // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-    //   (a) => a.id,
-    // );
-    let prevQuestions = [];
-    let allCategories = [];
+      if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
+      if (res.endDate && res.startDate && res.endDate < new Date())
+        throw new HttpException(
+          'Хугацаа дууссан байна.',
+          HttpStatus.BAD_REQUEST,
+        );
+      if (res.userEndDate != null)
+        throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
+      // date false ued ehleh
+      // date true ued duusah esvel urgeljluuleh
+      // const answers = await this.userAnswer.findByCode(code);
+      let categoryIndex = 0;
 
-    const categoriesByAssessment =
-      await this.questionCategoryDao.findByAssessment(res.assessment.id);
-    let categories = await Promise.all(
-      categoriesByAssessment.map((c) => {
-        const { questions, ...body } = c;
-        return { ...body };
-      }),
-    );
-    let categoryIndex = 0;
-    for (let i = 0; i < categoriesByAssessment.length; i++) {
-      const userAnswer = await this.userAnswer.findByQuestionCategory(
-        categoriesByAssessment[i].id,
-        res.code,
+      if (category == -1) {
+        await this.dao.update(res.id, {
+          ...res,
+          userEndDate: new Date(),
+        });
+        return;
+      }
+      let token = null;
+      const shuffle = res.assessment.questionShuffle;
+      const answerShuffle = res.assessment.answerShuffle;
+      // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
+      //   (a) => a.id,
+      // );
+      let prevQuestions = [];
+      let allCategories: number[] = [];
+
+      const categoriesByAssessment =
+        await this.questionCategoryDao.findByAssessment(res.assessment.id);
+      let categories = await Promise.all(
+        categoriesByAssessment.map((c) => {
+          const { questions, ...body } = c;
+          return { ...body };
+        }),
       );
-
-      if (userAnswer == null) {
-        categoryIndex = i;
-        break;
-      }
-    }
-    console.log(categoryIndex);
-
-    allCategories = await Promise.all(
-      categories.slice(categoryIndex).map((cate) => cate.id),
-    );
-    let currentCategory = allCategories[0];
-    console.log('current', currentCategory);
-    if (res.userStartDate == null && category === undefined) {
-      currentCategory = categories[0].id;
-      await this.dao.update(res.id, {
-        ...res,
-        userStartDate: new Date(),
-      });
-      if (res.email && res.lastname && res.firstname) {
-        const user = await this.authService.forceLogin(
-          res.email,
-          res.phone,
-          res.lastname,
-          res.firstname,
-        );
-        token = user;
-      }
-    }
-
-    // if (
-    //   res.userStartDate != null &&
-    //   category == undefined &&
-    //   res.userEndDate == null
-    // ) {
-    //   currentCategory = categories?.[0]?.id;
-    // }
-    // if (answers.length > 0) {
-    //   const answeredCategory = answers[answers.length - 1].questionCategory.id;
-    //   const i = allCategories.indexOf(answeredCategory);
-    //   const predictCategory = allCategories[i + 1];
-    //   if (currentCategory < predictCategory) {
-    //     currentCategory = predictCategory;
-    //     allCategories = allCategories.slice(i + 2);
-    //   }
-    // }
-
-    if (currentCategory) {
-      if (allCategories.length == 0)
-        allCategories = await Promise.all(
-          (
-            await this.questionCategoryDao.findByAssessment(
-              res.assessment.id,
-              currentCategory,
-            )
-          ).map((a) => a.id),
-        );
+      allCategories = await Promise.all(categories.map((cate) => cate.id));
       console.log(allCategories);
-      console.log(shuffle, currentCategory, answerShuffle, prevQuestions);
-      const result = await this.getQuestions(
-        shuffle,
-        currentCategory,
-        answerShuffle,
-        prevQuestions,
-      );
-      await this.createDetail(
-        result.questions,
-        res.id,
-        result.category,
-        res.service.id,
-      );
+      let currentCategory = category ?? allCategories[0];
+      categoryIndex = allCategories.indexOf(currentCategory);
+      allCategories =
+        categoryIndex !== -1
+          ? allCategories.slice(categoryIndex)
+          : allCategories;
+      if (con) {
+        for (let i = 0; i < categoriesByAssessment.length; i++) {
+          const userAnswer = await this.userAnswer.findByQuestionCategory(
+            categoriesByAssessment[i].id,
+            res.code,
+          );
 
-      return {
-        questions: result.questions,
-        category: result.category,
-        categories: allCategories.slice(1),
-        assessment: res.assessment,
-        token,
-      };
+          if (userAnswer == null) {
+            categoryIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (res.userStartDate == null && category === undefined) {
+        currentCategory = categories[0].id;
+        await this.dao.update(res.id, {
+          ...res,
+          userStartDate: new Date(),
+        });
+        if (res.email && res.lastname && res.firstname) {
+          const user = await this.authService.forceLogin(
+            res.email,
+            res.phone,
+            res.lastname,
+            res.firstname,
+          );
+          token = user;
+        }
+      }
+
+      if (currentCategory) {
+        if (allCategories.length == 0)
+          allCategories = await Promise.all(
+            (
+              await this.questionCategoryDao.findByAssessment(
+                res.assessment.id,
+                currentCategory,
+              )
+            ).map((a) => a.id),
+          );
+        const result = await this.getQuestions(
+          shuffle,
+          currentCategory,
+          answerShuffle,
+          prevQuestions,
+        );
+        await this.createDetail(
+          result.questions,
+          res.id,
+          result.category,
+          res.service.id,
+        );
+        console.log(allCategories, allCategories.slice(1), category);
+        return {
+          questions: result.questions,
+          category: result.category,
+          categories: allCategories.slice(1),
+          assessment: res.assessment,
+          visible: res.visible,
+          token,
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
   }
   createDetail = async (

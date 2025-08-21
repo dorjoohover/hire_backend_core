@@ -21,6 +21,8 @@ export class BlogEntity {
   title: string;
   @Column({ nullable: true })
   image: string;
+  @Column({ nullable: true })
+  video: string;
   @Column()
   content: string;
   @Column({ default: 0 })

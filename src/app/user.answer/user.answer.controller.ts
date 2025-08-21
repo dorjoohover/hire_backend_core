@@ -24,7 +24,7 @@ export class UserAnswerController {
   constructor(private readonly userAnswerService: UserAnswerService) {}
   // @Public()
   @Post()
-  create(
+  async create(
     @Body() dto: UserAnswerDtoList,
     @Ip() ip: string,
     @Headers() headers,
@@ -32,7 +32,7 @@ export class UserAnswerController {
   ) {
     try {
       const device = headers['user-agent'] ?? '';
-      return this.userAnswerService.create(dto, ip, device, user);
+      this.userAnswerService.create(dto, ip, device, user);
     } catch (error) {
       return {
         success: false,

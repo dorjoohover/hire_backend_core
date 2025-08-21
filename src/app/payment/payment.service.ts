@@ -101,6 +101,7 @@ export class PaymentService extends BaseService {
               userEndDate: exam.userEndDate,
               userStartDate: exam.userStartDate,
               price: transaction.service.price,
+              serviceId,
             });
           }
           if (role == Role.organization || userInfo.role == Role.organization) {
@@ -110,6 +111,7 @@ export class PaymentService extends BaseService {
               price: transaction.service.price,
               count: transaction.service.count,
               usedUserCount: transaction.service.usedUserCount,
+              serviceId,
             });
           }
         }
@@ -128,11 +130,13 @@ export class PaymentService extends BaseService {
     );
     paymentCount = count;
     for (const payment of res) {
+      const arr = payment.message.split('-');
       payments.push({
-        message: payment.message,
+        message: arr[0],
         assessment: payment.assessment,
         paymentDate: payment.createdAt,
         price: payment.totalPrice,
+        serviceId: arr?.[1] ?? null,
         admin: user['role'] == Role.client ? null : payment.charger,
       });
     }

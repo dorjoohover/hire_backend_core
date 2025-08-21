@@ -5,6 +5,8 @@ import { useContainer, ValidationError } from 'class-validator';
 import { setupSwagger } from './config/swagger';
 import { ErrorLogService } from './app/error-logs/error-log.service';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { LoggingInterceptor } from './base/logging.intercepter';
+import { FileErrorLogService } from './base/error-log.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -15,6 +17,7 @@ async function bootstrap() {
   });
   app.setGlobalPrefix('/api/v1');
   const errorLogService = app.get(ErrorLogService);
+  const fileErrorLogService = app.get(FileErrorLogService);
 
   // app.useGlobalGuards(new JwtAuthGuard());
 
@@ -32,7 +35,7 @@ async function bootstrap() {
   );
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(
-    new AllExceptionsFilter(httpAdapterHost, errorLogService),
+    new AllExceptionsFilter(httpAdapterHost, errorLogService, fileErrorLogService),
   );
   setupSwagger(app);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
@@ -53,7 +56,8 @@ async function bootstrap() {
       500,
     );
   });
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  // await app.listen(5000, '0.0.0.0');
   await app.listen(3000, '0.0.0.0');
-  // await app.listen(4000, '0.0.0.0');
 }
 bootstrap();

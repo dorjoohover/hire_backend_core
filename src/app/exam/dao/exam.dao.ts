@@ -12,11 +12,15 @@ import { ExamEntity } from '../entities/exam.entity';
 import { AdminExamDto, CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
+import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 
 @Injectable()
 export class ExamDao {
   private db: Repository<ExamEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private assessmentDao: AssessmentDao,
+  ) {
     this.db = this.dataSource.getRepository(ExamEntity);
   }
 
@@ -40,6 +44,10 @@ export class ExamDao {
   update = async (code: number, dto: any) => {
     const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ ...res, ...dto });
+  };
+
+  count = async () => {
+    return await this.db.count();
   };
 
   updateDate = async (code: number, dto: UpdateDateDto) => {
@@ -146,6 +154,26 @@ export class ExamDao {
       relations: ['assessment', 'service', 'user', 'service.user'],
     });
     return res;
+  };
+
+  findByCodeOnly = async (code: number) => {
+    const q = `SELECT id, visible, "assessmentId" AS assessment
+    FROM exam
+    WHERE code = ${code}
+    LIMIT 1;`;
+    const res = await this.db.query(q).then((d) => d[0]);
+
+    const query = `select id, name from "assessment" where id = ${res.assessment}`;
+    const assessment = await this.assessmentDao.query(query);
+    console.log(assessment);
+    return {
+      ...res,
+      assessment,
+    };
+  };
+
+  query = async (q: string) => {
+    return await this.db.query(q);
   };
 
   // findQuartile = async (assessment: number, r: number) => {
