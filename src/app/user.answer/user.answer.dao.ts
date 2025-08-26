@@ -137,18 +137,20 @@ export class UserAnswerDao {
       },
     });
   };
-  findByAnswerId = async (id: number) => {
+  findByAnswerId = async (id: number, code: number) => {
     return await this.db.findOne({
       where: {
         answer: {
           id,
         },
+        code
       },
     });
   };
-  findByAnswerMatrixId = async (id: number) => {
+  findByAnswerMatrixId = async (id: number, code: number) => {
     return await this.db.findOne({
       where: {
+        code: code,
         matrix: {
           id,
         },

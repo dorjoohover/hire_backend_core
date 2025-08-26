@@ -80,11 +80,14 @@ export class UserAnswerService extends BaseService {
         }
 
         // Multiple answers
+        const code = dto.data[0].code;
 
-        const answers = d.answers
+        const answers = d.answers;
         for (const answer of answers) {
-          const result =  answer.matrix ? await this.dao.findByAnswerMatrixId(answer.matrix) : await this.dao.findByAnswerId(answer.answer)
-          if(result) continue
+          const result = answer.matrix
+            ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
+            : await this.dao.findByAnswerId(answer.answer, code);
+          if (result) continue;
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
                 `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
