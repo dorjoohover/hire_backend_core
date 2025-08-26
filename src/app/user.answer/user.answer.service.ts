@@ -99,7 +99,6 @@ export class UserAnswerService extends BaseService {
               Number(answer.point ?? 0) +
               Number(question?.minValue ?? question[0]?.minValue ?? 0);
             console.log('if', point);
-            console.log('if', point);
           } else {
             let p;
 

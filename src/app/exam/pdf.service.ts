@@ -21,6 +21,7 @@ import { Narc } from 'src/assets/report/narc';
 import { Empathy } from 'src/assets/report/empathy';
 import { SingleTemplate } from 'src/assets/report/single';
 import { Setgel } from 'src/assets/report/setgel';
+import { Darktriad } from 'src/assets/report/darktriad';
 
 @Injectable()
 export class PdfService {
@@ -31,6 +32,7 @@ export class PdfService {
     private belbin: Belbin,
     private empathy: Empathy,
     private setgel: Setgel,
+    private darktriad: Darktriad,
     private singleTemplate: SingleTemplate,
     private userAnswer: UserAnswerDao,
   ) {}
@@ -109,6 +111,8 @@ export class PdfService {
         await this.setgel.template(doc, result, firstname, lastname, exam);
       if (exam.assessment.report == ReportType.EMPATHY)
         await this.empathy.template(doc, result, firstname, lastname, exam);
+      if (exam.assessment.report == ReportType.DARKTRIAD)
+        await this.darktriad.template(doc, result, firstname, lastname, exam);
       if (exam.assessment.report == ReportType.DISC) {
         await this.disc.report(
           doc,

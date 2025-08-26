@@ -1,4 +1,5 @@
 export * from './belbin';
+export * from './darktriad';
 export * from './genos';
 export * from './disc';
 export * from './setgel';

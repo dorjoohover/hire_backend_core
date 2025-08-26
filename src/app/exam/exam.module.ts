@@ -27,6 +27,7 @@ import {
   Genos,
   Narc,
   Setgel,
+  Darktriad,
   SingleTemplate,
 } from 'src/assets/report/index';
 import { ResultDao } from './dao/result.dao';
@@ -58,6 +59,7 @@ import { FileService } from 'src/file.service';
     FileService,
     AssessmentDao,
     Setgel,
+    Darktriad,
     SingleTemplate,
     ResultDao,
     TransactionDao,
