@@ -36,11 +36,16 @@ export class Darktriad {
       exam.assessment.usage,
     );
     doc
-      .font(fontBold)
-      .fillColor(colors.black)
-      .fontSize(13)
-      .text('Хар гурвалын сорил')
-      .moveDown(0.5);
+      .font('fontBold')
+      .fontSize(16)
+      .fillColor(colors.orange)
+      .text('Хар гурвалын сорил');
+    doc
+      .moveTo(40, doc.y + 2)
+      .strokeColor(colors.orange)
+      .lineTo(75, doc.y + 2)
+      .stroke()
+      .moveDown();
     doc
       .font(fontNormal)
       .fontSize(12)
@@ -50,6 +55,8 @@ export class Darktriad {
         'Сүүлийн 20 гаруй жил судлаач нар хар буюу сөрөг зан үйл, сөрөг зан төрхийн хэв шинжийг хайж олох, судлах чиглэлд ихээхэн сонирхох. Ялангуяа эдгээр сөрөг зан төрхийн хэв шинжүүдийг байгууллага менежменттэй холбон судалж, хэрхэн ажлын байрны орчин, байгууллагын соёл, удирдан манлайлахад нөлөөлдөг талаар сонирхох болжээ. Хар гурвал гэдэг нь ерөнхийдөө хүний сөрөг зан төрхийг илэрхийлдэг гурван хэв шинжийг нэгтгэсэн ойлголт юм. Хар гурвалд хоорондоо нягт харилцан холбоо хамааралтай, дараах гурван зан  төрхийн хэв шинжүүд орно. Үүнд: макиавеллизм (бусдад нөлөөлөх), нарциссизм (өөрийгөө хэт хайрлах, өөрийгөө тахин шүтэх), психопати (бусдын сэтгэл хөдлөлийг ойлгох, бусдын ороSAMнд өөрийгөө тавьж ойлгох чадваргүй байх) гэсэн гурван сөрөг зан төрхийн хэв шинжүүд орно. Эдгээр нь сэтгэцийн эмгэг биш, харин хувь хүний дэд түвшний зан төлөв юм. Хар гурвалын тестийн богино хувилбар (SD3) нь 2011 онд хөгжүүлэгдэж, түгээмэл ашиглагдаж байна.',
         { align: 'justify' },
       );
+    footer(doc);
+    doc.addPage();
     doc
       .font('fontBold')
       .fontSize(16)
@@ -104,7 +111,7 @@ export class Darktriad {
       .text(levelLabel.toUpperCase(), doc.x, doc.y - 2.5)
       .moveDown(-0.5);
 
-    await this.single.examQuartileGraph(doc, result);
+    // await this.single.examQuartileGraph(doc, result);
     doc
       .font(fontBold)
       .fontSize(13)
