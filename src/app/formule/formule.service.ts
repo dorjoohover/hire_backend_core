@@ -94,6 +94,9 @@ export class FormuleService extends BaseService {
         // return { ...r, sum: sum };
         let aCate = r.answerCategoryId;
         aCate = await this.answerCategoryDao.findOne(+aCate);
+
+        console.log(formula.formula, formula.formula?.includes('AVG'));
+        console.log(Math.round(parseFloat(r.point) * 100) / 100);
         let sum = formula.formula?.includes('AVG')
           ? Math.round(parseFloat(r.point) * 100) / 100
           : parseInt(r.point);
