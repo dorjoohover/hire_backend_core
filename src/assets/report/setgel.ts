@@ -31,7 +31,7 @@ export class Setgel {
       .font('fontBold')
       .fontSize(16)
       .fillColor(colors.orange)
-      .text('Үр дүн', marginX, doc.y + 10);
+      .text('Үр дүн', marginX, doc.y - 10);
     doc
       .moveTo(40, doc.y + 2)
       .strokeColor(colors.orange)

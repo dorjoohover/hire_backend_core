@@ -95,9 +95,10 @@ export class UserAnswerService extends BaseService {
             (answerCategory as QuestionAnswerEntity)?.reverse
           ) {
             point =
-              Number(question.maxValue) -
-              Number(answer.point) +
-              Number(question.minValue);
+              Number(question?.maxValue ?? question[0]?.maxValue ?? 0) -
+              Number(answer.point ?? 0) +
+              Number(question?.minValue ?? question[0]?.minValue ?? 0);
+            console.log('if', point);
             console.log('if', point);
           } else {
             let p;
