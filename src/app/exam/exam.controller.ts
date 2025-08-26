@@ -32,6 +32,7 @@ import { PassThrough } from 'stream';
 import AWS from 'aws-sdk';
 import { join } from 'path';
 import { FileService } from 'src/file.service';
+import type { Response as ExpressRes } from 'express';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -82,55 +83,44 @@ export class ExamController {
   async requestPdf(
     @Param('code') code: string,
     @Request() { user },
-    @Response() res,
+    @Response() res: ExpressRes,
   ) {
+    const role = user?.['role'];
     const filename = `report-${code}.pdf`;
-    // try {
-    //   const visible = await this.examService.checkExam(+code);
-    //   if (user['role'] == Role.client && !visible) {
-    //     throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
-    //   }
-    //   const file = await this.fileService.getFile(filename);
-    //   return file;
-    // } catch (error) {
-    //   throw new HttpException(
-    //     error?.message ?? 'Та түр хүлээнэ үү.',
-    //     HttpStatus.BAD_REQUEST,
-    //   );
-    // }
-    const filePath = join(this.cachePath, filename);
-    const role = user?.['role']; // from passport or middleware
 
-    try {
-      const doc = await this.examService.getPdf(+code, role); // PDFKit document
+    // PDFKit.PDFDocument үүсгэнэ
+    const doc = await this.examService.getPdf(+code, role);
 
-      // Create three output channels
-      const fileWriter = createWriteStream(filePath);
-      const resStream = new PassThrough(); // to pipe to HTTP response
-      const s3Stream = new PassThrough(); // to upload to S3
+    // ↓↓↓ заавал pipe-с ӨМНӨ тавина
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
 
-      // Pipe once, split to others
-      doc.pipe(resStream); // stream output into resStream only once
-      doc.end();
-
-      // Pipe the pass-through to multiple places
-      resStream.pipe(res); // 1. To user response
-      resStream.pipe(fileWriter); // 2. Save locally
-      resStream.pipe(s3Stream); // 3. Upload to S3
-
-      // Set headers before piping
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${filename}"`,
-      );
-    } catch (err) {
-      console.error('Error generating or streaming PDF:', err);
-      // if (!res.headersSent) {
-      //   res.status(500).send('Failed to generate PDF');
-      // }
-    }
+    // Шууд хэрэглэгч рүү урсгана
+    doc.pipe(res);
+    doc.end();
   }
+
+  // async requestPdf(
+  //   @Param('code') code: string,
+  //   @Request() { user },
+  //   @Response() res,
+  // ) {
+  //   const filename = `report-${code}.pdf`;
+  //   try {
+  //     const visible = await this.examService.checkExam(+code);
+  //     if (user['role'] == Role.client && !visible) {
+  //       throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
+  //     }
+  //     const file = await this.fileService.getFile(filename);
+  //     return file;
+  //   } catch (error) {
+  //     throw new HttpException(
+  //       error?.message ?? 'Та түр хүлээнэ үү.',
+  //       HttpStatus.BAD_REQUEST,
+  //     );
+  //   }
+  // }
   @Public()
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })

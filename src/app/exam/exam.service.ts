@@ -180,6 +180,7 @@ export class ExamService extends BaseService {
           id: user.id,
         },
       });
+      console.log(res[0].point)
 
       await this.resultDao.create({
         assessment: exam.assessment.id,
@@ -188,7 +189,7 @@ export class ExamService extends BaseService {
         duration: diff,
         firstname: exam?.firstname ?? user.firstname,
         lastname: exam?.lastname ?? user.lastname,
-        type: res[0]?.formula?.toLowerCase().includes('sum')
+        type: !res[0]?.formula?.toLowerCase().includes('count')
           ? ReportType.CORRECT
           : ReportType.CORRECTCOUNT,
         limit: exam.assessment.duration,
