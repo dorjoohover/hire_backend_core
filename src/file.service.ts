@@ -87,13 +87,13 @@ export class FileService {
       const filePath = join(this.localPath, filename);
 
       if (!existsSync(filePath)) {
-        const file = await this.downloadFromS3(filename);
-        console.log('file', file);
-        if (!file) {
-          throw new NotFoundException('File not found in S3');
-        }
+        // const file = await this.downloadFromS3(filename);
+        // console.log('file', file);
+        // if (!file) {
+        //   throw new NotFoundException('File not found in S3');
+        // }
 
-        writeFileSync(filePath, file);
+        // writeFileSync(filePath, file);
       }
 
       const stream = createReadStream(filePath);
