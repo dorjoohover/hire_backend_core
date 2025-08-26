@@ -81,9 +81,10 @@ export class UserAnswerService extends BaseService {
 
         // Multiple answers
 
-        const answers =
-          d.answers.length > 0 ? [d.answers[d.answers.length - 1]] : [];
+        const answers = d.answers
         for (const answer of answers) {
+          const result =  answer.matrix ? await this.dao.findByAnswerMatrixId(answer.matrix) : await this.dao.findByAnswerId(answer.answer)
+          if(result) continue
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
                 `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,

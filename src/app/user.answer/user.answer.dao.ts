@@ -23,7 +23,7 @@ export class UserAnswerDao {
   };
   create = async (dto: CreateUserAnswerDto) => {
     try {
-      let res= dto.matrix
+      let res = dto.matrix
         ? await this.db.findOne({
             where: {
               question: { id: dto.question },
@@ -134,6 +134,24 @@ export class UserAnswerDao {
     return await this.db.findOne({
       where: {
         id: id,
+      },
+    });
+  };
+  findByAnswerId = async (id: number) => {
+    return await this.db.findOne({
+      where: {
+        answer: {
+          id,
+        },
+      },
+    });
+  };
+  findByAnswerMatrixId = async (id: number) => {
+    return await this.db.findOne({
+      where: {
+        matrix: {
+          id,
+        },
       },
     });
   };
