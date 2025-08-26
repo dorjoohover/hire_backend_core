@@ -27,14 +27,14 @@ export class FileService {
   async upload(key: string, ct: string, body) {
     try {
       console.log(key);
-      await this.s3
-        .upload({
-          Bucket: this.bucketName,
-          Key: key,
-          Body: body,
-          ContentType: ct,
-        })
-        .promise();
+      // await this.s3
+      //   .upload({
+      //     Bucket: this.bucketName,
+      //     Key: key,
+      //     Body: body,
+      //     ContentType: ct,
+      //   })
+      //   .promise();
 
       // Optional: Save locally
       const localFilePath = join(this.localPath, key);

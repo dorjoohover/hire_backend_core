@@ -94,12 +94,14 @@ export class FormuleService extends BaseService {
         // return { ...r, sum: sum };
         let aCate = r.answerCategoryId;
         aCate = await this.answerCategoryDao.findOne(+aCate);
-        let sum = parseInt(r.point);
+        let sum = formula.formula?.includes('"AVG')
+          ? Math.round(parseFloat(r.point) * 100) / 100
+          : parseInt(r.point);
         return {
           point: sum,
           aCate: aCate?.name ?? aCate,
           parent: aCate.parent,
-          formula: formula.aggregations
+          formula: formula.aggregations,
         };
       }),
     );
