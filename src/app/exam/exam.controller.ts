@@ -84,7 +84,7 @@ export class ExamController {
     try {
       const visible = await this.examService.checkExam(+code);
       if (user['role'] == Role.client && !visible) {
-        throw new HttpException('Хандах эрхгүй байна', HttpStatus.BAD_REQUEST);
+        throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
       }
       const file = await this.fileService.getFile(filename);
       return file;

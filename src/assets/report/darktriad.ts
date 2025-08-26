@@ -13,8 +13,10 @@ import {
   title,
 } from 'src/app/exam/reports/formatter';
 import { SinglePdf } from 'src/app/exam/reports/single.pdf';
+import { VisualizationService } from 'src/app/exam/visualization.service';
+
 @Injectable()
-export class Setgel {
+export class Darktriad {
   constructor(private single: SinglePdf) {}
 
   async template(
@@ -26,7 +28,28 @@ export class Setgel {
   ) {
     header(doc, firstname, lastname);
     title(doc, result.assessmentName);
-    info(doc, exam.assessment.author, exam.assessment.description);
+    info(
+      doc,
+      exam.assessment.author,
+      exam.assessment.description,
+      exam.assessment.measure,
+      exam.assessment.usage,
+    );
+    doc
+      .font(fontBold)
+      .fillColor(colors.black)
+      .fontSize(13)
+      .text('Хар гурвалын сорил')
+      .moveDown(0.5);
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .lineGap(lh.md)
+      .fillColor(colors.black)
+      .text(
+        'Сүүлийн 20 гаруй жил судлаач нар хар буюу сөрөг зан үйл, сөрөг зан төрхийн хэв шинжийг хайж олох, судлах чиглэлд ихээхэн сонирхох. Ялангуяа эдгээр сөрөг зан төрхийн хэв шинжүүдийг байгууллага менежменттэй холбон судалж, хэрхэн ажлын байрны орчин, байгууллагын соёл, удирдан манлайлахад нөлөөлдөг талаар сонирхох болжээ. Хар гурвал гэдэг нь ерөнхийдөө хүний сөрөг зан төрхийг илэрхийлдэг гурван хэв шинжийг нэгтгэсэн ойлголт юм. Хар гурвалд хоорондоо нягт харилцан холбоо хамааралтай, дараах гурван зан  төрхийн хэв шинжүүд орно. Үүнд: макиавеллизм (бусдад нөлөөлөх), нарциссизм (өөрийгөө хэт хайрлах, өөрийгөө тахин шүтэх), психопати (бусдын сэтгэл хөдлөлийг ойлгох, бусдын ороSAMнд өөрийгөө тавьж ойлгох чадваргүй байх) гэсэн гурван сөрөг зан төрхийн хэв шинжүүд орно. Эдгээр нь сэтгэцийн эмгэг биш, харин хувь хүний дэд түвшний зан төлөв юм. Хар гурвалын тестийн богино хувилбар (SD3) нь 2011 онд хөгжүүлэгдэж, түгээмэл ашиглагдаж байна.',
+        { align: 'justify' },
+      );
     doc
       .font('fontBold')
       .fontSize(16)
