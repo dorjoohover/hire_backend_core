@@ -57,6 +57,8 @@ export class Darktriad {
       );
     footer(doc);
     doc.addPage();
+    header(doc, firstname, lastname, 'Таны DiSC график');
+
     doc
       .font('fontBold')
       .fontSize(16)
