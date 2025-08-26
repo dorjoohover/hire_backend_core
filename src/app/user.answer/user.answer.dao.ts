@@ -23,7 +23,7 @@ export class UserAnswerDao {
   };
   create = async (dto: CreateUserAnswerDto) => {
     try {
-      let res = dto.matrix
+      let { id, ...res } = dto.matrix
         ? await this.db.findOne({
             where: {
               question: { id: dto.question },
@@ -59,7 +59,7 @@ export class UserAnswerDao {
         res = this.db.create(body);
         await this.db.save(res);
       }
-      return res.id;
+      return id;
     } catch (error) {
       console.log('err', error);
       return undefined;

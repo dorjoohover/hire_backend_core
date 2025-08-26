@@ -190,42 +190,119 @@ export class QuestionService {
     }
   }
 
-  public async copy(categoryId: number, user: number) {
-    const assessmentRes = await this.assessmentDao.findOne(categoryId);
-    const assessment = await this.assessmentDao.create({
-      createdUser: user,
-      level: assessmentRes.level.id,
-      category: assessmentRes.category.id,
-      description: assessmentRes.description,
-      duration: assessmentRes.duration,
-      measure: assessmentRes.measure,
-      name: assessmentRes.name,
-      price: assessmentRes.price,
-      status: assessmentRes.status,
-      timeout: assessmentRes.timeout,
-      usage: assessmentRes.usage,
-      advice: assessmentRes.advice,
-      author: assessmentRes.author,
-      categoryShuffle: assessmentRes.categoryShuffle,
-      answerShuffle: assessmentRes.answerShuffle,
-      exampleReport: assessmentRes.exampleReport,
-      formule: assessmentRes.formule,
-      icons: assessmentRes.icons,
-      questionCount: assessmentRes.questionCount,
-      questionShuffle: assessmentRes.questionShuffle,
-      report: assessmentRes.report,
-      type: assessmentRes.type,
+  public async copy(assessmentId: number, userId: number) {
+    // 1) Эх өгөгдлөө бүтнээр нь авч ир (асуулт/хариулт/категориудтайгаа)
+    const src = await this.assessmentDao.findOne(assessmentId);
+    if(src.name.endsWith('copy')) throw new HttpException('Duplicated', 500)
+    if (!src) throw new Error(`Assessment ${assessmentId} not found`);
+
+    // 2) Шинэ assessment үүсгэнэ
+    const newAssessment = await this.assessmentDao.create({
+      createdUser: userId,
+      level: src.level?.id ?? src.level, // id эсвэл obj
+      category: src.category?.id,
+      description: src.description,
+      duration: src.duration,
+      measure: src.measure,
+      name: `${src.name} copy`,
+      price: src.price,
+      status: src.status,
+      timeout: src.timeout,
+      usage: src.usage,
+      advice: src.advice,
+      author: src.author,
+      categoryShuffle: src.categoryShuffle,
+      answerShuffle: src.answerShuffle,
+      icons: src.icons,
+      questionCount: src.questionCount,
+      questionShuffle: src.questionShuffle,
+      type: src.type,
     });
-    const questions = await this.questionDao.findQuestions(categoryId);
-    const questionCategories =
-      await this.questionCategoryDao.findByAssessmentId(categoryId);
-    const answerCategories =
-      await this.questionAnswerCategoryDao.findByAssessment(categoryId);
-    await Promise.all(
-      questions.map(async (q) => {
-        const answers = await this.questionAnswerDao.findByQuestionId(q.id);
-      }),
-    );
+
+    const newAssessmentId = newAssessment;
+
+    // const answerCategories: any[] = src.answerCategories ?? [];
+    const questionCategories = src.questionCategories ?? [];
+
+    // 3) Хариултын категорийн map (хуучин id -> шинэ id), parent-тай бол бас зохицуулна
+    const catIdMap = new Map<number, number>();
+
+    const ensureAnswerCategory = async (
+      oldCat: any | null | undefined,
+    ): Promise<number | null> => {
+      if (!oldCat) return null;
+      const oldId = oldCat.id ?? oldCat;
+      if (catIdMap.has(oldId)) return catIdMap.get(oldId)!;
+
+      // эхлээд parent-ийг үүсгэнэ (байвал)
+      const newParentId = await ensureAnswerCategory(oldCat.parent);
+
+      const created = await this.questionAnswerCategoryDao.create({
+        name: oldCat.name,
+        parent: newParentId, // шинэ parent id
+        assessment: newAssessmentId, // ШИНЭ assessment-р холбоно
+        description: oldCat.description ?? null,
+      });
+
+      const newId = created.id;
+      catIdMap.set(oldId, newId);
+      return newId;
+    };
+
+    // 3.1 Хэрвээ бүх категориудыг эхнээс нь нэг мөсөн үүсгэхийг хүсвэл (сонголт)
+    // for (const c of answerCategories) await ensureAnswerCategory(c);
+
+    // 4) Асуултын категорийг хуулж, асуулт/хариулт/матрицыг нэг бүрчлэн үүсгэнэ
+    for (const qc of questionCategories) {
+      // эхлээд qc-т харьяалагдах асуултуудыг авчир
+      const questions = await this.questionDao.findQuestions(qc.id);
+
+      // шинэ question category
+      const newQCat = await this.questionCategoryDao.create({
+        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл
+        ...qc,
+        name: qc.name,
+        createdUser: userId,
+        questionCount: questions.length,
+        assessment: newAssessmentId,
+      });
+      const newQCatId = newQCat;
+
+      // асуулт бүр
+      for (const question of questions ?? []) {
+        const newQ = await this.questionDao.create({
+          ...question,
+          category: newQCatId,
+          createdUser: userId,
+        });
+        const newQId = newQ.id;
+
+        const answers = question.answers ?? [];
+        for (const answer of answers) {
+          // хариултын category-г map-даж (parent chain-тэй бол parent-ийг нь эхлээд үүсгэнэ)
+          const newCatId = await ensureAnswerCategory(answer.category);
+
+          const newA = await this.questionAnswerDao.create({
+            ...answer,
+            category: newCatId,
+            question: newQId,
+          });
+          const newAId = newA;
+
+          const matrix = answer.matrix ?? [];
+          for (const mrtx of matrix) {
+            await this.questionAnswerMatrixDao.create({
+              ...mrtx,
+              answer: newAId,
+              category: newCatId,
+              question: newQId,
+            });
+          }
+        }
+      }
+    }
+
+    return newAssessment;
   }
 
   public async deleteAnswer(dto: { data: number[] }, matrix: boolean) {

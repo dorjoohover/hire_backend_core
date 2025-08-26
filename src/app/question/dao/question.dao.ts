@@ -95,6 +95,7 @@ export class QuestionDao {
           id: id,
         },
       },
+      relations: ['answers', 'matrix', 'answers.category', 'answers.matrix'],
     });
   };
 

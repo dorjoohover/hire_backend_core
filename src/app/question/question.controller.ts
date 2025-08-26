@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Request,
+  Req,
 } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import {
@@ -188,6 +189,11 @@ export class QuestionController {
   @Get('get/:id')
   findOne(@Param('id') id: string) {
     return this.questionService.findOne(+id);
+  }
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Get('copy/:id')
+  copy(@Param('id') id: string, @Req() { user }) {
+    return this.questionService.copy(+id, user.role);
   }
   // @Public()
   // @Roles(Role.admin)

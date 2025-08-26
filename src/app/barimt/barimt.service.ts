@@ -63,7 +63,6 @@ export class BarimtService {
           },
         },
       );
-      console.log(res);
 
       const tokenData = res.data;
       this.accessToken = tokenData.accessToken;
