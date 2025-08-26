@@ -80,7 +80,10 @@ export class UserAnswerService extends BaseService {
         }
 
         // Multiple answers
-        for (const answer of d.answers) {
+
+        const answers =
+          d.answers.length > 0 ? [d.answers[d.answers.length - 1]] : [];
+        for (const answer of answers) {
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
                 `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
@@ -95,10 +98,9 @@ export class UserAnswerService extends BaseService {
             (answerCategory as QuestionAnswerEntity)?.reverse
           ) {
             point =
-              answer.point ??
               Number(question?.maxValue ?? question[0]?.maxValue ?? 0) -
-                Number(answer.point ?? 0) +
-                Number(question?.minValue ?? question[0]?.minValue ?? 0);
+              Number(answer.point ?? 0) +
+              Number(question?.minValue ?? question[0]?.minValue ?? 0);
             console.log('if', point);
           } else {
             let p;
