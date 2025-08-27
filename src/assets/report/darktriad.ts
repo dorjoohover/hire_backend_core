@@ -396,9 +396,7 @@ export class Darktriad {
         .text(category + ' ', marginX, currentY, { continued: true })
         .font('fontBlack')
         .fillColor(colors.orange)
-        .text(String(score) + '/', { continued: true })
-        .fillColor(colors.black)
-        .text(String(maxScore), { continued: false });
+        .text(String(score), { continued: false });
 
       doc
         .font(fontBold)
@@ -500,6 +498,6 @@ export class Darktriad {
       .font(fontNormal)
       .text('байна.', { continued: false })
       .moveDown(1);
-    await this.single.examQuartileGraph(doc, result);
+    // await this.single.examQuartileGraph2(doc, result);
   }
 }

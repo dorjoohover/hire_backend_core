@@ -566,4 +566,161 @@ export class SinglePdf {
 
     doc.y = currentY + 50;
   }
+
+  async examQuartileGraph2(doc: PDFKit.PDFDocument, result: ResultEntity) {
+    console.log('result', result);
+
+    function calculateMean(data) {
+      return data.reduce((sum, val) => sum + val, 0) / data.length;
+    }
+
+    function calculateStdDev(data, mean) {
+      const variance =
+        data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
+        data.length;
+      return Math.sqrt(variance);
+    }
+
+    function normalDistribution(x, mean, stdDev) {
+      const exponent = Math.exp(
+        -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2)),
+      );
+      return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * exponent;
+    }
+
+    function percentile(data, value) {
+      let count = 0;
+      for (let num of data) {
+        if (num <= value) count++;
+      }
+      return (count / data.length) * 100;
+    }
+
+    // Fixed external dataset - replace this with your actual 1000 rows of data
+    const externalDataset = [
+      { user: 'User 1', Machia: 4.5, Narc: 3, Psycho: 2.5 },
+      { user: 'User 2', Machia: 4, Narc: 3.2, Psycho: 1.12 },
+      { user: 'User 3', Machia: 4.5, Narc: 3, Psycho: 4 },
+      // ... add your remaining 997 rows here
+      // For now, I'll add some sample data to demonstrate
+      { user: 'User 4', Machia: 3.8, Narc: 2.8, Psycho: 3.2 },
+      { user: 'User 5', Machia: 4.2, Narc: 3.5, Psycho: 2.8 },
+      // ... continue with your actual data
+    ];
+
+    // Extract the relevant assessment data based on the assessment type
+    // Assuming result.assessment contains the assessment type (e.g., 'Machia', 'Narc', 'Psycho')
+    const assessmentType = result.assessment; // or however you determine which column to use
+    const dataset = externalDataset
+      .map((row) => row[assessmentType])
+      .filter((val) => val !== undefined);
+
+    const mean = calculateMean(dataset);
+    const stdDev = calculateStdDev(dataset, mean);
+
+    const dataPoints = [];
+    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
+      dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
+    }
+
+    const percent = Math.round(percentile(dataset, result.point));
+    const max = Math.max(...dataset);
+
+    const width = doc.page.width - marginX * 2;
+    const buffer = await this.vis.createChart(
+      dataPoints,
+      dataPoints[0]?.[0] ?? 0,
+      dataPoints[dataPoints.length - 1]?.[0] ?? max,
+      normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
+      result.point,
+      percent,
+    );
+
+    doc.image(buffer, marginX, doc.y + 10, {
+      width: width,
+      height: (width / 900) * 450,
+    });
+
+    const currentY = doc.y + (width / 900) * 450 + 20;
+    const sectionName = result.assessmentName;
+    const total = 'Таны оноо нь нийт';
+    const name = `${sectionName}`;
+
+    const totalWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(total);
+
+    const nameWidth = doc
+      .font(fontBold)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(name);
+
+    const row1Width = totalWidth + nameWidth + 8;
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(total, doc.page.width - marginX - row1Width, currentY);
+
+    doc
+      .font(fontBold)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(
+        name,
+        doc.page.width - marginX - row1Width + totalWidth + 3,
+        currentY,
+      );
+
+    const percentPrefix = 'гүйцэтгэгчдийн ';
+    const percentText = `${percent}%`;
+    const percentSuffix = '-с өндөр байна.';
+
+    const prefixWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(percentPrefix);
+
+    const percentWidth = doc
+      .font('fontBlack')
+      .fontSize(18)
+      .fillColor('#F36421')
+      .widthOfString(percentText);
+
+    const suffixWidth = doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .widthOfString(percentSuffix);
+
+    const row2TotalWidth = prefixWidth + percentWidth + suffixWidth + 10;
+    let textX = doc.page.width - marginX - row2TotalWidth;
+
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(percentPrefix, textX, currentY + 18);
+
+    textX += prefixWidth + 3;
+    doc
+      .font('fontBlack')
+      .fontSize(18)
+      .fillColor('#F36421')
+      .text(percentText, textX, currentY + 14);
+
+    textX += percentWidth + 1;
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor('#231F20')
+      .text(percentSuffix, textX, currentY + 18);
+
+    doc.y = currentY + 50;
+  }
 }
