@@ -567,7 +567,11 @@ export class SinglePdf {
     doc.y = currentY + 50;
   }
 
-  async examQuartileGraph2(doc: PDFKit.PDFDocument, result: ResultEntity) {
+  async examQuartileGraph2(
+    doc: PDFKit.PDFDocument,
+    result: ResultEntity,
+    traitType?: string,
+  ) {
     console.log('result', result);
 
     function calculateMean(data) {
@@ -596,43 +600,79 @@ export class SinglePdf {
       return (count / data.length) * 100;
     }
 
-    // Fixed external dataset - replace this with your actual 1000 rows of data
-    const externalDataset = [
-      { user: 'User 1', Machia: 4.5, Narc: 3, Psycho: 2.5 },
-      { user: 'User 2', Machia: 4, Narc: 3.2, Psycho: 1.12 },
-      { user: 'User 3', Machia: 4.5, Narc: 3, Psycho: 4 },
-      // ... add your remaining 997 rows here
-      // For now, I'll add some sample data to demonstrate
-      { user: 'User 4', Machia: 3.8, Narc: 2.8, Psycho: 3.2 },
-      { user: 'User 5', Machia: 4.2, Narc: 3.5, Psycho: 2.8 },
-      // ... continue with your actual data
-    ];
+    const externalDataset = require('../../../../src/assets/icons/darktriad.json');
 
-    // Extract the relevant assessment data based on the assessment type
-    // Assuming result.assessment contains the assessment type (e.g., 'Machia', 'Narc', 'Psycho')
-    const assessmentType = result.assessment; // or however you determine which column to use
+    let currentUserScore = 0;
+    let assessmentType = traitType || result.result;
+
+    const currentDetail = result.details.find(
+      (detail) => detail.value === assessmentType,
+    );
+    if (currentDetail) {
+      currentUserScore = parseFloat(currentDetail.cause);
+    }
+
+    console.log(
+      `Assessment Type: ${assessmentType}, User Score: ${currentUserScore}`,
+    );
+
+    const traitMapping = {
+      Psychopathy: 'PSYCHO',
+      Narcissism: 'NARC',
+      Machiavellianism: 'MACHIA',
+    };
+
+    const datasetColumnName = traitMapping[assessmentType];
+    if (!datasetColumnName) {
+      console.error('Unknown assessment type:', assessmentType);
+      return;
+    }
+
     const dataset = externalDataset
-      .map((row) => row[assessmentType])
-      .filter((val) => val !== undefined);
+      .map((row) => row[datasetColumnName])
+      .filter((val) => val !== undefined && val !== null);
+
+    if (dataset.length === 0) {
+      console.error('No data found for assessment type:', assessmentType);
+      return;
+    }
 
     const mean = calculateMean(dataset);
     const stdDev = calculateStdDev(dataset, mean);
 
+    console.log(
+      `Dataset length: ${dataset.length}, Mean: ${mean}, StdDev: ${stdDev}`,
+    );
+
     const dataPoints = [];
-    for (let x = mean - 3 * stdDev; x <= mean + 3 * stdDev; x += 1) {
+    const minX = mean - 3 * stdDev;
+    const maxX = mean + 3 * stdDev;
+    const step = (maxX - minX) / 100;
+
+    for (let x = minX; x <= maxX; x += step) {
       dataPoints.push([x, normalDistribution(x, mean, stdDev) / 10]);
     }
 
-    const percent = Math.round(percentile(dataset, result.point));
+    if (dataPoints.length === 0) {
+      console.error('No data points generated');
+      return;
+    }
+
+    const percent = Math.round(percentile(dataset, currentUserScore));
     const max = Math.max(...dataset);
+
+    console.log(`User score: ${currentUserScore}, Percentile: ${percent}%`);
 
     const width = doc.page.width - marginX * 2;
     const buffer = await this.vis.createChart(
       dataPoints,
-      dataPoints[0]?.[0] ?? 0,
-      dataPoints[dataPoints.length - 1]?.[0] ?? max,
-      normalDistribution(result.point, mean, stdDev) / 10 - dataPoints[0][1],
-      result.point,
+      dataPoints[0]?.[0] ?? minX,
+      dataPoints[dataPoints.length - 1]?.[0] ?? maxX,
+      dataPoints.length > 0
+        ? normalDistribution(currentUserScore, mean, stdDev) / 10 -
+            dataPoints[0][1]
+        : 0,
+      currentUserScore,
       percent,
     );
 
@@ -678,7 +718,7 @@ export class SinglePdf {
 
     const percentPrefix = 'гүйцэтгэгчдийн ';
     const percentText = `${percent}%`;
-    const percentSuffix = '-с өндөр байна.';
+    const percentSuffix = '-г давсан.';
 
     const prefixWidth = doc
       .font(fontNormal)

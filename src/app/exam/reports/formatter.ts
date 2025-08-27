@@ -347,6 +347,7 @@ export const info = (
       .moveDown(1);
     y = doc.y;
   }
+  y = doc.y;
 
   if (usage) {
     doc
@@ -364,7 +365,11 @@ export const info = (
       });
   }
 
-  doc.moveDown(1);
+  if (usage) {
+    doc.moveDown(1);
+  } else {
+    doc.moveDown(0);
+  }
 };
 
 export const home = (
