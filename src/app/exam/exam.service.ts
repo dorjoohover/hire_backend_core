@@ -66,15 +66,15 @@ export class ExamService extends BaseService {
     }
     const result = await this.resultDao.findOne(id);
     const doc = await this.pdfService.createPdfInOneFile(result, res);
-    const resStream = new PassThrough();
-    doc.pipe(resStream);
-    doc.end();
-    this.fileService.processMultipleImages(
-      [],
-      resStream,
-      `report-${id}.pdf`,
-      'application/pdf',
-    );
+    // const resStream = new PassThrough();
+    // doc.pipe(resStream);
+    // doc.end();
+    // this.fileService.processMultipleImages(
+    //   [],
+    //   resStream,
+    //   `report-${id}.pdf`,
+    //   'application/pdf',
+    // );
     return doc;
   }
 
