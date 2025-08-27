@@ -290,7 +290,7 @@ export class VisualizationService {
     }
   }
 
-  async bar(userValue, maxValue, globalAverage) {
+  async bar(userValue, maxValue, globalAverage, avgtext) {
     const canvasWidth = 1800;
     const canvasHeight = 130;
 
@@ -388,7 +388,7 @@ export class VisualizationService {
           left: avgPositionInPixels + 'px',
           top: barYCenter + lineLength / 2 + 13,
           style: {
-            text: `Дундаж: ${globalAverage.toFixed(2)}`,
+            text: `${avgtext}: ${globalAverage.toFixed(2)}`,
             font: '24px Gilroy-Medium',
             fill: '#333',
             textAlign: 'center',
