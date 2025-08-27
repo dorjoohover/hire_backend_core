@@ -427,6 +427,7 @@ export class SinglePdf {
   }
 
   async examQuartileGraph(doc: PDFKit.PDFDocument, result: ResultEntity) {
+    console.log('result', result);
     function calculateMean(data) {
       return data.reduce((sum, val) => sum + val, 0) / data.length;
     }

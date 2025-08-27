@@ -154,6 +154,7 @@ export class Narc {
         values[index],
         divisors[index],
         averages[index],
+        'Дундаж',
       );
 
       doc.image(buffer, {
