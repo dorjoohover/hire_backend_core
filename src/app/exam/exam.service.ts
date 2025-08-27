@@ -88,6 +88,7 @@ export class ExamService extends BaseService {
     // new Promise((resolve) => setTimeout(resolve, 10000));
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
+    console.log('first', res);
     this.getPdf(code, Role.admin);
     return res;
   };
@@ -132,6 +133,7 @@ export class ExamService extends BaseService {
           'Байгууллагаас зүгээс үр дүнг нууцалсан байна.',
           HttpStatus.FORBIDDEN,
         );
+      console.log('result', result);
       if (result)
         return {
           // calculate: result.,
@@ -144,7 +146,6 @@ export class ExamService extends BaseService {
       if (formule) {
         const res = await this.formule.calculate(formule, exam.id);
         const calculate = await this.calculateByReportType(res, exam, user, id);
-
         return {
           calculate,
           visible: exam.visible,
@@ -180,7 +181,8 @@ export class ExamService extends BaseService {
           id: user.id,
         },
       });
-      console.log(res[0].point)
+      console.log('res', res);
+      console.log(res[0].point);
 
       await this.resultDao.create({
         assessment: exam.assessment.id,

@@ -24,6 +24,7 @@ import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
+import type { Response as ExpressRes } from 'express';
 import { UserEntity } from '../user/entities/user.entity';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -32,7 +33,6 @@ import { PassThrough } from 'stream';
 import AWS from 'aws-sdk';
 import { join } from 'path';
 import { FileService } from 'src/file.service';
-import type { Response as ExpressRes } from 'express';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
