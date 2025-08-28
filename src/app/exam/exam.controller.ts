@@ -80,47 +80,48 @@ export class ExamController {
   // @Public()
   @Get('/pdf/:code')
   @ApiParam({ name: 'code' })
-  async requestPdf(
-    @Param('code') code: string,
-    @Request() { user },
-    @Response() res: ExpressRes,
-  ) {
-    const role = user?.['role'];
-    const filename = `report-${code}.pdf`;
-
-    // PDFKit.PDFDocument үүсгэнэ
-    const doc = await this.examService.getPdf(+code, role);
-
-    // ↓↓↓ заавал pipe-с ӨМНӨ тавина
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Cache-Control', 'no-store');
-
-    // Шууд хэрэглэгч рүү урсгана
-    doc.pipe(res);
-    doc.end();
-  }
-
+  // for report development
   // async requestPdf(
   //   @Param('code') code: string,
   //   @Request() { user },
-  //   @Response() res,
+  //   @Response() res: ExpressRes,
   // ) {
+  //   const role = user?.['role'];
   //   const filename = `report-${code}.pdf`;
-  //   try {
-  //     const visible = await this.examService.checkExam(+code);
-  //     if (user['role'] == Role.client && !visible) {
-  //       throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
-  //     }
-  //     const file = await this.fileService.getFile(filename);
-  //     return file;
-  //   } catch (error) {
-  //     throw new HttpException(
-  //       error?.message ?? 'Та түр хүлээнэ үү.',
-  //       HttpStatus.BAD_REQUEST,
-  //     );
-  //   }
+
+  //   // PDFKit.PDFDocument үүсгэнэ
+  //   const doc = await this.examService.getPdf(+code, role);
+
+  //   // ↓↓↓ заавал pipe-с ӨМНӨ тавина
+  //   res.setHeader('Content-Type', 'application/pdf');
+  //   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  //   res.setHeader('Cache-Control', 'no-store');
+
+  //   // Шууд хэрэглэгч рүү урсгана
+  //   doc.pipe(res);
+  //   doc.end();
   // }
+
+  async requestPdf(
+    @Param('code') code: string,
+    @Request() { user },
+    @Response() res,
+  ) {
+    const filename = `report-${code}.pdf`;
+    try {
+      const visible = await this.examService.checkExam(+code);
+      if (user['role'] == Role.client && !visible) {
+        throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
+      }
+      const file = await this.fileService.getFile(filename);
+      return file;
+    } catch (error) {
+      throw new HttpException(
+        error?.message ?? 'Та түр хүлээнэ үү.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
   @Public()
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })

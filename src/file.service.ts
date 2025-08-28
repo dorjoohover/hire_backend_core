@@ -27,14 +27,14 @@ export class FileService {
   async upload(key: string, ct: string, body) {
     try {
       console.log(key);
-      // await this.s3
-      //   .upload({
-      //     Bucket: this.bucketName,
-      //     Key: key,
-      //     Body: body,
-      //     ContentType: ct,
-      //   })
-      //   .promise();
+      await this.s3
+        .upload({
+          Bucket: this.bucketName,
+          Key: key,
+          Body: body,
+          ContentType: ct,
+        })
+        .promise();
 
       // Optional: Save locally
       const localFilePath = join(this.localPath, key);
@@ -87,13 +87,13 @@ export class FileService {
       const filePath = join(this.localPath, filename);
 
       if (!existsSync(filePath)) {
-        // const file = await this.downloadFromS3(filename);
-        // console.log('file', file);
-        // if (!file) {
-        //   throw new NotFoundException('File not found in S3');
-        // }
+        const file = await this.downloadFromS3(filename);
+        console.log('file', file);
+        if (!file) {
+          throw new NotFoundException('File not found in S3');
+        }
 
-        // writeFileSync(filePath, file);
+        writeFileSync(filePath, file);
       }
 
       const stream = createReadStream(filePath);
