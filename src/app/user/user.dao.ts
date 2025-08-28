@@ -136,6 +136,17 @@ export class UserDao {
     return res;
   };
 
+  findByEmail = async (email: string): Promise<UserEntity | null> => {
+    if (!email) return null;
+
+    const res = await this._db.findOne({
+      where: {
+        email: email,
+      },
+    });
+    return res;
+  };
+
   getUserInfo = async (id: any) => {
     return this._db.findOne({
       select: ['id', 'email', 'role'],

@@ -273,20 +273,177 @@ export class UserServiceService extends BaseService {
             phone: email.phone,
             visible: email.visible,
           });
+
+          // Check if user exists in database
+          const existingUser = await this.userDao.findByEmail(email.email);
+          const isNewUser = !existingUser;
+
+          const exam = await this.examDao.findByCode(email.code);
+          const date = new Date(exam.endDate);
+          const year = date.getFullYear();
+          let month = `${date.getMonth() + 1}`;
+          if (+month < 10) month = `0${month}`;
+          let day = `${date.getDate()}`;
+          if (+day < 10) day = `0${day}`;
+          let hour = `${date.getHours()}`;
+          if (+hour < 10) hour = `0${hour}`;
+          let minute = `${date.getMinutes()}`;
+          if (+minute < 10) minute = `0${minute}`;
+          let second = `${date.getSeconds()}`;
+          if (+second < 10) second = `0${second}`;
+
+          const newUserSection = isNewUser
+            ? `
+          <tr>
+            <td style="background-color: #e8f5e8; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50; font-family: 'Montserrat', sans-serif; text-align: justify;">
+              <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
+              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
+                Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
+              </p>
+            </td>
+          </tr>
+        `
+            : '';
+
           await this.mailer.sendMail({
             to: email.email,
             subject: 'Танд тестийн урилга ирлээ',
-            html: `<div>
-         <p> Та <a href=https://hire.mn/exam/${email.code}>линк</a> дээр дарж тестээ бөглөнө үү.</p>
-<p>Таны анхааралд:</p>
-<ul>
-        <li>Танд hire.mn цахим хуудас дээрх ... тест өгөх эрх үүссэн байна.</li>
-<li>Тест эхлэхийн өмнө дэлгэцэд гарах зааврыг хянамгай уншихыг хүсье.</li>
-</ul>
-          <p>Асууж, тодруулах зүйл байвал <a href=mailto:info@hire.mn>info@hire.mn</a> хаягаар, <a href=tel:976-9909 9371>976-9909 9371</a> дугаараар холбогдоорой. </p>
-          <p>Манайхаар үйлчлүүлж байгаад тань баярлалаа.</p>
-          <p>Шуудангийн хаяг: Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p>
-          </div>`,
+            html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Танд тестийн урилга ирлээ</title>
+            <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+            body, h1, h2, h3, p, a, div {
+              font-family: 'Montserrat', sans-serif;
+            }
+          </style>
+          </head>
+          <body style="margin: 0; padding: 0; min-width: 100%; margin-top: 10px; font-family: 'Montserrat', sans-serif;">
+            <center style="width: 100%; table-layout: fixed; padding-bottom: 20px;">
+              <div style="max-width: 600px; margin: 0 auto;">
+                <table width="600" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                <td>
+                
+                <table align="center" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;">
+                  <tr>
+                    <td style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="width: 80%; text-align: left; vertical-align: middle;">
+            <img src="https://raw.githubusercontent.com/usukhbaya12/hire1.0/refs/heads/main/public/hire-2-white.png" alt="Hire.mn Logo" width="120" height="auto" style="display: block; border: 0;">
+            </td>
+      <td style="width: 20%; text-align: right; vertical-align: middle;">
+              <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
+                <tr>
+                  <td style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
+                    <a href="https://hire.mn" 
+                      style="padding: 10px 16px; border-radius: 4px; 
+                              color: #ff5000 !important; 
+                              font-family: 'Montserrat', Arial, sans-serif; 
+                              font-size: 14px; font-weight: 600; 
+                              text-decoration: none; 
+                              display: inline-block;
+                              mso-line-height-rule: exactly;
+                              line-height: 1.2;
+                              text-align: center;">
+                      Зочлох
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+                      </td>
+                  </tr>
+                  
+                  <tr>
+                    <td style="background-color:rgb(250, 250, 250); padding: 20px 40px 10px 40px;">
+                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        ${newUserSection}
+                        ${isNewUser ? '<br/>' : ''}
+                        <tr>
+                          <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; color: #333333;">
+                            Өдрийн мэнд,
+                          </td>
+                        </tr>
+                        <tr>
+                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
+                              <br/>Эрхэм <strong>${email.lastname}</strong> овогтой <strong>${email.firstname}</strong> танд <strong>${exam.service.user?.organizationName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${exam?.assessment?.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://hire.mn/exam/${email.code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
+                          </td>
+                        </tr>
+                         <tr>
+                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
+                          <br/>Тест, үнэлгээний линк ${year} оны ${month} сарын ${day} өдрийн ${hour}:${minute} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
+                          </td>
+                        </tr>
+                        <br/>
+                        <tr>
+            <td style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;">
+              <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">${exam?.assessment.name} тестийн тухай</h3>
+              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
+                ${exam?.assessment.description}
+              </p>
+              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong>Хэрэглээ</strong>
+              </p>
+              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
+                ${exam?.assessment.usage}
+              </p>
+              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong>Хэмжих зүйлс</strong>
+              </p>
+              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
+                ${exam?.assessment.measure}
+              </p>
+              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                <strong>Асуумжид хариулах заавар</strong>
+              </p>
+              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
+                ${exam?.assessment.advice}
+              </p>
+            </td>
+          </tr>
+              <br/>
+                        <tr>
+                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
+                          <p style="margin: 0 0 15px 0;">
+                            <br/>Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                          </p>
+                        </td>
+                      </tr>
+                        <tr>
+                          <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
+                            <p style="margin: 0 0 15px 0;">
+                              Хүндэтгэсэн,<br/>Hire.mn
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <tr>
+                    <td style="background-color: #f5f5f5; padding: 20px; text-align: center; font-family: 'Montserrat', sans-serif; font-size: 12px; color: #777777; border-top: 1px solid #eeeeee;">
+                      <p style="margin: 0; line-height: 1.5;">Шуудангийн хаяг: Аксиом Инк ХХК, Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо<br>Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p><br/>
+                      <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Аксиом Инк.</p>
+                    </td>
+                  </tr>
+                </table>
+                
+                </td>
+                </tr>
+                </table>
+              </div>
+            </center>
+          </body>
+          </html>
+          `,
           });
         }),
       );
