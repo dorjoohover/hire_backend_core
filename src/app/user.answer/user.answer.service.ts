@@ -219,7 +219,7 @@ export class UserAnswerService extends BaseService {
                       <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td style="width: 80%; text-align: left; vertical-align: middle;">
-                        <img src="https://hire.mn/hire-2-white.png" alt="Hire.mn Logo" width="120" height="auto" style="display: block; border: 0;">
+            <img src="https://raw.githubusercontent.com/usukhbaya12/images/refs/heads/main/hire-2-white.png" alt="Hire.mn Logo" width="120" height="auto" style="display: block; border: 0;">
               </td>
         <td style="width: 20%; text-align: right; vertical-align: middle;">
                 <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
