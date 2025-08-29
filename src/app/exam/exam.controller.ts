@@ -108,6 +108,7 @@ export class ExamController {
     @Response() res,
   ) {
     const filename = `report-${code}.pdf`;
+    console.log(code, filename, 'filenmae')
     try {
       const visible = await this.examService.checkExam(+code);
       // if (user['role'] == Role.client && !visible) {
