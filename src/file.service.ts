@@ -111,7 +111,7 @@ export class FileService {
 
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
-      console.log(key);
+      console.log('key',key);
       const raw = key;
       const cleaned = raw.trim().replace(/^\/*/, '');
       console.log('RAW:', JSON.stringify(raw));
