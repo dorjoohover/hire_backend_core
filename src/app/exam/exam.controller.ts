@@ -77,7 +77,7 @@ export class ExamController {
     }
   }
 
-  // @Public()
+  @Public()
   @Get('/pdf/:code')
   @ApiParam({ name: 'code' })
   // for report development
