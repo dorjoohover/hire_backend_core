@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { createReadStream, existsSync, writeFileSync } from 'fs';
+import { createReadStream, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import * as AWS from 'aws-sdk';
 import * as mime from 'mime-types';
@@ -82,56 +82,30 @@ export class FileService {
       throw error;
     }
   }
-  async getFile(filename: string): Promise<StreamableFile> {
-    try {
-      const filePath = join(this.localPath, filename);
-      console.log(filename);
-      if (!existsSync(filePath)) {
-        const file = await this.downloadFromS3(filename);
-        console.log('file', file);
-        if (!file) {
-          throw new NotFoundException('File not found in S3');
-        }
+async getFile(filename: string): Promise<StreamableFile> {
+  const filePath = join(this.localPath, filename);
 
-        writeFileSync(filePath, file);
-      }
+  // (optional) local кэш фолдерээ баталгаажуулах
+  mkdirSync(this.localPath, { recursive: true });
 
-      const stream = createReadStream(filePath);
-      const mimeType = mime.lookup(filename) || 'application/octet-stream';
-      console.log(stream)
-      return new StreamableFile(stream, {
-        type: mimeType,
-        disposition: `inline; filename="${filename}"`,
-      });
-    } catch (error) {
-      console.log(error)
-      throw error;
-    }
+  if (!existsSync(filePath)) {
+    const file = await this.downloadFromS3(filename);
+    if (!file) throw new NotFoundException('File not found in S3');
+    writeFileSync(filePath, file);
   }
 
+  const stream = createReadStream(filePath);
+  const mimeType = mime.lookup(filename) || 'application/octet-stream';
+  return new StreamableFile(stream, {
+    type: mimeType,
+    disposition: `inline; filename="${filename}"`,
+  });
+}
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
-      console.log('key',key);
-      const raw = key;
-      const cleaned = raw.trim().replace(/^\/*/, '');
-      console.log('RAW:', JSON.stringify(raw));
-      console.log('CLEANED:', JSON.stringify(cleaned));
-      console.log('HEX  :', Buffer.from(cleaned, 'utf8').toString('hex'));
-      await this.s3
-        .headObject({ Bucket: 'hire.mn', Key: 'report-3286171091721517.pdf' })
-        .promise();
-      await this.s3.headObject({ Bucket: 'hire.mn', Key: cleaned }).promise();
-      const list = await this.s3
-        .listObjectsV2({
-          Bucket: 'hire.mn',
-          Prefix: '3286171091721517', // эхний хэдэн цифр
-        })
-        .promise();
-      console.log(list.Contents?.map((o) => o.Key));
       const object = await this.s3
         .getObject({ Bucket: this.bucketName, Key: key })
         .promise();
-      console.log(object);
       return object.Body as Buffer;
     } catch (err) {
       console.error('S3 download error:', err.message);

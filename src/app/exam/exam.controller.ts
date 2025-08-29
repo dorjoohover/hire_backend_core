@@ -101,20 +101,19 @@ export class ExamController {
   //   doc.pipe(res);
   //   doc.end();
   // }
-
   async requestPdf(
     @Param('code') code: string,
     @Request() { user },
     @Response() res,
   ) {
     const filename = `report-${code}.pdf`;
-    console.log(code, filename, 'filenmae')
     try {
       const visible = await this.examService.checkExam(+code);
       // if (user['role'] == Role.client && !visible) {
       //   throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
-      // } 
+      // }
       const file = await this.fileService.getFile(filename);
+
       return file;
     } catch (error) {
       throw new HttpException(
