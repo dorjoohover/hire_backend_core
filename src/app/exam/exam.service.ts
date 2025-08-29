@@ -250,7 +250,7 @@ export class ExamService extends BaseService {
         limit: exam.assessment.duration,
         total: exam.assessment.totalPoint,
         result: result,
-        value: res[0].point.toString(),
+        value: (res[0].point ?? '').toString(),
         point: res[0].point,
       });
       return { point: res[0].point };

@@ -92,10 +92,9 @@ export class FileService {
       writeFileSync(filePath, file);
     }
 
-    const stream = createReadStream(filePath);
-    const mimeType = mime.lookup(filename) || 'application/pdf';
-    console.log(stream)
-    return new StreamableFile(stream, {
+    const stream = await createReadStream(filePath);
+    const mimeType = (await mime.lookup(filename)) || 'application/pdf';
+    return await new StreamableFile(stream, {
       type: mimeType,
       disposition: `inline; filename="${filename}"`,
     });
