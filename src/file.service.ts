@@ -104,6 +104,7 @@ export class FileService {
         disposition: `inline; filename="${filename}"`,
       });
     } catch (error) {
+      console.log(error)
       throw error;
     }
   }
