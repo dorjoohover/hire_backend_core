@@ -94,7 +94,7 @@ export class FileService {
 
     const stream = createReadStream(filePath);
     const mimeType = mime.lookup(filename) || 'application/pdf';
-
+    console.log(stream)
     return new StreamableFile(stream, {
       type: mimeType,
       disposition: `inline; filename="${filename}"`,
