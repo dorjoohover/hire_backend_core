@@ -105,18 +105,14 @@ export class ExamController {
     @Param('code') code: string,
     @Request() { user },
     @Response() res,
-  ) {
+  ): Promise<StreamableFile> {
     const filename = `report-${code}.pdf`;
     try {
       const visible = await this.examService.checkExam(+code);
       // if (user['role'] == Role.client && !visible) {
       //   throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
       // }
-      const buf = await this.fileService.getFile(filename);
-      return new StreamableFile(buf, {
-        type: 'application/pdf',
-        disposition: `inline; filename="${filename}"`,
-      });
+      return this.fileService.getFile(filename);
     } catch (error) {
       throw new HttpException(
         error?.message ?? 'Та түр хүлээнэ үү.',
