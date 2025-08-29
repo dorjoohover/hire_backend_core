@@ -85,7 +85,7 @@ export class FileService {
   async getFile(filename: string): Promise<StreamableFile> {
     try {
       const filePath = join(this.localPath, filename);
-      console.log(filename)
+      console.log(filename);
       if (!existsSync(filePath)) {
         const file = await this.downloadFromS3(filename);
         console.log('file', file);
@@ -111,6 +111,22 @@ export class FileService {
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
       console.log(key);
+      const raw = key;
+      const cleaned = raw.trim().replace(/^\/*/, '');
+      console.log('RAW:', JSON.stringify(raw));
+      console.log('CLEANED:', JSON.stringify(cleaned));
+      console.log('HEX  :', Buffer.from(cleaned, 'utf8').toString('hex'));
+      await this.s3
+        .headObject({ Bucket: 'hire.mn', Key: 'report-3286171091721517.pdf' })
+        .promise();
+      await this.s3.headObject({ Bucket: 'hire.mn', Key: cleaned }).promise();
+      const list = await this.s3
+        .listObjectsV2({
+          Bucket: 'hire.mn',
+          Prefix: '3286171091721517', // эхний хэдэн цифр
+        })
+        .promise();
+      console.log(list.Contents?.map((o) => o.Key));
       const object = await this.s3
         .getObject({ Bucket: this.bucketName, Key: key })
         .promise();
