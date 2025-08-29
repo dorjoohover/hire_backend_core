@@ -82,52 +82,52 @@ export class ExamController {
   @Get('/pdf/:code')
   @ApiParam({ name: 'code' })
   // for report development
-  async requestPdf(
-    @Param('code') code: string,
-    @Request() { user },
-    @NestResponse() res: ExpressRes,
-  ) {
-    const role = user?.['role'];
-    const filename = `report-${code}.pdf`;
-
-    // PDFKit.PDFDocument үүсгэнэ
-    const doc = await this.examService.getPdf(+code, role);
-
-    // ↓↓↓ заавал pipe-с ӨМНӨ тавина
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Cache-Control', 'no-store');
-
-    // Шууд хэрэглэгч рүү урсгана
-    doc.pipe(res);
-    doc.end();
-  }
-  // async requestPdf(@Param('code') code: string, @Res() res: Response) {
+  // async requestPdf(
+  //   @Param('code') code: string,
+  //   @Request() { user },
+  //   @NestResponse() res: ExpressRes,
+  // ) {
+  //   const role = user?.['role'];
   //   const filename = `report-${code}.pdf`;
 
-  //   // (шаардлагатай бол эрх шалгалтаа энд)
-  //   await this.examService.checkExam(+code);
+  //   // PDFKit.PDFDocument үүсгэнэ
+  //   const doc = await this.examService.getPdf(+code, role);
 
-  //   const { path, size } = await this.fileService.getFile(filename);
-  //   const type = (mime.lookup(filename) as string) || 'application/pdf';
+  //   // ↓↓↓ заавал pipe-с ӨМНӨ тавина
+  //   res.setHeader('Content-Type', 'application/pdf');
+  //   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  //   res.setHeader('Cache-Control', 'no-store');
 
-  //   // Толгойг тодорхой тавина — зарим прокси/шахалтэнд зайлшгүй хэрэгтэй
-  //   res.setHeader('Content-Type', type);
-  //   res.setHeader('Content-Length', size.toString());
-  //   res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  //   res.status(HttpStatus.OK);
-
-  //   const stream = createReadStream(path);
-  //   stream.on('open', () => {
-  //     // шууд дамжуулна
-  //     stream.pipe(res);
-  //   });
-  //   stream.on('error', (err) => {
-  //     // stream алдаа гарвал 500 хэлээд хаая
-  //     if (!res.headersSent) res.status(500);
-  //     res.end(`Stream error: ${err?.message ?? 'unknown'}`);
-  //   });
+  //   // Шууд хэрэглэгч рүү урсгана
+  //   doc.pipe(res);
+  //   doc.end();
   // }
+  async requestPdf(@Param('code') code: string, @Res() res: Response) {
+    const filename = `report-${code}.pdf`;
+
+    // (шаардлагатай бол эрх шалгалтаа энд)
+    await this.examService.checkExam(+code);
+
+    const { path, size } = await this.fileService.getFileBuf(filename);
+    const type = (mime.lookup(filename) as string) || 'application/pdf';
+
+    // Толгойг тодорхой тавина — зарим прокси/шахалтэнд зайлшгүй хэрэгтэй
+    res.setHeader('Content-Type', type);
+    res.setHeader('Content-Length', size.toString());
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.status(HttpStatus.OK);
+
+    const stream = createReadStream(path);
+    stream.on('open', () => {
+      // шууд дамжуулна
+      stream.pipe(res);
+    });
+    stream.on('error', (err) => {
+      // stream алдаа гарвал 500 хэлээд хаая
+      if (!res.headersSent) res.status(500);
+      res.end(`Stream error: ${err?.message ?? 'unknown'}`);
+    });
+  }
 
   @Public()
   @Get('calculation/:id')
