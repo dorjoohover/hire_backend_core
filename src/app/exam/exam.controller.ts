@@ -11,8 +11,8 @@ import {
   StreamableFile,
   HttpException,
   HttpStatus,
-  Response,
 } from '@nestjs/common';
+import * as mime from 'mime-types';
 import { ExamService } from './exam.service';
 import {
   AdminExamDto,
@@ -23,8 +23,8 @@ import {
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
-import type { Response as ExpressRes } from 'express';
+import { createReadStream, createWriteStream, existsSync, mkdirSync } from 'fs';
+import type { Response as ExpressRes, Response } from 'express';
 import { UserEntity } from '../user/entities/user.entity';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -101,25 +101,33 @@ export class ExamController {
   //   doc.pipe(res);
   //   doc.end();
   // }
-  async requestPdf(
-    @Param('code') code: string,
-    @Request() { user },
-    @Response() res,
-  ): Promise<StreamableFile> {
+  async requestPdf(@Param('code') code: string, @Res() res: Response) {
     const filename = `report-${code}.pdf`;
-    try {
-      const visible = await this.examService.checkExam(+code);
-      // if (user['role'] == Role.client && !visible) {
-      //   throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
-      // }
-      return await this.fileService.getFile(filename);
-    } catch (error) {
-      throw new HttpException(
-        error?.message ?? 'Та түр хүлээнэ үү.',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+
+    // (шаардлагатай бол эрх шалгалтаа энд)
+    await this.examService.checkExam(+code);
+
+    const { path, size } = await this.fileService.getFile(filename);
+    const type = (mime.lookup(filename) as string) || 'application/pdf';
+
+    // Толгойг тодорхой тавина — зарим прокси/шахалтэнд зайлшгүй хэрэгтэй
+    res.setHeader('Content-Type', type);
+    res.setHeader('Content-Length', size.toString());
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.status(HttpStatus.OK);
+
+    const stream = createReadStream(path);
+    stream.on('open', () => {
+      // шууд дамжуулна
+      stream.pipe(res);
+    });
+    stream.on('error', (err) => {
+      // stream алдаа гарвал 500 хэлээд хаая
+      if (!res.headersSent) res.status(500);
+      res.end(`Stream error: ${err?.message ?? 'unknown'}`);
+    });
   }
+
   @Public()
   @Get('calculation/:id')
   @ApiParam({ name: 'id' })

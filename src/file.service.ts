@@ -88,31 +88,17 @@ export class FileService {
       throw error;
     }
   }
-  async getFile(filename: string): Promise<StreamableFile> {
+  async getFile(filename: string): Promise<{ path: string; size: number }> {
+    mkdirSync(this.localPath, { recursive: true });
     const filePath = join(this.localPath, filename);
-    console.log('Looking for:', filePath);
 
     if (!existsSync(filePath)) {
-      const file = await this.downloadFromS3(filename);
-      console.log('Downloaded bytes from S3:', file?.length);
-      if (!file) throw new NotFoundException('File not found in S3');
-      writeFileSync(filePath, file);
-      console.log(
-        'File written at:',
-        filePath,
-        'size:',
-        statSync(filePath).size,
-      );
+      const buf = await this.downloadFromS3(filename);
+      if (!buf) throw new NotFoundException('File not found in S3');
+      writeFileSync(filePath, buf);
     }
-    const stream = createReadStream(filePath);
-    stream.on('open', () => console.log('[STREAM] opened:', filePath));
-    stream.on('error', (err) => console.error('[STREAM] error:', err?.message));
-
-    const mimeType = mime.lookup(filename) || 'application/octet-stream';
-    return new StreamableFile(stream, {
-      type: mimeType,
-      disposition: `inline; filename="${filename}"`,
-    });
+    const size = statSync(filePath).size;
+    return { path: filePath, size };
   }
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
