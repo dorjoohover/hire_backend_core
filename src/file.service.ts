@@ -85,7 +85,7 @@ export class FileService {
   async getFile(filename: string): Promise<StreamableFile> {
     try {
       const filePath = join(this.localPath, filename);
-
+      console.log(filename)
       if (!existsSync(filePath)) {
         const file = await this.downloadFromS3(filename);
         console.log('file', file);
