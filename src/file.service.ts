@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import * as AWS from 'aws-sdk';
 import * as mime from 'mime-types';
@@ -82,25 +82,17 @@ export class FileService {
       throw error;
     }
   }
-async getFile(filename: string): Promise<StreamableFile> {
-  const filePath = join(this.localPath, filename);
+  async getFile(filename: string): Promise<Buffer> {
+    const filePath = join(this.localPath, filename);
+    mkdirSync(this.localPath, { recursive: true });
 
-  // (optional) local кэш фолдерээ баталгаажуулах
-  mkdirSync(this.localPath, { recursive: true });
-
-  if (!existsSync(filePath)) {
-    const file = await this.downloadFromS3(filename);
-    if (!file) throw new NotFoundException('File not found in S3');
-    writeFileSync(filePath, file);
+    if (!existsSync(filePath)) {
+      const file = await this.downloadFromS3(filename);
+      if (!file) throw new NotFoundException('File not found in S3');
+      writeFileSync(filePath, file);
+    }
+    return readFileSync(filePath);
   }
-
-  const stream = createReadStream(filePath);
-  const mimeType = mime.lookup(filename) || 'application/octet-stream';
-  return new StreamableFile(stream, {
-    type: mimeType,
-    disposition: `inline; filename="${filename}"`,
-  });
-}
   private async downloadFromS3(key: string): Promise<Buffer | null> {
     try {
       const object = await this.s3

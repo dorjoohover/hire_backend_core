@@ -112,9 +112,11 @@ export class ExamController {
       // if (user['role'] == Role.client && !visible) {
       //   throw new HttpException('Хандах эрхгүй байна.', HttpStatus.BAD_REQUEST);
       // }
-      const file = await this.fileService.getFile(filename);
-
-      return file;
+      const buf = await this.fileService.getFile(filename);
+      return new StreamableFile(buf, {
+        type: 'application/pdf',
+        disposition: `inline; filename="${filename}"`,
+      });
     } catch (error) {
       throw new HttpException(
         error?.message ?? 'Та түр хүлээнэ үү.',
