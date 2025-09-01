@@ -152,13 +152,14 @@ export class VisualizationService {
     data: number[],
   ): Promise<Buffer> {
     const customFont = fontBold;
-
     const echartOption = {
       textStyle: {
         fontFamily: customFont,
       },
       radar: {
         indicator: indicator,
+        // Add splitNumber to resolve the tick readability warning
+        splitNumber: 4,
         axisLine: {
           lineStyle: {
             width: 3,
@@ -171,14 +172,14 @@ export class VisualizationService {
             color: '#E0E0E0',
           },
         },
-        name: {
-          textStyle: {
-            fontSize: 50,
-            color: colors.orange,
-            fontWeight: 'bold',
-            fontFamily: customFont,
-            padding: [50, 50, 50, 50],
-          },
+        // 'name' was renamed to 'axisName' and the 'textStyle' object was removed.
+        // All style properties are now directly under 'axisName'.
+        axisName: {
+          fontSize: 50,
+          color: colors.orange,
+          fontWeight: 'bold',
+          fontFamily: customFont,
+          padding: [50, 50, 50, 50],
         },
       },
       series: [
@@ -214,20 +215,15 @@ export class VisualizationService {
         },
       ],
     };
-
     const canvas = createCanvas(850 * 3, 620 * 3);
     const ctx = canvas.getContext('2d');
-
     ctx.scale(3, 3);
     ctx.imageSmoothingEnabled = true;
-
     const chart = echarts.init(canvas as any, null, {
       width: 850 * 3,
       height: 620 * 3,
     });
-
     chart.setOption(echartOption);
-
     return canvas.toBuffer('image/png', {
       compressionLevel: 0,
       resolution: 300,

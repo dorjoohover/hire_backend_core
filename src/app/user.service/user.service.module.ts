@@ -35,6 +35,7 @@ import {
   Setgel,
   Darktriad,
   SingleTemplate,
+  Holland,
 } from 'src/assets/report/index';
 import { ResultDao } from '../exam/dao/result.dao';
 import { BarimtService } from '../barimt/barimt.service';
@@ -59,6 +60,7 @@ import { FileService } from 'src/file.service';
     Narc,
     Setgel,
     Darktriad,
+    Holland,
     SingleTemplate,
     ResultDao,
     Belbin,

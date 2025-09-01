@@ -29,6 +29,7 @@ import {
   Setgel,
   Darktriad,
   SingleTemplate,
+  Holland,
 } from 'src/assets/report/index';
 import { ResultDao } from './dao/result.dao';
 import { TransactionDao } from '../payment/dao/transaction.dao';
@@ -60,6 +61,7 @@ import { FileService } from 'src/file.service';
     AssessmentDao,
     Setgel,
     Darktriad,
+    Holland,
     SingleTemplate,
     ResultDao,
     TransactionDao,

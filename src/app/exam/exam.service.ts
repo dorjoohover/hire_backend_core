@@ -35,6 +35,7 @@ import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { maxDigitDISC } from './reports/formatter';
 import { PassThrough } from 'stream';
 import { FileService } from 'src/file.service';
+import { Holland } from 'src/assets/report';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -256,7 +257,7 @@ export class ExamService extends BaseService {
       return { point: res[0].point };
     }
     if (type == ReportType.DISC) {
-      const order = ['d', 'i', 's', 'c'];
+      const order = ['D', 'i', 'S', 'C'];
       let response = '',
         agent = '';
       const defaultData = order.map((letter) => ({ aCate: letter, point: 0 }));
@@ -265,16 +266,16 @@ export class ExamService extends BaseService {
           res.find((obj) => obj['aCate']?.toLowerCase() === item.aCate) || item,
       );
       let index = {
-        d: [],
+        D: [],
         i: [],
-        s: [],
-        c: [],
+        S: [],
+        C: [],
       };
       let intens = {
-        d: 0,
+        D: 0,
         i: 0,
-        s: 0,
-        c: 0,
+        S: 0,
+        C: 0,
       };
 
       for (const r of mergedData) {
@@ -461,6 +462,67 @@ export class ExamService extends BaseService {
         details,
       };
     }
+    if (type == ReportType.HOLLAND) {
+      let details: ResultDetailDto[] = [];
+      for (const r of res) {
+        const cate = r['aCate'];
+        const point = r['point'];
+        details.push({
+          cause: point,
+          value: cate,
+        });
+      }
+
+      console.log('res', res);
+      for (const v of Holland.values) {
+        const include =
+          details.filter(
+            (detail) => detail.value?.toLowerCase() == v?.toLowerCase(),
+          ).length != 0;
+        if (!include)
+          details.push({
+            cause: '0',
+            value: v,
+          });
+      }
+
+      const sorted = details.sort(
+        (a, b) => parseInt(b.cause) - parseInt(a.cause),
+      );
+
+      const top1 = sorted[0];
+
+      const abbrev = sorted
+        .slice(0, 3)
+        .map((d) => d.value[0])
+        .join('');
+
+      const finalResult = `${abbrev} / ${top1.value}`;
+
+      await this.resultDao.create(
+        {
+          assessment: exam.assessment.id,
+          assessmentName: exam.assessment.name,
+          code: exam.code,
+          duration: diff,
+          firstname: exam?.firstname ?? user.firstname,
+          lastname: exam?.lastname ?? user.lastname,
+          type: exam.assessment.report,
+          limit: exam.assessment.duration,
+          total: exam.assessment.totalPoint,
+          result: finalResult, // store SAE / Social
+          value: top1.value, // store main top1 category
+        },
+        details,
+      );
+
+      return {
+        agent: top1.value,
+        details,
+        result: finalResult,
+      };
+    }
+
     if (type == ReportType.GENOS) {
       let details: ResultDetailDto[] = [];
       for (const r of res) {

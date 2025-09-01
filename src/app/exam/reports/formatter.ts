@@ -46,7 +46,7 @@ export const assetPath = (p: string) => {
   return fs.readFileSync(imagePath);
 };
 export function maxDigitDISC(n: string) {
-  const label = 'disc'; // map of letters
+  const label = 'DiSC'; // map of letters
   const digits = String(n).split('').map(Number);
   const maxDigit = Math.max(...digits);
   const indices = digits

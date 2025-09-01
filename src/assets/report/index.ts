@@ -6,3 +6,4 @@ export * from './setgel';
 export * from './empathy';
 export * from './narc';
 export * from './single';
+export * from './holland';

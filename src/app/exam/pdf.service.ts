@@ -22,6 +22,7 @@ import { Empathy } from 'src/assets/report/empathy';
 import { SingleTemplate } from 'src/assets/report/single';
 import { Setgel } from 'src/assets/report/setgel';
 import { Darktriad } from 'src/assets/report/darktriad';
+import { Holland } from 'src/assets/report/holland';
 
 @Injectable()
 export class PdfService {
@@ -33,6 +34,7 @@ export class PdfService {
     private empathy: Empathy,
     private setgel: Setgel,
     private darktriad: Darktriad,
+    private holland: Holland,
     private singleTemplate: SingleTemplate,
     private userAnswer: UserAnswerDao,
   ) {}
@@ -113,6 +115,8 @@ export class PdfService {
         await this.empathy.template(doc, result, firstname, lastname, exam);
       if (exam.assessment.report == ReportType.DARKTRIAD)
         await this.darktriad.template(doc, result, firstname, lastname, exam);
+      if (exam.assessment.report == ReportType.HOLLAND)
+        await this.holland.template(doc, result, firstname, lastname, exam);
       if (exam.assessment.report == ReportType.DISC) {
         await this.disc.report(
           doc,
