@@ -16,6 +16,7 @@ import { ExamDao } from '../dao/exam.dao';
 import { ResultEntity } from '../entities/result.entity';
 import { ResultDao } from '../dao/result.dao';
 import { color } from 'echarts';
+import sharp from 'sharp';
 
 @Injectable()
 export class SinglePdf {
@@ -675,8 +676,12 @@ export class SinglePdf {
       currentUserScore,
       percent,
     );
-
-    doc.image(buffer, marginX, doc.y + 10, {
+    console.log(buffer);
+    let png = await sharp(buffer)
+      .flatten({ background: '#ffffff' }) // ил тод байдал → цагаан дэвсгэр
+      .png({ progressive: false }) // interlaceгүй, pdfkit-д найдвартай
+      .toBuffer();
+    doc.image(png, marginX, doc.y + 10, {
       width: width,
       height: (width / 900) * 450,
     });

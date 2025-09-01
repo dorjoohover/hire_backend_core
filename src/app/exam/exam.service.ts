@@ -59,7 +59,7 @@ export class ExamService extends BaseService {
 
   public async getPdf(id: number, role?: number) {
     const res = await this.dao.findByCode(id);
-    if (!res.visible && role == Role.client) {
+    if (!res?.visible && role == Role.client) {
       throw new HttpException(
         'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
         HttpStatus.FORBIDDEN,
