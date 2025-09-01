@@ -4,6 +4,25 @@ import * as echarts from 'echarts';
 import { colors, fontBold, fontNormal } from './reports/formatter';
 
 // graphs
+
+const calculateSplitNumber = (max: number): number => {
+  if (!max) {
+    return 5;
+  }
+  if (max <= 6) {
+    return max;
+  }
+  const preferredSplits = [6, 4, 5, 3];
+  for (const splits of preferredSplits) {
+    if (max % splits === 0) {
+      return splits;
+    }
+  }
+  return 5;
+};
+
+const RIASEC_ORDER = ['I', 'A', 'S', 'E', 'C', 'R'];
+
 @Injectable()
 export class VisualizationService {
   constructor() {
@@ -14,6 +33,7 @@ export class VisualizationService {
       family: fontNormal,
     });
   }
+
   async createChart(
     data: number[][],
     min: number,
@@ -148,19 +168,47 @@ export class VisualizationService {
   }
 
   async createRadar(
-    indicator: { name: string; max: number }[],
+    indicator: { name: string; max: number; key?: string }[],
     data: number[],
   ): Promise<Buffer> {
     const max = indicator[0]?.max || 10;
 
-    const splitNumber = max <= 10 ? max : 5;
+    const splitNumber = calculateSplitNumber(max);
     const customFont = fontBold;
+
+    const RIASEC_ORDER = ['I', 'R', 'C', 'E', 'S', 'A'];
+    let orderedIndicator = indicator;
+    let orderedData = data;
+
+    if (indicator.some((i) => i.key)) {
+      const indicatorMap = indicator.reduce(
+        (acc, cur, idx) => {
+          acc[cur.key!] = { ...cur, data: data[idx] };
+          return acc;
+        },
+        {} as Record<string, { name: string; max: number; data: number }>,
+      );
+
+      orderedIndicator = [];
+      orderedData = [];
+
+      for (const key of RIASEC_ORDER) {
+        if (indicatorMap[key]) {
+          orderedIndicator.push({ name: indicatorMap[key].name, max });
+          orderedData.push(indicatorMap[key].data);
+        } else {
+          // fallback for missing keys
+          orderedIndicator.push({ name: key, max });
+          orderedData.push(0);
+        }
+      }
+    }
     const echartOption = {
       textStyle: {
         fontFamily: customFont,
       },
       radar: {
-        indicator: indicator,
+        indicator: orderedIndicator,
         splitNumber: splitNumber,
         axisLine: {
           lineStyle: {

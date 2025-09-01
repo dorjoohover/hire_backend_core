@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import sharp from 'sharp';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
@@ -15,6 +16,7 @@ import {
   title,
 } from 'src/app/exam/reports/formatter';
 import { VisualizationService } from 'src/app/exam/visualization.service';
+import { buffer } from 'stream/consumers';
 @Injectable()
 export class Holland {
   constructor(private vis: VisualizationService) {}
@@ -231,7 +233,7 @@ export class Holland {
             .font('fontMedium')
             .fontSize(11)
             .fillColor(colors.black)
-            .text('Шинж чанар:', ml + 4, mt + 23);
+            .text('Зан төлөв:', ml + 4, mt + 23);
 
           mt += 35;
           doc.font(fontNormal).text(value.description, ml + 4, mt + 2, {
@@ -407,7 +409,7 @@ export class Holland {
       .fontSize(12)
       .fillColor(colors.black)
       .text(
-        'Сонирхлын хэв шинж тус бүрд харгалзах оноог тооцоолж графикт үзүүлэв. Хамгийн өндөр оноо бүхий хэв шинж нь танд давамгайлан илэрч буй үндсэн хэв шинж бол харин дараа дараагийн хамгийн өндөр оноо бүхий хэв шинж нь дараачийн тод илэрч буй хэв шинжүүд юм. Сонирхолын хэв шинж тус бүрд харгалзах оноог тооцоолж графикт үзүүлэв. Хамгийн өндөр оноо бүхий хэв шинж нь таньд давамгайлан илэрч буй үндсэн хэв шинж бол харин дараа дараагийн хамгийн өндөр оноо бүхий хэв шинж нь дараачийн тод илэрч буй хэв шинжүүд юм.',
+        'Сонирхлын хэв шинж тус бүрд харгалзах оноог тооцоолж графикт үзүүлэв. Хамгийн өндөр оноо бүхий хэв шинж нь танд давамгайлан илэрч буй үндсэн хэв шинж бол харин дараа дараагийн хамгийн өндөр оноо бүхий хэв шинж нь дараачийн тод илэрч буй хэв шинжүүд юм.',
         marginX,
         doc.y,
         { align: 'justify' },
@@ -420,21 +422,42 @@ export class Holland {
       (max, obj) => (parseInt(obj.value) > parseInt(max.value) ? obj : max),
       details[0],
     );
+
     for (const detail of details) {
       const result = this.result(detail.value);
       indicator.push({
         name: result.name,
-        max: 40,
+        max: +max.cause,
+        key: result.key, // <-- add this line
       });
       data.push(+detail.cause);
       results.push({ ...result, point: +detail.cause, value: detail.value });
     }
+
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
-    doc.image(pie, 75, y - 10, {
+    let png = await sharp(pie)
+      .flatten({ background: '#ffffff' }) // ил тод байдал → цагаан дэвсгэр
+      .png({ progressive: false }) // interlaceгүй, pdfkit-д найдвартай
+      .toBuffer();
+    doc.image(png, 75, y - 5, {
       width: doc.page.width - 150,
     });
+
     doc.y += (doc.page.width / 425) * 310 - 150;
+    doc
+      .font(fontNormal)
+      .fontSize(12)
+      .fillColor(colors.black)
+      .text(
+        'RIASEC загварыг 6 өнцөгт бөгөөд өнцөг бүрд нэг хэв шинжийг оноож, харгалзуулсан гэж төсөөлье. Тэгвэл Холландын онолын дагуу хэв шинжүүд нь заавал R-I-A-S-E-C гэсэн дэс дарааллаар байрших ёстой. Энэхүү загварт зэргэлдээ орших хоёр хэв шинжүүд нь хоорондоо илүү төстэйг илэрхийлж буй бол, харин эсрэг талд орших хэв шинжүүд нь бие биеэсээ эрс ялгаатай, өөр буйг заана. Жишээлбэл, зэрэгцээ орших “Судлаач (Investigative)” болон “Уран бүтээлч (Artistic)”  хэв шинжүүд нь хоорондоо илүү төстэй, хамтдаа илрэх магадлал илүү байхад, харин загвар дээр эсрэг орших “Судлаач (Investigative)” болон “Нийгмийн идэвхтэй (Social)” хэв шинжүүд нь хоорондоо төдийлөн адилгүй, ялгаатай болохыг илтгэнэ (Трэйси & Раундз, 1993).',
+        marginX,
+        doc.y + 35,
+        { align: 'justify' },
+      );
     footer(doc);
+
+    doc.addPage();
+    header(doc, firstname, lastname, 'Танд илэрч буй хэв шинжүүд');
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { color } from 'echarts';
+import sharp from 'sharp';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { ResultDetailEntity } from 'src/app/exam/entities/result.detail.entity';
 import { ResultEntity } from 'src/app/exam/entities/result.entity';
@@ -757,9 +758,14 @@ export class Belbin {
     }
     let y = doc.y;
     const pie = await this.vis.createRadar(indicator, data);
-    doc.image(pie, 75, y - 10, {
+    let png = await sharp(pie)
+      .flatten({ background: '#ffffff' }) // ил тод байдал → цагаан дэвсгэр
+      .png({ progressive: false }) // interlaceгүй, pdfkit-д найдвартай
+      .toBuffer();
+    doc.image(png, 75, y - 10, {
       width: doc.page.width - 150,
     });
+
     doc.y += (doc.page.width / 425) * 310 - 150;
 
     const width = (doc.page.width / 8) * 5;
