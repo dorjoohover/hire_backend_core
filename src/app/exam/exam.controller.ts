@@ -108,7 +108,7 @@ export class ExamController {
   //   // (шаардлагатай бол эрх шалгалтаа энд)
   //   await this.examService.checkExam(+code);
 
-  //   const { path, size } = await this.fileService.getFile(filename);
+  //   const { path, size } = await this.fileService.getFileBuf(filename);
   //   const type = (mime.lookup(filename) as string) || 'application/pdf';
 
   //   // Толгойг тодорхой тавина — зарим прокси/шахалтэнд зайлшгүй хэрэгтэй
