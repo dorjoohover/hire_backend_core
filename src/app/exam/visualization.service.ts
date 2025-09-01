@@ -151,6 +151,9 @@ export class VisualizationService {
     indicator: { name: string; max: number }[],
     data: number[],
   ): Promise<Buffer> {
+    const max = indicator[0]?.max || 10;
+
+    const splitNumber = max <= 10 ? max : 5;
     const customFont = fontBold;
     const echartOption = {
       textStyle: {
@@ -158,8 +161,7 @@ export class VisualizationService {
       },
       radar: {
         indicator: indicator,
-        // Add splitNumber to resolve the tick readability warning
-        splitNumber: 4,
+        splitNumber: splitNumber,
         axisLine: {
           lineStyle: {
             width: 3,
@@ -172,8 +174,6 @@ export class VisualizationService {
             color: '#E0E0E0',
           },
         },
-        // 'name' was renamed to 'axisName' and the 'textStyle' object was removed.
-        // All style properties are now directly under 'axisName'.
         axisName: {
           fontSize: 50,
           color: colors.orange,
