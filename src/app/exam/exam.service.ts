@@ -69,7 +69,7 @@ export class ExamService extends BaseService {
     const doc = await this.pdfService.createPdfInOneFile(result, res);
     const resStream = new PassThrough();
     doc.pipe(resStream);
-    doc.end();
+    // doc.end();
     this.fileService.processMultipleImages(
       [],
       resStream,

@@ -676,7 +676,6 @@ export class SinglePdf {
       currentUserScore,
       percent,
     );
-    console.log(buffer);
     let png = await sharp(buffer)
       .flatten({ background: '#ffffff' }) // ил тод байдал → цагаан дэвсгэр
       .png({ progressive: false }) // interlaceгүй, pdfkit-д найдвартай

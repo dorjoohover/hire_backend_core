@@ -42,8 +42,8 @@ export const lh = {
 };
 
 export const assetPath = (p: string) => {
-  const imagePath = path.join(__dirname, `../../../../src/assets/${p}.png`);
-  return fs.readFileSync(imagePath);
+  const file = path.join(process.cwd(), 'src/assets', `${p}.png`);
+  return fs.readFileSync(file);
 };
 export function maxDigitDISC(n: string) {
   const label = 'DiSC'; // map of letters
