@@ -434,6 +434,7 @@ export class Holland {
     doc.image(pie, 75, y - 10, {
       width: doc.page.width - 150,
     });
+
     doc.y += (doc.page.width / 425) * 310 - 150;
     footer(doc);
   }

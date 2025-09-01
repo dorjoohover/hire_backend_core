@@ -4,6 +4,22 @@ import * as echarts from 'echarts';
 import { colors, fontBold, fontNormal } from './reports/formatter';
 
 // graphs
+
+const calculateSplitNumber = (max: number): number => {
+  if (!max) {
+    return 5;
+  }
+  if (max <= 6) {
+    return max;
+  }
+  const preferredSplits = [6, 4, 5, 3];
+  for (const splits of preferredSplits) {
+    if (max % splits === 0) {
+      return splits;
+    }
+  }
+  return 5;
+};
 @Injectable()
 export class VisualizationService {
   constructor() {
@@ -14,6 +30,7 @@ export class VisualizationService {
       family: fontNormal,
     });
   }
+
   async createChart(
     data: number[][],
     min: number,
@@ -153,7 +170,8 @@ export class VisualizationService {
   ): Promise<Buffer> {
     const max = indicator[0]?.max || 10;
 
-    const splitNumber = max <= 10 ? max : 5;
+    const splitNumber = calculateSplitNumber(max);
+    console.log('Calculated splitNumber:', splitNumber);
     const customFont = fontBold;
     const echartOption = {
       textStyle: {
