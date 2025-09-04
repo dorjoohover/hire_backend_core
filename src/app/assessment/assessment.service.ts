@@ -12,6 +12,7 @@ import { UserServiceDao } from '../user.service/user.service.dao';
 import { Meta } from 'src/base/base.interface';
 import { AssessmentStatus } from 'src/base/constants';
 import { ExamService } from '../exam/exam.service';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class AssessmentService {
@@ -90,8 +91,8 @@ export class AssessmentService {
     };
   }
 
-  public async findAll() {
-    const ass = await this.dao.findAll();
+  public async findAll(pg: PaginationDto) {
+    const ass = await this.dao.findAll(pg);
 
     const res = await Promise.all(
       ass.map(async (as) => {

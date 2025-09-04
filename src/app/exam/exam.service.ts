@@ -36,6 +36,7 @@ import { maxDigitDISC } from './reports/formatter';
 import { PassThrough } from 'stream';
 import { FileService } from 'src/file.service';
 import { Holland } from 'src/assets/report';
+import axios from 'axios';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -58,25 +59,26 @@ export class ExamService extends BaseService {
   }
 
   public async getPdf(id: number, role?: number) {
-    const res = await this.dao.findByCode(id);
-    if (!res?.visible && role == Role.client) {
-      throw new HttpException(
-        'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    const result = await this.resultDao.findOne(id);
-    const doc = await this.pdfService.createPdfInOneFile(result, res);
-    const resStream = new PassThrough();
-    doc.pipe(resStream);
-    // doc.end();
-    this.fileService.processMultipleImages(
-      [],
-      resStream,
-      `report-${id}.pdf`,
-      'application/pdf',
-    );
-    return doc;
+    // const res = await this.dao.findByCode(id);
+    // if (!res?.visible && role == Role.client) {
+    //   throw new HttpException(
+    //     'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
+    //     HttpStatus.FORBIDDEN,
+    //   );
+    // }
+    return true;
+    // const result = await this.resultDao.findOne(id);
+    // const doc = await this.pdfService.createPdfInOneFile(result, res);
+    // const resStream = new PassThrough();
+    // doc.pipe(resStream);
+    // // doc.end();
+    // this.fileService.processMultipleImages(
+    //   [],
+    //   resStream,
+    //   `report-${id}.pdf`,
+    //   'application/pdf',
+    // );
+    // return doc;
   }
 
   public checkExam = async (code: number) => {

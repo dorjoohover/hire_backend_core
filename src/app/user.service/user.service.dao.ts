@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, IsNull, Not, Repository } from 'typeorm';
+import { Between, DataSource, IsNull, Like, Not, Repository } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { AssessmentStatus, PaymentStatus } from 'src/base/constants';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class UserServiceDao {
@@ -58,10 +59,32 @@ export class UserServiceDao {
     return result;
   };
 
-  findAll = async () => {
-    return await this.db.find({
-      //   relations: [''],
+  findAll = async (pg: PaginationDto) => {
+    const whereCondition: any = {
+      createdAt:
+        pg.endDate && pg.startDate
+          ? Between(pg.startDate, pg.endDate)
+          : Not(IsNull()),
+    };
+
+    // Only add email condition if pg.email exists
+    if (pg.email) {
+      whereCondition.user = {
+        email: Like(`%${pg.email}%`),
+      };
+    }
+
+    const [data, count] = await this.db.findAndCount({
+      where: { ...whereCondition },
+      take: pg.limit,
+      skip: (pg.page == 0 ? 0 : pg.page - 1) * pg.limit,
+      relations: ['assessment', 'user'],
+      order: {
+        createdAt: 'DESC',
+      },
     });
+    const total = await this.db.count();
+    return { data, count, total };
   };
 
   findOne = async (id: number) => {

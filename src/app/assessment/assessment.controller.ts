@@ -16,6 +16,9 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Controller('assessment')
 @ApiBearerAuth('access-token')
@@ -31,9 +34,10 @@ export class AssessmentController {
   }
 
   @Public()
-  @Get()
-  findAll() {
-    return this.assessmentService.findAll();
+  @PQ(['type', 'status', 'name', 'category', 'createdUser'])
+  @Get('all')
+  findAll(@Pagination() pg: PaginationDto) {
+    return this.assessmentService.findAll(pg);
   }
   @Public()
   @Get('home/page')

@@ -25,6 +25,7 @@ import { ExamDao } from '../exam/dao/exam.dao';
 import { ResultDao } from '../exam/dao/result.dao';
 import { BarimtService } from '../barimt/barimt.service';
 import { Service } from 'aws-sdk';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class UserServiceService extends BaseService {
@@ -464,8 +465,8 @@ export class UserServiceService extends BaseService {
     return await this.examService.findExamByService(service);
   }
 
-  public async findAll() {
-    return await this.dao.findAll();
+  public async findAll(pg: PaginationDto) {
+    return await this.dao.findAll(pg);
   }
 
   public async findOne(id: number) {

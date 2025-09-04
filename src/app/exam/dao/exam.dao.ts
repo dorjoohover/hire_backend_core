@@ -51,11 +51,15 @@ export class ExamDao {
   };
 
   updateDate = async (code: number, dto: UpdateDateDto) => {
+    const date = new Date(dto.endDate);
+    // 8 tsagiin
+    
+    date.setHours(date.getHours() - 8);
     await this.db.update(
       { code },
       {
         // startDate: dto.startDate,
-        endDate: dto.endDate,
+        endDate: date,
       },
     );
   };

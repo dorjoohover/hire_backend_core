@@ -13,6 +13,7 @@ import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { DateDto } from '../dto/create-payment.dto';
 import { PaymentDao } from './payment.dao';
 import { PaymentType } from 'src/base/constants';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class TransactionDao {
@@ -70,10 +71,11 @@ export class TransactionDao {
     return res;
   };
 
-  findAll = async (page: number, limit: number, user: number) => {
+  findAll = async (pg: PaginationDto) => {
+    const { id, limit, page } = pg;
     return await this.db.findAndCount({
       where: {
-        createdUser: user == 0 ? Not(0) : user,
+        createdUser: id == 0 ? Not(0) : id,
       },
       take: limit,
       skip: (page - 1) * limit,
@@ -81,7 +83,7 @@ export class TransactionDao {
       order: {
         createdAt: 'DESC',
       },
-      relations: ['service', 'service.exams', ],
+      relations: ['service', 'service.exams'],
     });
   };
 

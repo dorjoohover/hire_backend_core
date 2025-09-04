@@ -27,6 +27,8 @@ import { ErrorLogModule } from './app/error-logs/error-log.module';
 import { BarimtModule } from './app/barimt/barimt.module';
 import { FileService } from './file.service';
 import { FileErrorLogService } from './base/error-log.service';
+import { ReportModule } from './app/report/report.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -35,13 +37,6 @@ import { FileErrorLogService } from './base/error-log.service';
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
 
-    // BullModule.forRoot({
-    //   connection: {
-    //     host: 'localhost',
-    //     port: 6379,
-    //   },
-
-    // }),
     // EbarimtModule,
     DatabaseModule,
     BarimtModule,
@@ -60,6 +55,7 @@ import { FileErrorLogService } from './base/error-log.service';
     ErrorLogModule,
     UserModule,
     UserServiceModule,
+    ReportModule,
   ],
   controllers: [AppController],
   providers: [

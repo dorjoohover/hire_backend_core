@@ -11,7 +11,7 @@ import {
   StreamableFile,
   HttpException,
   HttpStatus,
-  Response as NestResponse
+  Response as NestResponse,
 } from '@nestjs/common';
 import * as mime from 'mime-types';
 import { ExamService } from './exam.service';
@@ -34,6 +34,7 @@ import { PassThrough } from 'stream';
 import AWS from 'aws-sdk';
 import { join } from 'path';
 import { FileService } from 'src/file.service';
+import axios from 'axios';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -92,15 +93,28 @@ export class ExamController {
 
     // PDFKit.PDFDocument үүсгэнэ
     const doc = await this.examService.getPdf(+code, role);
+    console.log(doc, role, filename);
+    // if (doc) {
+    const response = await axios.get(`${process.env.REPORT}core/${code}`, {
+      responseType: 'stream',
+    });
+    res.setHeader('Content-Type', response.headers['content-type']);
+    res.setHeader('Content-Length', response.headers['content-length']);
+    res.setHeader(
+      'Content-Disposition',
+      response.headers['content-disposition'],
+    );
+    // Stream дамжуулах
+    response.data.pipe(res);
+    // }
+    // // ↓↓↓ заавал pipe-с ӨМНӨ тавина
+    // res.setHeader('Content-Type', 'application/pdf');
+    // res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    // res.setHeader('Cache-Control', 'no-store');
 
-    // ↓↓↓ заавал pipe-с ӨМНӨ тавина
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Cache-Control', 'no-store');
-
-    // Шууд хэрэглэгч рүү урсгана
-    doc.pipe(res);
-    doc.end();
+    // // Шууд хэрэглэгч рүү урсгана
+    // doc.pipe(res);
+    // doc.end();
   }
   // async requestPdf(@Param('code') code: string, @Res() res: Response) {
   //   const filename = `report-${code}.pdf`;

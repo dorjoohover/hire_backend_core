@@ -12,6 +12,7 @@ import {
 import { PaymentEntity } from '../entities/payment.entity';
 import { AdminDto, CreatePaymentDto, DateDto } from '../dto/create-payment.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class PaymentDao {
@@ -36,26 +37,19 @@ export class PaymentDao {
     return res.id;
   };
 
-  findAll = async (
-    role: number,
-    page: number,
-    limit: number,
-    user: number,
-    dto?: AdminDto,
-  ) => {
-    const where = dto?.assessmentId
+  findAll = async (pg: PaginationDto, user: number) => {
+    const { role, startDate, endDate, payment, assessmentId, limit, page } = pg;
+    const where = pg?.assessmentId
       ? {
           user: {
             role: role == 0 ? Not(role) : role,
             id: user == 0 ? Not(0) : user,
           },
           createdAt:
-            dto?.endDate && dto?.startDate
-              ? Between(dto.startDate, dto.endDate)
-              : Not(IsNull()),
+            endDate && startDate ? Between(startDate, endDate) : Not(IsNull()),
           totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
-          method: dto.payment ? In([dto.payment, 4]) : Not(0),
-          assessment: { id: dto.assessmentId },
+          method: payment ? In([payment, 4]) : Not(0),
+          assessment: { id: assessmentId },
         }
       : {
           user: {
@@ -63,11 +57,9 @@ export class PaymentDao {
             id: user == 0 ? Not(0) : user,
           },
           createdAt:
-            dto?.endDate && dto?.startDate
-              ? Between(dto.startDate, dto.endDate)
-              : Not(IsNull()),
+            endDate && startDate ? Between(startDate, endDate) : Not(IsNull()),
           totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
-          method: dto?.payment ? In([dto.payment, 4]) : Not(0),
+          method: payment ? In([payment, 4]) : Not(0),
         };
     return await this.db.findAndCount({
       where: where,
@@ -80,35 +72,44 @@ export class PaymentDao {
     });
   };
 
-  findAdmin = async (dto: AdminDto) => {
+  findAdmin = async (pg: PaginationDto) => {
     const res = this.db
       .createQueryBuilder('payment')
       .select('payment.method', 'method')
       .addSelect('SUM(payment."totalPrice")', 'total');
 
-    if (dto.endDate && dto.startDate) {
+    if (pg.endDate && pg.startDate) {
       res.andWhere('payment."createdAt" BETWEEN :start AND :end', {
-        start: dto.startDate,
-        end: dto.endDate,
+        start: pg.startDate,
+        end: pg.endDate,
       });
     }
 
-    if (dto.assessmentId) {
+    if (pg.assessmentId) {
       res.andWhere('payment."assessmentId" = :id', {
-        id: dto.assessmentId,
+        id: pg.assessmentId,
       });
     }
 
-    if (dto.role) {
+    if (pg.role) {
       res.innerJoin('users', 'user', 'payment."userId" = user.id');
       res.andWhere('user.role = :role', {
-        role: dto.role,
+        role: pg.role,
       });
     }
-
-    if (dto.payment) {
+    if (pg.assessmentName) {
+      res.innerJoin(
+        'assessment',
+        'assessment',
+        'payment."assessmentId" = assessment.id',
+      );
+      res.andWhere('assessment."assessmentName" LIKE :name', {
+        name: `%${pg.assessmentName}%`,
+      });
+    }
+    if (pg.payment) {
       res.andWhere('payment.method = :payment or payment.method = 4', {
-        payment: dto.payment,
+        payment: pg.payment,
       });
     }
 

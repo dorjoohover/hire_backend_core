@@ -9,6 +9,8 @@ import { UserDao } from '../user/user.dao';
 import { PaymentType } from 'src/base/constants';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { Admins, Role } from 'src/auth/guards/role/role.enum';
+import { PaginationDto } from 'src/base/decorator/pagination';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class PaymentService extends BaseService {
@@ -51,15 +53,9 @@ export class PaymentService extends BaseService {
     }
   }
 
-  public async findAdmin(dto: AdminDto, page: number, limit: number) {
-    const totalPrice = await this.dao.findAdmin(dto);
-    const [payment, count] = await this.dao.findAll(
-      dto.role ? dto.role : 0,
-      page,
-      limit,
-      0,
-      dto,
-    );
+  public async findAdmin(pg: PaginationDto) {
+    const totalPrice = await this.dao.findAdmin(pg);
+    const [payment, count] = await this.dao.findAll(pg, 0);
 
     return {
       totalPrice,
@@ -69,26 +65,18 @@ export class PaymentService extends BaseService {
     };
   }
 
-  public async findAll(
-    role: number,
-    page: number,
-    limit: number,
-    user: any,
-    userId: number,
-  ) {
+  public async findAll(pg: PaginationDto, user: UserEntity) {
+    const { role, id } = pg;
+    const userId = id;
     let transactions = [];
     let payments = [];
     let transactionCount = 0,
       paymentCount = 0;
-    const userInfo = await this.userDao.getUserInfo(userId);
+    const userInfo = await this.userDao.getUserInfo(pg.id);
     if (!userInfo)
       throw new HttpException('Хэрэглэгч олдсонгүй', HttpStatus.BAD_REQUEST);
     if (Admins.includes(+user['role'])) {
-      const [res, count] = await this.transactionDao.findAll(
-        page,
-        limit,
-        userId,
-      );
+      const [res, count] = await this.transactionDao.findAll(pg);
       transactionCount = count;
       for (const transaction of res) {
         const serviceId = transaction.service.id;
@@ -119,14 +107,15 @@ export class PaymentService extends BaseService {
     }
 
     const [res, count] = await this.dao.findAll(
-      Admins.includes(+user['role'])
-        ? userId
-          ? userInfo.role
-          : role
-        : +user['role'],
-      page,
-      limit,
-      Admins.includes(+user['role']) ? userId : user['id'],
+      {
+        ...pg,
+        role: Admins.includes(+user['role'])
+          ? userId
+            ? userInfo.role
+            : role
+          : +user['role'],
+      },
+      Admins.includes(+user.role) ? userId : user['id'],
     );
     paymentCount = count;
     for (const payment of res) {

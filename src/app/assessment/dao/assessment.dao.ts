@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Not, Repository } from 'typeorm';
+import { Between, DataSource, IsNull, Like, Not, Repository } from 'typeorm';
 import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
 import { QuestionDao } from 'src/app/question/dao/question.dao';
 import { Meta } from 'src/base/base.interface';
 import { AssessmentStatus } from 'src/base/constants';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class AssessmentDao {
@@ -65,9 +66,37 @@ export class AssessmentDao {
     return res.id;
   };
 
-  findAll = async () => {
+  findAll = async (pg: PaginationDto) => {
+    const whereCondition: any = {};
+    if (pg.type) {
+      whereCondition.type = pg.type;
+    }
+    if (pg.status) {
+      whereCondition.status = pg.status;
+    }
+    if (pg.name) {
+      whereCondition.status = Like(`%${pg.name}$`);
+    }
+    if (pg.category) {
+      whereCondition.category = {
+        id: pg.category,
+      };
+    }
+    if (pg.createdUser) {
+      whereCondition.createdUser = {
+        id: pg.createdUser,
+      };
+    }
     return await this.db.find({
+      where: {
+        ...whereCondition,
+      },
+      take: pg.limit,
+      skip: (pg.page == 0 ? 0 : pg.page - 1) * pg.limit,
       relations: ['level', 'category'],
+      order: {
+        createdAt: 'DESC',
+      },
     });
   };
 

@@ -28,6 +28,9 @@ import { ADMINS, Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Controller('blog')
 @ApiBearerAuth('access-token')
@@ -39,16 +42,10 @@ export class BlogController {
     return this.blogService.create(dto, user.id);
   }
   @Public()
-  @Get('all/:type/:limit/:page')
-  @ApiParam({ name: 'limit' })
-  @ApiParam({ name: 'type' })
-  @ApiParam({ name: 'page' })
-  findAll(
-    @Param('type') type: string,
-    @Param('limit') limit: number,
-    @Param('page') page: number,
-  ) {
-    return this.blogService.findAll(+type, limit, page);
+  @PQ(['type'])
+  @Get('all')
+  findAll(@Pagination() pg: PaginationDto) {
+    return this.blogService.findAll(pg);
   }
   @Public()
   @Get(':id')

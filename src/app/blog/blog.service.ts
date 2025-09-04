@@ -4,6 +4,7 @@ import { UpdateBlogDto } from './dto/update-blog.dto';
 import { DataSource, Not, Repository } from 'typeorm';
 import { BlogEntity } from './entities/blog.entity';
 import { FileService } from 'src/file.service';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class BlogService {
@@ -24,13 +25,10 @@ export class BlogService {
     return res.id;
   }
 
-  public async findAll(
-    type: number,
-    limit: number,
-    page: number,
-    user?: number,
-  ) {
-    const [data, total] = await this.db.findAndCount({
+  public async findAll(pg: PaginationDto, user?: number) {
+    const { type, page, limit } = pg;
+    const total = await this.db.count();
+    const [data, count] = await this.db.findAndCount({
       where: {
         category: type == 0 ? Not(type) : type,
         user: {
@@ -43,6 +41,7 @@ export class BlogService {
     });
     return {
       data,
+      count,
       total,
     };
   }

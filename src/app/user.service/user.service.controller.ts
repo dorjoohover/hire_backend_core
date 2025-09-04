@@ -26,6 +26,9 @@ import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Controller('userService')
 @ApiBearerAuth('access-token')
@@ -112,9 +115,11 @@ export class UserServiceController {
       user['email'],
     );
   }
-  @Get()
-  findAll() {
-    return this.userServiceService.findAll();
+
+  @PQ(['email', 'endDate', 'startDate'])
+  @Get('all')
+  findAll(@Pagination() pg: PaginationDto) {
+    return this.userServiceService.findAll(pg);
   }
   @Get('user/:id')
   @ApiParam({ name: 'id' })
