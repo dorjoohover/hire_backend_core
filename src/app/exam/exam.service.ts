@@ -494,12 +494,18 @@ export class ExamService extends BaseService {
 
       const top1 = sorted[0];
 
+      let cutoffIndex = 2;
+      while (
+        cutoffIndex + 1 < sorted.length &&
+        sorted[cutoffIndex].cause === sorted[cutoffIndex + 1].cause
+      ) {
+        cutoffIndex++;
+      }
+
       const abbrev = sorted
-        .slice(0, 3)
+        .slice(0, cutoffIndex + 1)
         .map((d) => d.value[0])
         .join('');
-
-      const finalResult = `${abbrev} / ${top1.value}`;
 
       await this.resultDao.create(
         {
@@ -512,8 +518,8 @@ export class ExamService extends BaseService {
           type: exam.assessment.report,
           limit: exam.assessment.duration,
           total: exam.assessment.totalPoint,
-          result: finalResult, // store SAE / Social
-          value: top1.value, // store main top1 category
+          result: abbrev,
+          value: top1.value,
         },
         details,
       );
@@ -521,7 +527,7 @@ export class ExamService extends BaseService {
       return {
         agent: top1.value,
         details,
-        result: finalResult,
+        result: abbrev,
       };
     }
 
