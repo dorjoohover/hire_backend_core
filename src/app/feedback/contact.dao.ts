@@ -3,6 +3,7 @@ import { BaseService } from 'src/base/base.service';
 import { ContactEntity } from './entities/contact.entity';
 import { DataSource, Repository } from 'typeorm';
 import { ContactDto } from './dto/create-feedback.dto';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class ContactDao extends BaseService {
@@ -20,8 +21,14 @@ export class ContactDao extends BaseService {
     });
     await this._db.save(res);
   }
-  public async getAll() {
+  public async getAll(pg: PaginationDto) {
+    const { type, limit, page } = pg;
     const [res, count] = await this._db.findAndCount({
+      where: {
+        type,
+      },
+      take: limit,
+      skip: (page - 1) * limit,
       order: {
         createdAt: 'desc',
       },

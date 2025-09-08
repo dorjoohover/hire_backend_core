@@ -8,6 +8,7 @@ import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { PaginationDto } from 'src/base/decorator/pagination';
 const saltOrRounds = 1;
 
 @Injectable()
@@ -187,8 +188,8 @@ export class UserService {
     // throw new HttpException('И-майл хаягаа баталгаажуулна уу', HttpStatus.FORBIDDEN);
     // return res;
   }
-  public async getAll() {
-    return await this.dao.getAll();
+  public async getAll(pg: PaginationDto) {
+    return await this.dao.getAll(pg);
   }
 
   public async sendOtp(email: string) {

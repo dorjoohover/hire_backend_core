@@ -24,6 +24,9 @@ import { ApiBearerAuth, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { PaginationDto } from 'src/base/decorator/pagination';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
 
 @ApiTags('User')
 @Controller('user')
@@ -78,8 +81,9 @@ export class UserController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.userService.getAll();
+  @PQ(['type'])
+  findAll(@Pagination() pg: PaginationDto) {
+    return this.userService.getAll(pg);
   }
 
   @Public()

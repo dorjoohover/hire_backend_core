@@ -12,10 +12,12 @@ export class ReportService {
   constructor(@InjectQueue('report') private reportQueue: Queue) {}
   async createReport(data: any, user: UserEntity) {
     const { code } = data;
-    const job = await this.reportQueue.add('generate', {
+    console.log(code);
+    const job = await this.reportQueue.add('default', {
       code,
       role: user?.role ?? Role.admin,
     });
+
     reportStore[job.id] = { status: 'PENDING', progress: 0 };
     return { jobId: job.id };
   }
@@ -35,7 +37,7 @@ export class ReportService {
 
   async getStatus(jobId: string) {
     const report = reportStore[jobId];
-    console.log(report)
+    console.log(report);
     if (!report) return { jobId, status: 'NOT_FOUND', progress: 0 };
     return { jobId, ...report };
   }
