@@ -11,14 +11,14 @@ export class ReportController {
 
   @Post()
   async create(@Body() dto: any, @Request() { user }) {
-    return this.reportsService.createReport(dto, user);
+    return this.reportsService.createReport(dto, user.role);
   }
 
   // Report service дууссан гэдэг callback
   @Post(':id/callback')
   async callback(@Param('id') id: string, @Body() body: any) {
     const { status, result, progress } = body;
-    console.log(body)
+    console.log(body);
     return this.reportsService.updateStatus(id, status, result, progress);
   }
   @Get(':id/status')

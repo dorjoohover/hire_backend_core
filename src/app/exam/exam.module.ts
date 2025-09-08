@@ -36,16 +36,22 @@ import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { FileService } from 'src/file.service';
+import { ReportService } from '../report/report.service';
+import { BullModule } from '@nestjs/bullmq';
 @Module({
   imports: [
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
+    BullModule.registerQueue({
+      name: 'report', // 👈 queue name
+    }),
   ],
   controllers: [ExamController],
   providers: [
     ExamService,
+    ReportService,
     ExamDao,
     ExamDetailDao,
     QuestionDao,

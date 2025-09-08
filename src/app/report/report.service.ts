@@ -10,12 +10,12 @@ const reportStore: Record<
 @Injectable()
 export class ReportService {
   constructor(@InjectQueue('report') private reportQueue: Queue) {}
-  async createReport(data: any, user: UserEntity) {
+  async createReport(data: any, role?: number) {
     const { code } = data;
-    console.log(code);
+
     const job = await this.reportQueue.add('default', {
       code,
-      role: user?.role ?? Role.admin,
+      role: role ?? Role.admin,
     });
 
     reportStore[job.id] = { status: 'PENDING', progress: 0 };

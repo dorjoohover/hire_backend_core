@@ -40,6 +40,8 @@ import {
 import { ResultDao } from '../exam/dao/result.dao';
 import { BarimtService } from '../barimt/barimt.service';
 import { FileService } from 'src/file.service';
+import { ReportService } from '../report/report.service';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -48,10 +50,14 @@ import { FileService } from 'src/file.service';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
+    BullModule.registerQueue({
+      name: 'report', // 👈 queue name
+    }),
   ],
   controllers: [UserServiceController],
   providers: [
     UserServiceService,
+    ReportService,
     UserServiceDao,
     DISC,
     Genos,

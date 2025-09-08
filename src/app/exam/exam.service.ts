@@ -37,6 +37,7 @@ import { PassThrough } from 'stream';
 import { FileService } from 'src/file.service';
 import { Holland } from 'src/assets/report';
 import axios from 'axios';
+import { ReportService } from '../report/report.service';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -54,6 +55,7 @@ export class ExamService extends BaseService {
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
     private fileService: FileService,
+    private report: ReportService,
   ) {
     super();
   }
@@ -92,7 +94,7 @@ export class ExamService extends BaseService {
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
     console.log('first', res);
-    this.getPdf(code, Role.admin);
+    this.report.createReport({ code });
     return res;
   };
 
