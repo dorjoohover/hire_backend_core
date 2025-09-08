@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateEmailLogDto } from './dto/create-email_log.dto';
-import { UpdateEmailLogDto } from './dto/update-email_log.dto';
+import { EmailLogDao } from './email_log.dao';
+import { EmailLogDto } from './email_log.dto';
+import { PaginationDto } from 'src/base/decorator/pagination';
+import { EmailLogStatus } from 'src/base/constants';
 
 @Injectable()
 export class EmailLogService {
-  create(createEmailLogDto: CreateEmailLogDto) {
-    return 'This action adds a new emailLog';
+  constructor(private dao: EmailLogDao) {}
+  public async create(dto: EmailLogDto) {
+    return await this.dao.create({ ...dto, status: EmailLogStatus.PENDING });
   }
 
-  findAll() {
-    return `This action returns all emailLog`;
+  public async findAll(pg: PaginationDto) {
+    return await this.dao.findAll(pg);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} emailLog`;
+  public async updateStatus(
+    id: number,
+    status: EmailLogStatus,
+    error?: string,
+  ) {
+    await this.dao.updateStatus(id, status, error);
   }
 
-  update(id: number, updateEmailLogDto: UpdateEmailLogDto) {
-    return `This action updates a #${id} emailLog`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} emailLog`;
+  public async deleteOne(id: number) {
+    await this.dao.delete(id);
   }
 }

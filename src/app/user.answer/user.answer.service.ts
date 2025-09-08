@@ -18,6 +18,8 @@ import { ExamService } from '../exam/exam.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import { UserDao } from '../user/user.dao';
 import { BarimtService } from '../barimt/barimt.service';
+import { EmailLogService } from '../email_log/email_log.service';
+import { EmailLogStatus } from 'src/base/constants';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -28,6 +30,7 @@ export class UserAnswerService extends BaseService {
     private mailService: MailerService,
     private examService: ExamService,
     private questionAnswerDao: QuestionAnswerDao,
+    private mailLog: EmailLogService,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
   ) {
     super();
@@ -178,11 +181,26 @@ export class UserAnswerService extends BaseService {
     const response = await this.examService.endExam(code, true);
 
     if (response?.visible) {
-      await this.mailService.sendMail({
-        to: email,
+      const log = await this.mailLog.create({
+        toEmail: email,
+        action: 'Create report',
         subject: 'Таны тайлан бэлэн боллоо',
-        html: this.generateEmailTemplate(id, name, code),
+        url: UserAnswerService.name,
       });
+      try {
+        await this.mailService.sendMail({
+          to: email,
+          subject: 'Таны тайлан бэлэн боллоо',
+          html: this.generateEmailTemplate(id, name, code),
+        });
+        await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
+      } catch (error) {
+        await this.mailLog.updateStatus(
+          log,
+          EmailLogStatus.FAILED,
+          error.message,
+        );
+      }
     }
 
     return { visible: response?.visible };

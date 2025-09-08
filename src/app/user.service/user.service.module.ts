@@ -42,6 +42,8 @@ import { BarimtService } from '../barimt/barimt.service';
 import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailLogDao } from '../email_log/email_log.dao';
+import { EmailLogService } from '../email_log/email_log.service';
 
 @Module({
   imports: [
@@ -66,6 +68,8 @@ import { BullModule } from '@nestjs/bullmq';
     Narc,
     Setgel,
     Darktriad,
+    EmailLogService,
+    EmailLogDao,
     Holland,
     SingleTemplate,
     ResultDao,

@@ -4,26 +4,33 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseService } from 'src/base/base.service';
 import { UserDao } from './user.dao';
 import * as bcrypt from 'bcrypt';
-import { CLIENT, ORGANIZATION } from 'src/base/constants';
+import { CLIENT, EmailLogStatus, ORGANIZATION } from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { PaginationDto } from 'src/base/decorator/pagination';
-const saltOrRounds = 1;
+import { EmailLogService } from '../email_log/email_log.service';
+export const saltOrRounds = 1;
 
 @Injectable()
 export class UserService {
   constructor(
     private dao: UserDao,
     private mailService: MailerService,
+    private mailLog: EmailLogService,
   ) {}
   async sendConfirmMail(email: string) {
+    const log = await this.mailLog.create({
+      toEmail: email,
+      action: 'Email verification',
+      subject: 'И-мэйл хаяг баталгаажуулах тухай',
+      url: UserService.name,
+    });
     try {
-      await this.mailService
-        .sendMail({
-          to: email,
-          subject: 'И-мэйл хаяг баталгаажуулах тухай',
-          html: `
+      await this.mailService.sendMail({
+        to: email,
+        subject: 'И-мэйл хаяг баталгаажуулах тухай',
+        html: `
           <!DOCTYPE html>
           <html>
           <head>
@@ -130,10 +137,14 @@ export class UserService {
           </body>
           </html>
           `,
-        })
-        .catch((err) => console.log(err));
+      });
+      await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
     } catch (error) {
-      console.log(error);
+      await this.mailLog.updateStatus(
+        log,
+        EmailLogStatus.FAILED,
+        error.message,
+      );
     }
   }
 
@@ -195,13 +206,19 @@ export class UserService {
   public async sendOtp(email: string) {
     let generated = Math.floor(Math.random() * 1000000);
     const code = generated.toString().padStart(6, '0');
-
-    await this.dao.updateByEmail({
-      email,
+    const log = await this.mailLog.create({
+      toEmail: email,
+      action: 'forget password',
       code,
+      subject: 'Нууц үг сэргээх тухай',
+      url: UserService.name,
     });
-    await this.mailService
-      .sendMail({
+    try {
+      await this.dao.updateByEmail({
+        email,
+        code,
+      });
+      await this.mailService.sendMail({
         to: email,
         subject: 'Нууц үг сэргээх тухай',
         html: `
@@ -310,8 +327,15 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
     </body>
     </html>
     `,
-      })
-      .catch((err) => console.log(err));
+      });
+      await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
+    } catch (error) {
+      await this.mailLog.updateStatus(
+        log,
+        EmailLogStatus.FAILED,
+        error.message,
+      );
+    }
   }
   public async updatePassword(email: string, password: string) {
     const hashed = await bcrypt.hash(password, saltOrRounds);

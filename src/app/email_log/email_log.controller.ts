@@ -1,45 +1,25 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param, Delete } from '@nestjs/common';
 import { EmailLogService } from './email_log.service';
-import { CreateEmailLogDto } from './dto/create-email_log.dto';
-import { UpdateEmailLogDto } from './dto/update-email_log.dto';
+import { PaginationDto } from 'src/base/decorator/pagination';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { Roles } from 'src/auth/guards/role/role.decorator';
+import { Role } from 'src/auth/guards/role/role.enum';
 
 @Controller('email_log')
 export class EmailLogController {
   constructor(private readonly emailLogService: EmailLogService) {}
 
-  @Post()
-  create(@Body() createEmailLogDto: CreateEmailLogDto) {
-    return this.emailLogService.create(createEmailLogDto);
+  @Roles(Role.super_admin, Role.tester, Role.admin)
+  @PQ(['user', 'status'])
+  @Get('all')
+  findAll(@Pagination() pg: PaginationDto) {
+    return this.emailLogService.findAll(pg);
   }
 
-  @Get()
-  findAll() {
-    return this.emailLogService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.emailLogService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateEmailLogDto: UpdateEmailLogDto,
-  ) {
-    return this.emailLogService.update(+id, updateEmailLogDto);
-  }
-
+  @Roles(Role.super_admin, Role.admin)
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.emailLogService.remove(+id);
+    return this.emailLogService.deleteOne(+id);
   }
 }

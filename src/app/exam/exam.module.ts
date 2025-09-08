@@ -38,6 +38,8 @@ import { PaymentDao } from '../payment/dao/payment.dao';
 import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailLogDao } from '../email_log/email_log.dao';
+import { EmailLogService } from '../email_log/email_log.service';
 @Module({
   imports: [
     JwtModule.register({
@@ -50,6 +52,8 @@ import { BullModule } from '@nestjs/bullmq';
   ],
   controllers: [ExamController],
   providers: [
+    EmailLogService,
+    EmailLogDao,
     ExamService,
     ReportService,
     ExamDao,

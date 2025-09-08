@@ -14,6 +14,8 @@ import { UserDao } from '../user/user.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { ExamModule } from '../exam/exam.module';
+import { EmailLogDao } from '../email_log/email_log.dao';
+import { EmailLogService } from '../email_log/email_log.service';
 
 @Module({
   imports: [ExamModule],
@@ -27,6 +29,8 @@ import { ExamModule } from '../exam/exam.module';
     UserService,
     UserDao,
     AssessmentLevelDao,
+    EmailLogService,
+    EmailLogDao,
     AssessmentCalculatorService,
     UserAnswerDao,
     QuestionAnswerCategoryDao,

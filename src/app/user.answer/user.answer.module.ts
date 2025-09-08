@@ -39,6 +39,8 @@ import { UserServiceDao } from '../user.service/user.service.dao';
 import { FileService } from 'src/file.service';
 import { BullModule } from '@nestjs/bullmq';
 import { ReportService } from '../report/report.service';
+import { EmailLogDao } from '../email_log/email_log.dao';
+import { EmailLogService } from '../email_log/email_log.service';
 @Module({
   imports: [
     JwtModule.register({
@@ -55,6 +57,8 @@ import { ReportService } from '../report/report.service';
     UserAnswerDao,
     QuestionDao,
     ReportService,
+    EmailLogService,
+    EmailLogDao,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
     ExamDao,

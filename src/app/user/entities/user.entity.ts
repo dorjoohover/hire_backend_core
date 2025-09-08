@@ -1,4 +1,5 @@
 import { BlogEntity } from 'src/app/blog/entities/blog.entity';
+import { EmailLogEntity } from 'src/app/email_log/email_log.entity';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
@@ -56,6 +57,10 @@ export class UserEntity {
     nullable: true,
   })
   charges?: PaymentEntity[];
+  @OneToMany(() => PaymentEntity, (payment) => payment.user, {
+    nullable: true,
+  })
+  emailLogs?: EmailLogEntity[];
   @OneToMany(() => UserServiceEntity, (service) => service.user, {
     nullable: true,
   })
