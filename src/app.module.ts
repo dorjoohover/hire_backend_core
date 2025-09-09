@@ -29,6 +29,7 @@ import { FileService } from './file.service';
 import { FileErrorLogService } from './base/error-log.service';
 import { ReportModule } from './app/report/report.module';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailLogModule } from './app/email_log/email_log.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { BullModule } from '@nestjs/bullmq';
     BarimtModule,
     BlogModule,
     BaseModule,
+    EmailLogModule,
     EmailModule,
     AuthModule,
     AssessmentCategoryModule,

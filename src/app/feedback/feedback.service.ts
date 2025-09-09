@@ -5,6 +5,7 @@ import { BaseService } from 'src/base/base.service';
 import { DataSource, Db, Not, Repository } from 'typeorm';
 import { FeedbackEntity } from './entities/feedback.entity';
 import { FeedbackType } from 'src/base/constants';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class FeedbackService extends BaseService {
@@ -28,12 +29,8 @@ export class FeedbackService extends BaseService {
     return this._db.save(res);
   }
 
-  public async findAll(
-    type: number,
-    assessment: number,
-    page: number,
-    limit: number,
-  ) {
+  public async findAll(pg: PaginationDto) {
+    const { type, assessment, limit, page } = pg;
     return await this._db.findAndCount({
       where: {
         type,

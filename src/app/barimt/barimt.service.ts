@@ -5,11 +5,14 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { BarimtDto, BarimtResponseDto } from './dto/barimt.dto';
 import { UserEntity } from '../user/entities/user.entity';
 import { format } from 'date-fns';
+import { EmailLogService } from '../email_log/email_log.service';
+import { EmailLogStatus } from 'src/base/constants';
 @Injectable()
 export class BarimtService {
   constructor(
     private readonly httpService: HttpService,
     private mailer: MailerService,
+    private mailLog: EmailLogService,
   ) {}
 
   private accessToken: string | null = null;
@@ -163,11 +166,17 @@ export class BarimtService {
   // }
 
   async sendEmail(email: string, dto: any, qrdata?: string) {
-    console.log(dto);
-    await this.mailer.sendMail({
-      to: email,
+    const log = await this.mailLog.create({
+      toEmail: email,
+      action: 'баримт үүсгэх',
       subject: 'И-баримт хүлээн авах',
-      html: `
+      url: BarimtService.name,
+    });
+    try {
+      await this.mailer.sendMail({
+        to: email,
+        subject: 'И-баримт хүлээн авах',
+        html: `
     <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
       <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px;">
         ${
@@ -205,17 +214,24 @@ export class BarimtService {
       </div>
     </div>
   `,
-      attachments: qrdata
-        ? [
-            {
-              filename: 'qrcode.png',
-              content: qrdata.split(',')[1],
-              encoding: 'base64',
-              cid: 'qrCode',
-            },
-          ]
-        : [],
-    });
+        attachments: qrdata
+          ? [
+              {
+                filename: 'qrcode.png',
+                content: qrdata.split(',')[1],
+                encoding: 'base64',
+                cid: 'qrCode',
+              },
+            ]
+          : [],
+      });
+    } catch (error) {
+      await this.mailLog.updateStatus(
+        log,
+        EmailLogStatus.FAILED,
+        error.message,
+      );
+    }
   }
 
   async getBarimt(id: number, email: string) {

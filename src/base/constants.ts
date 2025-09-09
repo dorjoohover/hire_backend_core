@@ -1,4 +1,4 @@
-export const DEFAULT_PAGE = 0;
+export const DEFAULT_PAGE = 1;
 export const DEFAULT_LIMIT = 20;
 
 // admin nemeh bolomjtoi
@@ -20,6 +20,11 @@ export const QuestionLevel = {
   EASY: 30,
 };
 
+export enum EmailLogStatus {
+  SENT = 10,
+  PENDING = 20,
+  FAILED = 30,
+}
 export const QuestionCategoryType = {
   QUESTION: 10,
   CATEGORY: 20,
@@ -145,3 +150,13 @@ export const SaleStatusDict = {
   10: 'Үүссэн',
   20: 'Ээлж хаасан',
 };
+
+export function generatePassword(length = 6): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}

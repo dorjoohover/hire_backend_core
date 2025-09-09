@@ -98,6 +98,7 @@ export class ExamController {
     const response = await axios.get(`${process.env.REPORT}core/${code}`, {
       responseType: 'stream',
     });
+    console.log(res, response);
     res.setHeader('Content-Type', response.headers['content-type']);
     res.setHeader('Content-Length', response.headers['content-length']);
     res.setHeader(

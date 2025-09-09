@@ -6,9 +6,10 @@ import { BaseService } from 'src/base/base.service';
 import { BaseModule } from 'src/base/base.module';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { EmailLogModule } from '../email_log/email_log.module';
 
 @Module({
-  imports: [BaseModule],
+  imports: [BaseModule, EmailLogModule],
   controllers: [UserController],
   providers: [UserService, UserDao, BaseService, AuthService, JwtService],
   exports: [UserService],

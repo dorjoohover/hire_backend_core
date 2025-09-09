@@ -18,7 +18,12 @@ import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
-import { PaymentStatus, PaymentType } from 'src/base/constants';
+import {
+  EmailLogStatus,
+  generatePassword,
+  PaymentStatus,
+  PaymentType,
+} from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
@@ -26,7 +31,9 @@ import { ResultDao } from '../exam/dao/result.dao';
 import { BarimtService } from '../barimt/barimt.service';
 import { Service } from 'aws-sdk';
 import { PaginationDto } from 'src/base/decorator/pagination';
-
+import { EmailLogService } from '../email_log/email_log.service';
+import * as bcrypt from 'bcrypt';
+import { saltOrRounds } from '../user/user.service';
 @Injectable()
 export class UserServiceService extends BaseService {
   constructor(
@@ -41,6 +48,7 @@ export class UserServiceService extends BaseService {
     private qpay: QpayService,
     private result: ResultDao,
     private barimt: BarimtService,
+    private mailLog: EmailLogService,
   ) {
     super();
   }
@@ -264,9 +272,15 @@ export class UserServiceService extends BaseService {
     return code;
   }
   public async sendLinkToMail(dto: SendLinkToEmails) {
-    try {
-      Promise.all(
-        dto.links.map(async (email) => {
+    Promise.all(
+      dto.links.map(async (email) => {
+        const log = await this.mailLog.create({
+          toEmail: email.email,
+          action: 'sent invitation',
+          subject: 'Танд тестийн урилга ирлээ',
+          url: UserServiceService.name,
+        });
+        try {
           await this.examService.updateExamByCode(email.code, {
             email: email.email,
             firstname: email.firstname,
@@ -278,7 +292,19 @@ export class UserServiceService extends BaseService {
           // Check if user exists in database
           const existingUser = await this.userDao.findByEmail(email.email);
           const isNewUser = !existingUser;
-
+          let password;
+          if (isNewUser) {
+            const generatedPassword = generatePassword();
+            password = await bcrypt.hash(generatedPassword, saltOrRounds);
+            await this.userDao.add({
+              email: email.email,
+              firstname: email.firstname,
+              lastname: email.lastname,
+              role: Role.client,
+              wallet: 0,
+              password,
+            });
+          }
           const exam = await this.examDao.findByCode(email.code);
           const date = new Date(exam.endDate);
           const year = date.getFullYear();
@@ -300,6 +326,8 @@ export class UserServiceService extends BaseService {
               <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
               <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
                 Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
+          <div> <p>Нэвтрэх и-мэйл хаяг: ${email}</p>
+          <p>Нууц үг: ${password}</p></div>
               </p>
             </td>
           </tr>
@@ -411,6 +439,7 @@ export class UserServiceService extends BaseService {
             </td>
           </tr>
               <br/>
+          
                         <tr>
                         <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                           <p style="margin: 0 0 15px 0;">
@@ -446,11 +475,16 @@ export class UserServiceService extends BaseService {
           </html>
           `,
           });
-        }),
-      );
-    } catch (error) {
-      console.log(error);
-    }
+          await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
+        } catch (error) {
+          await this.mailLog.updateStatus(
+            log,
+            EmailLogStatus.FAILED,
+            error.message,
+          );
+        }
+      }),
+    );
   }
   public async updateCount(
     service: number,

@@ -5,6 +5,7 @@ import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class UserDao {
@@ -100,8 +101,12 @@ export class UserDao {
     //   builder.values,
     // );
   };
-  getAll = async () => {
-    const res = await this._db.find();
+  getAll = async (pg: PaginationDto) => {
+    const { page, limit } = pg;
+    const res = await this._db.find({
+      take: limit,
+      skip: (page - 1) * limit,
+    });
     return res;
   };
   get = async (id: any) => {
