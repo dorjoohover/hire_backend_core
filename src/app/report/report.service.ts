@@ -44,7 +44,6 @@ export class ReportService {
   async getStatus(jobId: string) {
     let report = reportStore[jobId];
 
-    // Хэрэв jobId-р олдохгүй бол code-р хайна
     if (!report) {
       const found = Object.entries(reportStore).find(
         ([, value]) => value.code === jobId,
@@ -55,9 +54,21 @@ export class ReportService {
     }
 
     if (!report) {
-      return { jobId, status: 'NOT_FOUND', progress: 0 };
+      return {
+        jobId,
+        status: 'NOT_FOUND',
+        progress: 0,
+        result: null,
+        code: null,
+      };
     }
 
-    return { jobId, ...report };
+    return {
+      jobId,
+      status: report.status,
+      progress: report.progress,
+      result: report.result ?? null,
+      code: report.code,
+    };
   }
 }
