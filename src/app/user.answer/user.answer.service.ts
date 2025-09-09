@@ -203,7 +203,7 @@ export class UserAnswerService extends BaseService {
       }
     }
 
-    return { visible: response?.visible };
+    return { visible: response?.visible, jobId: response.jobId };
   }
   private generateEmailTemplate(
     id: number,

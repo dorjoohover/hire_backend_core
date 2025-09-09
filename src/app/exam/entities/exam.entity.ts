@@ -33,6 +33,8 @@ export class ExamEntity {
   lastname: string;
   @Column({ nullable: true })
   phone: string;
+  @Column({ nullable: true })
+  job: string;
   @Column({ default: true, nullable: true })
   visible: boolean;
 

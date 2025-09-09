@@ -53,7 +53,7 @@ export class ExamDao {
   updateDate = async (code: number, dto: UpdateDateDto) => {
     const date = new Date(dto.endDate);
     // 8 tsagiin
-    
+
     date.setHours(date.getHours() - 8);
     await this.db.update(
       { code },
@@ -71,6 +71,10 @@ export class ExamDao {
     const { email, lastname, firstname, phone } = dto;
     const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ ...res, email, lastname, firstname, phone });
+  };
+  updateByCodeJob = async (code: number, job: string) => {
+    const res = await this.db.findOne({ where: { code: code } });
+    await this.db.save({ ...res, job });
   };
 
   endExam = async (code: number) => {

@@ -3,9 +3,10 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { ExamService } from '../exam/exam.service';
 const reportStore: Record<
   string,
-  { status: string; result?: any; progress: number }
+  { status: string; result?: any; progress: number; code?: string }
 > = {};
 @Injectable()
 export class ReportService {
@@ -18,7 +19,7 @@ export class ReportService {
       role: role ?? Role.admin,
     });
 
-    reportStore[job.id] = { status: 'PENDING', progress: 0 };
+    reportStore[job.id] = { status: 'PENDING', progress: 0, code };
     return { jobId: job.id };
   }
 
@@ -34,11 +35,29 @@ export class ReportService {
     reportStore[jobId] = { ...prev, status, result, progress };
     return { jobId, ...reportStore[jobId] };
   }
-
+  findJobIdByCode(code: string) {
+    const entry = Object.entries(reportStore).find(
+      ([_, value]) => value.code === code,
+    );
+    return entry ? entry[0] : null; // entry[0] нь jobId
+  }
   async getStatus(jobId: string) {
-    const report = reportStore[jobId];
-    console.log(report);
-    if (!report) return { jobId, status: 'NOT_FOUND', progress: 0 };
+    let report = reportStore[jobId];
+
+    // Хэрэв jobId-р олдохгүй бол code-р хайна
+    if (!report) {
+      const found = Object.entries(reportStore).find(
+        ([, value]) => value.code === jobId,
+      );
+      if (found) {
+        [jobId, report] = found;
+      }
+    }
+
+    if (!report) {
+      return { jobId, status: 'NOT_FOUND', progress: 0 };
+    }
+
     return { jobId, ...report };
   }
 }

@@ -94,8 +94,9 @@ export class ExamService extends BaseService {
     await this.dao.endExam(code);
     const res = await this.calculateExamById(code, calculate);
     console.log('first', res);
-    this.report.createReport({ code });
-    return res;
+    const job = await this.report.createReport({ code });
+    await this.dao.updateByCodeJob(code, job.jobId);
+    return { ...res, jobId: job.jobId };
   };
 
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
@@ -811,6 +812,9 @@ export class ExamService extends BaseService {
       formatted.push({ ...body, totalPoint: assessment.totalPoint });
     }
     return formatted;
+  }
+  public async findByCode(code: number | string) {
+    return await this.dao.findByCode(code as number);
   }
   public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
     let [res, count] = await this.dao.findByAdmin(dto, page, limit);
