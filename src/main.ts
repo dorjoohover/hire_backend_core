@@ -35,7 +35,11 @@ async function bootstrap() {
   );
   const httpAdapterHost = app.get(HttpAdapterHost);
   app.useGlobalFilters(
-    new AllExceptionsFilter(httpAdapterHost, errorLogService, fileErrorLogService),
+    new AllExceptionsFilter(
+      httpAdapterHost,
+      errorLogService,
+      fileErrorLogService,
+    ),
   );
   setupSwagger(app);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
@@ -57,7 +61,7 @@ async function bootstrap() {
     );
   });
   app.useGlobalInterceptors(new LoggingInterceptor());
-  await app.listen(5000, '0.0.0.0');
-  // await app.listen(3000, '0.0.0.0');
+  // await app.listen(5000, '0.0.0.0');
+  await app.listen(3000, '0.0.0.0');
 }
 bootstrap();
