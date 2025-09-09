@@ -326,8 +326,8 @@ export class UserServiceService extends BaseService {
               <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
               <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
                 Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
-          <div> <p>Нэвтрэх и-мэйл хаяг: ${email}</p>
-          <p>Нууц үг: ${password}</p></div>
+          <td> <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нэвтрэх и-мэйл хаяг: ${email.email}</p>
+          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: ${password}</p></td>
               </p>
             </td>
           </tr>
