@@ -95,7 +95,6 @@ export class ExamService extends BaseService {
     const res = await this.calculateExamById(code, calculate);
     console.log('first', res);
     const job = await this.report.createReport({ code });
-    await this.dao.updateByCodeJob(code, job.jobId);
     return { ...res, jobId: job.jobId };
   };
 
