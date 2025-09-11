@@ -75,7 +75,7 @@ export class AssessmentDao {
       whereCondition.status = pg.status;
     }
     if (pg.name) {
-      whereCondition.status = Like(`%${pg.name}$`);
+      whereCondition.status = Like(`%${pg.name}%`);
     }
     if (pg.category) {
       whereCondition.category = {

@@ -33,8 +33,6 @@ export class ExamEntity {
   lastname: string;
   @Column({ nullable: true })
   phone: string;
-  @Column({ nullable: true })
-  job: string;
   @Column({ default: true, nullable: true })
   visible: boolean;
 
@@ -64,5 +62,5 @@ export class ExamEntity {
   @OneToMany(() => UserAnswerEntity, (userAns) => userAns.exam)
   userAnswers: UserAnswerEntity[];
   @ManyToOne(() => UserEntity, (user) => user.exams)
-  user: UserEntity; 
+  user: UserEntity;
 }
