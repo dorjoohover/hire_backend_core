@@ -13,8 +13,9 @@ import {
 export class ContactEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
+
   @Column()
   type: number;
   @Column({ nullable: true })

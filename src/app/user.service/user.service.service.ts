@@ -259,7 +259,7 @@ export class UserServiceService extends BaseService {
             assessment: service.assessment,
           },
           service.user
-            ? service.user.role == Role.client
+            ? role == Role.client
               ? service.user
               : null
             : null,

@@ -22,8 +22,9 @@ export class TransactionEntity {
   @Column({ nullable: true })
   count: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
   @ManyToOne(() => PaymentEntity, (exam) => exam.transactions, {
     nullable: true,
   })

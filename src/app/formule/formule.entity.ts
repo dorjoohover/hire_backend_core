@@ -42,10 +42,15 @@ export class FormulaEntity {
   filters?: {
     [key: string]: any;
   };
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-  @UpdateDateColumn()
-  updateAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
   @Column({ nullable: true })
   createdUser: number;
   @Column({ nullable: true })

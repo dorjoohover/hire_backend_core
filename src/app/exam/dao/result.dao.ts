@@ -1,17 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Between,
-  DataSource,
-  In,
-  IsNull,
-  Like,
-  Not,
-  Repository,
-} from 'typeorm';
-import { ExamEntity } from '../entities/exam.entity';
-import { AdminExamDto, CreateExamDto } from '../dto/create-exam.dto';
-import { UserEntity } from 'src/app/user/entities/user.entity';
-import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
+import { DataSource, IsNull, Not, Repository } from 'typeorm';
 import { ResultEntity } from '../entities/result.entity';
 import { ResultDetailEntity } from '../entities/result.detail.entity';
 import { ResultDetailDto, ResultDto } from '../dto/result.dto';

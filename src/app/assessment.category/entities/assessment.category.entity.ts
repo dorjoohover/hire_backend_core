@@ -21,10 +21,14 @@ export class AssessmentCategoryEntity {
   index: number;
   @Column({ unique: true })
   name: string;
-
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-  @UpdateDateColumn()
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
   @Column()
   createdUser: number;

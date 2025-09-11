@@ -29,10 +29,10 @@ export class ErrorLog {
 
   @Column({ nullable: true })
   ip?: string;
-  
+
   @Column({ nullable: true })
   device?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date;
 }

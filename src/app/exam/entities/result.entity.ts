@@ -29,11 +29,15 @@ export class ResultEntity {
 
   @Column()
   firstname: string;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-  @UpdateDateColumn()
-  updatedAt: Date;
 
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
   @OneToMany(() => ResultDetailEntity, (userAns) => userAns.result, {
     nullable: true,
     onDelete: 'CASCADE',

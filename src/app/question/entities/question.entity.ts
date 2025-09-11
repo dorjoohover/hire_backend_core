@@ -38,10 +38,15 @@ export class QuestionEntity {
   orderNumber: number;
   @Column({ nullable: true })
   slider: string;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-  @UpdateDateColumn()
-  updateAt: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
   @Column({ nullable: true })
   createdUser: number;
   @Column({ nullable: true })

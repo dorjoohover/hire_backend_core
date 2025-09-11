@@ -18,8 +18,9 @@ export class PaymentEntity {
   @Column()
   totalPrice: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
   @Column()
   method: number;
   @Column({ nullable: true })
@@ -31,7 +32,7 @@ export class PaymentEntity {
   charger: UserEntity;
   @ManyToOne(() => AssessmentEntity, (user) => user.payments, {
     nullable: true,
-    onDelete: 'CASCADE'
+    onDelete: 'CASCADE',
   })
   assessment: AssessmentEntity;
   @OneToMany(() => TransactionEntity, (transaction) => transaction.payment, {

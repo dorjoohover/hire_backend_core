@@ -33,8 +33,9 @@ export class UserServiceEntity {
     onDelete: 'CASCADE',
   })
   assessment: AssessmentEntity;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
   @OneToMany(() => ExamEntity, (exam) => exam.service, {
     nullable: true,
     onDelete: 'CASCADE',

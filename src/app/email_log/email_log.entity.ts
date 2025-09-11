@@ -40,6 +40,6 @@ export class EmailLogEntity {
   @Column({ type: 'text', nullable: true })
   error: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 }

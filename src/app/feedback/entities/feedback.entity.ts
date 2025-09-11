@@ -13,7 +13,7 @@ import {
 export class FeedbackEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
   @Column()
   type: number;

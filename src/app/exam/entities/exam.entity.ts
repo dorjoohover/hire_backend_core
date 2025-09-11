@@ -38,8 +38,9 @@ export class ExamEntity {
 
   @Column({ nullable: true })
   startDate: Date;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
   @Column({ nullable: true })
   endDate: Date;
   @Column({ nullable: true })

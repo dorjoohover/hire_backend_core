@@ -33,8 +33,9 @@ export class BlogEntity {
 
   @Column({ default: false })
   pinned: boolean;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
+
   @ManyToOne(() => UserEntity, (payment) => payment.blogs)
   user: UserEntity;
 }

@@ -69,9 +69,14 @@ export class AssessmentEntity {
   report: number;
   @Column({ nullable: true, default: false })
   partialScore: boolean;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
-  @UpdateDateColumn()
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updatedAt: Date;
   @Column()
   createdUser: number;

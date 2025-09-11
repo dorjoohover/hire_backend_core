@@ -43,8 +43,9 @@ export class UserEntity {
   position?: string;
   @Column({ nullable: true })
   forget?: string;
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
+
   @Column({ default: 0 })
   wallet: number;
   @Column({ default: false })
@@ -77,5 +78,4 @@ export class UserEntity {
     nullable: true,
   })
   exams?: ExamEntity[];
-
 }
