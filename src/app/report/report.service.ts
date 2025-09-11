@@ -1,16 +1,26 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { ExamService } from '../exam/exam.service';
+import { UserAnswerService } from '../user.answer/user.answer.service';
+import { ModuleRef } from '@nestjs/core';
 const reportStore: Record<
   string,
   { status: string; result?: any; progress: number; code?: string }
 > = {};
 @Injectable()
 export class ReportService {
-  constructor(@InjectQueue('report') private reportQueue: Queue) {}
+  private userAnswer: UserAnswerService;
+  constructor(
+    private moduleRef: ModuleRef,
+    @InjectQueue('report') private reportQueue: Queue,
+  ) {}
+  onModuleInit() {
+    // runtime-д UserAnswerService-г авна
+    this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
+  }
   async createReport(data: any, role?: number) {
     const { code } = data;
 
@@ -18,6 +28,7 @@ export class ReportService {
       code,
       role: role ?? Role.admin,
     });
+    console.log(code)
 
     reportStore[job.id] = { status: 'PENDING', progress: 0, code };
     return { jobId: job.id };
@@ -62,7 +73,9 @@ export class ReportService {
         code: null,
       };
     }
-
+    if (report.progress == 100 && report.code) {
+      this.userAnswer.sendEmail(report.code);
+    }
     return {
       jobId,
       status: report.status,

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import { ExamController } from './exam.controller';
 import { ExamDao } from './dao/exam.dao';
@@ -12,25 +12,12 @@ import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.categ
 import { FormuleService } from '../formule/formule.service';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
-import { VisualizationService } from './visualization.service';
-import { PdfService } from './pdf.service';
-import { SinglePdf } from './reports/single.pdf';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { jwtConstants } from 'src/auth/constants';
-import {
-  Belbin,
-  DISC,
-  Empathy,
-  Genos,
-  Narc,
-  Setgel,
-  Darktriad,
-  SingleTemplate,
-  Holland,
-} from 'src/assets/report/index';
+
 import { ResultDao } from './dao/result.dao';
 import { TransactionDao } from '../payment/dao/transaction.dao';
 import { UserServiceDao } from '../user.service/user.service.dao';
@@ -40,6 +27,8 @@ import { ReportService } from '../report/report.service';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
+import { UserAnswerService } from '../user.answer/user.answer.service';
+import { ReportModule } from '../report/report.module';
 @Module({
   imports: [
     JwtModule.register({
@@ -62,28 +51,17 @@ import { EmailLogService } from '../email_log/email_log.service';
     QuestionCategoryDao,
     AssessmentDao,
     QuestionService,
-    VisualizationService,
-    DISC,
-    Genos,
-    Empathy,
-    Narc,
     FileService,
     AssessmentDao,
-    Setgel,
-    Darktriad,
-    Holland,
-    SingleTemplate,
     ResultDao,
     TransactionDao,
     UserServiceDao,
     PaymentDao,
-    Belbin,
-    PdfService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
     FormuleService,
     UserAnswerDao,
-    SinglePdf,
+    UserAnswerService,
     AuthService,
     UserService,
     UserDao,

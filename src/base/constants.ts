@@ -153,7 +153,7 @@ export const SaleStatusDict = {
 
 export function generatePassword(length = 6): string {
   const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    '0123456789';
   let password = '';
   for (let i = 0; i < length; i++) {
     password += chars.charAt(Math.floor(Math.random() * chars.length));

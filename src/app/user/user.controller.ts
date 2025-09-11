@@ -81,7 +81,7 @@ export class UserController {
 
   @Public()
   @Get()
-  @PQ(['type'])
+  @PQ(['role'])
   findAll(@Pagination() pg: PaginationDto) {
     return this.userService.getAll(pg);
   }

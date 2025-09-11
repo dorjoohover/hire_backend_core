@@ -102,12 +102,20 @@ export class UserDao {
     // );
   };
   getAll = async (pg: PaginationDto) => {
-    const { page, limit } = pg;
-    const res = await this._db.find({
+    const { page, limit, role } = pg;
+    const [data, count] = await this._db.findAndCount({
+      where: {
+        role: role ?? Role.client,
+      },
       take: limit,
       skip: (page - 1) * limit,
     });
-    return res;
+    const total = await this._db.count({
+      where: {
+        role: role ?? Role.client,
+      },
+    });
+    return { data, count, total };
   };
   get = async (id: any) => {
     return await this._db.findOne({

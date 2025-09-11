@@ -144,13 +144,6 @@ export class ExamController {
   //   });
   // }
 
-  @Public()
-  @Get('calculation/:id')
-  @ApiParam({ name: 'id' })
-  calculateExamById(@Param('id') id: string) {
-    return this.examService.calculateExamById(+id, false);
-  }
-
   @Get('exam/:id')
   findOne(@Param('id') id: string) {}
 

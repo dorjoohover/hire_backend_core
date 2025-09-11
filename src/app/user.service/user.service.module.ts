@@ -19,24 +19,11 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QpayService } from '../payment/qpay.service';
 import { HttpModule } from '@nestjs/axios';
 import { PaymentDao } from '../payment/dao/payment.dao';
-import { PdfService } from '../exam/pdf.service';
-import { VisualizationService } from '../exam/visualization.service';
-import { SinglePdf } from '../exam/reports/single.pdf';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { jwtConstants } from 'src/auth/constants';
-import {
-  Belbin,
-  DISC,
-  Empathy,
-  Genos,
-  Narc,
-  Setgel,
-  Darktriad,
-  SingleTemplate,
-  Holland,
-} from 'src/assets/report/index';
+
 import { ResultDao } from '../exam/dao/result.dao';
 import { BarimtService } from '../barimt/barimt.service';
 import { FileService } from 'src/file.service';
@@ -61,19 +48,10 @@ import { EmailLogService } from '../email_log/email_log.service';
     UserServiceService,
     ReportService,
     UserServiceDao,
-    DISC,
-    Genos,
     FileService,
-    Empathy,
-    Narc,
-    Setgel,
-    Darktriad,
     EmailLogService,
     EmailLogDao,
-    Holland,
-    SingleTemplate,
     ResultDao,
-    Belbin,
     BarimtService,
     TransactionDao,
     ExamService,
@@ -85,8 +63,6 @@ import { EmailLogService } from '../email_log/email_log.service';
     QuestionService,
     QuestionCategoryDao,
     QuestionDao,
-    PdfService,
-    VisualizationService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
@@ -95,8 +71,7 @@ import { EmailLogService } from '../email_log/email_log.service';
     AssessmentDao,
     ExamDao,
     QpayService,
-    SinglePdf,
   ],
-  exports: [UserServiceService],
+  exports: [UserServiceService, UserServiceDao],
 })
 export class UserServiceModule {}

@@ -13,6 +13,7 @@ import { AdminExamDto, CreateExamDto } from '../dto/create-exam.dto';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
 import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
+import { ReportService } from 'src/app/report/report.service';
 
 @Injectable()
 export class ExamDao {
@@ -36,6 +37,9 @@ export class ExamDao {
       phone: user ? user.phone : null,
       assessmentName: dto.assessment.name,
       assessment: { id: dto.assessment.id },
+      user: {
+        id: user.id,
+      },
     });
     await this.db.save(res);
     return res.id;

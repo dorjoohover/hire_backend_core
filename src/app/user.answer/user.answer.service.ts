@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   CalculateUserAnswerDto,
   CreateUserAnswerDto,
@@ -10,16 +16,13 @@ import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
 import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { BaseService } from 'src/base/base.service';
-import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
-import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
 import { ExamService } from '../exam/exam.service';
 import { MailerService } from '@nestjs-modules/mailer';
-import { UserDao } from '../user/user.dao';
-import { BarimtService } from '../barimt/barimt.service';
 import { EmailLogService } from '../email_log/email_log.service';
 import { EmailLogStatus } from 'src/base/constants';
+import { ReportService } from '../report/report.service';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -28,8 +31,8 @@ export class UserAnswerService extends BaseService {
     private questionDao: QuestionDao,
     private examDao: ExamDao,
     private mailService: MailerService,
-    private examService: ExamService,
     private questionAnswerDao: QuestionAnswerDao,
+    @Inject(forwardRef(() => ReportService)) private report: ReportService,
     private mailLog: EmailLogService,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
   ) {
@@ -157,12 +160,8 @@ export class UserAnswerService extends BaseService {
       console.log(dto.end);
       if (dto.end) {
         const code = dto.data[0].code;
-        this.endExam(
-          code,
-          user.email,
-          exam.assessment?.id ?? exam.assessment[0].id,
-          exam.assessment?.name ?? exam.assessment[0].name,
-        );
+        this.examDao.endExam(code);
+        await this.report.createReport({ code });
       }
 
       return res;
@@ -177,33 +176,37 @@ export class UserAnswerService extends BaseService {
     }
   }
 
-  private async endExam(code: number, email: string, id: number, name: string) {
-    const response = await this.examService.endExam(code, true);
-
-    if (response?.visible) {
-      const log = await this.mailLog.create({
-        toEmail: email,
-        action: 'Create report',
+  public async sendEmail(code: string) {
+    const res = await this.examDao.findByCode(+code);
+    if (!res.visible) return;
+    const { user, assessment } = res;
+    const { email } = user;
+    const id = assessment?.id ?? assessment[0].id;
+    const name = assessment?.name ?? assessment[0].name;
+    const log = await this.mailLog.create({
+      toEmail: email,
+      action: 'Create report',
+      subject: 'Таны тайлан бэлэн боллоо',
+      url: UserAnswerService.name,
+    });
+    try {
+      await this.mailService.sendMail({
+        to: email,
         subject: 'Таны тайлан бэлэн боллоо',
-        url: UserAnswerService.name,
+        html: this.generateEmailTemplate(id, name, +code),
       });
-      try {
-        await this.mailService.sendMail({
-          to: email,
-          subject: 'Таны тайлан бэлэн боллоо',
-          html: this.generateEmailTemplate(id, name, code),
-        });
-        await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
-      } catch (error) {
-        await this.mailLog.updateStatus(
-          log,
-          EmailLogStatus.FAILED,
-          error.message,
-        );
-      }
+      await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
+    } catch (error) {
+      await this.mailLog.updateStatus(
+        log,
+        EmailLogStatus.FAILED,
+        error.message,
+      );
     }
+  }
 
-    return { visible: response?.visible, jobId: response.jobId };
+  private async endExam(code: number) {
+    await this.examDao.endExam(code);
   }
   private generateEmailTemplate(
     id: number,

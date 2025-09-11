@@ -249,6 +249,7 @@ export class UserServiceService extends BaseService {
       );
     const code = Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
+        console.log(service.user, role);
         const res = await this.examService.create(
           {
             endDate: dto.endDate,
@@ -293,8 +294,9 @@ export class UserServiceService extends BaseService {
           const existingUser = await this.userDao.findByEmail(email.email);
           const isNewUser = !existingUser;
           let password;
+          let generatedPassword = '';
           if (isNewUser) {
-            const generatedPassword = generatePassword();
+            generatedPassword = generatePassword();
             password = await bcrypt.hash(generatedPassword, saltOrRounds);
             await this.userDao.add({
               email: email.email,
@@ -327,7 +329,7 @@ export class UserServiceService extends BaseService {
               <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
                 Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
           <td> <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нэвтрэх и-мэйл хаяг: ${email.email}</p>
-          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: ${password}</p></td>
+          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: ${generatedPassword}</p></td>
               </p>
             </td>
           </tr>
