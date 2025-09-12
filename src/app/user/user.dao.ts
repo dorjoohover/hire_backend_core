@@ -133,7 +133,7 @@ export class UserDao {
     where = {
       email: email,
     };
-    if (!isNaN(parseInt(email))) {
+    if (!isNaN(+email)) {
       where = {
         id: +email,
       };
