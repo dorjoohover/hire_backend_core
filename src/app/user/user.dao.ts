@@ -103,10 +103,19 @@ export class UserDao {
   };
   getAll = async (pg: PaginationDto) => {
     const { page, limit, role } = pg;
+    let where;
+    if (role === Role.admin) {
+      // OR condition: role is admin or tester
+      where = [{ role: Role.admin }, { role: Role.tester }];
+    } else if (role) {
+      // Any specific role
+      where = { role };
+    } else {
+      // Default role
+      where = { role: Role.client };
+    }
     const [data, count] = await this._db.findAndCount({
-      where: {
-        role: role ?? Role.client,
-      },
+      where: where,
       take: limit,
       skip: (page - 1) * limit,
     });

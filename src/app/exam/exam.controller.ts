@@ -98,24 +98,8 @@ export class ExamController {
     const response = await axios.get(`${process.env.REPORT}core/${code}`, {
       responseType: 'stream',
     });
-    console.log(res, response);
-    res.setHeader('Content-Type', response.headers['content-type']);
-    res.setHeader('Content-Length', response.headers['content-length']);
-    res.setHeader(
-      'Content-Disposition',
-      response.headers['content-disposition'],
-    );
-    // Stream дамжуулах
-    response.data.pipe(res);
-    // }
-    // // ↓↓↓ заавал pipe-с ӨМНӨ тавина
-    // res.setHeader('Content-Type', 'application/pdf');
-    // res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    // res.setHeader('Cache-Control', 'no-store');
 
-    // // Шууд хэрэглэгч рүү урсгана
-    // doc.pipe(res);
-    // doc.end();
+    response.data.pipe(res);
   }
   // async requestPdf(@Param('code') code: string, @Res() res: Response) {
   //   const filename = `report-${code}.pdf`;
