@@ -6,6 +6,7 @@ import { Role } from 'src/auth/guards/role/role.enum';
 import { ExamService } from '../exam/exam.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { ModuleRef } from '@nestjs/core';
+import { REPORT_STATUS } from 'src/base/constants';
 const reportStore: Record<
   string,
   { status: string; result?: any; progress: number; code?: string }
@@ -28,7 +29,7 @@ export class ReportService {
       code,
       role: role ?? Role.admin,
     });
-    console.log(code)
+    console.log(code);
 
     reportStore[job.id] = { status: 'PENDING', progress: 0, code };
     return { jobId: job.id };
@@ -73,7 +74,13 @@ export class ReportService {
         code: null,
       };
     }
-    if (report.progress == 100 && report.code) {
+    if (
+      report.progress == 100 &&
+      report.status == REPORT_STATUS.COMPLETED &&
+      report.code
+    ) {
+      const prev = reportStore[jobId];
+      reportStore[jobId] = { ...prev, status: REPORT_STATUS.SENT };
       this.userAnswer.sendEmail(report.code);
     }
     return {

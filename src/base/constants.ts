@@ -54,6 +54,13 @@ export const AssessmentType = {
   TEST: 10,
   UNELGEE: 20,
 };
+export enum REPORT_STATUS {
+  CALCULATING = 'CALCULATING',
+  UPLOADING = 'UPLOADING',
+  WRITING = 'WRITING',
+  SENT = 'SENT',
+  COMPLETED = 'COMPLETED',
+}
 
 export const ReportType = {
   CORRECT: 10,
@@ -152,8 +159,7 @@ export const SaleStatusDict = {
 };
 
 export function generatePassword(length = 6): string {
-  const chars =
-    '0123456789';
+  const chars = '0123456789';
   let password = '';
   for (let i = 0; i < length; i++) {
     password += chars.charAt(Math.floor(Math.random() * chars.length));
