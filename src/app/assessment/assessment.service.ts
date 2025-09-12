@@ -92,10 +92,10 @@ export class AssessmentService {
   }
 
   public async findAll(pg: PaginationDto) {
-    const ass = await this.dao.findAll(pg);
+    const { data, count, total } = await this.dao.findAll(pg);
 
     const res = await Promise.all(
-      ass.map(async (as) => {
+      data.map(async (as) => {
         const user = await this.getUser(as);
         const category = await this.categoryDao.findOne(as.category.id);
         const count = await this.userServiceDao.countByAssessment(as.id);
@@ -109,6 +109,8 @@ export class AssessmentService {
     const level = await this.levelDao.findAll();
     return {
       res,
+      count,
+      total,
       level,
     };
   }

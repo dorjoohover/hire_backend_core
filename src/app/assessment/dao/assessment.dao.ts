@@ -87,7 +87,7 @@ export class AssessmentDao {
         id: pg.createdUser,
       };
     }
-    return await this.db.find({
+    const [data, count] = await this.db.findAndCount({
       where: {
         ...whereCondition,
       },
@@ -98,6 +98,12 @@ export class AssessmentDao {
         createdAt: 'DESC',
       },
     });
+    const total = await this.db.count();
+    return {
+      data,
+      count,
+      total,
+    };
   };
 
   updatePoint = async (id: number) => {

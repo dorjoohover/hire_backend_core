@@ -24,7 +24,6 @@ export class BlogService {
     await this.db.save(res);
     return res.id;
   }
-
   public async findAll(pg: PaginationDto, user?: number) {
     const { type, page, limit } = pg;
     const total = await this.db.count();

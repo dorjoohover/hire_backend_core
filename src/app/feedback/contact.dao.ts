@@ -33,9 +33,11 @@ export class ContactDao extends BaseService {
         createdAt: 'desc',
       },
     });
+    const total = await this._db.count();
     return {
       data: res,
       count,
+      total,
     };
   }
 }

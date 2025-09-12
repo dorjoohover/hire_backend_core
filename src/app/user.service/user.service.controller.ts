@@ -121,10 +121,10 @@ export class UserServiceController {
   findAll(@Pagination() pg: PaginationDto) {
     return this.userServiceService.findAll(pg);
   }
-  @Get('user/:id')
-  @ApiParam({ name: 'id' })
-  findById(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.findByUser(+id, +user['id'], user['email']);
+  @Get('user')
+  @PQ(['id'])
+  findById(@Pagination() pg, @Request() { user }) {
+    return this.userServiceService.findByUser(pg, +user['id'], user['email']);
   }
 
   @Get('find/:id')

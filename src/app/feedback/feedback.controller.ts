@@ -46,11 +46,7 @@ export class FeedbackController {
   @Get('all')
   @PQ(['assessment', 'type'])
   async findAll(@Pagination() pg: PaginationDto) {
-    const [res, count] = await this.feedbackService.findAll(pg);
-    return {
-      data: res,
-      total: count,
-    };
+    return await this.feedbackService.findAll(pg);
   }
   @Public()
   @Get('status/:assessment')

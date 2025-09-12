@@ -31,7 +31,7 @@ export class FeedbackService extends BaseService {
 
   public async findAll(pg: PaginationDto) {
     const { type, assessment, limit, page } = pg;
-    return await this._db.findAndCount({
+    const [data, count] = await this._db.findAndCount({
       where: {
         type,
         assessment: {
@@ -42,6 +42,12 @@ export class FeedbackService extends BaseService {
       take: limit,
       skip: (page - 1) * limit,
     });
+    const total = await this._db.count();
+    return {
+      data,
+      count,
+      total,
+    };
   }
 
   public async findStatus(assessment: number) {

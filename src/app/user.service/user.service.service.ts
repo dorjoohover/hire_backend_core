@@ -183,12 +183,12 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(assId: number, id: number, email: string) {
-    const responses = await this.dao.findByUser(assId, id, 0);
+  public async findByUser(pg: PaginationDto, id: number, email: string) {
+    const { data, count, total } = await this.dao.findByUser(pg, id, 0);
     const res = [];
     const ex = [];
-    const data = await this.examDao.findByUser([], email, assId);
-    for (const response of responses) {
+    const exam = await this.examDao.findByUser([], email, pg.id);
+    for (const response of data) {
       const { exams, user, ...body } = response;
       const examResults = [];
       for (const exam of exams) {
@@ -202,7 +202,7 @@ export class UserServiceService extends BaseService {
 
       res.push({ ...body, user, exams: examResults });
     }
-    const filtered = data.filter(
+    const filtered = exam.filter(
       (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
     );
 
@@ -218,6 +218,8 @@ export class UserServiceService extends BaseService {
 
     return {
       data: res,
+      count: res.length,
+      total,
       invited,
     };
     // const exams = await this.examDao.findAll(assId, email);

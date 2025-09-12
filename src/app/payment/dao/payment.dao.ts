@@ -61,7 +61,7 @@ export class PaymentDao {
           totalPrice: role == Role.organization ? Not(IsNull()) : MoreThan(0),
           method: payment ? In([payment, 4]) : Not(0),
         };
-    return await this.db.findAndCount({
+    const [data, count] = await this.db.findAndCount({
       where: where,
       relations: ['user', 'charger', 'assessment'],
       take: limit,
@@ -70,6 +70,8 @@ export class PaymentDao {
       },
       skip: (page - 1) * limit,
     });
+    const total = await this.db.count();
+    return { total, data, count };
   };
 
   findAdmin = async (pg: PaginationDto) => {
