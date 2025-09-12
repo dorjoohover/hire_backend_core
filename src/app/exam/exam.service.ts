@@ -73,11 +73,11 @@ export class ExamService extends BaseService {
       .then((d) => d[0]);
     return res.visible;
   };
-  public endExam = async (code: number) => {
-    await this.dao.endExam(code);
-    console.log('start', code);
-    await this.report.createReport({ code });
-  };
+  // public endExam = async (code: number) => {
+  //   await this.dao.endExam(code);
+  //   console.log('start', code);
+  //   await this.report.createReport({ code });
+  // };
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
     const code: number = Number(
