@@ -73,7 +73,7 @@ export class TransactionDao {
 
   findAll = async (pg: PaginationDto) => {
     const { id, limit, page } = pg;
-    return await this.db.findAndCount({
+    const [data, count] = await this.db.findAndCount({
       where: {
         createdUser: id == 0 ? Not(0) : id,
       },
@@ -85,6 +85,8 @@ export class TransactionDao {
       },
       relations: ['service', 'service.exams'],
     });
+    const total = await this.db.count();
+    return { data, count, total };
   };
 
   findOne = async (id: number) => {

@@ -55,12 +55,13 @@ export class PaymentService extends BaseService {
 
   public async findAdmin(pg: PaginationDto) {
     const totalPrice = await this.dao.findAdmin(pg);
-    const [payment, count] = await this.dao.findAll(pg, 0);
+    const { data, count, total } = await this.dao.findAll(pg, 0);
 
     return {
       totalPrice,
-      data: payment,
-      total: count,
+      data: data,
+      total: total,
+      count,
       // transactions,
     };
   }
@@ -71,14 +72,17 @@ export class PaymentService extends BaseService {
     let transactions = [];
     let payments = [];
     let transactionCount = 0,
-      paymentCount = 0;
+      transactionTotal = 0,
+      paymentCount = 0,
+      paymentTotal = 0;
     const userInfo = await this.userDao.getUserInfo(pg.id);
     if (!userInfo)
       throw new HttpException('Хэрэглэгч олдсонгүй', HttpStatus.BAD_REQUEST);
     if (Admins.includes(+user['role'])) {
-      const [res, count] = await this.transactionDao.findAll(pg);
+      const { data, count, total } = await this.transactionDao.findAll(pg);
       transactionCount = count;
-      for (const transaction of res) {
+      transactionTotal = total;
+      for (const transaction of data) {
         const serviceId = transaction.service.id;
         const exams = await this.examDao.findByService(serviceId);
         for (const exam of exams) {
@@ -106,7 +110,7 @@ export class PaymentService extends BaseService {
       }
     }
 
-    const [res, count] = await this.dao.findAll(
+    const { data, total, count } = await this.dao.findAll(
       {
         ...pg,
         role: Admins.includes(+user['role'])
@@ -118,7 +122,8 @@ export class PaymentService extends BaseService {
       Admins.includes(+user.role) ? userId : user['id'],
     );
     paymentCount = count;
-    for (const payment of res) {
+    paymentTotal = total;
+    for (const payment of data) {
       const arr = payment.message.split('-');
       payments.push({
         message: arr[0],
@@ -132,11 +137,13 @@ export class PaymentService extends BaseService {
     return {
       transactions: {
         data: transactions,
-        total: transactionCount,
+        total: transactionTotal,
+        count: transactionCount,
       },
       payments: {
         data: payments,
-        total: paymentCount,
+        total: paymentTotal,
+        count: paymentCount,
       },
     };
   }
