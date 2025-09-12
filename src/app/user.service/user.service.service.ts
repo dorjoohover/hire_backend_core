@@ -98,6 +98,8 @@ export class UserServiceService extends BaseService {
   }
 
   public async updateStatus(user: number, amount: number, id: number) {
+    const res = await this.dao.findOne(id);
+    if (res.status == PaymentStatus.SUCCESS) return;
     const service = await this.dao.updateStatus(id, PaymentStatus.SUCCESS);
     await this.paymentDao.create({
       method: PaymentType.QPAY,
@@ -258,11 +260,7 @@ export class UserServiceService extends BaseService {
             startDate: dto.startDate,
             assessment: service.assessment,
           },
-          service.user
-            ? role == Role.client
-              ? service.user
-              : null
-            : null,
+          service.user ? (role == Role.client ? service.user : null) : null,
         );
         return res;
       }),
