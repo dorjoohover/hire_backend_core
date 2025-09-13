@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Db, Repository } from 'typeorm';
+import { DataSource, Db, In, Like, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -89,30 +89,28 @@ export class UserDao {
     return res;
   };
 
-  changePassword = async (id: string, password: string, merchantId: string) => {
-    // const builder = new SqlBuilder({ password }, ['password']);
-    // const { cols, indexes } = builder.create();
-    // const criteria = builder
-    //   .condition('id', '=', id)
-    //   .condition('merchantId', '=', merchantId)
-    //   .criteria();
-    // await this._db._update(
-    //   `UPDATE "${tableName}" SET (${cols}) = ROW(${indexes}) ${criteria}`,
-    //   builder.values,
-    // );
-  };
   getAll = async (pg: PaginationDto) => {
-    const { page, limit, role } = pg;
-    let where;
-    if (role === Role.admin) {
-      // OR condition: role is admin or tester
-      where = [{ role: Role.admin }, { role: Role.tester }];
+    const { page, limit, role, email, orgName, orgRegister } = pg;
+    let where: any = {};
+
+    if (role == 35) {
+      where.role = In([Role.admin, Role.tester, Role.super_admin]);
     } else if (role) {
-      // Any specific role
-      where = { role };
+      where.role = role;
     } else {
-      // Default role
-      where = { role: Role.client };
+      where.role = Role.client;
+    }
+
+    if (email) {
+      where.email = Like(`%${email}%`);
+    }
+
+    if (orgName) {
+      where.organizationName = Like(`%${orgName}%`);
+    }
+
+    if (orgRegister) {
+      where.organizationRegisterNumber = orgRegister;
     }
     const [data, count] = await this._db.findAndCount({
       where: where,
