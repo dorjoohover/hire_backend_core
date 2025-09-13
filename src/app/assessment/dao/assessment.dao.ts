@@ -98,7 +98,7 @@ export class AssessmentDao {
     }
     if (pg.createdUser) {
       whereCondition.createdUser = {
-        id: pg.createdUser,
+        createdUser: pg.createdUser,
       };
     }
     const [data, count] = await this.db.findAndCount({
