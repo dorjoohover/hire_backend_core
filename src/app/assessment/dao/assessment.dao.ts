@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Between, DataSource, IsNull, Like, Not, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  IsNull,
+  Like,
+  Not,
+  Raw,
+  Repository,
+} from 'typeorm';
 import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
 import { QuestionDao } from 'src/app/question/dao/question.dao';
@@ -74,8 +82,14 @@ export class AssessmentDao {
     if (pg.status) {
       whereCondition.status = pg.status;
     }
+
     if (pg.name) {
-      whereCondition.status = Like(`%${pg.name}%`);
+      whereCondition.name = Raw(
+        (alias) => `LOWER(${alias}) LIKE LOWER(:name)`,
+        {
+          name: `%${pg.name}%`,
+        },
+      );
     }
     if (pg.category) {
       whereCondition.category = {

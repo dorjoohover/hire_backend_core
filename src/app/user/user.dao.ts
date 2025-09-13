@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Db, In, Like, Repository } from 'typeorm';
+import { DataSource, Db, In, Like, Raw, Repository } from 'typeorm';
 import { UserEntity } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -90,7 +90,7 @@ export class UserDao {
   };
 
   getAll = async (pg: PaginationDto) => {
-    const { page, limit, role, email, orgName, orgRegister } = pg;
+    const { page, limit, role, email, orgName, orgRegister, firstname } = pg;
     let where: any = {};
 
     if (role == 35) {
@@ -102,11 +102,25 @@ export class UserDao {
     }
 
     if (email) {
-      where.email = Like(`%${email}%`);
+      where.email = Raw((alias) => `LOWER(${alias}) LIKE LOWER(:email)`, {
+        email: `%${email}%`,
+      });
     }
-
     if (orgName) {
-      where.organizationName = Like(`%${orgName}%`);
+      where.organizationName = Raw(
+        (alias) => `LOWER(${alias}) LIKE LOWER(:orgName)`,
+        {
+          orgName: `%${orgName}%`,
+        },
+      );
+    }
+    if (firstname) {
+      where.firstname = Raw(
+        (alias) => `LOWER(${alias}) LIKE LOWER(:firstname)`,
+        {
+          firstname: `%${firstname}%`,
+        },
+      );
     }
 
     if (orgRegister) {
