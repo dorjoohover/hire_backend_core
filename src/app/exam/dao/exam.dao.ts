@@ -6,6 +6,7 @@ import {
   IsNull,
   Like,
   Not,
+  Raw,
   Repository,
 } from 'typeorm';
 import { ExamEntity } from '../entities/exam.entity';
@@ -14,6 +15,7 @@ import { UserEntity } from 'src/app/user/entities/user.entity';
 import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
 import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { ReportService } from 'src/app/report/report.service';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class ExamDao {
@@ -132,22 +134,29 @@ export class ExamDao {
       relations: ['assessment', 'service', 'service.user'],
     });
   };
-  findByAdmin = async (dto: AdminExamDto, page: number, limit: number) => {
+  findByAdmin = async (pg: PaginationDto) => {
+    const { assessment, page, limit, email, startDate, endDate } = pg;
+
     const whereCondition: any = {
-      assessment: {
-        id: dto.assessment == 0 ? Not(0) : dto.assessment,
-      },
-      createdAt:
-        dto.endDate && dto.startDate
-          ? Between(dto.startDate, dto.endDate)
-          : Not(IsNull()),
+      createdAt: Not(IsNull()),
     };
 
-    // Only add email condition if dto.email exists
-    if (dto.email) {
-      whereCondition.email = Like(`%${dto.email}%`);
+    if (assessment) {
+      whereCondition.assessment = {
+        id: assessment == 0 ? Not(0) : assessment,
+      };
     }
 
+    if (email) {
+      whereCondition.email = Raw(
+        (alias) => `LOWER(${alias}) LIKE LOWER(:email)`,
+        { email: `%${email}%` },
+      );
+    }
+
+    if (startDate && endDate) {
+      whereCondition.createdAt = Between(startDate, endDate);
+    }
     return await this.db.findAndCount({
       where: whereCondition,
       take: limit,

@@ -35,6 +35,9 @@ import AWS from 'aws-sdk';
 import { join } from 'path';
 import { FileService } from 'src/file.service';
 import axios from 'axios';
+import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
+import { Pagination } from 'src/base/decorator/pagination.decorator';
+import { PaginationDto } from 'src/base/decorator/pagination';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
@@ -143,15 +146,10 @@ export class ExamController {
   }
 
   @Roles(Role.admin, Role.tester, Role.super_admin)
-  @Post('all/:limit/:page')
-  @ApiParam({ name: 'limit' })
-  @ApiParam({ name: 'page' })
-  findByAdmin(
-    @Body() dto: AdminExamDto,
-    @Param('limit') limit: number,
-    @Param('page') page: number,
-  ) {
-    return this.examService.findByAdmin(dto, page, limit);
+  @Get('all/:limit/:page')
+  @PQ(['assessment', 'email', 'startDate', 'endDate'])
+  findByAdmin(@Pagination() pg: PaginationDto) {
+    return this.examService.findByAdmin(pg);
   }
 
   @Post('user')

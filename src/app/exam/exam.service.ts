@@ -23,6 +23,7 @@ import { UserServiceDao } from '../user.service/user.service.dao';
 import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -299,8 +300,8 @@ export class ExamService extends BaseService {
   public async findByCode(code: number | string) {
     return await this.dao.findByCode(code as number);
   }
-  public async findByAdmin(dto: AdminExamDto, page: number, limit: number) {
-    let [res, count] = await this.dao.findByAdmin(dto, page, limit);
+  public async findByAdmin(pg: PaginationDto) {
+    let [res, count] = await this.dao.findByAdmin(pg);
     res = await Promise.all(
       res.map(async (r) => {
         let us = r.user;
