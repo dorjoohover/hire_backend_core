@@ -5,7 +5,8 @@ import { Pagination } from 'src/base/decorator/pagination.decorator';
 import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
 import { Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
-
+import { ApiBearerAuth } from '@nestjs/swagger';
+@ApiBearerAuth('access-token')
 @Controller('email_log')
 export class EmailLogController {
   constructor(private readonly emailLogService: EmailLogService) {}
