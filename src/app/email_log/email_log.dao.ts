@@ -6,6 +6,7 @@ import {
   IsNull,
   Like,
   Not,
+  Raw,
   Repository,
 } from 'typeorm';
 import { UserEntity } from 'src/app/user/entities/user.entity';
@@ -41,17 +42,28 @@ export class EmailLogDao {
   };
 
   public async findAll(pg: PaginationDto) {
-    const { user, page, limit, status } = pg;
+    const { user, page, limit, status, startDate, endDate, email, type } = pg;
     const total = await this.db.count();
     const where: any = {};
 
     if (status !== undefined) {
       where.status = status;
     }
+    if (type !== undefined) {
+      where.type = type;
+    }
+    if (email !== undefined) {
+      where.email = Raw((alias) => `LOWER(${alias}) = :email`, {
+        email: email.toLowerCase(),
+      });
+    }
     if (user !== undefined) {
       where.user = {
         id: user,
       };
+    }
+    if (startDate && endDate) {
+      where.createdAt = Between(startDate, endDate);
     }
 
     const [data, count] = await this.db.findAndCount({

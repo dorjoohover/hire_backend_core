@@ -25,6 +25,15 @@ export enum EmailLogStatus {
   PENDING = 20,
   FAILED = 30,
 }
+
+export enum EmailLogType {
+  EBARIMT = 10,
+  VERIFICATION = 20,
+  FORGET_PASSWORD = 30,
+  INVITATION = 40,
+  REPORT = 50,
+}
+
 export const QuestionCategoryType = {
   QUESTION: 10,
   CATEGORY: 20,

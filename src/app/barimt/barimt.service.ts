@@ -6,7 +6,7 @@ import { BarimtDto, BarimtResponseDto } from './dto/barimt.dto';
 import { UserEntity } from '../user/entities/user.entity';
 import { format } from 'date-fns';
 import { EmailLogService } from '../email_log/email_log.service';
-import { EmailLogStatus } from 'src/base/constants';
+import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 @Injectable()
 export class BarimtService {
   constructor(
@@ -171,6 +171,7 @@ export class BarimtService {
       action: 'баримт үүсгэх',
       subject: 'И-баримт хүлээн авах',
       url: BarimtService.name,
+      type: EmailLogType.EBARIMT,
     });
     try {
       await this.mailer.sendMail({

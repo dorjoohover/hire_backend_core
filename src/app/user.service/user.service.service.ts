@@ -20,6 +20,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
 import {
   EmailLogStatus,
+  EmailLogType,
   generatePassword,
   PaymentStatus,
   PaymentType,
@@ -280,6 +281,7 @@ export class UserServiceService extends BaseService {
           action: 'sent invitation',
           subject: 'Танд тестийн урилга ирлээ',
           url: UserServiceService.name,
+          type: EmailLogType.INVITATION,
         });
         try {
           await this.examService.updateExamByCode(email.code, {

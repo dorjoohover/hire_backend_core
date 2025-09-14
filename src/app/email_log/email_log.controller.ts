@@ -13,7 +13,7 @@ export class EmailLogController {
 
   @Roles(Role.super_admin, Role.tester, Role.admin)
   @Get('all')
-  @PQ(['user', 'status'])
+  @PQ(['user', 'status', 'email', 'type', 'startDate', 'endDate'])
   findAll(@Pagination() pg: PaginationDto) {
     return this.emailLogService.findAll(pg);
   }

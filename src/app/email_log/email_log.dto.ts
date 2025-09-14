@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
-import { EmailLogStatus } from 'src/base/constants';
+import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 
 export class EmailLogDto {
   @ApiProperty({ description: 'Хүлээн авагчийн email' })
@@ -16,6 +16,10 @@ export class EmailLogDto {
   @IsOptional()
   @IsEnum(EmailLogStatus)
   status?: EmailLogStatus;
+  @ApiPropertyOptional({ enum: EmailLogType, description: 'Email status' })
+  @IsOptional()
+  @IsEnum(EmailLogType)
+  type?: EmailLogType;
 
   @ApiPropertyOptional({ description: 'Email-д байгаа URL холбоос' })
   @IsOptional()

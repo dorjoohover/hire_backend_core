@@ -21,7 +21,7 @@ import { QuestionAnswerEntity } from '../question/entities/question.answer.entit
 import { ExamService } from '../exam/exam.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import { EmailLogService } from '../email_log/email_log.service';
-import { EmailLogStatus } from 'src/base/constants';
+import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 import { ReportService } from '../report/report.service';
 
 @Injectable()
@@ -186,6 +186,7 @@ export class UserAnswerService extends BaseService {
     const log = await this.mailLog.create({
       toEmail: email,
       action: 'Create report',
+      type: EmailLogType.REPORT,
       subject: 'Таны тайлан бэлэн боллоо',
       url: UserAnswerService.name,
     });

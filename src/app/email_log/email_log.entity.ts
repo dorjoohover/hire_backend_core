@@ -1,4 +1,4 @@
-import { EmailLogStatus } from 'src/base/constants';
+import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -29,6 +29,12 @@ export class EmailLogEntity {
     default: EmailLogStatus.PENDING,
   })
   status: EmailLogStatus;
+  @Column({
+    type: 'enum',
+    enum: EmailLogType,
+    default: EmailLogType.VERIFICATION,
+  })
+  type: EmailLogType;
 
   @Column({ length: 255, nullable: true })
   url: string;

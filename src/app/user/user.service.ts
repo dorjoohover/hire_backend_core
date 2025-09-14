@@ -4,7 +4,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { BaseService } from 'src/base/base.service';
 import { UserDao } from './user.dao';
 import * as bcrypt from 'bcrypt';
-import { CLIENT, EmailLogStatus, ORGANIZATION } from 'src/base/constants';
+import {
+  CLIENT,
+  EmailLogStatus,
+  EmailLogType,
+  ORGANIZATION,
+} from 'src/base/constants';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendLinkToEmail } from '../user.service/dto/create-user.service.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
@@ -24,6 +29,7 @@ export class UserService {
       toEmail: email,
       action: 'Email verification',
       subject: 'И-мэйл хаяг баталгаажуулах тухай',
+      type: EmailLogType.VERIFICATION,
       url: UserService.name,
     });
     try {
@@ -208,6 +214,7 @@ export class UserService {
     const code = generated.toString().padStart(6, '0');
     const log = await this.mailLog.create({
       toEmail: email,
+      type: EmailLogType.FORGET_PASSWORD,
       action: 'forget password',
       code,
       subject: 'Нууц үг сэргээх тухай',
