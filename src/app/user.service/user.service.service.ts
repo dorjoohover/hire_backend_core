@@ -187,7 +187,7 @@ export class UserServiceService extends BaseService {
     const { data, count, total } = await this.dao.findByUser(pg, id, 0);
     const res = [];
     const ex = [];
-    const exam = await this.examDao.findByUser([], email, pg.id);
+    const exam = await this.examDao.findByUser([], email, pg.assId);
     for (const response of data) {
       const { exams, user, ...body } = response;
       const examResults = [];

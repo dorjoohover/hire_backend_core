@@ -86,6 +86,7 @@ export class ExamService extends BaseService {
         `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
       ),
     );
+    console.log('exam dto', createExamDto);
     await this.dao.create({ ...createExamDto, code: code }, user);
     const service = await this.userServiceDao.findOne(createExamDto.service);
     await this.transactionDao.create(
@@ -217,6 +218,7 @@ export class ExamService extends BaseService {
           answerShuffle,
           prevQuestions,
         );
+        console.log(res);
         await this.createDetail(
           result.questions,
           res.id,

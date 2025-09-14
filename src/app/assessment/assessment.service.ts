@@ -108,7 +108,7 @@ export class AssessmentService {
     );
     const level = await this.levelDao.findAll();
     return {
-      res,
+      data: res,
       count,
       total,
       level,

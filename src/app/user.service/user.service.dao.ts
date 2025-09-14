@@ -127,7 +127,7 @@ export class UserServiceDao {
           id: id,
         },
         assessment: {
-          id: pg.id == 0 ? Not(pg.id) : pg.id,
+          id: pg.assId == 0 ? Not(pg.assId) : pg.assId,
         },
       },
       relations: ['assessment', 'exams', 'user'],
