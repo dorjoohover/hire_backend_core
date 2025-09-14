@@ -71,6 +71,9 @@ export class EmailLogDao {
       relations: ['user'],
       skip: (page - 1) * limit,
       take: limit,
+      order: {
+        createdAt: 'DESC',
+      },
     });
     return {
       data,
