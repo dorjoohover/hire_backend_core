@@ -30,6 +30,8 @@ import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
 import { ExamModule } from '../exam/exam.module';
 import { ReportModule } from '../report/report.module';
+import { UserServiceService } from '../user.service/user.service.service';
+import { UserServiceModule } from '../user.service/user.service.module';
 @Module({
   imports: [
     JwtModule.register({
@@ -39,7 +41,9 @@ import { ReportModule } from '../report/report.module';
     BullModule.registerQueue({
       name: 'report', // 👈 queue name
     }),
-    ExamModule,
+    forwardRef(() => ExamModule),
+    forwardRef(() => UserServiceModule),
+
     forwardRef(() => ReportModule),
   ],
   controllers: [UserAnswerController],
@@ -49,10 +53,8 @@ import { ReportModule } from '../report/report.module';
     QuestionDao,
     EmailLogService,
     EmailLogDao,
-    ExamService,
     QuestionAnswerDao,
     QuestionAnswerMatrixDao,
-    ExamDao,
     AssessmentDao,
     FormuleService,
     FileService,

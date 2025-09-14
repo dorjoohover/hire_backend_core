@@ -26,6 +26,10 @@ export class EmailLogDto {
   @IsString()
   url?: string;
   code?: string;
+  firstname?: string;
+  lastname?: string;
+  visible?: boolean;
+  phone?: string;
 
   @ApiPropertyOptional({ description: 'Email зорилго/Action' })
   @IsOptional()

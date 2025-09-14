@@ -45,6 +45,14 @@ export class EmailLogEntity {
 
   @Column({ type: 'text', nullable: true })
   error: string;
+  @Column({ type: 'text', nullable: true })
+  firstname: string;
+  @Column({ type: 'text', nullable: true })
+  lastname: string;
+  @Column({ type: 'text', nullable: true })
+  phone: string;
+  @Column({ nullable: true })
+  visible: boolean;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

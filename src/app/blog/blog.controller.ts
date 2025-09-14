@@ -42,7 +42,7 @@ export class BlogController {
     return this.blogService.create(dto, user.id);
   }
   @Public()
-  @PQ(['type'])
+  @PQ(['type', 'name'])
   @Get('all')
   findAll(@Pagination() pg: PaginationDto) {
     return this.blogService.findAll(pg);

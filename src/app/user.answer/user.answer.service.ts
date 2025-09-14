@@ -29,11 +29,11 @@ export class UserAnswerService extends BaseService {
   constructor(
     private dao: UserAnswerDao,
     private questionDao: QuestionDao,
-    private examDao: ExamDao,
+    @Inject(forwardRef(() => ExamDao)) private examDao: ExamDao,
     private mailService: MailerService,
     private questionAnswerDao: QuestionAnswerDao,
     @Inject(forwardRef(() => ReportService)) private report: ReportService,
-    private mailLog: EmailLogService,
+    @Inject(forwardRef(() => EmailLogService)) private mailLog: EmailLogService,
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
   ) {
     super();
@@ -159,9 +159,7 @@ export class UserAnswerService extends BaseService {
       // Тест дууссан эсэх
       console.log(dto.end);
       if (dto.end) {
-        const code = dto.data[0].code;
-        this.examDao.endExam(code);
-        await this.report.createReport({ code });
+        this.createReport(dto.data[0].code);
       }
 
       return res;
@@ -175,7 +173,10 @@ export class UserAnswerService extends BaseService {
           );
     }
   }
-
+  public async createReport(code: number) {
+    this.examDao.endExam(code);
+    await this.report.createReport({ code });
+  }
   public async sendEmail(code: string) {
     const res = await this.examDao.findByCode(+code);
     if (!res.visible) return;
@@ -189,6 +190,7 @@ export class UserAnswerService extends BaseService {
       type: EmailLogType.REPORT,
       subject: 'Таны тайлан бэлэн боллоо',
       url: UserAnswerService.name,
+      code,
     });
     try {
       await this.mailService.sendMail({

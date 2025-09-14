@@ -5,8 +5,11 @@ import { UserService } from '../user/user.service';
 import { UserDao } from '../user/user.dao';
 import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
+import { UserAnswerModule } from '../user.answer/user.answer.module';
+import { UserServiceModule } from '../user.service/user.service.module';
 
 @Module({
+  imports: [UserAnswerModule, UserServiceModule],
   controllers: [AssessmentCategoryController],
   providers: [
     AssessmentCategoryService,

@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { HttpService } from '@nestjs/axios';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -10,8 +16,8 @@ import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 @Injectable()
 export class BarimtService {
   constructor(
-    private readonly httpService: HttpService,
     private mailer: MailerService,
+    @Inject(forwardRef(() => EmailLogService))
     private mailLog: EmailLogService,
   ) {}
 

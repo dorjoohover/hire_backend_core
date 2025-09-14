@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
-import { DataSource, Not, Repository } from 'typeorm';
+import { DataSource, Not, Raw, Repository } from 'typeorm';
 import { BlogEntity } from './entities/blog.entity';
 import { FileService } from 'src/file.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
@@ -25,18 +25,32 @@ export class BlogService {
     return res.id;
   }
   public async findAll(pg: PaginationDto, user?: number) {
-    const { type, page, limit } = pg;
+    const { type, page, limit, name } = pg;
     const total = await this.db.count();
+    let where: any = {};
+    if (user) {
+      where.user = { id: user };
+    }
+    if (type && type != 0) {
+      where.category = type;
+    }
+    if (name) {
+      where.name = Raw((alias) => `LOWER(${alias}) = :name`, {
+        name: name.toLowerCase(),
+      });
+    }
+
     const [data, count] = await this.db.findAndCount({
       where: {
         category: type == 0 ? Not(type) : type,
-        user: {
-          id: user ? user : Not(-1),
-        },
       },
       relations: ['user'],
       skip: (page - 1) * limit,
       take: limit,
+      order: {
+        pinned: 'asc',
+        createdAt: 'desc',
+      },
     });
     return {
       data,

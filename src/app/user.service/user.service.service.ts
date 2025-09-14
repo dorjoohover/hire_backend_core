@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
@@ -49,7 +55,7 @@ export class UserServiceService extends BaseService {
     private qpay: QpayService,
     private result: ResultDao,
     private barimt: BarimtService,
-    private mailLog: EmailLogService,
+    @Inject(forwardRef(() => EmailLogService)) private mailLog: EmailLogService,
   ) {
     super();
   }
@@ -184,11 +190,11 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(pg: PaginationDto, id: number, email: string) {
-    const { data, count, total } = await this.dao.findByUser(pg, id, 0);
+  public async findByUser(assId: number, id: number, email: string) {
+    const { data, count, total } = await this.dao.findByUser(assId, id, 0);
     const res = [];
     const ex = [];
-    const exam = await this.examDao.findByUser([], email, pg.assId);
+    const exam = await this.examDao.findByUser([], email, assId);
     for (const response of data) {
       const { exams, user, ...body } = response;
       const examResults = [];
@@ -282,6 +288,11 @@ export class UserServiceService extends BaseService {
           subject: 'Танд тестийн урилга ирлээ',
           url: UserServiceService.name,
           type: EmailLogType.INVITATION,
+          code: email.code.toString(),
+          firstname: email.firstname,
+          lastname: email.lastname,
+          phone: email.phone,
+          visible: email.visible,
         });
         try {
           await this.examService.updateExamByCode(email.code, {

@@ -103,7 +103,7 @@ export class UserServiceDao {
     await this.db.save(res);
   };
 
-  findByUser = async (pg: PaginationDto, id: number, service: number) => {
+  findByUser = async (assId: number, id: number, service: number) => {
     // const responses = await this.dao.findByUser(assId, id);
     // const res = [];
     // for (const response of responses) {
@@ -119,7 +119,7 @@ export class UserServiceDao {
     //   res.push({ ...response, exams: examResults });
     // }
     // return res;
-    const { page, limit } = pg;
+
     const [data, count] = await this.db.findAndCount({
       where: {
         id: service == 0 ? Not(IsNull()) : service,
@@ -127,12 +127,10 @@ export class UserServiceDao {
           id: id,
         },
         assessment: {
-          id: pg.assId == 0 ? Not(pg.assId) : pg.assId,
+          id: assId == 0 ? Not(assId) : assId,
         },
       },
       relations: ['assessment', 'exams', 'user'],
-      skip: (page - 1) * limit,
-      take: limit,
     });
     const total = await this.db.count();
     return { data, count, total };

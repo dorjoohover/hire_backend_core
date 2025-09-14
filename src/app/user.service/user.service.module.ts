@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
 import { UserServiceController } from './user.service.controller';
 import { UserServiceDao } from './user.service.dao';
@@ -31,6 +31,7 @@ import { ReportService } from '../report/report.service';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
+import { UserAnswerModule } from '../user.answer/user.answer.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { EmailLogService } from '../email_log/email_log.service';
     BullModule.registerQueue({
       name: 'report', // 👈 queue name
     }),
+    forwardRef(() => UserAnswerModule),
   ],
   controllers: [UserServiceController],
   providers: [

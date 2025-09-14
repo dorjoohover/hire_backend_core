@@ -27,6 +27,7 @@ import { UserService } from '../user/user.service';
 import { FormuleService } from '../formule/formule.service';
 import { FileService } from 'src/file.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
+import { UserServiceModule } from '../user.service/user.service.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
       name: 'report',
     }),
     forwardRef(() => UserAnswerModule),
+    forwardRef(() => UserServiceModule),
   ],
   controllers: [ReportController],
   providers: [

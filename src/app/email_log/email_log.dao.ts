@@ -41,6 +41,10 @@ export class EmailLogDao {
     await this.db.save({ ...res, status, error });
   };
 
+  public async findOne(id: number) {
+    return await this.db.findOne({ where: { id } });
+  }
+
   public async findAll(pg: PaginationDto) {
     const { user, page, limit, status, startDate, endDate, email, type } = pg;
     const total = await this.db.count();
@@ -53,7 +57,7 @@ export class EmailLogDao {
       where.type = type;
     }
     if (email !== undefined) {
-      where.email = Raw((alias) => `LOWER(${alias}) = :email`, {
+      where.toEmail = Raw((alias) => `LOWER(${alias}) = :email`, {
         email: email.toLowerCase(),
       });
     }

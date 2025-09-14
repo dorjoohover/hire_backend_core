@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { AdminExamDto, CreateExamDto } from './dto/create-exam.dto';
 import { ExamDao } from './dao/exam.dao';
 import { ExamDetailDao } from './dao/exam.detail.dao';
@@ -29,11 +35,10 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 export class ExamService extends BaseService {
   constructor(
     private dao: ExamDao,
-    private formule: FormuleService,
     private detailDao: ExamDetailDao,
     private questionService: QuestionService,
-    private authService: AuthService,
-    private userAnswer: UserAnswerDao,
+    @Inject(forwardRef(() => AuthService)) private authService: AuthService,
+    @Inject(forwardRef(() => UserAnswerDao)) private userAnswer: UserAnswerDao,
     private userDao: UserDao,
     private resultDao: ResultDao,
     private transactionDao: TransactionDao,
