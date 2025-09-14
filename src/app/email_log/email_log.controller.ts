@@ -12,8 +12,8 @@ export class EmailLogController {
   constructor(private readonly emailLogService: EmailLogService) {}
 
   @Roles(Role.super_admin, Role.tester, Role.admin)
-  @PQ(['user', 'status'])
   @Get('all')
+  @PQ(['user', 'status'])
   findAll(@Pagination() pg: PaginationDto) {
     return this.emailLogService.findAll(pg);
   }

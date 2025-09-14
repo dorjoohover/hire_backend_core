@@ -43,12 +43,15 @@ export class EmailLogDao {
   public async findAll(pg: PaginationDto) {
     const { user, page, limit, status } = pg;
     const total = await this.db.count();
-    const where: any = {
-      user: { id: user ? user : Not(-1) },
-    };
+    const where: any = {};
 
     if (status !== undefined) {
       where.status = status;
+    }
+    if (user !== undefined) {
+      where.user = {
+        id: user,
+      };
     }
 
     const [data, count] = await this.db.findAndCount({

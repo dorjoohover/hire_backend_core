@@ -41,6 +41,9 @@ export class FeedbackService extends BaseService {
       relations: ['assessment', 'user'],
       take: limit,
       skip: (page - 1) * limit,
+      order: {
+        createdAt: 'DESC',
+      },
     });
     const total = await this._db.count();
     return {
