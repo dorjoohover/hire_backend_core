@@ -336,16 +336,25 @@ export class UserServiceService extends BaseService {
 
           const newUserSection = isNewUser
             ? `
-          <tr>
-            <td style="background-color: #e8f5e8; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50; font-family: 'Montserrat', sans-serif; text-align: justify;">
-              <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
-              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
-                Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
-          <td> <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нэвтрэх и-мэйл хаяг: ${email.email}</p>
-          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: ${generatedPassword}</p></td>
-              </p>
-            </td>
-          </tr>
+              <tr>
+                <td style="background-color: #e8f5e8; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50; font-family: 'Montserrat', sans-serif; text-align: justify;">
+                  <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">
+                    Hire.mn-д тавтай морил!
+                  </h3>
+
+                  <p style="color: #333333; margin: 0 0 15px 0; font-size: 14px; line-height: 1.5;">
+                    Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа
+                    <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
+                  </p>
+
+                  <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
+                    Нэвтрэх и-мэйл хаяг: <strong>${email.email}</strong>
+                  </p>
+                  <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
+                    Нууц үг: <strong>${generatedPassword}</strong>
+                  </p>
+                </td>
+              </tr>
         `
             : '';
 
