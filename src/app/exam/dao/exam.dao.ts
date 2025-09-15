@@ -39,9 +39,9 @@ export class ExamDao {
       phone: user ? user.phone : null,
       assessmentName: dto.assessment.name,
       assessment: { id: dto.assessment.id },
-      user: {
+      user: user ? {
         id: user?.id,
-      },
+      } : null,
     });
     await this.db.save(res);
     return res.id;
