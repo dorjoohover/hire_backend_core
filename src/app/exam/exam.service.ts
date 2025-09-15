@@ -197,7 +197,7 @@ export class ExamService extends BaseService {
           ...res,
           userStartDate: date,
         });
-        if (res.email && res.lastname && res.firstname) {
+        if (res.email && (res.lastname || res.firstname)) {
           const user = await this.authService.forceLogin(
             res.email,
             res.phone,
