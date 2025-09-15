@@ -40,7 +40,7 @@ export class ExamDao {
       assessmentName: dto.assessment.name,
       assessment: { id: dto.assessment.id },
       user: {
-        id: user.id,
+        id: user?.id,
       },
     });
     await this.db.save(res);

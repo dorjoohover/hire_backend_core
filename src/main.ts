@@ -62,7 +62,7 @@ async function bootstrap() {
   });
   app.useGlobalInterceptors(new LoggingInterceptor());
   console.log(process.env.PORT ?? 5000)
-  await app.listen(process.env.PORT ?? 5000, '0.0.0.0');
+  await app.listen(process.env.PORT ?? 5000, '127.0.0.1');
   // await app.listen(3000, '0.0.0.0');
 }
 bootstrap();
