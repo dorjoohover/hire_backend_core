@@ -192,9 +192,10 @@ export class ExamService extends BaseService {
 
       if (res.userStartDate == null && category === undefined) {
         currentCategory = categories[0].id;
+        const date = new Date();
         await this.dao.update(res.id, {
           ...res,
-          userStartDate: new Date(),
+          userStartDate: date,
         });
         if (res.email && res.lastname && res.firstname) {
           const user = await this.authService.forceLogin(
@@ -203,7 +204,12 @@ export class ExamService extends BaseService {
             res.lastname,
             res.firstname,
           );
-          token = user;
+          await this.dao.update(res.id, {
+            ...res,
+            userStartDate: date,
+            user: user.user,
+          });
+          token = user.token;
         }
       }
 

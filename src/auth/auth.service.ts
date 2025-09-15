@@ -52,7 +52,11 @@ export class AuthService {
         role: Role.client,
       });
     }
-    return await this.generateToken(user);
+    const token = await this.generateToken(user);
+    return {
+      token,
+      user,
+    };
   }
 
   async login(user: LoginUserDto) {

@@ -39,9 +39,11 @@ export class ExamDao {
       phone: user ? user.phone : null,
       assessmentName: dto.assessment.name,
       assessment: { id: dto.assessment.id },
-      user: user ? {
-        id: user?.id,
-      } : null,
+      user: user
+        ? {
+            id: user?.id,
+          }
+        : null,
     });
     await this.db.save(res);
     return res.id;
@@ -49,7 +51,17 @@ export class ExamDao {
 
   update = async (code: number, dto: any) => {
     const res = await this.db.findOne({ where: { code: code } });
-    await this.db.save({ ...res, ...dto });
+    if (dto.user) {
+      await this.db.save({
+        ...res,
+        ...dto,
+        user: {
+          id: dto.user.id,
+        },
+      });
+    } else {
+      await this.db.save({ ...res, ...dto });
+    }
   };
 
   count = async () => {
