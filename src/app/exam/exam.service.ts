@@ -201,8 +201,8 @@ export class ExamService extends BaseService {
           const user = await this.authService.forceLogin(
             res.email,
             res.phone,
-            res.lastname,
-            res.firstname,
+            res.lastname ?? '',
+            res.firstname ?? '',
           );
           await this.dao.update(res.id, {
             ...res,
