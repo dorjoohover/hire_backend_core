@@ -44,7 +44,8 @@ export class QuestionAnswerDao {
         res.orderNumber == dto.orderNumber &&
         res.file == dto.file &&
         dto.category == res.category?.id &&
-        dto.reverse == res.reverse;
+        dto.reverse == res.reverse &&
+        dto.negative == res.negative;
       if (update) return id;
       await this.db.update(id, {
         ...dto,
@@ -84,6 +85,7 @@ export class QuestionAnswerDao {
         orderNumber: true,
         file: true,
         reverse: true,
+        negative: true,
       },
       where: {
         question: { id: id },

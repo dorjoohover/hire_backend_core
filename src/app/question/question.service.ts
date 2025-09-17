@@ -78,6 +78,7 @@ export class QuestionService {
         question: questionId,
         correct: answer.answer?.correct,
         reverse: answer.answer.reverse,
+        negative: answer.answer.negative,
       };
       const category = answer.answer?.category;
       const cate =
@@ -193,7 +194,7 @@ export class QuestionService {
   public async copy(assessmentId: number, userId: number) {
     // 1) Эх өгөгдлөө бүтнээр нь авч ир (асуулт/хариулт/категориудтайгаа)
     const src = await this.assessmentDao.findOne(assessmentId);
-    if(src.name.endsWith('copy')) throw new HttpException('Duplicated', 500)
+    if (src.name.endsWith('copy')) throw new HttpException('Duplicated', 500);
     if (!src) throw new Error(`Assessment ${assessmentId} not found`);
 
     // 2) Шинэ assessment үүсгэнэ
