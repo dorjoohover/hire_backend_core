@@ -28,7 +28,8 @@ export class QuestionAnswerEntity {
   correct: boolean;
   @Column({ default: false })
   reverse: boolean;
-
+  @Column({ default: false })
+  negative: boolean;
   @ManyToOne(() => QuestionEntity, (question) => question.answers, {
     onDelete: 'CASCADE',
   })

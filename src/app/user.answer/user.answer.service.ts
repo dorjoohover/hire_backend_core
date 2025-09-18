@@ -99,7 +99,7 @@ export class UserAnswerService extends BaseService {
                 `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
               )
             : await this.questionAnswerDao.query(
-                `select reverse,correct,  "categoryId" from "questionAnswer" where id = ${answer.answer}`,
+                `select reverse,negative,correct,  "categoryId" from "questionAnswer" where id = ${answer.answer}`,
               );
           answerCategory = answerCategory[0];
           let point: number;
@@ -132,6 +132,11 @@ export class UserAnswerService extends BaseService {
             console.log(p);
 
             point = typeof p === 'number' ? +p : +p;
+          }
+
+          if ((answerCategory as QuestionAnswerEntity)?.negative) {
+            point = -point;
+            console.log('negative', point);
           }
 
           const body: CreateUserAnswerDto = {
