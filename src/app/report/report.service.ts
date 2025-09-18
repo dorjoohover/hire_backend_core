@@ -9,7 +9,12 @@ import { ModuleRef } from '@nestjs/core';
 import { REPORT_STATUS } from 'src/base/constants';
 const reportStore: Record<
   string,
-  { status: string; result?: any; progress: number; code?: string }
+  {
+    status: string;
+    result?: any;
+    progress: number;
+    code?: string;
+  }
 > = {};
 @Injectable()
 export class ReportService {
@@ -29,7 +34,6 @@ export class ReportService {
       code,
       role: role ?? Role.admin,
     });
-    console.log(code);
 
     reportStore[job.id] = { status: 'PENDING', progress: 0, code };
     return { jobId: job.id };
@@ -43,8 +47,10 @@ export class ReportService {
   ) {
     const prev = reportStore[jobId] || {};
     // console.log(progress);
-    console.log(progress);
     reportStore[jobId] = { ...prev, status, result, progress };
+    if (progress == 100 || status == REPORT_STATUS.COMPLETED) {
+      this.sendMail(jobId);
+    }
     return { jobId, ...reportStore[jobId] };
   }
   findJobIdByCode(code: string) {
@@ -79,9 +85,7 @@ export class ReportService {
       report.status == REPORT_STATUS.COMPLETED &&
       report.code
     ) {
-      const prev = reportStore[jobId];
-      reportStore[jobId] = { ...prev, status: REPORT_STATUS.SENT };
-      this.userAnswer.sendEmail(report.code);
+      this.sendMail(jobId);
     }
     return {
       jobId,
@@ -90,5 +94,13 @@ export class ReportService {
       result: report.result ?? null,
       code: report.code,
     };
+  }
+
+  async sendMail(jobId: string) {
+    const prev = reportStore[jobId];
+    if (prev.status != REPORT_STATUS.SENT) {
+      reportStore[jobId] = { ...prev, status: REPORT_STATUS.SENT };
+      this.userAnswer.sendEmail(prev.code);
+    }
   }
 }

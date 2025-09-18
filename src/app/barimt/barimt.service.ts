@@ -232,6 +232,7 @@ export class BarimtService {
             ]
           : [],
       });
+      await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
     } catch (error) {
       await this.mailLog.updateStatus(
         log,
