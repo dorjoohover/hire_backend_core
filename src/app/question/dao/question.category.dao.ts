@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, In, MoreThan, Not, Repository } from 'typeorm';
+import { DataSource, MoreThan, Repository } from 'typeorm';
 import { QuestionCategoryEntity } from '../entities/question.category.entity';
 import { CreateQuestionCategoryDto } from '../dto/create-question.category.dto';
-import { UpdateQuestionCategoryDto } from '../dto/create-question.dto';
 import { QuestionStatus } from 'src/base/constants';
-import { UserAnswerDao } from 'src/app/user.answer/user.answer.dao';
 
 @Injectable()
 export class QuestionCategoryDao {
