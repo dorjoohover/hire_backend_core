@@ -102,7 +102,6 @@ export class ExamController {
 
     if (doc) {
       const report = await this.report.getByCode(code);
-      console.log(report);
       if (
         report == undefined ||
         report?.status == REPORT_STATUS.SENT ||
@@ -112,28 +111,13 @@ export class ExamController {
           responseType: 'stream',
         });
 
-        response.data.pipe(res);
-      }
-      if (report.status === REPORT_STATUS.UPLOADING) {
-        // Тайлан upload хийгдэж байна
-        throw new HttpException(
-          'Тайлан сервер рүү хуулж байна. Түр хүлээнэ үү...',
-          202,
-        );
-      }
-
-      if (report.status === REPORT_STATUS.CALCULATING) {
-        throw new HttpException(
-          'Тайлан бодогдож байна. Түр хүлээнэ үү...',
-          202,
-        );
-      }
-
-      if (report.status === REPORT_STATUS.WRITING) {
-        throw new HttpException(
-          'Тайлан PDF файл руу бичигдэж байна. Түр хүлээнэ үү...',
-          202,
-        );
+        return response.data.pipe(res); // return хийж байна!
+      } else if (report.status === REPORT_STATUS.UPLOADING) {
+        throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
+      } else if (report.status === REPORT_STATUS.CALCULATING) {
+        throw new HttpException('Тайлан бодогдож байна...', 202);
+      } else if (report.status === REPORT_STATUS.WRITING) {
+        throw new HttpException('Тайлан PDF бичиж байна...', 202);
       }
     }
   }
