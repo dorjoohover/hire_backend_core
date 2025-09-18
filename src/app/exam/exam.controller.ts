@@ -38,13 +38,15 @@ import axios from 'axios';
 import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
 import { Pagination } from 'src/base/decorator/pagination.decorator';
 import { PaginationDto } from 'src/base/decorator/pagination';
+import { ReportService } from '../report/report.service';
+import { REPORT_STATUS } from 'src/base/constants';
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
   private readonly cachePath = join(__dirname, '..', '..', 'cache');
   constructor(
     private readonly examService: ExamService,
-    private readonly fileService: FileService,
+    private readonly report: ReportService,
   ) {
     if (!existsSync(this.cachePath)) {
       mkdirSync(this.cachePath, { recursive: true });
@@ -97,12 +99,44 @@ export class ExamController {
     // PDFKit.PDFDocument үүсгэнэ
     const doc = await this.examService.getPdf(+code, role);
     console.log(doc, role, filename);
-    // if (doc) {
-    const response = await axios.get(`${process.env.REPORT}core/${code}`, {
-      responseType: 'stream',
-    });
 
-    response.data.pipe(res);
+    if (doc) {
+      const report = await this.report.getByCode(code);
+      console.log(report);
+      if (
+        report.status == REPORT_STATUS.SENT ||
+        report.status == REPORT_STATUS.COMPLETED
+      ) {
+        const response = await axios.get(`${process.env.REPORT}core/${code}`, {
+          responseType: 'stream',
+        });
+
+        response.data.pipe(res);
+      }
+      if (report.status === REPORT_STATUS.UPLOADING) {
+        // Тайлан upload хийгдэж байна
+        throw new HttpException(
+          'Тайлан сервер рүү хуулж байна. Түр хүлээнэ үү...',
+          202,
+        );
+      }
+
+      if (report.status === REPORT_STATUS.CALCULATING) {
+        throw new HttpException(
+          'Тайлан бодогдож байна. Түр хүлээнэ үү...',
+          202,
+        );
+      }
+
+      if (report.status === REPORT_STATUS.WRITING) {
+        throw new HttpException(
+          'Тайлан PDF файл руу бичигдэж байна. Түр хүлээнэ үү...',
+          202,
+        );
+      }
+
+      throw new HttpException('Тайлан олдсонгүй', 404);
+    }
   }
   // async requestPdf(@Param('code') code: string, @Res() res: Response) {
   //   const filename = `report-${code}.pdf`;

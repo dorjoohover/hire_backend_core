@@ -59,6 +59,9 @@ export class ReportService {
     );
     return entry ? entry[0] : null; // entry[0] нь jobId
   }
+  async getByCode(code: string) {
+    return Object.values(reportStore).find((r) => r.code === code);
+  }
   async getStatus(jobId: string) {
     let report = reportStore[jobId];
 
