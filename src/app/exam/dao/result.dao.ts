@@ -15,6 +15,7 @@ export class ResultDao {
 
   create = async (dto: ResultDto, details: ResultDetailDto[] = []) => {
     const res = this.db.create(dto);
+    console.log(dto);
     await this.db.save(res);
     for (const detail of details) {
       const d = this.detail.create({ ...detail, result: { id: res.id } });
