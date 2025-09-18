@@ -33,7 +33,7 @@ import { UserServiceModule } from '../user.service/user.service.module';
   imports: [
     BullModule.forRoot({
       connection: {
-        host: 'localhost',
+        host: 'redis',
         port: 6379,
       },
     }),
