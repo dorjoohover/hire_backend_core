@@ -105,7 +105,8 @@ export class ExamController {
       console.log(report);
       if (
         report.status == REPORT_STATUS.SENT ||
-        report.status == REPORT_STATUS.COMPLETED
+        report.status == REPORT_STATUS.COMPLETED ||
+        report == undefined
       ) {
         const response = await axios.get(`${process.env.REPORT}core/${code}`, {
           responseType: 'stream',
@@ -134,8 +135,6 @@ export class ExamController {
           202,
         );
       }
-
-      throw new HttpException('Тайлан олдсонгүй', 404);
     }
   }
   // async requestPdf(@Param('code') code: string, @Res() res: Response) {
