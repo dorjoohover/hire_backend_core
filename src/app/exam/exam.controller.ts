@@ -104,9 +104,9 @@ export class ExamController {
       const report = await this.report.getByCode(code);
       console.log(report);
       if (
-        report.status == REPORT_STATUS.SENT ||
-        report.status == REPORT_STATUS.COMPLETED ||
-        report == undefined
+        report == undefined ||
+        report?.status == REPORT_STATUS.SENT ||
+        report?.status == REPORT_STATUS.COMPLETED
       ) {
         const response = await axios.get(`${process.env.REPORT}core/${code}`, {
           responseType: 'stream',
