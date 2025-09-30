@@ -47,6 +47,7 @@ export class ExamController {
   constructor(
     private readonly examService: ExamService,
     private readonly report: ReportService,
+    private readonly file: FileService,
   ) {
     if (!existsSync(this.cachePath)) {
       mkdirSync(this.cachePath, { recursive: true });
@@ -107,11 +108,13 @@ export class ExamController {
         report?.status == REPORT_STATUS.SENT ||
         report?.status == REPORT_STATUS.COMPLETED
       ) {
-        const response = await axios.get(`${process.env.REPORT}core/${code}`, {
-          responseType: 'stream',
+        const response = await this.file.getReport(filename, res);
+        res.set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${filename}"`,
         });
 
-        return response.data.pipe(res); // return хийж байна!
+        response.pipe(res);
       } else if (report.status === REPORT_STATUS.UPLOADING) {
         throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
       } else if (report.status === REPORT_STATUS.CALCULATING) {
