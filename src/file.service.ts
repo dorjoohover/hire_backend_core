@@ -22,7 +22,8 @@ import { Response } from 'express';
 export class FileService {
   private readonly s3: AWS.S3;
   private readonly bucketName = process.env.AWS_BUCKET_NAME;
-  private readonly localPath = process.env.REPORT_PATH;
+  private readonly localPath = './uploads';
+  private readonly reportPath = process.env.REPORT_PATH;
 
   constructor() {
     this.s3 = new AWS.S3({
@@ -156,7 +157,8 @@ export class FileService {
   }
   async getReport(filename: string, res: Response) {
     try {
-      const filePath = join(this.localPath, filename);
+      const filePath = join(this.reportPath, filename);
+      console.log(filePath);
       if (!existsSync(filePath)) {
         const buffer = await this.downloadFromS3(filename);
         if (!buffer) throw new Error('File not found in S3');
