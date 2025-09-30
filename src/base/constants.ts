@@ -86,6 +86,15 @@ export const ReportType = {
   BURNOUT: 110,
   BIGFIVE: 120,
   DISAGREEMENT: 130,
+  WHOQOL: 140,
+  HADS: 150,
+  CFS: 160,
+  BOS: 170,
+  PSI: 180,
+  OFFICE: 190,
+  ETHIC: 200,
+  INAPPROPRIATE: 210,
+  GRIT: 220,
 };
 export const BlogType = {
   BLOG: 10,

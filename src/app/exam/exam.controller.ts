@@ -151,8 +151,25 @@ export class ExamController {
   //   });
   // }
 
-  @Get('exam/:id')
-  findOne(@Param('id') id: string) {}
+  @Public()
+  @Get('exam/:code')
+  @ApiParam({ name: 'code' })
+  async getExamInfo(@Param('code') code: string) {
+    try {
+      const examInfo = await this.examService.getExamInfoByCode(+code);
+
+      if (!examInfo) {
+        throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
+      }
+
+      return examInfo;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to retrieve exam info',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
   @Get('service/:id')
   findByService(@Param('id') id: string) {

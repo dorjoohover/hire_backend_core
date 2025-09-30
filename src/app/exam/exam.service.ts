@@ -126,6 +126,49 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
+  async getExamInfoByCode(code: number) {
+    const result = await this.resultDao.findOne(code);
+
+    if (!result) {
+      return null;
+    }
+
+    const exam = await this.dao.findByCode(code);
+
+    if (!exam) {
+      throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.FORBIDDEN);
+    }
+
+    if (!exam.visible) {
+      throw new HttpException(
+        'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const isInvited = exam.email != null && exam.user == null;
+
+    const orgName = exam.service?.user?.organizationName ?? null;
+
+    const icons = exam.assessment?.icons ?? null;
+
+    return {
+      assessmentName: result.assessmentName,
+      assessment: result.assessment,
+      firstname: result.firstname,
+      lastname: result.lastname,
+      createdAt: result.createdAt,
+      type: result.type,
+      result: result.result,
+      total: result.total,
+      point: result.point,
+      value: result.value,
+      isInvited,
+      orgName,
+      icons,
+    };
+  }
+
   // category questioncount der asuudaltai bga
   public async updateByCode(code: number, con: boolean, category?: number) {
     try {
