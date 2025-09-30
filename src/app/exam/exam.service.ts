@@ -150,6 +150,8 @@ export class ExamService extends BaseService {
 
     const orgName = exam.service?.user?.organizationName ?? null;
 
+    const icons = exam.assessment?.icons ?? null;
+
     return {
       assessmentName: result.assessmentName,
       assessment: result.assessment,
@@ -163,6 +165,7 @@ export class ExamService extends BaseService {
       value: result.value,
       isInvited,
       orgName,
+      icons,
     };
   }
 
