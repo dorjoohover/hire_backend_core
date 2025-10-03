@@ -30,6 +30,7 @@ import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
+import { performance } from 'perf_hooks';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -153,10 +154,10 @@ export class ExamService extends BaseService {
     const icons = exam.assessment?.icons ?? null;
 
     return {
-      assessmentName: result.assessmentName,
-      assessment: result.assessment,
-      firstname: result.firstname,
-      lastname: result.lastname,
+      assessmentName: exam.assessmentName,
+      assessment: exam.assessment,
+      firstname: exam.firstname,
+      lastname: exam.lastname,
       createdAt: result.createdAt,
       type: result.type,
       result: result.result,
@@ -171,8 +172,11 @@ export class ExamService extends BaseService {
 
   // category questioncount der asuudaltai bga
   public async updateByCode(code: number, con: boolean, category?: number) {
+    const startAll = performance.now();
     try {
+      console.time('⏱ dao.findByCode');
       const res = await this.dao.findByCode(code);
+      console.timeEnd('⏱ dao.findByCode');
 
       if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
       if (res.endDate && res.startDate && res.endDate < new Date())
@@ -182,104 +186,141 @@ export class ExamService extends BaseService {
         );
       if (res.userEndDate != null)
         throw new HttpException('Эрх дууссан байна.', HttpStatus.BAD_REQUEST);
-      // date false ued ehleh
-      // date true ued duusah esvel urgeljluuleh
-      // const answers = await this.userAnswer.findByCode(code);
-      let categoryIndex = 0;
 
+      let categoryIndex = 0;
+      let token = null;
+
+      // -1 => тестийг хаах
       if (category == -1) {
+        console.time('⏱ dao.update (userEndDate)');
         await this.dao.update(res.id, {
           ...res,
           userEndDate: new Date(),
         });
+        console.timeEnd('⏱ dao.update (userEndDate)');
+
+        console.log(
+          `🎯 updateByCode нийт хугацаа: ${(
+            performance.now() - startAll
+          ).toFixed(2)} ms`,
+        );
         return;
       }
-      let token = null;
+
       const shuffle = res.assessment.questionShuffle;
       const answerShuffle = res.assessment.answerShuffle;
-      // let prevQuestions = (await this.detailDao.findByExam(res.id)).map(
-      //   (a) => a.id,
-      // );
-      let prevQuestions = [];
+
+      let prevQuestions: number[] = [];
       let allCategories: number[] = [];
 
+      console.time('⏱ questionCategoryDao.findByAssessment');
       const categoriesByAssessment =
         await this.questionCategoryDao.findByAssessment(res.assessment.id);
-      let categories = await Promise.all(
-        categoriesByAssessment.map((c) => {
-          const { questions, ...body } = c;
-          return { ...body };
-        }),
-      );
-      allCategories = await Promise.all(categories.map((cate) => cate.id));
-      console.log(allCategories);
+      console.timeEnd('⏱ questionCategoryDao.findByAssessment');
+
+      const categories = categoriesByAssessment.map((c) => {
+        const { questions, ...body } = c;
+        return { ...body };
+      });
+
+      allCategories = categories.map((cate) => cate.id);
+      console.log('📌 allCategories:', allCategories);
+
       let currentCategory = category ?? allCategories[0];
       categoryIndex = allCategories.indexOf(currentCategory);
       allCategories =
         categoryIndex !== -1
           ? allCategories.slice(categoryIndex)
           : allCategories;
+
       if (con) {
+        console.time('⏱ check userAnswer by categories');
         for (let i = 0; i < categoriesByAssessment.length; i++) {
+          const t0 = performance.now();
           const userAnswer = await this.userAnswer.findByQuestionCategory(
             categoriesByAssessment[i].id,
             res.code,
           );
-
+          console.log(
+            `   ↪ findByQuestionCategory(cat=${categoriesByAssessment[i].id}) = ${(performance.now() - t0).toFixed(2)} ms`,
+          );
           if (userAnswer == null) {
             categoryIndex = i;
             break;
           }
         }
+        console.timeEnd('⏱ check userAnswer by categories');
       }
 
       if (res.userStartDate == null && category === undefined) {
         currentCategory = categories[0].id;
         const date = new Date();
+
+        console.time('⏱ dao.update (userStartDate)');
         await this.dao.update(res.id, {
           ...res,
           userStartDate: date,
         });
+        console.timeEnd('⏱ dao.update (userStartDate)');
+
         if (res.email && (res.lastname || res.firstname)) {
+          console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
             res.email,
             res.phone,
             res.lastname ?? '',
             res.firstname ?? '',
           );
+          console.timeEnd('⏱ authService.forceLogin');
+
+          console.time('⏱ dao.update (attach user)');
           await this.dao.update(res.id, {
             ...res,
             userStartDate: date,
             user: user.user,
           });
+          console.timeEnd('⏱ dao.update (attach user)');
+
           token = user.token;
         }
       }
 
       if (currentCategory) {
-        if (allCategories.length == 0)
-          allCategories = await Promise.all(
-            (
-              await this.questionCategoryDao.findByAssessment(
-                res.assessment.id,
-                currentCategory,
-              )
-            ).map((a) => a.id),
-          );
+        if (allCategories.length == 0) {
+          console.time('⏱ questionCategoryDao.findByAssessment (fallback)');
+          allCategories = (
+            await this.questionCategoryDao.findByAssessment(
+              res.assessment.id,
+              currentCategory,
+            )
+          ).map((a) => a.id);
+          console.timeEnd('⏱ questionCategoryDao.findByAssessment (fallback)');
+        }
+
+        console.time('⏱ getQuestions');
         const result = await this.getQuestions(
           shuffle,
           currentCategory,
           answerShuffle,
           prevQuestions,
         );
-        console.log(res);
+        console.timeEnd('⏱ getQuestions');
+
+        console.time('⏱ createDetail');
         await this.createDetail(
           result.questions,
           res.id,
           result.category,
           res.service.id,
         );
-        console.log(allCategories, allCategories.slice(1), category);
+        console.timeEnd('⏱ createDetail');
+
+        console.log(
+          `🎯 updateByCode нийт хугацаа: ${(
+            performance.now() - startAll
+          ).toFixed(2)} ms`,
+        );
+
         return {
           questions: result.questions,
           category: result.category,
@@ -290,7 +331,7 @@ export class ExamService extends BaseService {
         };
       }
     } catch (error) {
-      console.log(error);
+      console.error('❌ updateByCode алдаа:', error);
       throw error;
     }
   }

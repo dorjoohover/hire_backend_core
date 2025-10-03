@@ -23,6 +23,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { EmailLogService } from '../email_log/email_log.service';
 import { EmailLogStatus, EmailLogType } from 'src/base/constants';
 import { ReportService } from '../report/report.service';
+import { performance } from 'perf_hooks';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -38,6 +39,7 @@ export class UserAnswerService extends BaseService {
   ) {
     super();
   }
+
   public async create(
     dto: UserAnswerDtoList,
     ip: string,
@@ -47,21 +49,31 @@ export class UserAnswerService extends BaseService {
     const res = [];
     const message = (msg: string) =>
       new HttpException(msg, HttpStatus.BAD_REQUEST);
-    console.log(dto);
+
+    const startAll = performance.now(); // ✅ нийт хугацааг эхлүүлэх
+
     try {
       // Validate input
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
+      console.time('⏱ examDao.findByCodeOnly');
       const exam = await this.examDao.findByCodeOnly(dto.data[0].code);
-      console.log(exam);
+      console.timeEnd('⏱ examDao.findByCodeOnly');
+
       if (!exam) throw message('Тест олдсонгүй');
 
       for (const d of dto.data) {
+        const startQuestionLoop = performance.now();
+
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
-        const query = `select "minValue", "maxValue"  from question where id = ${d.question}`;
-        const question = await this.questionDao.query(query);
+        console.time(`⏱ question ${d.question} fetch`);
+        const question = await this.questionDao.query(
+          `select "minValue", "maxValue"  from question where id = ${d.question}`,
+        );
+        console.timeEnd(`⏱ question ${d.question} fetch`);
+
         if (!question) throw message('Асуулт олдсонгүй');
 
         // No answer case
@@ -80,29 +92,39 @@ export class UserAnswerService extends BaseService {
             exam: exam.id,
             device,
           };
+
+          console.time(`⏱ dao.create (no answer q=${d.question})`);
           const r = await this.dao.create(body);
+          console.timeEnd(`⏱ dao.create (no answer q=${d.question})`);
+
           res.push(r);
           continue;
         }
 
         // Multiple answers
         const code = dto.data[0].code;
-
         const answers = d.answers;
+
         for (const answer of answers) {
+          const loopStart = performance.now();
+
           const result = answer.matrix
             ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
             : await this.dao.findByAnswerId(answer.answer, code);
           if (result) continue;
+
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
-                `select   "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
+                `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
               )
             : await this.questionAnswerDao.query(
-                `select reverse,negative,correct,  "categoryId" from "questionAnswer" where id = ${answer.answer}`,
+                `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
               );
+
           answerCategory = answerCategory[0];
+
           let point: number;
+
           if (
             !answer.matrix &&
             (answerCategory as QuestionAnswerEntity)?.reverse
@@ -111,7 +133,6 @@ export class UserAnswerService extends BaseService {
               Number(question?.maxValue ?? question[0]?.maxValue ?? 0) -
               Number(answer.point ?? 0) +
               Number(question?.minValue ?? question[0]?.minValue ?? 0);
-            console.log('if', point);
           } else {
             let p;
 
@@ -129,14 +150,11 @@ export class UserAnswerService extends BaseService {
               p = answerResult[0]?.point;
             }
 
-            console.log(p);
-
             point = typeof p === 'number' ? +p : +p;
           }
 
           if ((answerCategory as QuestionAnswerEntity)?.negative) {
             point = -point;
-            console.log('negative', point);
           }
 
           const body: CreateUserAnswerDto = {
@@ -156,16 +174,41 @@ export class UserAnswerService extends BaseService {
             exam: exam.id,
             device,
           };
+
+          console.time(`⏱ dao.create (q=${d.question}, a=${answer.answer})`);
           const r = await this.dao.create(body);
+          console.timeEnd(
+            `⏱ dao.create (q=${d.question}, a=${answer.answer})`,
+          );
+
           res.push(r);
+
+          console.log(
+            `✅ Answer save (q=${d.question}, a=${answer.answer}) хугацаа: ${(
+              performance.now() - loopStart
+            ).toFixed(2)} ms`,
+          );
         }
+
+        console.log(
+          `✅ Question ${d.question} нийт хугацаа: ${(
+            performance.now() - startQuestionLoop
+          ).toFixed(2)} ms`,
+        );
       }
 
       // Тест дууссан эсэх
-      console.log(dto.end);
       if (dto.end) {
+        console.time('⏱ createReport');
         this.createReport(dto.data[0].code);
+        console.timeEnd('⏱ createReport');
       }
+
+      console.log(
+        `🎯 Бүх create() нийт хугацаа: ${(performance.now() - startAll).toFixed(
+          2,
+        )} ms`,
+      );
 
       return res;
     } catch (error) {
@@ -178,6 +221,7 @@ export class UserAnswerService extends BaseService {
           );
     }
   }
+
   public async createReport(code: number) {
     this.examDao.endExam(code);
     await this.report.createReport({ code });
