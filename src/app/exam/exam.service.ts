@@ -131,11 +131,20 @@ export class ExamService extends BaseService {
     const result = await this.resultDao.findOne(code);
 
     if (!result) {
-      return null;
+      throw new HttpException(
+        'Шалгалтын хариу олдсонгүй.',
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const exam = await this.dao.findByCode(code);
 
+    if (!user) {
+      throw new HttpException(
+        'Хэрэглэгч нэвтрэх шаардлагатай.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
     if (!exam) {
       throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.FORBIDDEN);
     }
@@ -153,7 +162,7 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-    console.log(exam.service.user)
+    console.log(exam.service.user);
     if (
       user &&
       user.role === ORGANIZATION &&
