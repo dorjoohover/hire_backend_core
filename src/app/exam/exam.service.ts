@@ -146,7 +146,7 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-
+    console.log(user);
     if (user && user.role == CLIENT && user?.id != exam.user.id) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
@@ -156,7 +156,8 @@ export class ExamService extends BaseService {
     if (
       user &&
       user.role === ORGANIZATION &&
-      (!user.services || !user.services.some((s) => s.user.id === user.id))
+      !exam.service?.user?.id &&
+      exam?.service?.user?.id != user?.id
     ) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
