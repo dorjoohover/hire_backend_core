@@ -128,7 +128,7 @@ export class ExamDao {
           id: service,
         },
       },
-      relations: ['assessment'],
+    relations: ['assessment', 'service'],
     });
   };
 

@@ -126,6 +126,8 @@ export class PaymentService extends BaseService {
     for (const payment of data) {
       const arr = payment.message.split('-');
       let service = arr?.[1] && this.examDao.findByService(+arr?.[1]);
+      console.log(arr?.[1])
+      console.log(service?.[0].service)
       payments.push({
         message: arr[0],
         assessment: payment.assessment,
