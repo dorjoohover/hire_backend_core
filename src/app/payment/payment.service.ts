@@ -125,17 +125,19 @@ export class PaymentService extends BaseService {
     paymentTotal = total;
     for (const payment of data) {
       const arr = payment.message.split('-');
-      let service = arr?.[1] && this.examDao.findByService(+arr?.[1]);
-      console.log(arr?.[1])
-      console.log(service?.[0].service)
+      // let service = arr?.[1] && this.examDao.findByService(+arr?.[1]);
+      // console.log(arr?.[1])
+      // console.log(service?.[0].service)
       payments.push({
         message: arr[0],
         assessment: payment.assessment,
         paymentDate: payment.createdAt,
         price: payment.totalPrice,
-        paymentCount: service
-          ? ((await service)?.[0]?.service?.count ?? 0)
-          : payment.totalPrice == 0 || payment.assessment.price == 0
+        paymentCount:
+        //  service
+        //   ? ((await service)?.[0]?.service?.count ?? 0)
+          // :
+           payment.totalPrice == 0 || payment.assessment.price == 0
             ? 0
             : payment.totalPrice / payment.assessment.price,
         serviceId: arr?.[1] ?? null,

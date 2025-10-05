@@ -130,6 +130,11 @@ export class UserServiceDao {
           id: assId == 0 ? Not(assId) : assId,
         },
       },
+      order: {
+        exams: {
+          userEndDate: 'desc',
+        },
+      },
       relations: ['assessment', 'exams', 'user'],
     });
     const total = await this.db.count();
