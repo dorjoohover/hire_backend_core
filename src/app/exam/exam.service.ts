@@ -133,7 +133,7 @@ export class ExamService extends BaseService {
     if (!result) {
       throw new HttpException(
         'Шалгалтын хариу олдсонгүй.',
-        HttpStatus.FORBIDDEN,
+        HttpStatus.BAD_REQUEST,
       );
     }
 
@@ -146,7 +146,7 @@ export class ExamService extends BaseService {
       );
     }
     if (!exam) {
-      throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.FORBIDDEN);
+      throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.BAD_REQUEST);
     }
 
     if (!exam.visible) {
@@ -159,7 +159,7 @@ export class ExamService extends BaseService {
     if (user && user.role == CLIENT && user?.id != exam.user.id) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
-        HttpStatus.FORBIDDEN,
+        HttpStatus.BAD_REQUEST,
       );
     }
     console.log(exam.service.user);
@@ -171,7 +171,7 @@ export class ExamService extends BaseService {
     ) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
-        HttpStatus.FORBIDDEN,
+        HttpStatus.BAD_REQUEST,
       );
     }
 
