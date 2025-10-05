@@ -64,7 +64,8 @@ export class AuthService {
     let result;
     let res = await this.usersService.getUser(user.email);
     if (!res) res = await this.usersService.getUser(user.registerNumber);
-    if (res.role == ORGANIZATION && !user.isOrg) {
+    console.log(user.isOrg)
+    if (res.role == ORGANIZATION && user.isOrg == false) {
       throw new HttpException('Байгууллагаар нэвтэрнэ үү', 202);
     }
     if (res.role == CLIENT && user.isOrg) {
