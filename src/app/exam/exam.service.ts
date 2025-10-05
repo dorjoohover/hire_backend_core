@@ -20,7 +20,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
-import { ReportType } from 'src/base/constants';
+import { CLIENT, ORGANIZATION, ReportType } from 'src/base/constants';
 import { UserDao } from '../user/user.dao';
 import { ResultDao } from './dao/result.dao';
 import { ResultDetailDto } from './dto/result.dto';
@@ -127,7 +127,7 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
-  async getExamInfoByCode(code: number) {
+  async getExamInfoByCode(code: number, user?: UserEntity) {
     const result = await this.resultDao.findOne(code);
 
     if (!result) {
@@ -143,6 +143,23 @@ export class ExamService extends BaseService {
     if (!exam.visible) {
       throw new HttpException(
         'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    if (user && user.role == CLIENT && user?.id != exam.user.id) {
+      throw new HttpException(
+        'Тайлан харах эрхгүй байна.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    if (
+      user &&
+      user.role === ORGANIZATION &&
+      (!user.services || !user.services.some((s) => s.user.id === user.id))
+    ) {
+      throw new HttpException(
+        'Тайлан харах эрхгүй байна.',
         HttpStatus.FORBIDDEN,
       );
     }

@@ -85,7 +85,7 @@ export class ExamController {
     }
   }
 
-  @Public()
+  // @Public()
   @Get('/pdf/:code')
   @ApiParam({ name: 'code' })
   // for report development
@@ -99,7 +99,7 @@ export class ExamController {
 
     // PDFKit.PDFDocument үүсгэнэ
     const doc = await this.examService.getPdf(+code, role);
-    console.log(doc, role, filename);
+    await this.examService.getExamInfoByCode(+code, user);
 
     if (doc) {
       const report = await this.report.getByCode(code);
