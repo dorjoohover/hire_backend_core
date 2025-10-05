@@ -12,6 +12,7 @@ import { CreateUserDto } from 'src/app/user/dto/create-user.dto';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { jwtConstants } from './constants';
 import { Role } from './guards/role/role.enum';
+import { P } from 'src/base/const/app.const';
 
 @Injectable()
 export class AuthService {
@@ -63,6 +64,12 @@ export class AuthService {
     let result;
     let res = await this.usersService.getUser(user.email);
     if (!res) res = await this.usersService.getUser(user.registerNumber);
+    if (res.role == ORGANIZATION && !user.isOrg) {
+      throw new HttpException('Байгууллагаар нэвтэрнэ үү', 202);
+    }
+    if (res.role == CLIENT && user.isOrg) {
+      throw new HttpException('Шалгуулагчаар нэвтэрнэ үү', 202);
+    }
     if (res && !res.emailVerified) {
       await this.usersService.sendConfirmMail(res.email);
       throw new HttpException(

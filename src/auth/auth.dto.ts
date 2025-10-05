@@ -5,6 +5,8 @@ export class LoginUserDto {
   @ApiProperty()
   email?: string;
   @ApiProperty()
+  isOrg?: boolean;
+  @ApiProperty()
   registerNumber?: string;
   @ApiProperty()
   token?: string;

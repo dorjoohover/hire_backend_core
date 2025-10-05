@@ -153,6 +153,7 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
+    console.log(exam.service.user)
     if (
       user &&
       user.role === ORGANIZATION &&
