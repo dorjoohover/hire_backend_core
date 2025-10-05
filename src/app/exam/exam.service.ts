@@ -166,7 +166,7 @@ export class ExamService extends BaseService {
     if (
       user &&
       user.role === ORGANIZATION &&
-      !exam.service?.user?.id &&
+      exam.service?.user?.id &&
       exam?.service?.user?.id != user?.id
     ) {
       throw new HttpException(
