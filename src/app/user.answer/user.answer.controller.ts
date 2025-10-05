@@ -32,7 +32,7 @@ export class UserAnswerController {
   ) {
     try {
       const device = headers['user-agent'] ?? '';
-      this.userAnswerService.create(dto, ip, device, user);
+      return this.userAnswerService.create(dto, ip, device, user);
     } catch (error) {
       return {
         success: false,

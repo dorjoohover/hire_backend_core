@@ -202,6 +202,9 @@ export class UserAnswerService extends BaseService {
         console.time('⏱ createReport');
         this.createReport(dto.data[0].code);
         console.timeEnd('⏱ createReport');
+        return {
+          visible: exam.visible,
+        };
       }
 
       console.log(
@@ -209,8 +212,6 @@ export class UserAnswerService extends BaseService {
           2,
         )} ms`,
       );
-
-      return res;
     } catch (error) {
       console.error('❌ Хэрэглэгчийн хариулт бүртгэх үед алдаа:', error);
       throw error instanceof HttpException

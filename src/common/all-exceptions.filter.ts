@@ -78,7 +78,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: exception.message || 'Системийн алдаа',
       statusCode: httpStatus,
     };
-    console.log(responseBody)
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
