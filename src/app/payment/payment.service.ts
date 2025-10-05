@@ -130,6 +130,10 @@ export class PaymentService extends BaseService {
         assessment: payment.assessment,
         paymentDate: payment.createdAt,
         price: payment.totalPrice,
+        paymentCount:
+          payment.totalPrice == 0 || payment.assessment.price == 0
+            ? 0
+            : payment.totalPrice / payment.assessment.price,
         serviceId: arr?.[1] ?? null,
         admin: user['role'] == Role.client ? null : payment.charger,
       });
