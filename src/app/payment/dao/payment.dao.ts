@@ -63,7 +63,7 @@ export class PaymentDao {
         };
     const [data, count] = await this.db.findAndCount({
       where: where,
-      relations: ['user', 'charger', 'assessment'],
+      relations: ['user', 'charger', 'assessment', 'transactions'],
       take: limit,
       order: {
         createdAt: 'desc',
