@@ -5,7 +5,7 @@ export class LoginUserDto {
   @ApiProperty()
   email?: string;
   @ApiProperty()
-  isOrg?: boolean;
+  isOrg?: string;
   @ApiProperty()
   registerNumber?: string;
   @ApiProperty()
