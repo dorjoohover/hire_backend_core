@@ -30,14 +30,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const clientIp = request.ip || '';
       let status = 500;
 
+      console.log(exception.message)
       if (exception instanceof HttpException) {
         status = exception.getStatus();
         message = exception.message as string;
       } else if (exception instanceof Error) {
         message = exception.message;
       }
-      // Log error in PostgreSQL with IP
-      try {
         if (message != 'Forbidden resource' && status != 404 && status != 400) {
           await this.fileLog.log({
             ts: new Date().toISOString(),
@@ -51,10 +50,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
             user: (request as any)?.user ?? undefined,
           });
         }
-      } catch (e) {
-        // файл бичих боломжгүй үед сүүлчийн аврал
-        console.error('[file-log-failed]', e);
-      }
       // await this.errorLogService.logError(
       //   exception,
       //   message,
