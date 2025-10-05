@@ -25,6 +25,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { MailerService } from '@nestjs-modules/mailer';
 import { QpayService } from '../payment/qpay.service';
 import {
+  CLIENT,
   EmailLogStatus,
   EmailLogType,
   generatePassword,
@@ -250,14 +251,12 @@ export class UserServiceService extends BaseService {
         'Худалдан авалт олдсонгүй',
         HttpStatus.BAD_REQUEST,
       );
-    if (
-      role == Role.organization &&
-      service.count - service.usedUserCount - dto.count < 0
-    )
+    if (service.count - service.usedUserCount - dto.count < 0)
       throw new HttpException(
         'Үлдэгдэл хүрэлцэхгүй байна.',
         HttpStatus.PAYMENT_REQUIRED,
       );
+
     const code = Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
         console.log(service.user, role);
