@@ -139,12 +139,12 @@ export class ExamService extends BaseService {
 
     const exam = await this.dao.findByCode(code);
 
-    if (!user) {
-      throw new HttpException(
-        'Хэрэглэгч нэвтрэх шаардлагатай.',
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    // if (!user) {
+    //   throw new HttpException(
+    //     'Хэрэглэгч нэвтрэх шаардлагатай.',
+    //     HttpStatus.FORBIDDEN,
+    //   );
+    // }
     if (!exam) {
       throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.BAD_REQUEST);
     }
