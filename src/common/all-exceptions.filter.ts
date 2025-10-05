@@ -23,11 +23,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
   async catch(exception: Error, host: ArgumentsHost) {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
+    let message;
     try {
+      message = 'Internal server error';
       const request = ctx.getRequest<Request>();
       const clientIp = request.ip || '';
       let status = 500;
-      let message = 'Internal server error';
 
       if (exception instanceof HttpException) {
         status = exception.getStatus();
@@ -79,7 +80,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const responseBody = {
       succeed: false,
-      message: exception.message || 'Системийн алдаа',
+      message: message ?? (exception.message || 'Системийн алдаа'),
       statusCode: httpStatus,
     };
 
