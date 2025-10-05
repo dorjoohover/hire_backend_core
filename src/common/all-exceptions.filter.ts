@@ -75,9 +75,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     const responseBody = {
       succeed: false,
-      message: message ?? (exception.message || 'Системийн алдаа'),
+      message: exception.message || 'Системийн алдаа',
       statusCode: httpStatus,
     };
+    console.log(responseBody)
 
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
