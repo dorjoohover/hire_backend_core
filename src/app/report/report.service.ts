@@ -35,7 +35,7 @@ export class ReportService {
       role: role ?? Role.admin,
     });
 
-    reportStore[job.id] = { status: 'PENDING', progress: 0, code };
+    reportStore[job.id] = { status: 'PENDING', progress: 5, code };
     return { jobId: job.id };
   }
 
