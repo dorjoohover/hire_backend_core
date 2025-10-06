@@ -258,7 +258,7 @@ export class UserServiceService extends BaseService {
         HttpStatus.PAYMENT_REQUIRED,
       );
 
-    const code = Promise.all(
+    const code = await Promise.all(
       Array.from({ length: dto.count }, (_, i) => i + 1).map(async (i) => {
         console.log(service.user, role);
         const res = await this.examService.create(
