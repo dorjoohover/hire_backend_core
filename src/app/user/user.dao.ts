@@ -159,12 +159,13 @@ export class UserDao {
         id: +email,
       };
     }
+    // {
+    //       organizationRegisterNumber: email,
+    //     },
     const res = await this._db.findOne({
       where: [
         where,
-        {
-          organizationRegisterNumber: email,
-        },
+        
       ],
     });
     return res;
