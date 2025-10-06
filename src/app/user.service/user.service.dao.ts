@@ -97,6 +97,7 @@ export class UserServiceDao {
   };
 
   updateCount = async (id: number, count: number, used: number) => {
+    console.log(id, count, used);
     const res = await this.db.findOne({ where: { id: id } });
     res.count += count;
     res.usedUserCount += used;
