@@ -224,7 +224,7 @@ export class UserAnswerService extends BaseService {
   }
 
   public async createReport(code: number) {
-    this.examDao.endExam(code);
+    await this.examDao.endExam(code);
     await this.report.createReport({ code });
   }
   public async sendEmail(code: string) {
