@@ -64,11 +64,10 @@ export class AuthService {
     let result;
     let res = await this.usersService.getUser(user.email);
     if (!res) res = await this.usersService.getUser(user.registerNumber);
-    console.log('isOrg', user.isOrg);
-    if (res.role == ORGANIZATION && user.isOrg == 'false') {
+    if (res?.role == ORGANIZATION && user.isOrg == 'false') {
       throw new HttpException('Байгууллагаар нэвтэрнэ үү', 202);
     }
-    if (res.role == CLIENT && user.isOrg == 'true') {
+    if (res?.role == CLIENT && user.isOrg == 'true') {
       throw new HttpException('Шалгуулагчаар нэвтэрнэ үү', 202);
     }
     if (res && !res.emailVerified) {
