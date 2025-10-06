@@ -128,7 +128,7 @@ export class ExamDao {
           id: service,
         },
       },
-    relations: ['assessment', 'service'],
+      relations: ['assessment', 'service'],
     });
   };
 
@@ -144,6 +144,9 @@ export class ExamDao {
         },
       },
       relations: ['assessment', 'service', 'service.user'],
+      order: {
+        userEndDate: 'desc',
+      },
     });
   };
   findByAdmin = async (pg: PaginationDto) => {
