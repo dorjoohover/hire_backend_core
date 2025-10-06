@@ -251,6 +251,7 @@ export class UserServiceService extends BaseService {
         'Худалдан авалт олдсонгүй',
         HttpStatus.BAD_REQUEST,
       );
+    console.log(service.count, service.usedUserCount, dto.count);
     if (service.count - service.usedUserCount - dto.count < 0)
       throw new HttpException(
         'Үлдэгдэл хүрэлцэхгүй байна.',
