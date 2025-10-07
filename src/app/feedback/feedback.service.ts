@@ -16,11 +16,11 @@ export class FeedbackService extends BaseService {
 
     this._db = this.dataSource.getRepository(FeedbackEntity);
   }
-  public async create(dto: CreateFeedbackDto, user?: number) {
+  public async create(dto: CreateFeedbackDto, user?: string) {
     const res = await this._db.create({
       ...dto,
       user: user ? {
-        id: user,
+        id: +user,
       } : null,
       assessment: {
         id: dto.assessment,

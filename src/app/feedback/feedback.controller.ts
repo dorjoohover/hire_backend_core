@@ -30,7 +30,7 @@ export class FeedbackController {
   @Public()
   @Post()
   create(@Body() createFeedbackDto: CreateFeedbackDto, @Request() { user }) {
-    return this.feedbackService.create(createFeedbackDto, +user['id']);
+    return this.feedbackService.create(createFeedbackDto, user?.['id']);
   }
   @Public()
   @Post('contact')
