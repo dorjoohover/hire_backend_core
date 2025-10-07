@@ -21,7 +21,9 @@ export class FeedbackEntity {
   message: string;
   @Column({ nullable: true })
   status: number;
-  @ManyToOne(() => UserEntity, (service) => service.feedbacks)
+  @ManyToOne(() => UserEntity, (service) => service.feedbacks, {
+    nullable: true,
+  })
   user: UserEntity;
   @ManyToOne(() => AssessmentEntity, (service) => service.feedbacks, {
     onDelete: 'CASCADE',

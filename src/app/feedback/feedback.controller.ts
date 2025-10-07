@@ -27,6 +27,7 @@ export class FeedbackController {
     private readonly contact: ContactDao,
   ) {}
 
+  @Public()
   @Post()
   create(@Body() createFeedbackDto: CreateFeedbackDto, @Request() { user }) {
     return this.feedbackService.create(createFeedbackDto, +user['id']);
