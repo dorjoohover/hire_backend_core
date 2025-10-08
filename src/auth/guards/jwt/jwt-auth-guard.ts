@@ -22,8 +22,17 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         IS_PUBLIC_KEY,
         [context.getHandler(), context.getClass()],
       );
-      // return true
+      const request = context.switchToHttp().getRequest();
       if (isPublic) {
+        // Хэрвээ public route бол — токен байвал шалгаж үзнэ, байхгүй бол алгасна
+        const authHeader = request.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          try {
+            return (await super.canActivate(context)) as boolean;
+          } catch {
+            return true;
+          }
+        }
         return true;
       }
       const parentCanActivate = (await super.canActivate(context)) as boolean;
