@@ -174,7 +174,6 @@ export class UserService {
         throw new HttpException('Бүртгэлтэй байна.', HttpStatus.BAD_REQUEST);
       }
       if (
-        !dto.organizationPhone ||
         !dto.organizationName ||
         !dto.lastname ||
         !dto.position ||
