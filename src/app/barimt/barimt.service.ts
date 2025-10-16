@@ -28,13 +28,16 @@ export class BarimtService {
   public async loginEbarimt(): Promise<{ token: string; expiredIn: number }> {
     const now = Date.now();
 
-    if (now < this.expiresAt && this.accessToken) {
+    // Хэрвээ token хүчинтэй байвал шууд буцаана
+    if (this.accessToken && now < this.expiresAt - 5_000) {
+      // ⬅️ 5 секундийн "safety margin" нэмлээ
       return {
         token: this.accessToken,
         expiredIn: Math.floor((this.expiresAt - now) / 1000),
       };
     }
 
+    // Хэрвээ аль хэдийн refresh хийж байгаа бол түүнийг хүлээнэ
     if (this.refreshing) {
       const token = await this.refreshing;
       return {
@@ -43,6 +46,7 @@ export class BarimtService {
       };
     }
 
+    // Шинэ token авах
     this.refreshing = this._getNewToken().finally(() => {
       this.refreshing = null;
     });
@@ -55,8 +59,6 @@ export class BarimtService {
   }
 
   private async _getNewToken(): Promise<string> {
-    const now = Date.now();
-
     const url = `${process.env.BARIMT_URL}login`;
 
     try {
@@ -75,16 +77,22 @@ export class BarimtService {
 
       const tokenData = res.data;
       this.accessToken = tokenData.accessToken;
-      this.expiresAt = now + tokenData.expiredIn * 1000;
+      this.expiresAt = Date.now() + tokenData.expiredIn * 1000;
+
+      console.log(
+        `[Ebarimt] New token acquired, expires in ${tokenData.expiredIn} sec`,
+      );
+
       return this.accessToken;
     } catch (error) {
-      console.log(error);
+      const axiosError = error as AxiosError;
       this.accessToken = null;
       this.expiresAt = 0;
-      const axiosError = error as AxiosError;
+
+      console.error('[Ebarimt] Token fetch failed:', axiosError.response?.data);
       throw new HttpException(
         axiosError.response?.data || 'Authentication failed',
-        500,
+        axiosError.response?.status || 500,
       );
     }
   }
@@ -95,6 +103,7 @@ export class BarimtService {
     price: number,
     service: number,
   ) {
+    const { token } = await this.loginEbarimt();
     const d = {
       branchNo: '001',
       posNo: '10008555',
@@ -125,7 +134,7 @@ export class BarimtService {
       easy: true,
       payments: dto.payments,
     };
-    const { token } = await this.loginEbarimt();
+
     // return token;
     try {
       if (!d.receipts || d.receipts.length == 0)
