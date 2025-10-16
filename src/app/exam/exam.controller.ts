@@ -128,13 +128,13 @@ export class ExamController {
   @Public()
   @Get('/recalculate/:code')
   async recalculate(@Param('code') code: number) {
-    const result = await axios.get(`${process.env.REPORT}/calculate/${code}`);
+    const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
     return result.data;
   }
   @Public()
   @Get('/regenerate/:code')
   async regenerate(@Param('code') code: number, @Res() res: Response) {
-    const url = `${process.env.REPORT}/test/${code}`;
+    const url = `${process.env.REPORT}test/${code}`;
     const response = await axios.get(url, {
       responseType: 'stream', // ⬅️ stream болгож авна
     });
