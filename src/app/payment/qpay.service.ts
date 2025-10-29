@@ -29,13 +29,27 @@ export class QpayService {
     this.accessToken = data.access_token;
     this.refreshToken = data.refresh_token;
     this.expiresIn = new Date(Date.now() + data.expires_in * 1000);
+    console.log(
+      'Access token refreshed:',
+      this.accessToken.slice(0, 20),
+      '...',
+      new Date(),
+    );
   }
 
   private async ensureValidToken() {
-    if (!this.accessToken || new Date() > this.expiresIn) {
-      if (this.refreshToken) {
+    const now = new Date();
+
+    if (!this.accessToken || now > this.expiresIn) {
+      const diff = this.expiresIn
+        ? now.getTime() - this.expiresIn.getTime()
+        : 0;
+
+      if (this.refreshToken && diff < 24 * 60 * 60 * 1000) {
+        console.log('Token expired → Refreshing...');
         await this.refreshAccessToken();
       } else {
+        console.log('24 цаг өнгөрсөн → Re-authenticating...');
         await this.authenticate();
       }
     }
