@@ -1,7 +1,7 @@
 // src/qpay/qpay.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 @Injectable()
 export class QpayService {
   private readonly logger = new Logger(QpayService.name);
@@ -95,21 +95,28 @@ export class QpayService {
     }
   }
   private async authenticate() {
-    const response = await this.httpService
-      .post(
-        `${this.baseUrl}auth/token`,
-        {},
-        {
-          auth: {
-            username: process.env.QPAY_CLIENT_ID,
-            password: process.env.QPAY_CLIENT_SECRET,
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          `${this.baseUrl}auth/token`,
+          {},
+          {
+            auth: {
+              username: process.env.QPAY_CLIENT_ID,
+              password: process.env.QPAY_CLIENT_SECRET,
+            },
+            timeout: 10000,
           },
-        },
-      )
-      .toPromise();
-    this.accessToken = response.data.access_token;
-    this.refreshToken = response.data.refresh_token;
-    this.expiresIn = new Date(Date.now() + response.data.expires_in * 1000);
+        ),
+      );
+
+      this.accessToken = response.data.access_token;
+      this.refreshToken = response.data.refresh_token;
+      this.expiresIn = new Date(Date.now() + response.data.expires_in * 1000);
+    } catch (e) {
+      console.error('QPAY AUTH ERROR:', e.response?.data || e.message);
+      throw e;
+    }
   }
 
   // ✅ Invoice үүсгэх
