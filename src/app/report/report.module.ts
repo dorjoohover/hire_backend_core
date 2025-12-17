@@ -35,6 +35,8 @@ import { UserServiceModule } from '../user.service/user.service.module';
       connection: {
         host: process.env.REDIS_HOST,
         port: 6379,
+        enableReadyCheck: false,
+        maxRetriesPerRequest: null,
       },
     }),
     BullModule.registerQueue({
