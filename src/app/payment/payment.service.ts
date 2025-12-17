@@ -134,10 +134,10 @@ export class PaymentService extends BaseService {
         paymentDate: payment.createdAt,
         price: payment.totalPrice,
         paymentCount:
-        //  service
-        //   ? ((await service)?.[0]?.service?.count ?? 0)
+          //  service
+          //   ? ((await service)?.[0]?.service?.count ?? 0)
           // :
-           payment.totalPrice == 0 || (payment.assessment?.price ?? 0)  == 0
+          payment.totalPrice == 0 || (payment.assessment?.price ?? 0) == 0
             ? 0
             : payment.totalPrice / payment.assessment.price,
         serviceId: arr?.[1] ?? null,
