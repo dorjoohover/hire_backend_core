@@ -59,6 +59,7 @@ export class UserAnswerDao {
           const p = Number(dto.point);
           return isNaN(p) ? 0 : p;
         })();
+        console.log(body.question, point)
         await this.db.save({ ...res, point });
       } else {
         res = this.db.create(body);

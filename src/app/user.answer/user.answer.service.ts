@@ -64,7 +64,6 @@ export class UserAnswerService extends BaseService {
 
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
-
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
@@ -122,7 +121,13 @@ export class UserAnswerService extends BaseService {
               );
 
           answerCategory = answerCategory[0];
-
+          if (
+            !answer?.answer &&
+            answer?.answer == null &&
+            !answer?.point &&
+            !answer?.matrix
+          )
+            continue;
           let point: number;
 
           if (
