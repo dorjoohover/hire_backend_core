@@ -48,13 +48,18 @@ export class UserAnswerDao {
         exam: { id: +dto.exam },
         endDate: new Date(),
         answer: { id: dto.answer ? dto.answer : null },
+
         matrix: dto.matrix ? { id: +dto.matrix } : null,
         question: { id: +dto.question },
         answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
         questionCategory: { id: +dto.questionCategory },
       };
       if (res) {
-        await this.db.save({ ...res, point: dto.point });
+        const point: number = (() => {
+          const p = Number(dto.point);
+          return isNaN(p) ? 0 : p;
+        })();
+        await this.db.save({ ...res, point });
       } else {
         res = this.db.create(body);
         await this.db.save(res);
@@ -143,7 +148,7 @@ export class UserAnswerDao {
         answer: {
           id,
         },
-        code
+        code,
       },
     });
   };
