@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   Between,
   DataSource,
+  ILike,
   In,
   IsNull,
   Like,
@@ -49,17 +50,15 @@ export class EmailLogDao {
     const { user, page, limit, status, startDate, endDate, email, type } = pg;
     const total = await this.db.count();
     const where: any = {};
-
     if (status !== undefined) {
       where.status = status;
     }
     if (type !== undefined) {
       where.type = type;
     }
+
     if (email !== undefined) {
-      where.toEmail = Raw((alias) => `LOWER(${alias}) = :email`, {
-        email: email.toLowerCase(),
-      });
+      where.toEmail = ILike(`%${email}%`);
     }
     if (user !== undefined) {
       where.user = {
