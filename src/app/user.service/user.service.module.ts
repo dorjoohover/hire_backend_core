@@ -32,6 +32,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
       name: 'report', // 👈 queue name
     }),
     forwardRef(() => UserAnswerModule),
+    forwardRef(() => EmailModule),
   ],
   controllers: [UserServiceController],
   providers: [

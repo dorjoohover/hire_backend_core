@@ -61,12 +61,4 @@ export class UserAnswerController {
   findByCode(@Param('code') code: string) {
     return this.userAnswerService.findByCode(+code);
   }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateUserAnswerDto: UpdateUserAnswerDto,
-  ) {
-    return this.userAnswerService.update(+id, updateUserAnswerDto);
-  }
 }

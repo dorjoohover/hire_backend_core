@@ -3,10 +3,10 @@ import { BarimtService } from './barimt.service';
 
 import { HttpModule } from '@nestjs/axios';
 import { BarimtController } from './barimt.controller';
-import { EmailLogModule } from '../email_log/email_log.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [HttpModule, forwardRef(() => EmailLogModule)],
+  imports: [HttpModule, forwardRef(() => EmailModule)],
   controllers: [BarimtController],
   providers: [BarimtService],
   exports: [BarimtService],

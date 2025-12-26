@@ -43,10 +43,9 @@ export class ExamService extends BaseService {
     private userDao: UserDao,
     private resultDao: ResultDao,
     private transactionDao: TransactionDao,
+    @Inject(forwardRef(() => UserServiceDao))
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
-    private fileService: FileService,
-    private report: ReportService,
   ) {
     super();
   }

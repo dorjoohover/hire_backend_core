@@ -6,19 +6,15 @@ import {
   Injectable,
 } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { HttpService } from '@nestjs/axios';
-import { MailerService } from '@nestjs-modules/mailer';
 import { BarimtDto, BarimtResponseDto } from './dto/barimt.dto';
 import { UserEntity } from '../user/entities/user.entity';
-import { format } from 'date-fns';
-import { EmailLogService } from '../email_log/email_log.service';
-import { EmailLogStatus, EmailLogType } from 'src/base/constants';
+import { EmailService } from '../email/email.service';
+import { UserService } from '../user/user.service';
 @Injectable()
 export class BarimtService {
   constructor(
-    private mailer: MailerService,
-    @Inject(forwardRef(() => EmailLogService))
-    private mailLog: EmailLogService,
+    @Inject(forwardRef(() => EmailService))
+    private mailer: EmailService,
   ) {}
 
   private accessToken: string | null = null;
@@ -181,74 +177,17 @@ export class BarimtService {
   // }
 
   async sendEmail(email: string, dto: any, qrdata?: string) {
-    const log = await this.mailLog.create({
-      toEmail: email,
-      action: 'баримт үүсгэх',
-      subject: 'И-баримт хүлээн авах',
-      url: BarimtService.name,
-      type: EmailLogType.EBARIMT,
+    await this.mailer.sendEBarimtMail({
+      date: dto.date,
+      ddtd: dto.ddtd,
+      email,
+      lottery: dto.lottery,
+      tin: dto.tin,
+      noat: dto.noat,
+      qrdata: qrdata,
+      tax: dto.tax,
+      totalAmount: dto.totalAmount,
     });
-    try {
-      await this.mailer.sendMail({
-        to: email,
-        subject: 'И-баримт хүлээн авах',
-        html: `
-    <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px; border-radius: 8px;">
-        ${
-          qrdata
-            ? `
-        <div style="text-align: center; margin-bottom: 20px;">
-          <img src="cid:qrCode" alt="QR Code"
-               style="width: 300px; height: 300px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;" />
-        </div>`
-            : ''
-        }
-        <h2 style="color: #333333; margin-bottom: 16px;">И-баримтын мэдээлэл</h2>
-        <p style="margin: 8px 0;"><strong>Сугалаа:</strong> ${dto.lottery}</p>
-        <p style="margin: 8px 0;"><strong>Үнийн дүн:</strong> ${dto.totalAmount}₮</p>
-        <p style="margin: 8px 0;"><strong>НӨАТ:</strong> ${dto.noat}₮</p>
-        ${dto.tax ? `<p style="margin: 8px 0;"><strong>НХАТ:</strong> ${dto.tax}₮</p>` : ''}
-        <p style="margin: 8px 0;"><strong>ДДТД:</strong> ${dto.ddtd}</p>
-        <p style="margin: 8px 0;"><strong>ТТД (Татварын дугаар):</strong> ${dto.tin}</p>
-        <p style="margin: 8px 0;"><strong>Огноо:</strong> ${dto.date}</p>
-        <hr style="border:none; border-top:1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 14px; color: #555555; margin-bottom: 16px;">
-          Асууж, тодруулах зүйл байвал
-          <a href="mailto:info@hire.mn" style="color: #1a73e8; text-decoration: none;">info@hire.mn</a> болон
-          <a href="tel:97699099371" style="color: #1a73e8; text-decoration: none;">976-9909 9371</a> холбогдоно уу.
-        </p>
-        <p style="font-size: 14px; color: #555555; margin-bottom: 16px;">
-          Манайхаар үйлчлүүлсэнд баярлалаа.
-        </p>
-        <p style="font-size: 12px; color: #999999; line-height: 1.4;">
-          Шуудангийн хаяг:<br/>
-          Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо Энхтайвны өргөн чөлөө-5,<br/>
-          СЭЗИС, Б байр, 7-р давхар, 13381<br/>
-          Ш/Н: Улаанбаатар-49
-        </p>
-      </div>
-    </div>
-  `,
-        attachments: qrdata
-          ? [
-              {
-                filename: 'qrcode.png',
-                content: qrdata.split(',')[1],
-                encoding: 'base64',
-                cid: 'qrCode',
-              },
-            ]
-          : [],
-      });
-      await this.mailLog.updateStatus(log, EmailLogStatus.SENT);
-    } catch (error) {
-      await this.mailLog.updateStatus(
-        log,
-        EmailLogStatus.FAILED,
-        error.message,
-      );
-    }
   }
 
   async getBarimt(id: number, email: string) {

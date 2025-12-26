@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt/jwt-auth-guard';
 import { RolesGuard } from './auth/guards/role/role.guard';
@@ -19,7 +19,6 @@ import { BaseModule } from './base/base.module';
 import { UserModule } from './app/user/user.module';
 import { UserServiceModule } from './app/user.service/user.service.module';
 import { FormuleModule } from './app/formule/formule.module';
-import { EmailModule } from './auth/email.module';
 import { FeedbackModule } from './app/feedback/feedback.module';
 import { BlogModule } from './app/blog/blog.module';
 import { ErrorLogModule } from './app/error-logs/error-log.module';
@@ -30,12 +29,21 @@ import { FileErrorLogService } from './base/error-log.service';
 import { ReportModule } from './app/report/report.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
+import { EmailModule } from './app/email/email.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        port: 6379,
+        enableReadyCheck: false,
+        maxRetriesPerRequest: null,
+      },
     }),
 
     // EbarimtModule,

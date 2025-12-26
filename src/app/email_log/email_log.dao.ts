@@ -1,18 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Between,
-  DataSource,
-  ILike,
-  In,
-  IsNull,
-  Like,
-  Not,
-  Raw,
-  Repository,
-} from 'typeorm';
+import { Between, DataSource, ILike, Repository } from 'typeorm';
 import { UserEntity } from 'src/app/user/entities/user.entity';
-import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto';
-import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { EmailLogEntity } from './email_log.entity';
 import { EmailLogDto } from './email_log.dto';
 import { EmailLogStatus } from 'src/base/constants';
@@ -37,9 +25,21 @@ export class EmailLogDao {
     return await this.db.count();
   };
 
-  updateStatus = async (id: number, status: EmailLogStatus, error?: string) => {
+  updateStatus = async ({
+    id,
+    status,
+    attemps,
+    error,
+    date,
+  }: {
+    id: number;
+    status: EmailLogStatus;
+    attemps?: number;
+    error?: string;
+    date?: Date;
+  }) => {
     const res = await this.db.findOne({ where: { id } });
-    await this.db.save({ ...res, status, error });
+    await this.db.save({ ...res, status, attemps, error, lastAttemptAt: date });
   };
 
   public async findOne(id: number) {

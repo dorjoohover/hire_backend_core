@@ -24,6 +24,7 @@ export enum EmailLogStatus {
   SENT = 10,
   PENDING = 20,
   FAILED = 30,
+  RETRYING = 40,
 }
 
 export enum EmailLogType {

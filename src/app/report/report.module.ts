@@ -22,12 +22,11 @@ import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { QuestionService } from '../question/question.service';
 import { UserServiceDao } from '../user.service/user.service.dao';
-import { UserDao } from '../user/user.dao';
-import { UserService } from '../user/user.service';
 import { FormuleService } from '../formule/formule.service';
 import { FileService } from 'src/file.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -44,6 +43,7 @@ import { UserServiceModule } from '../user.service/user.service.module';
     }),
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserServiceModule),
+    forwardRef(() => UserModule),
   ],
   controllers: [ReportController],
   providers: [
@@ -53,7 +53,6 @@ import { UserServiceModule } from '../user.service/user.service.module';
     ExamDetailDao,
     QuestionService,
     AuthService,
-    UserDao,
     ResultDao,
     TransactionDao,
     UserServiceDao,
@@ -65,7 +64,6 @@ import { UserServiceModule } from '../user.service/user.service.module';
     EmailLogDao,
     EmailLogService,
     QuestionAnswerCategoryDao,
-    UserService,
     JwtService,
     PaymentDao,
     FormuleService,

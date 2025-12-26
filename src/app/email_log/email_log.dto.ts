@@ -40,4 +40,5 @@ export class EmailLogDto {
   @IsOptional()
   @IsString()
   error?: string;
+  attempts?: number;
 }

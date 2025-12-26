@@ -8,13 +8,7 @@ import { UserServiceService } from '../user.service/user.service.service';
 
 @Injectable()
 export class EmailLogService {
-  constructor(
-    private dao: EmailLogDao,
-    @Inject(forwardRef(() => UserAnswerService))
-    private userAnswerService: UserAnswerService,
-    @Inject(forwardRef(() => UserServiceService))
-    private userServiceService: UserServiceService,
-  ) {}
+  constructor(private dao: EmailLogDao) {}
   public async create(dto: EmailLogDto) {
     return await this.dao.create({ ...dto, status: EmailLogStatus.PENDING });
   }
@@ -23,35 +17,48 @@ export class EmailLogService {
     return await this.dao.findAll(pg);
   }
 
-  public async updateStatus(
-    id: number,
-    status: EmailLogStatus,
-    error?: string,
-  ) {
-    await this.dao.updateStatus(id, status, error);
+  public async findOne(id: number) {
+    return await this.dao.findOne(id);
+  }
+
+  public async updateStatus({
+    id,
+    status,
+    attemps,
+    error,
+    date,
+  }: {
+    id: number;
+    status: EmailLogStatus;
+    attemps?: number;
+    error?: string;
+    date?: Date;
+  }) {
+    await this.dao.updateStatus({ id, error, status, attemps, date });
   }
 
   public async deleteOne(id: number) {
     await this.dao.delete(id);
   }
-  public async send(id: number, type: EmailLogType) {
-    const log = await this.dao.findOne(id);
-    if (type == EmailLogType.REPORT) {
-      await this.userAnswerService.createReport(+log.code);
-    }
-    if (type == EmailLogType.INVITATION) {
-      await this.userServiceService.sendLinkToMail({
-        links: [
-          {
-            code: +log.code,
-            email: log.toEmail,
-            firstname: log.firstname,
-            lastname: log.lastname,
-            phone: log.phone,
-            visible: log.visible,
-          },
-        ],
-      });
-    }
-  }
+  // public async send(id: number, type: EmailLogType) {
+  //   const log = await this.dao.findOne(id);
+
+  //   if (type == EmailLogType.REPORT) {
+  //     await this.userAnswerService.createReport(+log.code);
+  //   }
+  //   if (type == EmailLogType.INVITATION) {
+  //     await this.userServiceService.sendLinkToMail({
+  //       links: [
+  //         {
+  //           code: +log.code,
+  //           email: log.toEmail,
+  //           firstname: log.firstname,
+  //           lastname: log.lastname,
+  //           phone: log.phone,
+  //           visible: log.visible,
+  //         },
+  //       ],
+  //     });
+  //   }
+  // }
 }

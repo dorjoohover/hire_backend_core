@@ -53,7 +53,11 @@ export class EmailLogEntity {
   phone: string;
   @Column({ nullable: true })
   visible: boolean;
+  @Column({ nullable: true })
+  attemps: number;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  lastAttemptAt: Date;
 }

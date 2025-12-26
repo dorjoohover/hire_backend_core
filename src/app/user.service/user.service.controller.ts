@@ -145,9 +145,4 @@ export class UserServiceController {
   // update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
   //   return this.userServiceService.update(+id, dto);
   // }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userServiceService.remove(+id);
-  }
 }

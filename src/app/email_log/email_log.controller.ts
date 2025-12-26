@@ -24,12 +24,4 @@ export class EmailLogController {
   remove(@Param('id') id: string) {
     return this.emailLogService.deleteOne(+id);
   }
-
-  @Roles(Role.super_admin, Role.tester, Role.admin)
-  @Post('send/:type/:id')
-  @ApiParam({ name: 'type' })
-  @ApiParam({ name: 'id' })
-  send(@Param('type') type: EmailLogType, @Param('id') id: number) {
-    this.emailLogService.send(id, type);
-  }
 }
