@@ -17,7 +17,7 @@ export type ErrorLogEntry = {
 
 @Injectable()
 export class FileErrorLogService implements OnModuleDestroy {
-  private dir = process.env.LOG_DIR ?? path.resolve(process.cwd(), 'logs');
+  private dir = process.env.CORE_LOG_DIR ?? path.resolve(process.cwd(), 'logs');
   private stream: WriteStream | null = null;
   private day = '';
 
