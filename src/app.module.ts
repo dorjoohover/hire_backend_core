@@ -35,7 +35,7 @@ import { EmailModule } from './app/email/email.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      envFilePath: `.env`,
     }),
     BullModule.forRoot({
       connection: {
