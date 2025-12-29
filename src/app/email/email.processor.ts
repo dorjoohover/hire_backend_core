@@ -28,7 +28,7 @@ export class EmailProcessor extends WorkerHost {
   }
   async process(job: Job<EmailJobPayload>) {
     const { logId, to, subject, html, attachments } = job.data;
-    console.log('SEND', new Date().toISOString(), to);
+    console.log('SEND', new Date().toISOString(), to, logId);
     try {
       await this.maillog.updateStatus({
         id: logId,

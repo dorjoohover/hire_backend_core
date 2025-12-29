@@ -22,6 +22,7 @@ export class EmailService {
   ) {}
   private async logAndQueue(payload: EmailJobPayload) {
     let log = payload.logId;
+    console.log(log)
     if (payload.logId != undefined) {
       log = await this.maillog.create({
         toEmail: payload.to,
@@ -38,7 +39,7 @@ export class EmailService {
         attempts: 0,
       });
     }
-
+console.log(log)
     await this.emailQueue.add(
       'send-email',
       {
