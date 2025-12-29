@@ -22,8 +22,8 @@ export class EmailService {
   ) {}
   private async logAndQueue(payload: EmailJobPayload) {
     let log = payload.logId;
-    console.log(log)
-    if (payload.logId != undefined) {
+    console.log(log);
+    if (payload.logId == undefined) {
       log = await this.maillog.create({
         toEmail: payload.to,
         subject: payload.subject,
@@ -39,7 +39,7 @@ export class EmailService {
         attempts: 0,
       });
     }
-console.log(log)
+    console.log(log);
     await this.emailQueue.add(
       'send-email',
       {
@@ -289,7 +289,7 @@ console.log(log)
                 <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                   <tr>
                     <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
-                      <a href="${process.env.WEB || "https://hire.mn"}" 
+                      <a href="${process.env.WEB || 'https://hire.mn'}" 
                         style="padding: 10px 16px; border-radius: 4px; 
                                 color: #ff5000 !important; 
                                 font-family: 'Montserrat', Arial, sans-serif; 
@@ -321,7 +321,7 @@ console.log(log)
                           <tr>
                             <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                               <p style="margin: 0 0 15px 0;">
-                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=${process.env.WEB || "https://hire.mn"}/test/${id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=${process.env.WEB || "https://hire.mn"}/api/report/${code}>энд дарж</a> татаж авна уу.
+                                <br/>Таны онлайн тест, үнэлгээний Hire.mn платформ дээр өгсөн <a href=${process.env.WEB || 'https://hire.mn'}/test/${id} style="color: #ff5000; font-weight: 700; text-decoration: none;">${name}</a> тестийн тайлан бэлэн боллоо. Та тайлангаа <a style="color: #ff5000; text-decoration: none;" href=${process.env.WEB || 'https://hire.mn'}/api/report/${code}>энд дарж</a> татаж авна уу.
                               </p>
                             </td>
                           </tr>
@@ -448,7 +448,7 @@ console.log(log)
               <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                 <tr>
                   <td style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
-                    <a href="${process.env.WEB || "https://hire.mn"}" 
+                    <a href="${process.env.WEB || 'https://hire.mn'}" 
                       style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
                               font-family: 'Montserrat', Arial, sans-serif; 
@@ -481,7 +481,7 @@ console.log(log)
                         </tr>
                         <tr>
                         <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                              <br/>Эрхэм <strong>${lastname}</strong> овогтой <strong>${firstname}</strong> танд <strong>${orgName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=${process.env.WEB || "https://hire.mn"}/exam/${code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
+                              <br/>Эрхэм <strong>${lastname}</strong> овогтой <strong>${firstname}</strong> танд <strong>${orgName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=${process.env.WEB || 'https://hire.mn'}/exam/${code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
                           </td>
                         </tr>
                          <tr>
@@ -593,7 +593,7 @@ console.log(log)
               <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                 <tr>
                   <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
-                    <a href="${process.env.WEB || "https://hire.mn"}" 
+                    <a href="${process.env.WEB || 'https://hire.mn'}" 
                       style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
                               font-family: 'Montserrat', Arial, sans-serif; 
@@ -705,7 +705,7 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
         <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
           <tr>
             <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
-              <a href="${process.env.WEB || "https://hire.mn"}" 
+              <a href="${process.env.WEB || 'https://hire.mn'}" 
                 style="padding: 10px 16px; border-radius: 4px; 
                         color: #ff5000 !important; 
                         font-family: 'Montserrat', Arial, sans-serif; 
