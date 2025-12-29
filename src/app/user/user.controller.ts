@@ -73,9 +73,9 @@ export class UserController {
   verifyEmail(@Param('email') email: string, @Res() res) {
     try {
       this.userService.verifyMail(email);
-      return res.redirect(`https://hire.mn/auth/signin?email=${email}`);
+      return res.redirect(`${process.env.WEB || "https://hire.mn"}/auth/signin?email=${email}`);
     } catch (error) {
-      return res.redirect('https://hire.mn/auth/signin');
+      return res.redirect(`${process.env.WEB || "https://hire.mn"}/auth/signin`);
     }
   }
 
