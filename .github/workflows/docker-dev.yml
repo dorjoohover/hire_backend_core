@@ -3,7 +3,7 @@ name: Build & Push DEV Image
 on:
   push:
     branches:
-      - dev
+      - test
 
 permissions:
   contents: read
