@@ -27,4 +27,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/dorjoohover/hire_backend_core:dev
+          tags: ghcr.io/dorjoohover/hire_backend_core:test
