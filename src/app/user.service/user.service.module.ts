@@ -40,9 +40,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
-    BullModule.registerQueue({
-      name: 'report', // 👈 queue name
-    }),
+
     forwardRef(() => UserAnswerModule),
   ],
   controllers: [UserServiceController],

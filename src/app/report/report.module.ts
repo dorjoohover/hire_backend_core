@@ -39,9 +39,7 @@ import { UserServiceModule } from '../user.service/user.service.module';
         maxRetriesPerRequest: null,
       },
     }),
-    BullModule.registerQueue({
-      name: 'report',
-    }),
+  
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserServiceModule),
   ],

@@ -37,9 +37,6 @@ import { UserServiceModule } from '../user.service/user.service.module';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
-    BullModule.registerQueue({
-      name: 'report', // 👈 queue name
-    }),
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserServiceModule),
   ],
