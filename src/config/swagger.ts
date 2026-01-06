@@ -8,7 +8,7 @@ import {
 
 const config = new DocumentBuilder()
   .setTitle('Hire Core')
-  .setDescription('API with global authorization.')
+  .setDescription('API.')
   .setVersion('1.0')
   .addBearerAuth(
     {
