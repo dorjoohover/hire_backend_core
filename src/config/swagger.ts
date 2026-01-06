@@ -7,7 +7,7 @@ import {
 } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
-  .setTitle('Hire')
+  .setTitle('Hire Core')
   .setDescription('API with global authorization.')
   .setVersion('1.0')
   .addBearerAuth(
