@@ -7,8 +7,8 @@ import {
 } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
-  .setTitle('Swagger API')
-  .setDescription('API documentation with global authorization.')
+  .setTitle('Hire')
+  .setDescription('API with global authorization.')
   .setVersion('1.0')
   .addBearerAuth(
     {
