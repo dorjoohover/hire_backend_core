@@ -55,14 +55,14 @@ export class EmailService {
     const log = await this.maillog.findOne(id);
 
     if (type == EmailLogType.REPORT) {
-      await this.answer.createReport(+log.code);
+      await this.answer.createReport(log.code);
       await this.answer.sendEmail(log.code, id);
     }
     if (type == EmailLogType.INVITATION) {
       await this.userService.sendLinkToMail({
         links: [
-          {
-            code: +log.code,
+        {
+            code: log.code,
             email: log.toEmail,
             firstname: log.firstname,
             lastname: log.lastname,

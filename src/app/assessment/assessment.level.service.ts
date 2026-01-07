@@ -13,6 +13,7 @@ export class AssessmentLevelService extends BaseService {
   }
 
   public async findAll() {
+    console.log('asdf')
     return await this.dao.findAll();
   }
 

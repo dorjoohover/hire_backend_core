@@ -37,6 +37,7 @@ export class AssessmentController {
   @PQ(['type', 'status', 'name', 'category', 'createdUser'])
   @Get('all')
   findAll(@Pagination() pg: PaginationDto) {
+    console.log('asdfasdfasdf')
     return this.assessmentService.findAll(pg);
   }
   @Public()

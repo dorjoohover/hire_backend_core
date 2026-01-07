@@ -20,7 +20,6 @@ import { TransactionDao } from '../payment/dao/transaction.dao';
 import { PaymentDao } from '../payment/dao/payment.dao';
 import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
-import { BullModule } from '@nestjs/bullmq';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
@@ -30,11 +29,9 @@ import { UserModule } from '../user/user.module';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
-    BullModule.registerQueue({
-      name: 'report', // 👈 queue name
-    }),
-    forwardRef(() => UserModule),
+
     forwardRef(() => UserAnswerModule),
+    forwardRef(() => UserModule),
     forwardRef(() => UserServiceModule),
   ],
   controllers: [ExamController],

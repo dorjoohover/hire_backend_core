@@ -3,7 +3,7 @@ import { IsNotEmpty } from 'class-validator';
 import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 
 export class CreateExamDto {
-  code?: number;
+  code?: string;
   created?: number;
   assessment?: AssessmentEntity;
   @ApiProperty({ type: Date })
@@ -17,7 +17,7 @@ export class CreateExamDto {
 
 export class FindExamByCodeDto {
   @ApiProperty()
-  code: number;
+  code: string;
   @ApiProperty()
   category?: number;
 }

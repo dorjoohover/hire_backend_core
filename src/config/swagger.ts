@@ -8,7 +8,7 @@ import {
 
 const config = new DocumentBuilder()
   .setTitle('Swagger API')
-  .setDescription('API documentation with global authorization.')
+  .setDescription('API th global authorization.')
   .setVersion('1.0')
   .addBearerAuth(
     {

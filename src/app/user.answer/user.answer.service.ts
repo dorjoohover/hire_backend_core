@@ -223,13 +223,13 @@ export class UserAnswerService extends BaseService {
     }
   }
 
-  public async createReport(code: number) {
+  public async createReport(code: string) {
     await this.examDao.endExam(code);
     await this.report.createReport({ code });
   }
   public async sendEmail(code: string, logId?: number) {
     const res = await this.examDao.findByCode(+code);
-    if (!res.visible) return;
+    if (!res?.visible) return;
     const { user, assessment } = res;
     const { email } = user;
     const id = assessment?.id ?? assessment[0].id;
@@ -248,10 +248,10 @@ export class UserAnswerService extends BaseService {
     return await this.dao.findAll();
   }
 
-  public async findByCode(code: number) {
+  public async findByCode(code: string) {
     return await this.dao.findByCode(code, 0);
   }
-  public async findOne(id: number, code: number) {
+  public async findOne(id: number, code: string) {
     let res = await this.dao.findByCode(code, id);
     const formatted = await Promise.all(
       res.map((r) => {

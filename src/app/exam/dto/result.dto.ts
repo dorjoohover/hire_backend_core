@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ResultDto {
   @ApiProperty()
-  code: number;
+  code: string;
   @ApiProperty()
   assessmentName: string;
   @ApiProperty()
