@@ -18,8 +18,8 @@ export class ResultEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
 
-  @Column({ type: 'bigint' })
-  code: number;
+  @Column({ nullable: true })
+  code: string;
 
   @Column()
   assessmentName: string;

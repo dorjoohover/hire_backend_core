@@ -1,6 +1,8 @@
 import { Controller, Post, Body, Param, Get, Request } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import axios from 'axios';
+import { REPORT_STATUS } from 'src/base/constants';
 
 @Public()
 @Controller('report')
@@ -17,9 +19,12 @@ export class ReportController {
   // Report service дууссан гэдэг callback
   @Post(':id/callback')
   async callback(@Param('id') id: string, @Body() body: any) {
-    const { status, result, progress } = body;
+    const { status, result, progress, code } = body;
     console.log(body);
-    return this.reportsService.updateStatus(id, status, result, progress);
+    await this.reportsService.updateStatus({...body, id});
+    if (status == REPORT_STATUS.COMPLETED) {
+      this.reportsService.sendMail(id, code);
+    }
   }
   @Get(':id/status')
   async status(@Param('id') id: string) {

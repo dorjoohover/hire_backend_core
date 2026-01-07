@@ -18,8 +18,8 @@ export class ExamEntity {
   id?: number;
 
   //   token|code|url|sequence
-  @Column({ type: 'bigint' })
-  code: number;
+  @Column({nullable: true})
+  code: string;
   // assessment name
   @Column()
   assessmentName: string;

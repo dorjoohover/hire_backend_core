@@ -25,7 +25,7 @@ export class ResultDao {
     return res.id;
   };
 
-  // update = async (code: number, dto: ResultDto, details?: ResultDetailDto[]) => {
+  // update = async (code: string, dto: ResultDto, details?: ResultDetailDto[]) => {
   //   const res = await this.db.findOne({ where: { code: code } });
   //   await this.db.save({ ...res, ...dto });
   // };
@@ -36,7 +36,7 @@ export class ResultDao {
     });
   };
 
-  findOne = async (code: number) => {
+  findOne = async (code: string) => {
     return await this.db.findOne({
       where: {
         code,

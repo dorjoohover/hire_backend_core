@@ -98,8 +98,8 @@ export class ExamController {
     const filename = `report-${code}.pdf`;
 
     // PDFKit.PDFDocument үүсгэнэ
-    const doc = await this.examService.getPdf(+code, role);
-    await this.examService.getExamInfoByCode(+code, user);
+    const doc = await this.examService.getPdf(code, role);
+    await this.examService.getExamInfoByCode(code, user);
 
     if (doc) {
       const report = await this.report.getByCode(code);
@@ -182,7 +182,7 @@ export class ExamController {
   @ApiParam({ name: 'code' })
   async getExamInfo(@Param('code') code: string) {
     try {
-      const examInfo = await this.examService.getExamInfoByCode(+code);
+      const examInfo = await this.examService.getExamInfoByCode(code);
 
       if (!examInfo) {
         throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);

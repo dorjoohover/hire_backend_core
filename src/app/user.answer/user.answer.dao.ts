@@ -111,7 +111,7 @@ export class UserAnswerDao {
     return await this.db.find({});
   };
 
-  findByCode = async (code: number, id?: number) => {
+  findByCode = async (code: string, id?: number) => {
     if (id != 0 && id) {
       return await this.db.find({
         where: {
@@ -143,7 +143,7 @@ export class UserAnswerDao {
       },
     });
   };
-  findByAnswerId = async (id: number, code: number) => {
+  findByAnswerId = async (id: number, code: string) => {
     return await this.db.findOne({
       where: {
         answer: {
@@ -153,7 +153,7 @@ export class UserAnswerDao {
       },
     });
   };
-  findByAnswerMatrixId = async (id: number, code: number) => {
+  findByAnswerMatrixId = async (id: number, code: string) => {
     return await this.db.findOne({
       where: {
         code: code,
@@ -163,7 +163,7 @@ export class UserAnswerDao {
       },
     });
   };
-  findByQuestionCategory = async (id: number, code: number) => {
+  findByQuestionCategory = async (id: number, code: string) => {
     return await this.db.findOne({
       where: {
         questionCategory: {

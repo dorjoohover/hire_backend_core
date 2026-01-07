@@ -35,9 +35,7 @@ import { EmailModule } from '../email/email.module';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
     }),
-    BullModule.registerQueue({
-      name: 'report', // 👈 queue name
-    }),
+
     forwardRef(() => ExamModule),
     forwardRef(() => UserServiceModule),
     forwardRef(() => EmailModule),

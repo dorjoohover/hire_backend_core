@@ -2,8 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ReportService } from './report.service';
 import { ReportController } from './report.controller';
 import { BullModule } from '@nestjs/bullmq';
-import { UserAnswerService } from '../user.answer/user.answer.service';
-import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionDao } from '../question/dao/question.dao';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from 'src/auth/auth.service';
@@ -38,9 +36,7 @@ import { UserModule } from '../user/user.module';
         maxRetriesPerRequest: null,
       },
     }),
-    BullModule.registerQueue({
-      name: 'report',
-    }),
+  
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserServiceModule),
     forwardRef(() => UserModule),

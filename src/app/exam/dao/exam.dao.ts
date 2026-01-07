@@ -49,8 +49,8 @@ export class ExamDao {
     return res.id;
   };
 
-  update = async (code: number, dto: any) => {
-    const res = await this.db.findOne({ where: { code: code } });
+  update = async (code: string | number, dto: any) => {
+    const res = await this.db.findOne({ where: { code: `${code}` } });
     if (dto.user) {
       await this.db.save({
         ...res,
@@ -68,13 +68,13 @@ export class ExamDao {
     return await this.db.count();
   };
 
-  updateDate = async (code: number, dto: UpdateDateDto) => {
+  updateDate = async (code: string | number, dto: UpdateDateDto) => {
     const date = new Date(dto.endDate);
     // 8 tsagiin
 
     date.setHours(date.getHours() - 8);
     await this.db.update(
-      { code },
+      { code: `${code}` },
       {
         // startDate: dto.startDate,
         endDate: date,
@@ -83,19 +83,19 @@ export class ExamDao {
   };
 
   updateByCode = async (
-    code: number,
+    code: string,
     dto: { email: string; lastname: string; firstname: string; phone: string },
   ) => {
     const { email, lastname, firstname, phone } = dto;
     const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ ...res, email, lastname, firstname, phone });
   };
-  updateByCodeJob = async (code: number, job: string) => {
+  updateByCodeJob = async (code: string, job: string) => {
     const res = await this.db.findOne({ where: { code: code } });
     await this.db.save({ ...res, job });
   };
 
-  endExam = async (code: number) => {
+  endExam = async (code: string) => {
     const res = await this.db.findOne({ where: { code } });
     await this.db.save({ ...res, userEndDate: new Date() });
   };
@@ -182,27 +182,46 @@ export class ExamDao {
       },
     });
   };
-  findByCode = async (code: number) => {
+  findByCode = async (code: string | number) => {
     const res = await this.db.findOne({
       where: {
-        code: code,
+        code: `${code}`,
       },
       relations: ['assessment', 'service', 'user', 'service.user'],
     });
     return res;
   };
 
-  findByCodeOnly = async (code: number) => {
-    const q = `SELECT id, visible, "assessmentId" AS assessment
+  findByCodeOnly = async (code: string) => {
+    const exam = await this.db
+      .query(
+        `
+    SELECT id, visible, "assessmentId" AS assessment
     FROM exam
-    WHERE code = ${code}
-    LIMIT 1;`;
-    const res = await this.db.query(q).then((d) => d[0]);
+    WHERE code = $1
+    LIMIT 1
+    `,
+        [String(code)],
+      )
+      .then((r) => r[0]);
 
-    const query = `select id, name from "assessment" where id = ${res.assessment}`;
-    const assessment = await this.assessmentDao.query(query);
+    if (!exam) {
+      return null;
+    }
+
+    const assessment = await this.db
+      .query(
+        `
+    SELECT id, name
+    FROM assessment
+    WHERE id = $1
+    `,
+        [exam.assessment],
+      )
+      .then((r) => r[0]);
+
     return {
-      ...res,
+      ...exam,
       assessment,
     };
   };

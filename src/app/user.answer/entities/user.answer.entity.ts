@@ -35,8 +35,8 @@ export class UserAnswerEntity {
     onDelete: 'CASCADE',
   })
   exam: ExamEntity;
-  @Column({ type: 'bigint' })
-  code: number;
+  @Column({ nullable: true })
+  code: string;
   @ManyToOne(() => QuestionEntity, (exam) => exam.userAnswers, {
     onDelete: 'CASCADE',
   })

@@ -50,7 +50,7 @@ export class ExamService extends BaseService {
     super();
   }
 
-  public async getPdf(id: number, role?: number) {
+  public async getPdf(id: number | string, role?: number) {
     const res = await this.dao.findByCode(id);
     if (!res?.visible && role == Role.client) {
       throw new HttpException(
@@ -73,24 +73,24 @@ export class ExamService extends BaseService {
     // return doc;
   }
 
-  public checkExam = async (code: number) => {
+  public checkExam = async (code: string) => {
     const res = await this.dao
       .query(`select visible from exam where code = ${code}`)
       .then((d) => d[0]);
     return res.visible;
   };
-  // public endExam = async (code: number) => {
+  // public endExam = async (code: string) => {
   //   await this.dao.endExam(code);
   //   console.log('start', code);
   //   await this.report.createReport({ code });
   // };
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
-    const code: number = Number(
+    const code = Number(
       BigInt(
         `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
       ),
-    );
+    ).toString();
     console.log('exam dto', createExamDto);
     await this.dao.create({ ...createExamDto, code: code }, user);
     const service = await this.userServiceDao.findOne(createExamDto.service);
@@ -114,7 +114,7 @@ export class ExamService extends BaseService {
   }
 
   public async updateExamByCode(
-    code: number,
+    code: string,
     dto: {
       email: string;
       firstname: string;
@@ -126,7 +126,7 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
-  async getExamInfoByCode(code: number, user?: UserEntity) {
+  async getExamInfoByCode(code: string, user?: UserEntity) {
     const result = await this.resultDao.findOne(code);
 
     if (!result) {
@@ -198,7 +198,7 @@ export class ExamService extends BaseService {
   }
 
   // category questioncount der asuudaltai bga
-  public async updateByCode(code: number, con: boolean, category?: number) {
+  public async updateByCode(code: string, con: boolean, category?: number) {
     const startAll = performance.now();
     try {
       console.time('⏱ dao.findByCode');
@@ -421,8 +421,8 @@ export class ExamService extends BaseService {
     }
     return formatted;
   }
-  public async findByCode(code: number | string) {
-    return await this.dao.findByCode(code as number);
+  public async findByCode(code: string | string) {
+    return await this.dao.findByCode(code);
   }
   public async findByAdmin(pg: PaginationDto) {
     let [res, count] = await this.dao.findByAdmin(pg);
