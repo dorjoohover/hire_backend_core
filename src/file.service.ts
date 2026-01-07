@@ -17,6 +17,7 @@ import * as AWS from 'aws-sdk';
 import * as mime from 'mime-types';
 import { PassThrough } from 'stream';
 import { Response } from 'express';
+import axios from 'axios';
 
 @Injectable()
 export class FileService {
@@ -30,7 +31,7 @@ export class FileService {
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_KEY,
       region: process.env.AWS_REGION,
-       httpOptions: {
+      httpOptions: {
         timeout: 300000,
         connectTimeout: 15000,
       },
@@ -159,28 +160,20 @@ export class FileService {
       return null;
     }
   }
-  async getReport(filename: string, res: Response) {
+  async getReport(filename: string) {
     try {
-      const filePath = join(this.reportPath, filename);
-      console.log(filePath);
-      if (!existsSync(filePath)) {
-        const buffer = await this.downloadFromS3(filename);
-        if (!buffer) throw new Error('File not found in S3');
-        writeFileSync(filePath, buffer);
-      }
+      const response = await axios.get(
+        `${process.env.REPORT}file/${filename}`,
+        {
+          responseType: 'stream', // ⭐ ХАМГИЙН ЧУХАЛ
+          timeout: 15000,
+        },
+      );
 
-      const type = mime.lookup(filename) || 'application/pdf';
-
-      res.setHeader('Content-Type', type);
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-      res.status(HttpStatus.OK);
-
-      const stream = createReadStream(filePath);
-
-      return stream;
-    } catch (error) {
-      console.log(error);
-      throw error;
+      return response; // stream + headers
+    } catch (e) {
+      console.error('REPORT FETCH ERROR:', e.message);
+      return null; // ❗ throw хийхгүй
     }
   }
 }

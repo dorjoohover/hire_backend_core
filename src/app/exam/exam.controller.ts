@@ -104,17 +104,24 @@ export class ExamController {
     if (doc) {
       const report = await this.report.getByCode(code);
       if (
-        report == undefined ||
-        report?.status == REPORT_STATUS.SENT ||
-        report?.status == REPORT_STATUS.COMPLETED
+        !report ||
+        report.status === REPORT_STATUS.SENT ||
+        report.status === REPORT_STATUS.COMPLETED
       ) {
-        const response = await this.file.getReport(filename, res);
-        res.set({
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `inline; filename="${filename}"`,
-        });
+        const response = await this.file.getReport(filename);
 
-        response.pipe(res);
+        if (!response) {
+          throw new HttpException('File not found', 404);
+        }
+
+        res.setHeader(
+          'Content-Type',
+          response.headers['content-type'] || 'application/pdf',
+        );
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+        response.data.pipe(res); // ⭐ STREAM → RESPONSE
+        return;
       } else if (report.status === REPORT_STATUS.UPLOADING) {
         throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
       } else if (report.status === REPORT_STATUS.CALCULATING) {

@@ -35,7 +35,7 @@ import { EmailModule } from './app/email/email.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.docker`,
+      envFilePath: `.env.development`,
     }),
     BullModule.forRoot({
       connection: {
