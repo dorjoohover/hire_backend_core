@@ -34,7 +34,7 @@ export class ReportService {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 10000,
+        timeout: 60000,
       },
     );
     console.log(res.data);
