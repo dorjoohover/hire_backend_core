@@ -25,6 +25,7 @@ import { FileService } from 'src/file.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
+import { ReportLogDao } from './report.log.dao';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UserModule } from '../user/user.module';
     ReportService,
     ExamService,
     ExamDao,
+    ReportLogDao,
     ExamDetailDao,
     QuestionService,
     AuthService,

@@ -22,6 +22,8 @@ export class EmailLogEntity {
 
   @Column({ type: 'text', nullable: true })
   code: string;
+  @Column({ type: 'text', nullable: true })
+  assessmentName: string;
 
   @Column({
     type: 'enum',

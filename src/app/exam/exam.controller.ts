@@ -128,6 +128,8 @@ export class ExamController {
         throw new HttpException('Тайлан бодогдож байна...', 202);
       } else if (report.status === REPORT_STATUS.WRITING) {
         throw new HttpException('Тайлан PDF бичиж байна...', 202);
+      } else if (report.status === REPORT_STATUS.STARTED) {
+        throw new HttpException('Тайлан бодож эхэлсэн...', 202);
       }
     }
   }

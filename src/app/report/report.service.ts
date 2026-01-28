@@ -8,59 +8,42 @@ import { UserAnswerService } from '../user.answer/user.answer.service';
 import { ModuleRef } from '@nestjs/core';
 import { REPORT_STATUS } from 'src/base/constants';
 import axios from 'axios';
-const reportStore: Record<
-  string,
-  {
-    status: string;
-    result?: any;
-    progress: number;
-    code?: string;
-  }
-> = {};
+import { ReportLogDao } from './report.log.dao';
+
 @Injectable()
 export class ReportService {
   private userAnswer: UserAnswerService;
-  constructor(private moduleRef: ModuleRef) {}
+  constructor(
+    private moduleRef: ModuleRef,
+    private dao: ReportLogDao,
+  ) {}
   private REPORT = process.env.REPORT;
   onModuleInit() {
     // runtime-д UserAnswerService-г авна
     this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
   }
   async createReport(data: any, role?: number) {
-    const res = await axios.post(
+    axios.post(
       this.REPORT,
       { ...data, role },
       {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 60000,
       },
     );
-    console.log(res.data);
-    return { jobId: res.data.jobId };
   }
 
-  async updateStatus(body: any) {
-    const { status, result, progress, code, id } = body;
-    reportStore[id] = { status, progress, code, result };
-  }
+  // async updateStatus(body: any) {
+  //   const { status, result, progress, code, id } = body;
+  //   reportStore[id] = { status, progress, code, result };
+  // }
 
   async getByCode(code: string) {
-    return (await axios.get(`${this.REPORT}get/code/${code}`)).data;
+    return await this.dao.getOne(code);
   }
   async getStatus(jobId: string) {
-    let report = reportStore[jobId];
-
-    if (!report) {
-      const found = Object.entries(reportStore).find(
-        ([, value]) => value.code === jobId,
-      );
-      console.log(found, reportStore, jobId);
-      if (found) {
-        [jobId, report] = found;
-      }
-    }
+    let report = await this.dao.getOne(jobId);
 
     if (!report) {
       return {
@@ -76,24 +59,16 @@ export class ReportService {
       report.status == REPORT_STATUS.COMPLETED &&
       report.code
     ) {
-      this.sendMail(jobId, report.code);
+      this.sendMail(report.code);
     }
-    return {
-      jobId,
-      status: report.status,
-      progress: report.progress,
-      result: report.result ?? null,
-      code: report.code,
-    };
+    return report;
   }
 
-
-  async sendMail(jobId: string, code: string) {
-    const prev = reportStore[jobId];
+  async sendMail(code: string) {
+    const prev = await this.dao.getOne(code);
     if (prev.status != REPORT_STATUS.SENT) {
-      reportStore[jobId] = { ...prev, status: REPORT_STATUS.SENT };
+      await this.dao.updateByCode(code, { status: REPORT_STATUS.SENT });
       await this.userAnswer.sendEmail(code);
-      axios.get(`${this.REPORT}mail/${jobId}/${REPORT_STATUS.SENT}`);
     }
   }
 }

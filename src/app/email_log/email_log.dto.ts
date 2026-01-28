@@ -30,6 +30,7 @@ export class EmailLogDto {
   lastname?: string;
   visible?: boolean;
   phone?: string;
+  assessmentName?: string;
 
   @ApiPropertyOptional({ description: 'Email зорилго/Action' })
   @IsOptional()

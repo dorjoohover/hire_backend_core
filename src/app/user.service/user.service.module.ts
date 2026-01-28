@@ -33,6 +33,7 @@ import { EmailLogDao } from '../email_log/email_log.dao';
 import { EmailLogService } from '../email_log/email_log.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { EmailModule } from '../email/email.module';
+import { ReportLogDao } from '../report/report.log.dao';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { EmailModule } from '../email/email.module';
     ReportService,
     UserServiceDao,
     FileService,
+    ReportLogDao,
     EmailLogService,
     EmailLogDao,
     ResultDao,

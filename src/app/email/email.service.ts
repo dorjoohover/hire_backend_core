@@ -35,6 +35,7 @@ export class EmailService {
         firstname: payload.meta?.firstname,
         lastname: payload.meta?.lastname,
         phone: payload.meta?.phone,
+        assessmentName: payload.meta?.assessmentName,
         visible: payload.meta?.visible,
         attempts: 0,
       });
@@ -61,7 +62,7 @@ export class EmailService {
     if (type == EmailLogType.INVITATION) {
       await this.userService.sendLinkToMail({
         links: [
-        {
+          {
             code: log.code,
             email: log.toEmail,
             firstname: log.firstname,
@@ -81,6 +82,7 @@ export class EmailService {
     id: number;
     name: string;
     code: string;
+    assessmentName?: string;
     logId?: number;
   }) {
     const html = this.generateReportTemplate(input.id, input.name, +input.code);
@@ -90,7 +92,7 @@ export class EmailService {
       to: input.email,
       subject: 'Таны тайлан бэлэн боллоо',
       html,
-      meta: { code: input.code },
+      meta: { code: input.code, assessmentName: input.assessmentName },
       logId: input.logId,
     });
   }
@@ -111,6 +113,7 @@ export class EmailService {
     phone: string;
     code: string;
     id?: number;
+    assessmentName?: number;
     assessment: AssessmentEntity;
   }) {
     if (input.id) {
@@ -127,6 +130,7 @@ export class EmailService {
         url: UserServiceService.name,
         type: EmailLogType.INVITATION,
         code: input.code,
+        assessmentName: input.assessment?.name,
         firstname: input.firstname,
         lastname: input.lastname,
         phone: input.phone,

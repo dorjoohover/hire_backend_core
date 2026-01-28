@@ -23,6 +23,7 @@ import { ReportService } from '../report/report.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
+import { ReportLogDao } from '../report/report.log.dao';
 @Module({
   imports: [
     JwtModule.register({
@@ -39,6 +40,7 @@ import { UserModule } from '../user/user.module';
     ExamService,
     ExamDao,
     ExamDetailDao,
+    ReportLogDao,
     QuestionDao,
     QuestionCategoryDao,
     AssessmentDao,

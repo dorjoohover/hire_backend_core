@@ -238,6 +238,7 @@ export class UserAnswerService extends BaseService {
     await this.mailService.sendReportMail({
       code: code,
       email: email,
+      assessmentName: res.assessmentName,
       id: id,
       logId,
       name: name,
