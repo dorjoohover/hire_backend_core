@@ -3,7 +3,7 @@ name: Build & Push Image
 on:
   push:
     branches:
-      - main
+      - test
 
 permissions:
   contents: read
@@ -27,4 +27,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/dorjoohover/hire_backend_core:main
+          tags: ghcr.io/dorjoohover/hire_backend_core:test
