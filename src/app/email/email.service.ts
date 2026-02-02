@@ -332,7 +332,7 @@ export class EmailService {
                           <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-                              Тайлангийн электрон хувилбарыг Hire.mn сайт руу нэвтэрч, “Өгсөн тестүүд” булангаас харах боломжтой. Тайлантай холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                              Тайлангийн электрон хувилбарыг Hire.mn сайт руу нэвтэрч, “Өгсөн тестүүд” булангаас харах боломжтой. Тайлантай холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                             </p>
                           </td>
                         </tr>
@@ -517,7 +517,14 @@ export class EmailService {
                           <strong>${firstname}</strong> танд
                           <strong>${orgName ?? ''}</strong> байгууллагаас
                           <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест,
-                          үнэлгээнд оролцох урилга илгээсэн байна. Та "тест өгөх" товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцаарай.
+                          үнэлгээнд оролцох урилга илгээсэн байна. 
+                        </td>
+                      </tr>
+                       <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <br />Та <strong>тест өгөх</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцаарай.
                         </td>
                       </tr>
                       <tr>
@@ -596,7 +603,7 @@ export class EmailService {
                               href="mailto:info@hire.mn"
                               style="color: #ff5000; text-decoration: none;"
                               >info@hire.mn</a>
-                            хаягаар эсвэл
+                            мэйл хаягаар эсвэл
                             <a
                               href="tel:976-9909 9371"
                               style="color: #ff5000; text-decoration: none;"
@@ -719,7 +726,7 @@ export class EmailService {
                         <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-                              Хэрвээ танд бүртгэлтэй холбоотой асууж тодруулах зүйл байвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                              Хэрвээ танд бүртгэлтэй холбоотой асууж тодруулах зүйл байвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                             </p>
                           </td>
                         </tr>
@@ -830,7 +837,7 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
                   <tr>
                     <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                       <p style="margin: 0 0 15px 0;">
-                        Таны Hire.mn дээрх бүртгэлтэй хаягийн нууц үг сэргээх кодыг илгээлээ. Хэрвээ та нууц үг сэргээх хүсэлт илгээгүй бол ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                        Таны Hire.mn дээрх бүртгэлтэй хаягийн нууц үг сэргээх кодыг илгээлээ. Хэрвээ та нууц үг сэргээх хүсэлт илгээгүй бол ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл аягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                       </p>
                     </td>
                   </tr>
