@@ -452,7 +452,7 @@ export class EmailService {
               <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                 <tr>
                   <td style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
-                    <a href="${process.env.WEB || 'https://hire.mn'}" 
+                    <a 
                       style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
                               font-family: 'Montserrat', Arial, sans-serif; 
@@ -462,7 +462,7 @@ export class EmailService {
                               mso-line-height-rule: exactly;
                               line-height: 1.2;
                               text-align: center;">
-                      Зочлох
+                      ⭐️
                     </a>
                   </td>
                 </tr>
@@ -495,6 +495,49 @@ export class EmailService {
                         </tr>
                         <br/>
                         <tr>
+
+                        <td style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;">
+              <a href=${process.env.WEB || 'https://hire.mn'}/exam/${code} style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
+                Тест өгөх
+              </p>
+              </td>
+
+              <td style="background-color:rgb(255, 249, 178); padding: 20px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: center;">
+  
+  <table cellspacing="0" cellpadding="0" border="0" align="center">
+    <tr>
+      <td 
+        style="
+          background-color: #ff5000;
+          border-radius: 999px;
+          mso-padding-alt: 14px 28px;
+          text-align: center;
+        ">
+        <a
+          href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
+          style="
+            display: inline-block;
+            padding: 14px 28px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff !important;
+            text-decoration: none;
+            letter-spacing: 0.2px;
+            line-height: 1.2;
+          ">
+          📝 Тест өгөх
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin: 12px 0 0 0; font-size: 12px; color: #666666;">
+    Линк ${year}.${month}.${day} ${hour}:${minute} хүртэл хүчинтэй
+  </p>
+
+</td>
+
             <td style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;">
               <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">${assessment.name} тестийн тухай</h3>
               <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
