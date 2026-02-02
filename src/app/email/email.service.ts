@@ -517,12 +517,7 @@ export class EmailService {
                           <strong>${firstname}</strong> танд
                           <strong>${orgName ?? ''}</strong> байгууллагаас
                           <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест,
-                          үнэлгээнд оролцох урилга илгээсэн байна. Та
-                          <a
-                            style="color: #ff5000; text-decoration: none;"
-                            href="${process.env.WEB || 'https://hire.mn'}/exam/${code}">
-                            линк дээр дарж</a>
-                          тест, үнэлгээндээ оролцоно уу.
+                          үнэлгээнд оролцох урилга илгээсэн байна. Та "тест өгөх" товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцаарай.
                         </td>
                       </tr>
                       <tr>
@@ -536,15 +531,15 @@ export class EmailService {
                       </tr>
                       <br />
                       <tr>
-                        <td style="padding: 20px 0; text-align: center;">
+                        <td style="padding: 15px 0; text-align: center;">
                           <table cellspacing="0" cellpadding="0" border="0" align="center">
                             <tr>
-                              <td style="border-radius: 8px; background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
+                              <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
                                 <a
                                   href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
-                                  style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
+                                  style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
                                 >
-                                  🎯 Тест өгөх
+                                  🎯  Тест өгөх
                                 </a>
                               </td>
                             </tr>
@@ -554,7 +549,7 @@ export class EmailService {
                       <br />
                       <tr>
                         <td
-                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
+                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0 10px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
                         >
                           <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">
                             ${assessment.name} тестийн тухай
@@ -583,7 +578,7 @@ export class EmailService {
                           <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
                             <strong>Асуумжид хариулах заавар</strong>
                           </p>
-                          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
+                          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
                             ${assessment.advice}
                           </p>
                         </td>
