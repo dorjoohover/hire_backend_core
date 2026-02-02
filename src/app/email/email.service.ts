@@ -476,7 +476,7 @@ export class EmailService {
                               <td
                                 style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;"
                               >
-                                
+                                <a
                                   style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
                               font-family: 'Montserrat', Arial, sans-serif; 
@@ -518,11 +518,10 @@ export class EmailService {
                           <strong>${orgName ?? ''}</strong> байгууллагаас
                           <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест,
                           үнэлгээнд оролцох урилга илгээсэн байна. Та
-                          
+                          <a
                             style="color: #ff5000; text-decoration: none;"
-                            href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
-                            >линк дээр дарж</a
-                          >
+                            href="${process.env.WEB || 'https://hire.mn'}/exam/${code}">
+                            линк дээр дарж</a>
                           тест, үнэлгээндээ оролцоно уу.
                         </td>
                       </tr>
@@ -541,7 +540,7 @@ export class EmailService {
                           <table cellspacing="0" cellpadding="0" border="0" align="center">
                             <tr>
                               <td style="border-radius: 8px; background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
-                                
+                                <a
                                   href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
                                   style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
                                 >
@@ -598,17 +597,15 @@ export class EmailService {
                           <p style="margin: 0 0 15px 0;">
                             <br />Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын
                             өдрүүдэд 09-18 цагийн хооронд
-                            
+                            <a
                               href="mailto:info@hire.mn"
                               style="color: #ff5000; text-decoration: none;"
-                              >info@hire.mn</a
-                            >
+                              >info@hire.mn</a>
                             хаягаар эсвэл
-                            
+                            <a
                               href="tel:976-9909 9371"
                               style="color: #ff5000; text-decoration: none;"
-                              >976-9909 9371</a
-                            >
+                              >976-9909 9371</a>
                             утсаар холбогдоно уу.
                           </p>
                         </td>
