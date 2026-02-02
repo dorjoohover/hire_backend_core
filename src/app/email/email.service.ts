@@ -556,7 +556,7 @@ export class EmailService {
                       <br />
                       <tr>
                         <td
-                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0 10px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
+                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 25px 0 10px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
                         >
                           <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">
                             ${assessment.name} тестийн тухай
@@ -585,9 +585,18 @@ export class EmailService {
                           <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
                             <strong>Асуумжид хариулах заавар</strong>
                           </p>
-                          <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-                            ${assessment.advice}
-                          </p>
+                          <div style="color: #333333; font-size: 14px; line-height: 1.5;">
+                            <style>
+                              .advice-content p {
+                                margin: 0 0 10px 0 !important;
+                                font-size: 14px !important;
+                                line-height: 1.5 !important;
+                              }
+                            </style>
+                            <div class="advice-content">
+                              ${assessment.advice}
+                            </div>
+                          </div>
                         </td>
                       </tr>
                       <br />
