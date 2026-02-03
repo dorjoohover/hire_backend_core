@@ -30,12 +30,37 @@ import { ReportModule } from './app/report/report.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env`,
+    }),
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ({
+        type: 'postgres',
+        host: '172.17.0.1',
+        port: 5432,
+        username: 'dorjoo',
+        password: 'a1rKebDn7IIpisr9boM8dE6lzKW9D20xl3Rz',
+        database: 'hire',
+
+        autoLoadEntities: true,
+        synchronize: false,
+        logging: false,
+
+        ssl: false,
+
+        extra: {
+          family: 4,
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 30000,
+          keepAlive: true,
+        },
+      }),
     }),
     BullModule.forRoot({
       connection: {
@@ -47,7 +72,7 @@ import { EmailModule } from './app/email/email.module';
     }),
 
     // EbarimtModule,
-    DatabaseModule,
+    // DatabaseModule,
     BarimtModule,
     BlogModule,
     BaseModule,
