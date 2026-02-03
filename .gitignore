@@ -4,6 +4,7 @@
 /build
 .env.local
 /uploads
+docker-compose.yml
 # Logs
 logs
 *.log
