@@ -39,28 +39,26 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       envFilePath: `.env`,
     }),
     TypeOrmModule.forRootAsync({
-      useFactory: () => ({
-        type: 'postgres',
-        host: process.env.DB_HOST,
-        port: Number(process.env.DB_PORT),
-        username: process.env.DB_USER,
-        password: process.env.DB_PASS,
-        database: process.env.DB_NAME,
+      inject: [ConfigService], // 🔥 заавал
+      useFactory: (config: ConfigService) => {
+        console.log('DB CONFIG 👉', {
+          type: 'postgres',
+          host: config.get('DB_HOST'),
+          port: config.get<number>('DB_PORT'),
+          username: config.get('DB_USER'),
+          password: config.get('DB_PASSWORD'),
+          database: config.get('DB_NAME'),
+        });
 
-        autoLoadEntities: true,
-        synchronize: false,
-        logging: false,
-
-        ssl: false,
-
-        extra: {
-          family: 4,
-          max: 10,
-          idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 30000,
-          keepAlive: true,
-        },
-      }),
+        return {
+          type: 'postgres',
+          host: config.get('DB_HOST'),
+          port: config.get<number>('DB_PORT'),
+          username: config.get('DB_USER'),
+          password: config.get('DB_PASSWORD'),
+          database: config.get('DB_NAME'),
+        };
+      },
     }),
     BullModule.forRoot({
       connection: {
