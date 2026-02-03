@@ -41,11 +41,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forRootAsync({
       useFactory: () => ({
         type: 'postgres',
-        host: '172.17.0.1',
-        port: 5432,
-        username: 'dorjoo',
-        password: 'a1rKebDn7IIpisr9boM8dE6lzKW9D20xl3Rz',
-        database: 'hire',
+        host: process.env.DB_HOST,
+        port: Number(process.env.DB_HOST),
+        username: process.env.DB_USER,
+        password: process.env.DB_PASS,
+        database: process.env.DB_NAME,
 
         autoLoadEntities: true,
         synchronize: false,
