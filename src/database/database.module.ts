@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true })],
+  imports: [ConfigModule.forRoot({ isGlobal: true })], // Load environment variables
   providers: [
     {
       provide: DataSource,
@@ -13,26 +13,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         try {
           const dataSource = new DataSource({
             type: 'postgres',
-
-            // 🔥 URL бүү ашигла — force IPv4
-            host: '172.17.0.1',
-            port: 5432,
-            username: 'dorjoo',
-            password: 'a1rKebDn7IIpisr9boM8dE6lzKW9D20xl3Rz',
-            database: 'hire',
-
+            url: configService.get<string>('DATABASE_URL'), // Load from .env
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-
-            synchronize: false, // 🔴 прод-д true БИТГИЙ
-            logging: false,
-
-            ssl: false,
+            synchronize: true,
             extra: {
-              ssl: false,
-              family: 4,              // 🔥 IPv4 force (ЧУХАЛ)
-              max: 10,
-              connectionTimeoutMillis: 20000,
+              max: Number(process.env.DB_POOL_MAX ?? 10), // pool хэмжээ
+              idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
+              connectionTimeoutMillis: Number(
+                process.env.DB_CONN_TIMEOUT_MS ?? 5_000,
+              ),
+              keepAlive: true,
+              statement_timeout: Number(
+                process.env.DB_STATEMENT_TIMEOUT_MS ?? 30_000,
+              ),
+              query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 35_000),
             },
+
           });
 
           await dataSource.initialize();

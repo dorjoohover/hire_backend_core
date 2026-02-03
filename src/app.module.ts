@@ -30,35 +30,12 @@ import { ReportModule } from './app/report/report.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env`,
-    }),
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService], // 🔥 заавал
-      useFactory: (config: ConfigService) => {
-        console.log('DB CONFIG 👉', {
-          type: 'postgres',
-          host: config.get('DB_HOST'),
-          port: config.get<number>('DB_PORT'),
-          username: config.get('DB_USER'),
-          password: config.get('DB_PASSWORD'),
-          database: config.get('DB_NAME'),
-        });
-
-        return {
-          type: 'postgres',
-          host: config.get('DB_HOST'),
-          port: config.get<number>('DB_PORT'),
-          username: config.get('DB_USER'),
-          password: config.get('DB_PASSWORD'),
-          database: config.get('DB_NAME'),
-        };
-      },
     }),
     BullModule.forRoot({
       connection: {
@@ -70,7 +47,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     }),
 
     // EbarimtModule,
-    // DatabaseModule,
+    DatabaseModule,
     BarimtModule,
     BlogModule,
     BaseModule,
