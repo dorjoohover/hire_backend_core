@@ -31,7 +31,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
               ssl: false,
               family: 4,              // 🔥 IPv4 force (ЧУХАЛ)
               max: 10,
-              connectionTimeoutMillis: 5000,
+              connectionTimeoutMillis: 20000,
             },
           });
 
