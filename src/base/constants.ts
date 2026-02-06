@@ -49,6 +49,7 @@ export const AssessmentStatus = {
   ACTIVE: 10,
   ARCHIVE: 20,
   HIGHLIGHTED: 30,
+  ONLY: 40,
 };
 
 export const QuestionType = {
