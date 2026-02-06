@@ -47,11 +47,11 @@ export class ReportService {
 
     if (!report) {
       return {
-        jobId,
-        status: 'NOT_FOUND',
+        // id: jobId,
+        code: jobId,
+        status: REPORT_STATUS.STARTED,
         progress: 0,
         result: null,
-        code: null,
       };
     }
     if (
