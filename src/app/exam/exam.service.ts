@@ -126,6 +126,10 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
+  public async getOwners(email: string) {
+    return await this.dao.findAllOwners(email);
+  }
+
   async getExamInfoByCode(code: string, user?: UserEntity) {
     const result = await this.resultDao.findOne(code);
 
@@ -154,7 +158,6 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-    console.log(user);
     if (user && user.role == CLIENT && user?.id != exam.user.id) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
@@ -446,7 +449,7 @@ export class ExamService extends BaseService {
       total: count,
     };
   }
-  remove(id: number) {
-    return `This action removes a #${id} exam`;
+  async deleteResult(code: string) {
+    await this.resultDao.delete(code);
   }
 }

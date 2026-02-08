@@ -18,6 +18,7 @@ import { UserDao } from '../user/user.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QpayService } from '../payment/qpay.service';
 import {
+  AssessmentAudience,
   generatePassword,
   PaymentStatus,
   PaymentType,
@@ -51,6 +52,21 @@ export class UserServiceService extends BaseService {
   }
   public async create(dto: CreateUserServiceDto, user: any) {
     const assessment = await this.assessmentDao.findOne(dto.assessment);
+    const role = +user['role'];
+    if (assessment.audience == AssessmentAudience.ORGANIZATION) {
+      if (role == Role.organization) {
+        if (assessment?.owner?.id != user['id'])
+          throw new HttpException(
+            'Тест авах эрхгүй байна.',
+            HttpStatus.BAD_REQUEST,
+          );
+      } else {
+        throw new HttpException(
+          'Тестийг зөвхөн урилгаар авна.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
     const price = assessment.price * dto.count;
     if (
       +user['role'] == Role.organization &&

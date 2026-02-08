@@ -13,6 +13,7 @@ import { Meta } from 'src/base/base.interface';
 import { AssessmentStatus } from 'src/base/constants';
 import { ExamService } from '../exam/exam.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
+import { UserEntity } from '../user/entities/user.entity';
 
 @Injectable()
 export class AssessmentService {
@@ -91,12 +92,16 @@ export class AssessmentService {
     };
   }
 
-  public async findAll(pg: PaginationDto) {
-    console.log('asdff')
+  public async findAll(pg: PaginationDto, user?: UserEntity) {
+    let orgAss = [];
+    if (user?.id) {
+      const owners = await this.exam.getOwners(user.email);
+      orgAss = await this.dao.findOrg([...owners, user.id]);
+    }
     const { data, count, total } = await this.dao.findAll(pg);
-
+    const assessments = [...data, ...orgAss];
     const res = await Promise.all(
-      data.map(async (as) => {
+      assessments.map(async (as) => {
         const user = await this.getUser(as);
         const category = await this.categoryDao.findOne(as.category.id);
         const count = await this.userServiceDao.countByAssessment(as.id);
@@ -110,7 +115,7 @@ export class AssessmentService {
     const level = await this.levelDao.findAll();
     return {
       data: res,
-      count,
+      count: +count + orgAss.length,
       total,
       level,
     };

@@ -37,6 +37,9 @@ export class FormuleDto {
     operation: string;
   }[];
 
+  @ApiProperty({ nullable: true, required: false })
+  assessment?: number;
+
   // @ApiProperty({
   //   description:
   //     'Optional filters for the query, with table aliases (e.g., "sales.region", "product.category")',
@@ -60,4 +63,28 @@ export class FormuleDto {
   @ApiProperty()
   sort: boolean;
 
+  @ApiProperty({
+    isArray: true,
+    required: false,
+    type: () => FormuleDto,
+    example: [
+      {
+        name: 'Sub formula 1',
+        formula: 'SUM(point)',
+        variables: [1, 2],
+        groupBy: ['answerCategoryId'],
+        aggregations: [{ field: 'point', operation: 'SUM' }],
+        sort: false,
+        category: 1,
+        is_calculated: true,
+      },
+    ],
+  })
+  @ApiProperty()
+  category?: number;
+  @ApiProperty()
+  is_calculated?: boolean;
+  @IsOptional()
+  @IsArray()
+  subFormulas?: FormuleDto[];
 }

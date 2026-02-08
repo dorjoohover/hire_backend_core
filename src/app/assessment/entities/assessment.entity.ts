@@ -15,6 +15,9 @@ import { ExamEntity } from 'src/app/exam/entities/exam.entity';
 import { QuestionAnswerCategoryEntity } from 'src/app/question/entities/question.answer.category.entity';
 import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
+import { AssessmentAudience } from 'src/base/constants';
+import { UserEntity } from 'src/app/user/entities/user.entity';
+import { AssessmentFormulaEntity } from './assessment.formule.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -65,6 +68,8 @@ export class AssessmentEntity {
 
   @Column()
   type: number;
+  @Column({ default: AssessmentAudience.DEFAULT })
+  audience: number;
   @Column({ nullable: true })
   report: number;
   @Column({ nullable: true, default: false })
@@ -80,6 +85,8 @@ export class AssessmentEntity {
   updatedAt: Date;
   @Column()
   createdUser: number;
+  @ManyToOne(() => UserEntity, (user) => user.assessments)
+  owner: UserEntity;
   @Column({ nullable: true })
   updatedUser: number;
   @ManyToOne(() => AssessmentCategoryEntity, (category) => category.assessments)
@@ -121,4 +128,10 @@ export class AssessmentEntity {
     onUpdate: 'CASCADE',
   })
   feedbacks: FeedbackEntity[];
+  @OneToMany(() => AssessmentFormulaEntity, (service) => service.assessment, {
+    nullable: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  formules: AssessmentFormulaEntity[];
 }

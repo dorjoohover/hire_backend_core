@@ -46,7 +46,7 @@ export class UserServiceDao {
     await this.db.save(res);
     return res;
   };
- updateCount = async (id: number, count: number, used: number) => {
+  updateCount = async (id: number, count: number, used: number) => {
     console.log(id, count, used);
     const res = await this.db.findOne({ where: { id: id } });
     res.count += count;
@@ -58,7 +58,11 @@ export class UserServiceDao {
     const result = await this.db
       .createQueryBuilder('item')
       .select('item.assessmentId', 'assessmentId')
-      .addSelect('SUM(count)', 'sum')
+      .addSelect('SUM(item.count)', 'sum')
+      .innerJoin('item.assessment', 'a')
+      .where('a.status NOT IN (:...status)', {
+        status: [AssessmentStatus.ONLY, AssessmentStatus.ARCHIVE],
+      })
       .groupBy('item.assessmentId')
       .orderBy('sum', 'DESC')
       .limit(limit)
@@ -103,9 +107,7 @@ export class UserServiceDao {
     });
   };
 
- 
   findByUser = async (assId: number, id: number, service: number) => {
-
     const [data, count] = await this.db.findAndCount({
       where: {
         id: service == 0 ? Not(IsNull()) : service,

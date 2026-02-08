@@ -5,10 +5,12 @@ import { DataSource, Repository } from 'typeorm';
 import { FormulaEntity } from './formule.entity';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { AssessmentFormulaEntity } from '../assessment/entities/assessment.formule.entity';
 
 @Injectable()
 export class FormuleService extends BaseService {
   private db: Repository<FormulaEntity>;
+  private assFormula: Repository<AssessmentFormulaEntity>;
   constructor(
     private answerCategoryDao: QuestionAnswerCategoryDao,
     private dataSource: DataSource,
@@ -19,8 +21,40 @@ export class FormuleService extends BaseService {
   }
 
   public async create(dto: FormuleDto, user: number) {
-    const res = this.db.create({ ...dto, createdUser: user });
+    const { subFormulas, assessment, ...body } = dto;
+    const res = this.db.create({ ...body, createdUser: user });
     await this.db.save(res);
+    const formule = this.assFormula.create({
+      assessment: { id: assessment },
+      formule: {
+        id: res.id,
+      },
+      parent: null,
+    });
+    await this.assFormula.save(formule);
+    if (subFormulas && subFormulas.length > 0) {
+      subFormulas.forEach(async (subFormula) => {
+        const { assessment, subFormulas, category, ...body } = subFormula;
+        if (!subFormula.is_calculated) return;
+        const child = this.db.create({ ...body, createdUser: user });
+        await this.db.save(child);
+        const formula = this.assFormula.create({
+          assessment: {
+            id: assessment,
+          },
+          formule: {
+            id: child.id,
+          },
+          parent: {
+            id: res.id,
+          },
+          question_category: {
+            id: category,
+          },
+        });
+        await this.assFormula.save(formula);
+      });
+    }
     return res.id;
   }
 
@@ -32,7 +66,7 @@ export class FormuleService extends BaseService {
     return await this.db.findOne({ where: { id: id } });
   }
 
-  async aggregate(dto: FormuleDto, w: string): Promise<any[]> {
+  async aggregate(dto: FormulaEntity, w: string): Promise<any[]> {
     try {
       const { groupBy, aggregations, filters, limit, order, sort } = dto;
 

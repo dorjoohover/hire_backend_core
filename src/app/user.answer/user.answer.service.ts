@@ -19,6 +19,7 @@ import { QuestionAnswerEntity } from '../question/entities/question.answer.entit
 import { ReportService } from '../report/report.service';
 import { performance } from 'perf_hooks';
 import { EmailService } from '../email/email.service';
+import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -31,6 +32,7 @@ export class UserAnswerService extends BaseService {
     @Inject(forwardRef(() => ReportService)) private report: ReportService,
 
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
+    private questionCategoryDao: QuestionCategoryDao,
   ) {
     super();
   }
@@ -56,7 +58,7 @@ export class UserAnswerService extends BaseService {
       console.timeEnd('⏱ examDao.findByCodeOnly');
 
       if (!exam) throw message('Тест олдсонгүй');
-
+      console.log(dto);
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
         if (!d.question) throw message('Асуулт байхгүй');
@@ -98,7 +100,10 @@ export class UserAnswerService extends BaseService {
         // Multiple answers
         const code = dto.data[0].code;
         const answers = d.answers;
-
+        const category = await this.questionCategoryDao.findOne(
+          d.questionCategory,
+        );
+        const is_calculated = category.is_calculated;
         for (const answer of answers) {
           const loopStart = performance.now();
 
@@ -106,28 +111,32 @@ export class UserAnswerService extends BaseService {
             ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
             : await this.dao.findByAnswerId(answer.answer, code);
           if (result) continue;
-
+          console.log(answer);
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
                 `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
               )
-            : await this.questionAnswerDao.query(
-                `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
-              );
+            : !answer.answer && !is_calculated
+              ? null
+              : await this.questionAnswerDao.query(
+                  `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
+                );
 
-          answerCategory = answerCategory[0];
+          answerCategory = answerCategory?.[0];
           if (
             !answer?.answer &&
             answer?.answer == null &&
             !answer?.point &&
-            !answer?.matrix
+            !answer?.matrix &&
+            is_calculated
           )
             continue;
           let point: number;
 
           if (
             !answer.matrix &&
-            (answerCategory as QuestionAnswerEntity)?.reverse
+            (answerCategory as QuestionAnswerEntity)?.reverse &&
+            is_calculated
           ) {
             point =
               Number(question?.maxValue ?? question[0]?.maxValue ?? 0) -
@@ -144,10 +153,14 @@ export class UserAnswerService extends BaseService {
               );
               p = matrixResult[0]?.point;
             } else {
-              const answerResult = await this.questionAnswerDao.query(
-                `SELECT point FROM "questionAnswer" WHERE id = ${answer.answer}`,
-              );
-              p = answerResult[0]?.point;
+              if (!answer.answer && !is_calculated) {
+                p = null;
+              } else {
+                const answerResult = await this.questionAnswerDao.query(
+                  `SELECT point FROM "questionAnswer" WHERE id = ${answer.answer}`,
+                );
+                p = answerResult[0]?.point;
+              }
             }
 
             point = typeof p === 'number' ? +p : +p;
@@ -166,8 +179,8 @@ export class UserAnswerService extends BaseService {
             point,
             answer: answer.answer,
             correct: answer.matrix
-              ? null
-              : ((answerCategory as QuestionAnswerEntity)?.correct ?? null),
+              ? false
+              : ((answerCategory as QuestionAnswerEntity)?.correct ?? false),
             matrix: answer.matrix,
             value: answer.value,
             ip,
