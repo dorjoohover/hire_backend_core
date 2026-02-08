@@ -332,7 +332,7 @@ export class EmailService {
                           <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-                              Тайлангийн электрон хувилбарыг Hire.mn сайт руу нэвтэрч, “Өгсөн тестүүд” булангаас харах боломжтой. Тайлантай холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                              Тайлангийн электрон хувилбарыг Hire.mn сайт руу нэвтэрч, “Өгсөн тестүүд” булангаас харах боломжтой. Тайлантай холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                             </p>
                           </td>
                         </tr>
@@ -420,40 +420,64 @@ export class EmailService {
         `
       : '';
     const html = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Танд тестийн урилга ирлээ</title>
-            <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-            <style>
-            body, h1, h2, h3, p, a, div {
-              font-family: 'Montserrat', sans-serif;
-            }
-          </style>
-          </head>
-          <body style="margin: 0; padding: 0; min-width: 100%; margin-top: 10px; font-family: 'Montserrat', sans-serif;">
-            <center style="width: 100%; table-layout: fixed; padding-bottom: 20px;">
-              <div style="max-width: 600px; margin: 0 auto;">
-                <table width="600" cellspacing="0" cellpadding="0" border="0" align="center">
-                <tr>
-                <td>
-                
-                <table align="center" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;">
-                  <tr>
-                    <td style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Танд тестийн урилга ирлээ</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body, h1, h2, h3, p, a, div {
+        font-family: 'Montserrat', sans-serif;
+      }
+    </style>
+  </head>
+  <body
+    style="margin: 0; padding: 0; min-width: 100%; margin-top: 10px; font-family: 'Montserrat', sans-serif;"
+  >
+    <center style="width: 100%; table-layout: fixed; padding-bottom: 20px;">
+      <div style="max-width: 600px; margin: 0 auto;">
+        <table width="600" cellspacing="0" cellpadding="0" border="0" align="center">
           <tr>
-            <td style="width: 80%; text-align: left; vertical-align: middle;">
-            <img src="https://raw.githubusercontent.com/usukhbaya12/images/refs/heads/main/hire-2-white.png" alt="Hire.mn Logo" width="120" height="auto" style="display: block; border: 0;">
-            </td>
-      <td style="width: 20%; text-align: right; vertical-align: middle;">
-              <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
+            <td>
+              <table
+                align="center"
+                cellpadding="0"
+                cellspacing="0"
+                border="0"
+                style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;"
+              >
                 <tr>
-                  <td style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
-                    <a href="${process.env.WEB || 'https://hire.mn'}" 
-                      style="padding: 10px 16px; border-radius: 4px; 
+                  <td style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width: 80%; text-align: left; vertical-align: middle;">
+                          <img
+                            src="https://raw.githubusercontent.com/usukhbaya12/images/refs/heads/main/hire-2-white.png"
+                            alt="Hire.mn Logo"
+                            width="120"
+                            height="auto"
+                            style="display: block; border: 0;"
+                          />
+                        </td>
+                        <td style="width: 20%; text-align: right; vertical-align: middle;">
+                          <table
+                            cellspacing="0"
+                            cellpadding="0"
+                            border="0"
+                            align="right"
+                            style="display: inline-block;"
+                          >
+                            <tr>
+                              <td
+                                style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;"
+                              >
+                                <a
+                                  style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
                               font-family: 'Montserrat', Arial, sans-serif; 
                               font-size: 14px; font-weight: 600; 
@@ -461,101 +485,175 @@ export class EmailService {
                               display: inline-block;
                               mso-line-height-rule: exactly;
                               line-height: 1.2;
-                              text-align: center;">
-                      Зочлох
-                    </a>
+                              text-align: center;"
+                                >
+                                  ⭐️
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="background-color:rgb(250, 250, 250); padding: 20px 40px 10px 40px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      ${newUserSection} ${isNewUser ? '<br />' : ''}
+                      <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; color: #333333;"
+                        >
+                          Өдрийн мэнд,
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <br />Эрхэм <strong>${lastname}</strong> овогтой
+                          <strong>${firstname}</strong> танд
+                          <strong>${orgName ?? ''}</strong> байгууллагаас
+                          <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест,
+                          үнэлгээнд оролцох урилга илгээсэн байна. 
+                        </td>
+                      </tr>
+                       <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <br />Та <strong>тест өгөх</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцаарай.
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <br />Тест, үнэлгээний линк ${year} оны ${month} сарын ${day} өдрийн
+                          ${hour}:${minute} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт
+                          хүсье.
+                        </td>
+                      </tr>
+                      <br />
+                      <tr>
+                        <td style="padding: 15px 0; text-align: center;">
+                          <table cellspacing="0" cellpadding="0" border="0" align="center">
+                            <tr>
+                              <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
+                                <a
+                                  href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
+                                  style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
+                                >
+                                  🎯  Тест өгөх
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <br />
+                      <tr>
+                        <td
+                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 25px 0 10px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
+                        >
+                          <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">
+                            ${assessment.name} тестийн тухай
+                          </h3>
+                          <p
+                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
+                          >
+                            ${assessment.description}
+                          </p>
+                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                            <strong>Хэрэглээ</strong>
+                          </p>
+                          <p
+                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
+                          >
+                            ${assessment.usage}
+                          </p>
+                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                            <strong>Хэмжих зүйлс</strong>
+                          </p>
+                          <p
+                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
+                          >
+                            ${assessment.measure}
+                          </p>
+                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
+                            <strong>Асуумжид хариулах заавар</strong>
+                          </p>
+                          <div style="color: #333333; font-size: 14px; line-height: 1.5;">
+                            <style>
+                              .advice-content p {
+                                margin: 0 0 10px 0 !important;
+                                font-size: 14px !important;
+                                line-height: 1.5 !important;
+                              }
+                            </style>
+                            <div class="advice-content">
+                              ${assessment.advice}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                      <br />
+
+                      <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <p style="margin: 0 0 15px 0;">
+                            <br />Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын
+                            өдрүүдэд 09-18 цагийн хооронд
+                            <a
+                              href="mailto:info@hire.mn"
+                              style="color: #ff5000; text-decoration: none;"
+                              >info@hire.mn</a>
+                            мэйл хаягаар эсвэл
+                            <a
+                              href="tel:976-9909 9371"
+                              style="color: #ff5000; text-decoration: none;"
+                              >976-9909 9371</a>
+                            утсаар холбогдоно уу.
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <p style="margin: 0 0 15px 0;">Хүндэтгэсэн,<br />Hire.mn</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td
+                    style="background-color: #f5f5f5; padding: 20px; text-align: center; font-family: 'Montserrat', sans-serif; font-size: 12px; color: #777777; border-top: 1px solid #eeeeee;"
+                  >
+                    <p style="margin: 0; line-height: 1.5;">
+                      Шуудангийн хаяг: Аксиом Инк ХХК, Улаанбаатар хот, Баянзүрх дүүрэг, 1-р
+                      хороо<br />Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н:
+                      Улаанбаатар-49
+                    </p>
+                    <br />
+                    <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Аксиом Инк.</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
         </table>
-                      </td>
-                  </tr>
-                  
-                  <tr>
-                    <td style="background-color:rgb(250, 250, 250); padding: 20px 40px 10px 40px;">
-                      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                        ${newUserSection}
-                        ${isNewUser ? '<br/>' : ''}
-                        <tr>
-                          <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; color: #333333;">
-                            Өдрийн мэнд,
-                          </td>
-                        </tr>
-                        <tr>
-                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                              <br/>Эрхэм <strong>${lastname}</strong> овогтой <strong>${firstname}</strong> танд <strong>${orgName ?? ''}</strong> байгууллагаас <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна. Та <a style="color: #ff5000; text-decoration: none;" href=${process.env.WEB || 'https://hire.mn'}/exam/${code}>линк дээр дарж</a> тест, үнэлгээндээ оролцоно уу.
-                          </td>
-                        </tr>
-                         <tr>
-                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                          <br/>Тест, үнэлгээний линк ${year} оны ${month} сарын ${day} өдрийн ${hour}:${minute} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>
-                          </td>
-                        </tr>
-                        <br/>
-                        <tr>
-            <td style="background-color:rgb(255, 249, 178); padding: 15px; margin: 20px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;">
-              <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">${assessment.name} тестийн тухай</h3>
-              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
-                ${assessment.description}
-              </p>
-              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                <strong>Хэрэглээ</strong>
-              </p>
-              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
-                ${assessment.usage}
-              </p>
-              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                <strong>Хэмжих зүйлс</strong>
-              </p>
-              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5; margin-bottom: 10px;">
-                ${assessment.measure}
-              </p>
-              <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                <strong>Асуумжид хариулах заавар</strong>
-              </p>
-              <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
-                ${assessment.advice}
-              </p>
-            </td>
-          </tr>
-              <br/>
-          
-                        <tr>
-                        <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                          <p style="margin: 0 0 15px 0;">
-                            <br/>Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
-                          </p>
-                        </td>
-                      </tr>
-                        <tr>
-                          <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
-                            <p style="margin: 0 0 15px 0;">
-                              Хүндэтгэсэн,<br/>Hire.mn
-                            </p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                  <tr>
-                    <td style="background-color: #f5f5f5; padding: 20px; text-align: center; font-family: 'Montserrat', sans-serif; font-size: 12px; color: #777777; border-top: 1px solid #eeeeee;">
-                      <p style="margin: 0; line-height: 1.5;">Шуудангийн хаяг: Аксиом Инк ХХК, Улаанбаатар хот, Баянзүрх дүүрэг, 1-р хороо<br>Энхтайвны өргөн чөлөө-5, СЭЗИС, Б байр, 7-р давхар, 13381, Ш/Н: Улаанбаатар-49</p><br/>
-                      <p style="margin: 0 0 10px 0;">© ${new Date().getFullYear()} Аксиом Инк.</p>
-                    </td>
-                  </tr>
-                </table>
-                
-                </td>
-                </tr>
-                </table>
-              </div>
-            </center>
-          </body>
-          </html>
-          `;
+      </div>
+    </center>
+  </body>
+</html>
+`;
     return { html };
   }
 
@@ -637,7 +735,7 @@ export class EmailService {
                         <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-                              Хэрвээ танд бүртгэлтэй холбоотой асууж тодруулах зүйл байвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                              Хэрвээ танд бүртгэлтэй холбоотой асууж тодруулах зүйл байвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                             </p>
                           </td>
                         </tr>
@@ -748,7 +846,7 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
                   <tr>
                     <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                       <p style="margin: 0 0 15px 0;">
-                        Таны Hire.mn дээрх бүртгэлтэй хаягийн нууц үг сэргээх кодыг илгээлээ. Хэрвээ та нууц үг сэргээх хүсэлт илгээгүй бол ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> хаягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
+                        Таны Hire.mn дээрх бүртгэлтэй хаягийн нууц үг сэргээх кодыг илгээлээ. Хэрвээ та нууц үг сэргээх хүсэлт илгээгүй бол ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn" style="color: #ff5000; text-decoration: none;">info@hire.mn</a> мэйл аягаар эсвэл <a href="tel:976-9909 9371" style="color: #ff5000; text-decoration: none;">976-9909 9371</a> утсаар холбогдоно уу.
                       </p>
                     </td>
                   </tr>
