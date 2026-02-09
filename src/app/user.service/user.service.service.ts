@@ -65,7 +65,7 @@ export class UserServiceService extends BaseService {
       price,
     );
     let invoice = null;
-    if (price > 0) {
+    if (price > 0 && +user['role'] == Role.client) {
       invoice = await this.qpay.createInvoice(price, res.id, +user['id']);
     }
     if (+user['role'] == Role.organization) {

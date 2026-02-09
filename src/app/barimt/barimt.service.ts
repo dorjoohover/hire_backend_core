@@ -48,6 +48,9 @@ export class BarimtService {
     });
 
     const token = await this.refreshing;
+    if (!token) {
+      throw new HttpException('Ebarimt token invalid', 401);
+    }
     return {
       token,
       expiredIn: Math.floor((this.expiresAt - Date.now()) / 1000),
@@ -87,7 +90,7 @@ export class BarimtService {
 
       console.error('[Ebarimt] Token fetch failed:', axiosError.response?.data);
       throw new HttpException(
-        axiosError.response?.data || 'Authentication failed',
+        axiosError.response?.data || 'Ebarimt нэвтрэх token авч чадсангүй',
         axiosError.response?.status || 500,
       );
     }
@@ -100,6 +103,7 @@ export class BarimtService {
     service: number,
   ) {
     const { token } = await this.loginEbarimt();
+    console.log(token);
     const d = {
       branchNo: '001',
       posNo: '10008555',
