@@ -58,7 +58,6 @@ export class UserAnswerService extends BaseService {
       console.timeEnd('⏱ examDao.findByCodeOnly');
 
       if (!exam) throw message('Тест олдсонгүй');
-      console.log(dto);
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
         if (!d.question) throw message('Асуулт байхгүй');
@@ -110,8 +109,7 @@ export class UserAnswerService extends BaseService {
           const result = answer.matrix
             ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
             : await this.dao.findByAnswerId(answer.answer, code);
-          if (result) continue;
-          console.log(answer);
+          if (result && is_calculated) continue;
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
                 `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
