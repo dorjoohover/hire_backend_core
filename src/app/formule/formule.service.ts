@@ -18,6 +18,7 @@ export class FormuleService extends BaseService {
   ) {
     super();
     this.db = this.dataSource.getRepository(FormulaEntity);
+    this.assFormula = this.dataSource.getRepository(AssessmentFormulaEntity)
   }
 
   public async create(dto: FormuleDto, user: number) {
