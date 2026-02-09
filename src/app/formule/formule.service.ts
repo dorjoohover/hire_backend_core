@@ -35,27 +35,23 @@ export class FormuleService extends BaseService {
       });
       await this.assFormula.save(formule);
       if (subFormulas && subFormulas.length > 0) {
-        subFormulas.forEach(async (subFormula) => {
-          const { assessment, subFormulas, category, ...body } = subFormula;
-          if (!subFormula.is_calculated) return;
+        for (const subFormula of subFormulas) {
+          if (!subFormula.is_calculated) continue;
+
+          const { assessment, subFormulas: _, category, ...body } = subFormula;
+
           const child = this.db.create({ ...body, createdUser: user });
           await this.db.save(child);
+
           const formula = this.assFormula.create({
-            assessment: {
-              id: assessment,
-            },
-            formule: {
-              id: child.id,
-            },
-            parent: {
-              id: formule.id,
-            },
-            question_category: {
-              id: category,
-            },
+            assessment: { id: assessment },
+            formule: { id: child.id },
+            parent: { id: formule.id },
+            question_category: category ? { id: category } : null,
           });
+
           await this.assFormula.save(formula);
-        });
+        }
       }
       return res.id;
     } catch (error) {
