@@ -24,44 +24,45 @@ export class FormuleService extends BaseService {
   public async create(dto: FormuleDto, user: number) {
     try {
       const { subFormulas, assessment, ...body } = dto;
-      console.log({ ...body, createdUser: user });
       const res = this.db.create({ ...body, createdUser: user });
       await this.db.save(res);
-      console.log({
-        assessment: { id: assessment },
-        formule: {
-          id: res.id,
-        },
-        parent: null,
-      });
-      const formule = this.assFormula.create({
-        assessment: { id: assessment },
-        formule: {
-          id: res.id,
-        },
-        parent: null,
-      });
-      await this.assFormula.save(formule);
-      if (subFormulas && subFormulas.length > 0) {
-        for (const subFormula of subFormulas) {
-          console.log(subFormula);
-          if (!subFormula.is_calculated) continue;
 
-          const { assessment, subFormulas: _, category, ...body } = subFormula;
+      if (assessment) {
+        const formule = this.assFormula.create({
+          assessment: { id: assessment },
+          formule: {
+            id: res.id,
+          },
+          parent: null,
+        });
+        await this.assFormula.save(formule);
+        if (subFormulas && subFormulas.length > 0) {
+          for (const subFormula of subFormulas) {
+            console.log(subFormula);
+            if (!subFormula.is_calculated) continue;
 
-          const child = this.db.create({ ...body, createdUser: user });
-          await this.db.save(child);
+            const {
+              assessment,
+              subFormulas: _,
+              category,
+              ...body
+            } = subFormula;
 
-          const formula = this.assFormula.create({
-            assessment: { id: assessment },
-            formule: { id: child.id },
-            parent: { id: formule.id },
-            question_category: category ? { id: category } : null,
-          });
+            const child = this.db.create({ ...body, createdUser: user });
+            await this.db.save(child);
 
-          await this.assFormula.save(formula);
+            const formula = this.assFormula.create({
+              assessment: { id: assessment },
+              formule: { id: child.id },
+              parent: { id: formule.id },
+              question_category: category ? { id: category } : null,
+            });
+
+            await this.assFormula.save(formula);
+          }
         }
       }
+
       return res.id;
     } catch (error) {
       console.log(error, 'formule dao');
