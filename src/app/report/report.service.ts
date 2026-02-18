@@ -59,7 +59,7 @@ export class ReportService {
       report.status == REPORT_STATUS.COMPLETED &&
       report.code
     ) {
-      // this.sendMail(report.code);
+      this.sendMail(report.code);
     }
     return report;
   }
