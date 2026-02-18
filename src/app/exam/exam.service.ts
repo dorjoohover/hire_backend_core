@@ -164,7 +164,6 @@ export class ExamService extends BaseService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(exam.service.user);
     if (
       user &&
       user.role === ORGANIZATION &&
@@ -432,7 +431,7 @@ export class ExamService extends BaseService {
     res = await Promise.all(
       res.map(async (r) => {
         let us = r.user;
-        console.log(r.code, r.user, r.email);
+        console.log(r.code, r.user?.email, r.email);
         if (r.email != null && us == null)
           us = await this.userDao.getByEmail(r.email);
         const result = await this.resultDao.findOne(r.code);

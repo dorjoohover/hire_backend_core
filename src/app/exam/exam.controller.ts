@@ -77,10 +77,13 @@ export class ExamController {
       );
       return res;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStatus = (error as any)?.status || 500;
       return {
         success: false,
-        message: error.message,
-        status: error.status,
+        message: errorMessage,
+        status: errorStatus,
       };
     }
   }
@@ -201,11 +204,12 @@ export class ExamController {
       }
 
       return examInfo;
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to retrieve exam info',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to retrieve exam info';
+      const errorStatus =
+        (error as any)?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(errorMessage, errorStatus);
     }
   }
 
@@ -234,6 +238,4 @@ export class ExamController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateExamDto: UpdateExamDto) {}
-
-
 }

@@ -18,7 +18,6 @@ import * as mime from 'mime-types';
 import { PassThrough } from 'stream';
 import { Response } from 'express';
 import axios from 'axios';
-import { fi } from '@faker-js/faker/.';
 
 @Injectable()
 export class FileService {
@@ -312,7 +311,8 @@ export class FileService {
 
       return object.Body as Buffer;
     } catch (err) {
-      console.error('❌ S3 download error:', err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('❌ S3 download error:', errorMessage);
       return null;
     }
   }
@@ -321,15 +321,28 @@ export class FileService {
       const response = await axios.get(
         `${process.env.REPORT}file/${filename}`,
         {
-          responseType: 'stream', // ⭐ ХАМГИЙН ЧУХАЛ
-          timeout: 15000,
+          responseType: 'stream',
+          timeout: 30000,
+          headers: {
+            Connection: 'close', // keep-alive issue-с сэргийлнэ
+          },
         },
       );
 
-      return response; // stream + headers
-    } catch (e) {
-      console.error('REPORT FETCH ERROR:', e.message);
-      return null; // ❗ throw хийхгүй
+      return response;
+    } catch (e: any) {
+      console.error('REPORT FETCH ERROR:', e.code, e.message);
+
+      if (e.code === 'ECONNRESET') {
+        console.log('Retrying report fetch...');
+        return axios.get(`${process.env.REPORT}file/${filename}`, {
+          responseType: 'stream',
+          timeout: 30000,
+          headers: { Connection: 'close' },
+        });
+      }
+
+      return null;
     }
   }
 }
