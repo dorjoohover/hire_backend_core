@@ -54,20 +54,22 @@ export class UserAnswerService extends BaseService {
       console.time('⏱ examDao.findByCodeOnly');
       const exam = await this.examDao.findByCode(dto.data[0].code);
       console.timeEnd('⏱ examDao.findByCodeOnly');
-
+      const questionIds = dto.data.map((d) => d.question);
       if (!exam) throw message('Тест олдсонгүй');
       const questions = await this.questionDao.q(
         `SELECT id, "minValue", "maxValue"
    FROM question
    WHERE id = ANY($1)`,
-        [dto.data.map((d) => d.question)],
+        [questionIds],
       );
+      console.log(questions);
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
         console.time(`⏱ question ${d.question} fetch`);
+
         const question = questions.find((q) => q.id === d.question);
         console.timeEnd(`⏱ question ${d.question} fetch`);
 
