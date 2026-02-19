@@ -92,7 +92,6 @@ export class AssessmentService {
   }
 
   public async findAll(pg: PaginationDto) {
-    console.log('asdff')
     const { data, count, total } = await this.dao.findAll(pg);
 
     const res = await Promise.all(

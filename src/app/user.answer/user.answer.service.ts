@@ -62,7 +62,6 @@ export class UserAnswerService extends BaseService {
    WHERE id = ANY($1)`,
         [questionIds],
       );
-      console.log(questions);
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
         if (!d.question) throw message('Асуулт байхгүй');

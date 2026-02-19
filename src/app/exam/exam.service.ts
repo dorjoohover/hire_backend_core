@@ -154,7 +154,6 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-    console.log(user);
     if (user && user.role == CLIENT && user?.id != exam.user.id) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
@@ -371,18 +370,16 @@ export class ExamService extends BaseService {
     category: QuestionCategoryEntity,
     service: number,
   ) => {
-    return Promise.all(
-      questions.map(async (question) => {
-        await this.detailDao.create({
-          exam: exam,
-          pageNumber: 0,
-          question: question.question.id,
-          questionCategory: category.id,
-          questionCategoryName: category.name,
-          service: service,
-        });
-      }),
-    );
+    for (const question of questions) {
+      await this.detailDao.create({
+        exam,
+      pageNumber: 0,
+        question: question.question.id,
+        questionCategory: category.id,
+        questionCategoryName: category.name,
+        service,
+      });
+    }
   };
   public async getQuestions(
     shuffle: boolean,
