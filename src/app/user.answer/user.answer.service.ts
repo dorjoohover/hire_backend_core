@@ -52,9 +52,7 @@ export class UserAnswerService extends BaseService {
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
       console.time('⏱ examDao.findByCodeOnly');
-      const exam = await this.examDao.query(
-        `select id, visible from exam where code = ${dto.data[0].code}`,
-      );
+      const exam = await this.examDao.findByCode(dto.data[0].code);
       console.timeEnd('⏱ examDao.findByCodeOnly');
 
       if (!exam) throw message('Тест олдсонгүй');
