@@ -70,7 +70,7 @@ export class UserAnswerService extends BaseService {
 
         console.time(`⏱ question ${d.question} fetch`);
 
-        const question = questions.find((q) => q.id === d.question);
+        const question = await questions.find((q) => q.id === d.question);
         console.timeEnd(`⏱ question ${d.question} fetch`);
 
         if (!question) throw message('Асуулт олдсонгүй');
