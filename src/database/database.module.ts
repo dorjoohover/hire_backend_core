@@ -15,7 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             type: 'postgres',
             url: configService.get<string>('DATABASE_URL'), // Load from .env
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: true,
+            synchronize: false,
             extra: {
               max: Number(process.env.DB_POOL_MAX ?? 10), // pool хэмжээ
               idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
