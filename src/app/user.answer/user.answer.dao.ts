@@ -59,7 +59,7 @@ export class UserAnswerDao {
           const p = Number(dto.point);
           return isNaN(p) ? 0 : p;
         })();
-        console.log(body.question, point)
+        console.log(body.question, point);
         await this.db.save({ ...res, point });
       } else {
         res = this.db.create(body);
@@ -70,6 +70,31 @@ export class UserAnswerDao {
       console.log('err', error);
       return undefined;
     }
+  };
+  insert = async (rows: CreateUserAnswerDto[]) => {
+    if (!rows.length) return;
+
+    const entities = rows.map((dto) => ({
+      exam: { id: +dto.exam },
+      endDate: new Date(),
+      answer: dto.answer ? { id: +dto.answer } : null,
+      matrix: dto.matrix ? { id: +dto.matrix } : null,
+      question: { id: +dto.question },
+      answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
+      questionCategory: { id: +dto.questionCategory },
+      point: dto.point ?? 0,
+      ip: dto.ip,
+      device: dto.device,
+      value: dto.value ?? null,
+    }));
+
+    await this.db
+      .createQueryBuilder()
+      .insert()
+      .into(UserAnswerEntity)
+      .values(entities)
+      .orUpdate(['point'], ['examId', 'questionId', 'answerId'])
+      .execute();
   };
 
   partialCalculator = async (

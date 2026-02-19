@@ -136,6 +136,10 @@ export class QuestionDao {
     return await this.db.query(query);
   };
 
+  q = async (q: string, params?: any[]) => {
+    return await this.db.query(q, params);
+  };
+
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };

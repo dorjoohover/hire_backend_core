@@ -41,7 +41,7 @@ export class UserAnswerService extends BaseService {
     device: string,
     user?: any,
   ) {
-    const res = [];
+    const userAnswers = [];
     const message = (msg: string) =>
       new HttpException(msg, HttpStatus.BAD_REQUEST);
 
@@ -52,20 +52,25 @@ export class UserAnswerService extends BaseService {
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
       console.time('⏱ examDao.findByCodeOnly');
-      const exam = await this.examDao.findByCodeOnly(dto.data[0].code);
+      const exam = await this.examDao.query(
+        `select id, visible from exam where code = ${dto.data[0].code}`,
+      );
       console.timeEnd('⏱ examDao.findByCodeOnly');
 
       if (!exam) throw message('Тест олдсонгүй');
-
+      const questions = await this.questionDao.q(
+        `SELECT id, "minValue", "maxValue"
+   FROM question
+   WHERE id = ANY($1)`,
+        [dto.data.map((d) => d.question)],
+      );
       for (const d of dto.data) {
         const startQuestionLoop = performance.now();
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
         console.time(`⏱ question ${d.question} fetch`);
-        const question = await this.questionDao.query(
-          `select "minValue", "maxValue"  from question where id = ${d.question}`,
-        );
+        const question = questions.find((q) => q.id === d.question);
         console.timeEnd(`⏱ question ${d.question} fetch`);
 
         if (!question) throw message('Асуулт олдсонгүй');
@@ -88,24 +93,28 @@ export class UserAnswerService extends BaseService {
           };
 
           console.time(`⏱ dao.create (no answer q=${d.question})`);
-          const r = await this.dao.create(body);
+          const r = await this.dao.insert([body]);
           console.timeEnd(`⏱ dao.create (no answer q=${d.question})`);
 
-          res.push(r);
+          userAnswers.push(r);
           continue;
         }
 
         // Multiple answers
-        const code = dto.data[0].code;
+        // const code = dto.data[0].code;
         const answers = d.answers;
 
         for (const answer of answers) {
           const loopStart = performance.now();
 
-          const result = answer.matrix
-            ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
-            : await this.dao.findByAnswerId(answer.answer, code);
-          if (result) continue;
+          // const result = answer.matrix
+          //   ? await this.dao.query(
+          //       `select id from "userAnswer" where "matrixId" = ${answer.matrix} and "examId" = ${exam.id} and code = '${code}'`,
+          //     )
+          //   : await this.dao.query(
+          //       `select id from "userAnswer" where "answerId" = ${answer.answer} and "examId" = ${exam.id} and code = '${code}'`,
+          //     );
+          // if (result) continue;
 
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
@@ -175,13 +184,7 @@ export class UserAnswerService extends BaseService {
             device,
           };
 
-          console.time(`⏱ dao.create (q=${d.question}, a=${answer.answer})`);
-          const r = await this.dao.create(body);
-          console.timeEnd(
-            `⏱ dao.create (q=${d.question}, a=${answer.answer})`,
-          );
-
-          res.push(r);
+          userAnswers.push(body);
 
           console.log(
             `✅ Answer save (q=${d.question}, a=${answer.answer}) хугацаа: ${(
@@ -196,6 +199,10 @@ export class UserAnswerService extends BaseService {
           ).toFixed(2)} ms`,
         );
       }
+
+      console.time(`⏱ dao.create (answers)`);
+      await this.dao.insert(userAnswers);
+      console.timeEnd(`⏱ dao.create (answers)`);
 
       // Тест дууссан эсэх
       if (dto.end) {
