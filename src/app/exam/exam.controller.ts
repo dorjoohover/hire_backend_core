@@ -105,7 +105,7 @@ export class ExamController {
       await this.examService.getExamInfoByCode(
         code,
         user,
-        response != null && response.status === 200,
+        response != null && response?.status === 200,
       );
       const report = await this.report.getByCode(code);
       if(!report) throw new HttpException('Тайлан олдсонгүй...', 404);
