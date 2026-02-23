@@ -17,7 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: false,
             extra: {
-              max: Number(50), // pool хэмжээ
+              max: Number(25), // pool хэмжээ
               idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
               connectionTimeoutMillis: Number(
                 process.env.DB_CONN_TIMEOUT_MS ?? 15_000,
