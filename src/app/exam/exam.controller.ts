@@ -102,6 +102,7 @@ export class ExamController {
 
     if (doc) {
       const response = await this.file.getReport(filename);
+      console.log(response);
       await this.examService.getExamInfoByCode(
         code,
         user,
