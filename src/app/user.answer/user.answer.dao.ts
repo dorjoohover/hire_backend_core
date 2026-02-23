@@ -85,7 +85,9 @@ export class UserAnswerDao {
       point: dto.point ?? 0,
       ip: dto.ip,
       device: dto.device,
+      code: dto.code,
       value: dto.value ?? null,
+      ...dto,
     }));
 
     await this.db
