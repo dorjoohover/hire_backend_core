@@ -102,11 +102,10 @@ export class ExamController {
 
     if (doc) {
       const response = await this.file.getReport(filename);
-      console.log(response);
       await this.examService.getExamInfoByCode(
         code,
         user,
-        response.status === 200,
+        response != null && response.status === 200,
       );
       const report = await this.report.getByCode(code);
       if(!report) throw new HttpException('Тайлан олдсонгүй...', 404);
