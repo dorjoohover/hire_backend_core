@@ -74,21 +74,23 @@ export class UserAnswerDao {
   insert = async (rows: CreateUserAnswerDto[]) => {
     if (!rows.length) return;
 
-    const entities = rows.map((dto) => ({
-      exam: { id: +dto.exam },
-      endDate: new Date(),
-      answer: dto.answer ? { id: +dto.answer } : null,
-      matrix: dto.matrix ? { id: +dto.matrix } : null,
-      question: { id: +dto.question },
-      answerCategory: dto.answerCategory ? { id: +dto.answerCategory } : null,
-      questionCategory: { id: +dto.questionCategory },
-      point: dto.point ?? 0,
-      ip: dto.ip,
-      device: dto.device,
-      code: dto.code,
-      value: dto.value ?? null,
-      ...dto,
-    }));
+    const entities = rows.map((dto) => {
+      const { exam, answer, matrix, question, answerCategory, questionCategory, ...rest } = dto;
+      return {
+        exam: { id: +exam },
+        endDate: new Date(),
+        answer: answer ? { id: +answer } : null,
+        matrix: matrix ? { id: +matrix } : null,
+        question: { id: +question },
+        answerCategory: answerCategory ? { id: +answerCategory } : null,
+        questionCategory: { id: +questionCategory },
+        point: rest.point ?? 0,
+        ip: rest.ip,
+        device: rest.device,
+        code: rest.code,
+        value: rest.value ?? null,
+      };
+    });
 
     await this.db
       .createQueryBuilder()
