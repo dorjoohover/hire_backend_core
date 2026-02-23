@@ -99,10 +99,14 @@ export class ExamController {
 
     // PDFKit.PDFDocument үүсгэнэ
     const doc = await this.examService.getPdf(code, role);
-    await this.examService.getExamInfoByCode(code, user);
 
     if (doc) {
       const response = await this.file.getReport(filename);
+      await this.examService.getExamInfoByCode(
+        code,
+        user,
+        response.status === 200,
+      );
       const report = await this.report.getByCode(code);
       if (
         !report ||
