@@ -108,6 +108,7 @@ export class ExamController {
         response.status === 200,
       );
       const report = await this.report.getByCode(code);
+      if(!report) throw new HttpException('Тайлан олдсонгүй...', 404);
       if (
         !report ||
         report.status === REPORT_STATUS.SENT ||
