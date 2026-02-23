@@ -41,7 +41,7 @@ export class ReportService {
         },
       );
     } catch (err) {
-      console.error('Report error:', err.message);
+      console.error('Report error:', err.message, data.code);
     }
   }
 
