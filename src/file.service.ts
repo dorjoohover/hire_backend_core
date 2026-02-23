@@ -108,20 +108,27 @@ export class FileService {
   }
   async getFile(filename: string): Promise<StreamableFile> {
     try {
-      const filePath = join(this.localPath, filename);
+      // 1️⃣ URL decode (%20 → space)
+      const decodedName = decodeURIComponent(filename);
+
+      // 2️⃣ Path traversal хамгаалалт
+      const safeName = decodedName.replace(/(\.\.\/|\\)/g, '');
+
+      const filePath = join(this.localPath, safeName);
+
       if (!existsSync(filePath)) {
-        throw new NotFoundException('not found ');
+        throw new NotFoundException('File not found');
       }
 
       const stream = createReadStream(filePath);
-      const mimeType = mime.lookup(filename) || 'application/octet-stream';
+      const mimeType = mime.lookup(safeName) || 'application/octet-stream';
 
       return new StreamableFile(stream, {
         type: mimeType,
-        disposition: `inline; filename="${filename}"`,
+        disposition: `inline; filename="${safeName}"`,
       });
     } catch (error) {
-      console.log(error);
+      console.error('GET FILE ERROR:', error);
       throw error;
     }
   }
