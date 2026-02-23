@@ -112,11 +112,11 @@ export class FileService {
       const decodedName = decodeURIComponent(filename);
 
       // 2️⃣ Path traversal хамгаалалт
-     
 
       const filePath = join(this.localPath, filename);
 
       if (!existsSync(filePath)) {
+        console.log('File not found locally, trying S3:', decodedName);
         const buffer = await this.downloadFromS3(decodedName);
         if (!buffer) throw new Error('File not found in S3');
         writeFileSync(filePath, buffer);
