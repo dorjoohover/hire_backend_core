@@ -126,10 +126,14 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
-  async getExamInfoByCode(code: string, user?: UserEntity) {
+  async getExamInfoByCode(
+    code: string,
+    user?: UserEntity,
+    ignoreResult = false,
+  ) {
     const result = await this.resultDao.findOne(code);
 
-    if (!result) {
+    if (!result && !ignoreResult) {
       throw new HttpException(
         'Шалгалтын хариу олдсонгүй.',
         HttpStatus.BAD_REQUEST,
@@ -373,7 +377,7 @@ export class ExamService extends BaseService {
     for (const question of questions) {
       await this.detailDao.create({
         exam,
-      pageNumber: 0,
+        pageNumber: 0,
         question: question.question.id,
         questionCategory: category.id,
         questionCategoryName: category.name,
