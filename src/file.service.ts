@@ -125,11 +125,11 @@ export class FileService {
       }
 
       const stream = createReadStream(filePath);
-      const mimeType = mime.lookup(safeName) || 'application/octet-stream';
+      const mimeType = mime.lookup(filename) || 'application/octet-stream';
 
       return new StreamableFile(stream, {
         type: mimeType,
-        disposition: `inline; filename="${safeName}"`,
+        disposition: `inline; filename="${filename}"`,
       });
     } catch (error) {
       console.error('GET FILE ERROR:', error);
