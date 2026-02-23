@@ -112,11 +112,15 @@ export class FileService {
       const decodedName = decodeURIComponent(filename);
 
       // 2️⃣ Path traversal хамгаалалт
-      const safeName = decodedName.replace(/(\.\.\/|\\)/g, '');
+     
 
-      const filePath = join(this.localPath, safeName);
+      const filePath = join(this.localPath, filename);
 
       if (!existsSync(filePath)) {
+         const safeName = decodedName.replace('%20', ' ');
+        const buffer = await this.downloadFromS3(safeName);
+        if (!buffer) throw new Error('File not found in S3');
+        writeFileSync(filePath, buffer);
         throw new NotFoundException('File not found');
       }
 
