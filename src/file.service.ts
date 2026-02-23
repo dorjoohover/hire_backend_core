@@ -120,7 +120,6 @@ export class FileService {
         const buffer = await this.downloadFromS3(decodedName);
         if (!buffer) throw new Error('File not found in S3');
         writeFileSync(filePath, buffer);
-        throw new NotFoundException('File not found');
       }
 
       const stream = createReadStream(filePath);
