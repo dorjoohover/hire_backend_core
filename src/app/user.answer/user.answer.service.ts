@@ -44,7 +44,6 @@ export class UserAnswerService extends BaseService {
     const userAnswers = [];
     const message = (msg: string) =>
       new HttpException(msg, HttpStatus.BAD_REQUEST);
-
     const startAll = performance.now(); // ✅ нийт хугацааг эхлүүлэх
 
     try {
@@ -52,6 +51,7 @@ export class UserAnswerService extends BaseService {
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
       console.time('⏱ examDao.findByCodeOnly');
+      console.log(dto.data[0].code);
       const exam = await this.examDao.findByCode(dto.data[0].code);
       console.timeEnd('⏱ examDao.findByCodeOnly');
       const questionIds = dto.data.map((d) => d.question);
@@ -69,7 +69,9 @@ export class UserAnswerService extends BaseService {
 
         console.time(`⏱ question ${d.question} fetch`);
 
-        const question = await questions.find((q) => Number(q.id) == Number(d.question));
+        const question = await questions.find(
+          (q) => Number(q.id) == Number(d.question),
+        );
         console.timeEnd(`⏱ question ${d.question} fetch`);
 
         if (!question) throw message('Асуулт олдсонгүй');
@@ -89,6 +91,7 @@ export class UserAnswerService extends BaseService {
             ip,
             exam: exam.id,
             device,
+            code: dto.data[0].code,
           };
 
           console.time(`⏱ dao.create (no answer q=${d.question})`);
@@ -181,6 +184,7 @@ export class UserAnswerService extends BaseService {
             ip,
             exam: exam.id,
             device,
+            code: dto.data[0].code,
           };
 
           userAnswers.push(body);
