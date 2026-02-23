@@ -102,26 +102,16 @@ export class ExamController {
     await this.examService.getExamInfoByCode(code, user);
 
     if (doc) {
+      const response = await this.file.getReport(filename);
       const report = await this.report.getByCode(code);
       if (
         !report ||
         report.status === REPORT_STATUS.SENT ||
         report.status === REPORT_STATUS.COMPLETED
       ) {
-        const response = await this.file.getReport(filename);
-
         if (!response) {
           throw new HttpException('File not found', 404);
         }
-
-        res.setHeader(
-          'Content-Type',
-          response.headers['content-type'] || 'application/pdf',
-        );
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-
-        response.data.pipe(res); // ⭐ STREAM → RESPONSE
-        return;
       } else if (report.status === REPORT_STATUS.UPLOADING) {
         throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
       } else if (report.status === REPORT_STATUS.CALCULATING) {
@@ -131,6 +121,14 @@ export class ExamController {
       } else if (report.status === REPORT_STATUS.STARTED) {
         throw new HttpException('Тайлан бодож эхэлсэн...', 202);
       }
+      res.setHeader(
+        'Content-Type',
+        response.headers['content-type'] || 'application/pdf',
+      );
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+      response.data.pipe(res);
+      return;
     }
   }
 
