@@ -9,6 +9,11 @@ import { ModuleRef } from '@nestjs/core';
 import { REPORT_STATUS } from 'src/base/constants';
 import axios from 'axios';
 import { ReportLogDao } from './report.log.dao';
+import http from 'http';
+const agent = new http.Agent({
+  keepAlive: false, // 👈 маш чухал
+  maxSockets: 50,
+});
 
 @Injectable()
 export class ReportService {
@@ -23,15 +28,21 @@ export class ReportService {
     this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
   }
   async createReport(data: any, role?: number) {
-    axios.post(
-      this.REPORT,
-      { ...data, role },
-      {
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      await axios.post(
+        this.REPORT,
+        { ...data, role },
+        {
+          httpAgent: agent,
+          timeout: 20000, // 20 сек
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    );
+      );
+    } catch (err) {
+      console.error('Report error:', err.message);
+    }
   }
 
   // async updateStatus(body: any) {
