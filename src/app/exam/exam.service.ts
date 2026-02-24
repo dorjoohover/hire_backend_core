@@ -91,7 +91,6 @@ export class ExamService extends BaseService {
         `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
       ),
     ).toString();
-    console.log('exam dto', createExamDto);
     await this.dao.create({ ...createExamDto, code: code }, user);
     const service = await this.userServiceDao.findOne(createExamDto.service);
     await this.transactionDao.create(
@@ -164,7 +163,6 @@ export class ExamService extends BaseService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    console.log(exam.service.user);
     if (
       user &&
       user.role === ORGANIZATION &&
@@ -204,9 +202,7 @@ export class ExamService extends BaseService {
   public async updateByCode(code: string, con: boolean, category?: number) {
     const startAll = performance.now();
     try {
-      console.time('⏱ dao.findByCode');
       const res = await this.dao.findByCode(code);
-      console.timeEnd('⏱ dao.findByCode');
 
       if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
       if (res.endDate && res.startDate && res.endDate < new Date())
@@ -222,12 +218,10 @@ export class ExamService extends BaseService {
 
       // -1 => тестийг хаах
       if (category == -1) {
-        console.time('⏱ dao.update (userEndDate)');
         await this.dao.update(res.id, {
           ...res,
           userEndDate: new Date(),
         });
-        console.timeEnd('⏱ dao.update (userEndDate)');
 
         console.log(
           `🎯 updateByCode нийт хугацаа: ${(
@@ -243,10 +237,8 @@ export class ExamService extends BaseService {
       let prevQuestions: number[] = [];
       let allCategories: number[] = [];
 
-      console.time('⏱ questionCategoryDao.findByAssessment');
       const categoriesByAssessment =
         await this.questionCategoryDao.findByAssessment(res.assessment.id);
-      console.timeEnd('⏱ questionCategoryDao.findByAssessment');
 
       const categories = categoriesByAssessment.map((c) => {
         const { questions, ...body } = c;
@@ -264,7 +256,6 @@ export class ExamService extends BaseService {
           : allCategories;
 
       if (con) {
-        console.time('⏱ check userAnswer by categories');
         for (let i = 0; i < categoriesByAssessment.length; i++) {
           const t0 = performance.now();
           const userAnswer = await this.userAnswer.findByQuestionCategory(
@@ -279,37 +270,29 @@ export class ExamService extends BaseService {
             break;
           }
         }
-        console.timeEnd('⏱ check userAnswer by categories');
       }
 
       if (res.userStartDate == null && category === undefined) {
         currentCategory = categories[0].id;
         const date = new Date();
 
-        console.time('⏱ dao.update (userStartDate)');
         await this.dao.update(res.id, {
           ...res,
           userStartDate: date,
         });
-        console.timeEnd('⏱ dao.update (userStartDate)');
 
         if (res.email && (res.lastname || res.firstname)) {
-          console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
             res.email,
             res.phone,
             res.lastname ?? '',
             res.firstname ?? '',
           );
-          console.timeEnd('⏱ authService.forceLogin');
-
-          console.time('⏱ dao.update (attach user)');
           await this.dao.update(res.id, {
             ...res,
             userStartDate: date,
             user: user.user,
           });
-          console.timeEnd('⏱ dao.update (attach user)');
 
           token = user.token;
         }
@@ -317,33 +300,26 @@ export class ExamService extends BaseService {
 
       if (currentCategory) {
         if (allCategories.length == 0) {
-          console.time('⏱ questionCategoryDao.findByAssessment (fallback)');
           allCategories = (
             await this.questionCategoryDao.findByAssessment(
               res.assessment.id,
               currentCategory,
             )
           ).map((a) => a.id);
-          console.timeEnd('⏱ questionCategoryDao.findByAssessment (fallback)');
         }
 
-        console.time('⏱ getQuestions');
         const result = await this.getQuestions(
           shuffle,
           currentCategory,
           answerShuffle,
           prevQuestions,
         );
-        console.timeEnd('⏱ getQuestions');
-
-        console.time('⏱ createDetail');
         await this.createDetail(
           result.questions,
           res.id,
           result.category,
           res.service.id,
         );
-        console.timeEnd('⏱ createDetail');
 
         console.log(
           `🎯 updateByCode нийт хугацаа: ${(

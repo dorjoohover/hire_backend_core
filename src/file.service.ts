@@ -40,7 +40,6 @@ export class FileService {
 
   async upload(key: string, ct: string, body) {
     try {
-      console.log(key);
       await this.s3
         .upload({
           Bucket: this.bucketName,
@@ -89,7 +88,6 @@ export class FileService {
 
         results.push(fileUrl);
       }
-      console.log(results);
       return results;
     } catch (error) {
       console.log(error);

@@ -50,10 +50,7 @@ export class UserAnswerService extends BaseService {
       // Validate input
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
-      console.time('⏱ examDao.findByCodeOnly');
-      console.log(dto.data[0].code);
       const exam = await this.examDao.findByCode(dto.data[0].code);
-      console.timeEnd('⏱ examDao.findByCodeOnly');
       const questionIds = dto.data.map((d) => d.question);
       if (!exam) throw message('Тест олдсонгүй');
       const questions = await this.questionDao.q(
@@ -67,12 +64,9 @@ export class UserAnswerService extends BaseService {
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
-        console.time(`⏱ question ${d.question} fetch`);
-
         const question = await questions.find(
           (q) => Number(q.id) == Number(d.question),
         );
-        console.timeEnd(`⏱ question ${d.question} fetch`);
 
         if (!question) throw message('Асуулт олдсонгүй');
 
@@ -94,9 +88,7 @@ export class UserAnswerService extends BaseService {
             code: dto.data[0].code,
           };
 
-          console.time(`⏱ dao.create (no answer q=${d.question})`);
           const r = await this.dao.insert([body]);
-          console.timeEnd(`⏱ dao.create (no answer q=${d.question})`);
 
           userAnswers.push(r);
           continue;
@@ -188,12 +180,6 @@ export class UserAnswerService extends BaseService {
           };
 
           userAnswers.push(body);
-
-          console.log(
-            `✅ Answer save (q=${d.question}, a=${answer.answer}) хугацаа: ${(
-              performance.now() - loopStart
-            ).toFixed(2)} ms`,
-          );
         }
 
         console.log(
@@ -203,15 +189,11 @@ export class UserAnswerService extends BaseService {
         );
       }
 
-      console.time(`⏱ dao.create (answers)`);
       await this.dao.insert(userAnswers);
-      console.timeEnd(`⏱ dao.create (answers)`);
 
       // Тест дууссан эсэх
       if (dto.end) {
-        console.time('⏱ createReport');
         this.createReport(dto.data[0].code);
-        console.timeEnd('⏱ createReport');
         return {
           visible: exam.visible,
         };
