@@ -15,7 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             type: 'postgres',
             url: configService.get<string>('DATABASE_URL'), // Load from .env
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-            synchronize: false,
+            synchronize: true,
             extra: {
               max: Number(25), // pool хэмжээ
               idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
@@ -29,7 +29,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
               query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 35_000),
             },
           });
-
           await dataSource.initialize();
           console.log('✅ Database Connected Successfully');
           return dataSource;
