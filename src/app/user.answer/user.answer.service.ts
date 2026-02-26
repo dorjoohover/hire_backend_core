@@ -106,14 +106,14 @@ export class UserAnswerService extends BaseService {
         for (const answer of answers) {
           const loopStart = performance.now();
 
-          const result = answer.matrix
-            ? await this.dao.query(
-                `select id from "userAnswer" where "matrixId" = ${answer.matrix} and "examId" = ${exam.id} and code = '${code}'`,
-              )
-            : await this.dao.query(
-                `select id from "userAnswer" where "answerId" = ${answer.answer} and "examId" = ${exam.id} and code = '${code}'`,
-              );
-          if (result) continue;
+          // const result = answer.matrix
+          //   ? await this.dao.query(
+          //       `select id from "userAnswer" where "matrixId" = ${answer.matrix} and "examId" = ${exam.id} and code = '${code}'`,
+          //     )
+          //   : await this.dao.query(
+          //       `select id from "userAnswer" where "answerId" = ${answer.answer} and "examId" = ${exam.id} and code = '${code}'`,
+          //     );
+          // if (result) continue;
 
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
