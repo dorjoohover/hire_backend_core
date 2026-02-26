@@ -49,6 +49,7 @@ export const AssessmentStatus = {
   ACTIVE: 10,
   ARCHIVE: 20,
   HIGHLIGHTED: 30,
+  ONLY: 40,
 };
 
 export const QuestionType = {
@@ -64,8 +65,14 @@ export const AssessmentType = {
   TEST: 10,
   UNELGEE: 20,
 };
+
+export const AssessmentAudience = {
+  DEFAULT: 10,
+  ORGANIZATION: 20,
+};
 export enum REPORT_STATUS {
   CALCULATING = 'CALCULATING',
+  PENDING = 'PENDING',
   UPLOADING = 'UPLOADING',
   WRITING = 'WRITING',
   STARTED = 'STARTED',

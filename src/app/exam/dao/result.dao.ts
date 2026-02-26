@@ -61,4 +61,10 @@ export class ResultDao {
 
     return res.map((r) => r.point);
   };
+
+  delete = async (code: string) => {
+    await this.db.delete({
+      code,
+    });
+  };
 }

@@ -84,7 +84,7 @@ export class AuthService {
         result = await this.usersService.addUser({
           lastname: '',
           firstname: user.name,
-          email: user.email,
+          email: user.email.toLowerCase(),
           profile: user.profile,
           emailVerified: true,
         });
@@ -94,7 +94,7 @@ export class AuthService {
           firstname: res?.firstname,
           lastname: res?.lastname,
           role: res.role,
-          email: res.email,
+          email: res.email.toLowerCase(),
           organizationName: res?.organizationName,
           organizationRegisterNumber: res?.organizationRegisterNumber,
           organizationPhone: res?.organizationPhone,

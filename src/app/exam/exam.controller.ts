@@ -77,10 +77,13 @@ export class ExamController {
       );
       return res;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStatus = (error as any)?.status || 500;
       return {
         success: false,
-        message: error.message,
-        status: error.status,
+        message: errorMessage,
+        status: errorStatus,
       };
     }
   }
@@ -125,6 +128,8 @@ export class ExamController {
         throw new HttpException('Тайлан PDF бичиж байна...', 202);
       } else if (report.status === REPORT_STATUS.STARTED) {
         throw new HttpException('Тайлан бодож эхэлсэн...', 202);
+      } else if (report.status === REPORT_STATUS.PENDING) {
+        throw new HttpException('Тайлан хүлээгдэж байна...', 202);
       }
       res.setHeader(
         'Content-Type',
@@ -139,13 +144,14 @@ export class ExamController {
 
   @Public()
   @Get('/recalculate/:code')
-  async recalculate(@Param('code') code: number) {
+  async recalculate(@Param('code') code: string) {
+    await this.examService.deleteResult(code);
     const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
     return result.data;
   }
   @Public()
   @Get('/regenerate/:code')
-  async regenerate(@Param('code') code: number, @Res() res: Response) {
+  async regenerate(@Param('code') code: string, @Res() res: Response) {
     const url = `${process.env.REPORT}test/${code}`;
     const response = await axios.get(url, {
       responseType: 'stream', // ⬅️ stream болгож авна
@@ -201,11 +207,12 @@ export class ExamController {
       }
 
       return examInfo;
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to retrieve exam info',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to retrieve exam info';
+      const errorStatus =
+        (error as any)?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+      throw new HttpException(errorMessage, errorStatus);
     }
   }
 
@@ -234,9 +241,4 @@ export class ExamController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateExamDto: UpdateExamDto) {}
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.examService.remove(+id);
-  }
 }

@@ -5,10 +5,12 @@ import { DataSource, Repository } from 'typeorm';
 import { FormulaEntity } from './formule.entity';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { AssessmentFormulaEntity } from '../assessment/entities/assessment.formule.entity';
 
 @Injectable()
 export class FormuleService extends BaseService {
   private db: Repository<FormulaEntity>;
+  private assFormula: Repository<AssessmentFormulaEntity>;
   constructor(
     private answerCategoryDao: QuestionAnswerCategoryDao,
     private dataSource: DataSource,
@@ -16,12 +18,55 @@ export class FormuleService extends BaseService {
   ) {
     super();
     this.db = this.dataSource.getRepository(FormulaEntity);
+    this.assFormula = this.dataSource.getRepository(AssessmentFormulaEntity);
   }
 
   public async create(dto: FormuleDto, user: number) {
-    const res = this.db.create({ ...dto, createdUser: user });
-    await this.db.save(res);
-    return res.id;
+    try {
+      const { subFormulas, assessment, ...body } = dto;
+      const res = this.db.create({ ...body, createdUser: user });
+      await this.db.save(res);
+
+      if (assessment) {
+        const formule = this.assFormula.create({
+          assessment: { id: assessment },
+          formule: {
+            id: res.id,
+          },
+          parent: null,
+        });
+        await this.assFormula.save(formule);
+        if (subFormulas && subFormulas.length > 0) {
+          for (const subFormula of subFormulas) {
+            console.log(subFormula);
+            if (!subFormula.is_calculated) continue;
+
+            const {
+              assessment,
+              subFormulas: _,
+              category,
+              ...body
+            } = subFormula;
+
+            const child = this.db.create({ ...body, createdUser: user });
+            await this.db.save(child);
+
+            const formula = this.assFormula.create({
+              assessment: { id: assessment },
+              formule: { id: child.id },
+              parent: { id: formule.id },
+              question_category: category ? { id: category } : null,
+            });
+
+            await this.assFormula.save(formula);
+          }
+        }
+      }
+
+      return res.id;
+    } catch (error) {
+      console.log(error, 'formule dao');
+    }
   }
 
   public async findAll() {
@@ -32,7 +77,7 @@ export class FormuleService extends BaseService {
     return await this.db.findOne({ where: { id: id } });
   }
 
-  async aggregate(dto: FormuleDto, w: string): Promise<any[]> {
+  async aggregate(dto: FormulaEntity, w: string): Promise<any[]> {
     try {
       const { groupBy, aggregations, filters, limit, order, sort } = dto;
 

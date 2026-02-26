@@ -1,4 +1,3 @@
-import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
 import {
   Column,
   CreateDateColumn,
@@ -8,16 +7,21 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ExamEntity } from './exam.entity';
-import { QuestionEntity } from 'src/app/question/entities/question.entity';
-import { QuestionCategoryEntity } from 'src/app/question/entities/question.category.entity';
 import { ResultDetailEntity } from './result.detail.entity';
 
 @Entity('result')
 export class ResultEntity {
   @PrimaryGeneratedColumn('increment')
   id?: number;
+  @ManyToOne(() => ResultEntity, (result) => result.children, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
+  parent?: ResultEntity;
 
+  // 🔹 Children
+  @OneToMany(() => ResultEntity, (result) => result.parent)
+  children?: ResultEntity[];
   @Column({ nullable: true })
   code: string;
 
@@ -56,6 +60,8 @@ export class ResultEntity {
   //during duration
   @Column()
   duration: number;
+  @Column({ nullable: true })
+  question_category: number;
   @Column({ nullable: true, type: 'numeric' })
   point: number;
   // in disc (d || c || di)

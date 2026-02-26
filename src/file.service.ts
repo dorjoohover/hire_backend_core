@@ -25,19 +25,174 @@ export class FileService {
   private readonly bucketName = process.env.AWS_BUCKET_NAME;
   private readonly localPath = './uploads';
   private readonly reportPath = process.env.REPORT_PATH;
-
   constructor() {
+    console.log('AWS_ACCESS_KEY =', process.env.AWS_ACCESS_KEY);
+    console.log('AWS_SECRET_KEY length =', process.env.AWS_SECRET_KEY?.length);
+    console.log('AWS_REGION =', process.env.AWS_REGION);
+    console.log('BUCKET =', process.env.AWS_BUCKET_NAME);
+
     this.s3 = new AWS.S3({
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_KEY,
       region: process.env.AWS_REGION,
-      httpOptions: {
-        timeout: 300000,
-        connectTimeout: 15000,
-      },
+      s3ForcePathStyle: true,
+      signatureVersion: 'v4',
     });
   }
+  // constructor() {
+  //   this.s3 = new AWS.S3({
+  //     accessKeyId: process.env.AWS_ACCESS_KEY,
+  //     secretAccessKey: process.env.AWS_SECRET_KEY,
+  //     region: process.env.AWS_REGION,
+  //     s3ForcePathStyle: true,
+  //     httpOptions: {
+  //       timeout: 300000,
+  //       connectTimeout: 15000,
+  //     },
+  //   });
+  // }
+  async massRenameWithReportPrefix() {
+    let continuationToken: string | undefined;
 
+    do {
+      const listRes = await this.s3
+        .listObjectsV2({
+          Bucket: this.bucketName,
+          ContinuationToken: continuationToken,
+        })
+        .promise();
+
+      if (!listRes.Contents) break;
+
+      for (const obj of listRes.Contents) {
+        const key = obj.Key;
+        if (!key || key.endsWith('/')) continue;
+
+        const fileName = key.split('/').pop();
+        if (!fileName) continue;
+
+        // ❌ 1. IMAGE бол шууд skip
+        if (/\.(png|jpg|jpeg|webp)$/i.test(fileName)) {
+          console.log('[SKIP - image]', key);
+          continue;
+        }
+
+        /**
+         * CASE A: report- эхэлсэн
+         */
+        if (fileName.startsWith('report-')) {
+          // ✅ report-ТОO → хэвээр
+          if (/^report-\d+(\.|$)/.test(fileName)) {
+            console.log('[OK - numeric report]', key);
+            continue;
+          }
+
+          // 🔁 report-code.pdf → report-code
+          const nameWithoutExt = fileName.replace(/\.[^/.]+$/, '');
+          const newKey = key.replace(fileName, nameWithoutExt);
+
+          console.log('[RENAME FIX]', key, '→', newKey);
+
+          await this.s3
+            .copyObject({
+              Bucket: this.bucketName,
+              CopySource: `${this.bucketName}/${key}`,
+              Key: newKey,
+            })
+            .promise();
+
+          await this.s3
+            .deleteObject({
+              Bucket: this.bucketName,
+              Key: key,
+            })
+            .promise();
+
+          continue;
+        }
+
+        /**
+         * CASE B: report- байхгүй
+         * ЗӨВХӨН цэвэр тоо байвал report- нэмнэ
+         * 123.pdf ✅
+         * 123_abc.pdf ❌
+         */
+        if (/^\d+(\.|$)/.test(fileName)) {
+          const newKey = key.replace(fileName, `report-${fileName}`);
+          console.log('[RENAME ADD]', key, '→', newKey);
+
+          await this.s3
+            .copyObject({
+              Bucket: this.bucketName,
+              CopySource: `${this.bucketName}/${key}`,
+              Key: newKey,
+            })
+            .promise();
+
+          await this.s3
+            .deleteObject({
+              Bucket: this.bucketName,
+              Key: key,
+            })
+            .promise();
+
+          continue;
+        }
+
+        // ❌ бусад бүх формат
+        console.log('[SKIP - invalid format]', key);
+      }
+
+      continuationToken = listRes.NextContinuationToken;
+    } while (continuationToken);
+
+    return {
+      success: true,
+      message: 'Mass rename completed with strict rules',
+    };
+  }
+
+  async dryRunRenameWithReportPrefix() {
+    let continuationToken: string | undefined;
+    console.log('start');
+    do {
+      const listRes = await this.s3
+        .listObjectsV2({
+          Bucket: this.bucketName,
+          // Prefix: this.reportPath,
+          ContinuationToken: continuationToken,
+        })
+        .promise();
+      if (!listRes.Contents) break;
+
+      for (const obj of listRes.Contents) {
+        const key = obj.Key;
+        if (!key) continue;
+
+        if (key.endsWith('/')) continue;
+
+        const fileName = key.split('/').pop();
+        if (!fileName) continue;
+
+        // аль хэдийн report- байвал алгасна
+        if (fileName.startsWith('report-')) {
+          // console.log('[SKIP]', key);
+          continue;
+        }
+
+        const newKey = key.replace(fileName, `report-${fileName}`);
+
+        console.log('[DRY-RUN]', key, '→', newKey);
+      }
+
+      continuationToken = listRes.NextContinuationToken;
+    } while (continuationToken);
+
+    return {
+      success: true,
+      message: 'Dry-run completed. No files were changed.',
+    };
+  }
   async upload(key: string, ct: string, body) {
     try {
       await this.s3
@@ -163,7 +318,8 @@ export class FileService {
 
       return object.Body as Buffer;
     } catch (err) {
-      console.error('❌ S3 download error:', err.message);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('❌ S3 download error:', errorMessage);
       return null;
     }
   }
@@ -172,15 +328,28 @@ export class FileService {
       const response = await axios.get(
         `${process.env.REPORT}file/${filename}`,
         {
-          responseType: 'stream', // ⭐ ХАМГИЙН ЧУХАЛ
-          timeout: 15000,
+          responseType: 'stream',
+          timeout: 30000,
+          headers: {
+            Connection: 'close', // keep-alive issue-с сэргийлнэ
+          },
         },
       );
 
-      return response; // stream + headers
-    } catch (e) {
-      console.error('REPORT FETCH ERROR:', e.message);
-      return null; // ❗ throw хийхгүй
+      return response;
+    } catch (e: any) {
+      console.error('REPORT FETCH ERROR:', e.code, e.message);
+
+      if (e.code === 'ECONNRESET') {
+        console.log('Retrying report fetch...');
+        return axios.get(`${process.env.REPORT}file/${filename}`, {
+          responseType: 'stream',
+          timeout: 30000,
+          headers: { Connection: 'close' },
+        });
+      }
+
+      return null;
     }
   }
 }

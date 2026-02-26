@@ -1,3 +1,4 @@
+import { AssessmentEntity } from 'src/app/assessment/entities/assessment.entity';
 import { BlogEntity } from 'src/app/blog/entities/blog.entity';
 import { EmailLogEntity } from 'src/app/email_log/email_log.entity';
 import { ExamEntity } from 'src/app/exam/entities/exam.entity';
@@ -74,6 +75,10 @@ export class UserEntity {
     nullable: true,
   })
   blogs?: BlogEntity[];
+  @OneToMany(() => AssessmentEntity, (assessment) => assessment.owner, {
+    nullable: true,
+  })
+  assessments?: AssessmentEntity[];
   @OneToMany(() => ExamEntity, (exam) => exam.user, {
     nullable: true,
   })

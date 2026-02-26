@@ -143,4 +143,10 @@ export class AppController extends BaseService {
   async getFile(@Param('file') filename: string) {
     return await this.fileService.getFile(filename);
   }
+
+  // @Public()
+  // @Get('/files/fix_filename')
+  // async fix_filename() {
+  //   return await this.fileService.massRenameWithReportPrefix();
+  // }
 }

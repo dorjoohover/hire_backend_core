@@ -58,11 +58,11 @@ export class ReportService {
 
     if (!report) {
       return {
-        // id: jobId,
-        code: jobId,
-        status: REPORT_STATUS.STARTED,
+        id: null,
+        status: REPORT_STATUS.PENDING,
         progress: 0,
         result: null,
+        code: jobId,
       };
     }
     if (

@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  watchtower:
+    image: ghcr.io/containrrr/watchtower:1.7.1
+    restart: always
+    command:
+      - "--label-enable"
+      - "--interval"
+      - "300"
+      - "--cleanup"
+      - "--rolling-restart"
+    environment:
+      DOCKER_API_VERSION: "1.52"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  traefik:
+    image: traefik:v3.6
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.report.address=:3000"
+      - "--entrypoints.report.forwardedHeaders.insecure=true"
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  redis:
+    image: redis:7
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+
+  core:
+    image: ghcr.io/dorjoohover/hire_backend_core:main
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - /var/log/hire/core:/app/logs:rw
+    depends_on:
+      - redis
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.core.entrypoints=report"
+      - "traefik.http.routers.core.rule=PathPrefix(`/`)"
+      - "traefik.http.services.core.loadbalancer.server.port=3000"
+      - "com.centurylinklabs.watchtower.enable=true"
+
+volumes:
+  redisdata:

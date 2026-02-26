@@ -17,48 +17,42 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   async canActivate(context: ExecutionContext) {
-    try {
-      const isPublic = this.reflector.getAllAndOverride<boolean>(
-        IS_PUBLIC_KEY,
-        [context.getHandler(), context.getClass()],
-      );
-      const request = context.switchToHttp().getRequest();
-      if (isPublic) {
-        // Хэрвээ public route бол — токен байвал шалгаж үзнэ, байхгүй бол алгасна
-        const authHeader = request.headers['authorization'];
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          try {
-            return (await super.canActivate(context)) as boolean;
-          } catch {
-            return true;
-          }
-        }
-        return true;
-      }
-      const parentCanActivate = (await super.canActivate(context)) as boolean;
-      return parentCanActivate;
-    } catch (error) {
-      return false;
-    }
-  }
-  handleRequest(err, user, info, context) {
-    const request = context.switchToHttp().getRequest();
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (isPublic) {
-      // Public route бол user байхгүй байж болно
-      request.user = user || null;
-      return user || null;
+      // ALWAYS try jwt, but never block
+      try {
+        await super.canActivate(context);
+      } catch {
+        // ignore
+      }
+      return true; // always allow
+    }
+
+    // private route
+    return (await super.canActivate(context)) as boolean;
+  }
+
+  handleRequest(err, user, _info, context) {
+    const req = context.switchToHttp().getRequest();
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (isPublic) {
+      req.user = user ?? null;
+      return req.user;
     }
 
     if (err || !user) {
       throw err || new UnauthorizedException();
     }
 
-    request.user = user;
+    req.user = user;
     return user;
   }
 }

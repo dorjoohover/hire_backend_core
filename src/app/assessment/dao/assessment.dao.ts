@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   Between,
   DataSource,
+  In,
   IsNull,
   Like,
   Not,
@@ -27,10 +28,21 @@ export class AssessmentDao {
 
   async find(page = 1, limit = 20, sort = true, status = 0): Promise<Meta> {
     const skip = (page - 1) * limit;
+    let statusCondition: any;
+
+    if (status > 0) {
+      if (status === AssessmentStatus.ONLY) {
+        statusCondition = In([]);
+      } else {
+        statusCondition = status;
+      }
+    } else {
+      statusCondition = Not(AssessmentStatus.ONLY);
+    }
 
     const [items, total] = await this.db.findAndCount({
       where: {
-        status: status <= 0 ? Not(Math.abs(status)) : status,
+        status: statusCondition,
       },
       skip,
 
@@ -73,14 +85,41 @@ export class AssessmentDao {
     await this.db.save(res);
     return res.id;
   };
-
+  findOrg = async (owners: number[]) => {
+    const data = await this.db.find({
+      where: {
+        owner: {
+          id: In(owners),
+        },
+      },
+      relations: ['level', 'category'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+    return data;
+  };
   findAll = async (pg: PaginationDto) => {
     const whereCondition: any = {};
     if (pg.type) {
       whereCondition.type = pg.type;
     }
+
+    if (pg.owners?.length) {
+      whereCondition.owner = {
+        id: In(pg.owners),
+      };
+    }
     if (pg.status) {
-      whereCondition.status = pg.status;
+      if (pg.status === AssessmentStatus.ONLY && !pg.owners?.length) {
+        whereCondition.status = In([]);
+      } else {
+        whereCondition.status = pg.status;
+      }
+    } else {
+      if (!pg.owners?.length) {
+        whereCondition.status = Not(AssessmentStatus.ONLY);
+      }
     }
 
     if (pg.name) {
@@ -97,7 +136,7 @@ export class AssessmentDao {
       };
     }
     if (pg.createdUser) {
-      whereCondition.createdUser = pg.createdUser
+      whereCondition.createdUser = pg.createdUser;
     }
     const [data, count] = await this.db.findAndCount({
       where: {
@@ -149,6 +188,7 @@ export class AssessmentDao {
         'answerCategories',
         'category',
         'questionCategories',
+        'owner'
       ],
     });
     return res;

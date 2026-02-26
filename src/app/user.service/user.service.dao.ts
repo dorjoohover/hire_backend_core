@@ -46,12 +46,23 @@ export class UserServiceDao {
     await this.db.save(res);
     return res;
   };
+  updateCount = async (id: number, count: number, used: number) => {
+    console.log(id, count, used);
+    const res = await this.db.findOne({ where: { id: id } });
+    res.count += count;
+    res.usedUserCount += used;
+    await this.db.save(res);
+  };
 
   countDemand = async (limit: number) => {
     const result = await this.db
       .createQueryBuilder('item')
       .select('item.assessmentId', 'assessmentId')
-      .addSelect('SUM(count)', 'sum')
+      .addSelect('SUM(item.count)', 'sum')
+      .innerJoin('item.assessment', 'a')
+      .where('a.status NOT IN (:...status)', {
+        status: [AssessmentStatus.ONLY, AssessmentStatus.ARCHIVE],
+      })
       .groupBy('item.assessmentId')
       .orderBy('sum', 'DESC')
       .limit(limit)
@@ -96,31 +107,7 @@ export class UserServiceDao {
     });
   };
 
-  updateCount = async (id: number, count: number, used: number) => {
-    console.log(id, count, used);
-    const res = await this.db.findOne({ where: { id: id } });
-    res.count += count;
-    res.usedUserCount += used;
-    await this.db.save(res);
-  };
-
   findByUser = async (assId: number, id: number, service: number) => {
-    // const responses = await this.dao.findByUser(assId, id);
-    // const res = [];
-    // for (const response of responses) {
-    //   const exams = response.exams;
-    //   const examResults = [];
-    //   for (const exam of exams) {
-    //     const result = await this.result.findOne(exam.code);
-    //     examResults.push({
-    //       ...exam,
-    //       result: result,
-    //     });
-    //   }
-    //   res.push({ ...response, exams: examResults });
-    // }
-    // return res;
-
     const [data, count] = await this.db.findAndCount({
       where: {
         id: service == 0 ? Not(IsNull()) : service,

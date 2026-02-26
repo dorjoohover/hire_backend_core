@@ -125,11 +125,11 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
-  async getExamInfoByCode(
-    code: string,
-    user?: UserEntity,
-    ignoreResult = false,
-  ) {
+  public async getOwners(email: string) {
+    return await this.dao.findAllOwners(email);
+  }
+
+  async getExamInfoByCode(code: string, user?: UserEntity, ignoreResult = false) {
     const result = await this.resultDao.findOne(code);
 
     if (!result && !ignoreResult) {
@@ -406,7 +406,7 @@ export class ExamService extends BaseService {
     res = await Promise.all(
       res.map(async (r) => {
         let us = r.user;
-        console.log(r.code, r.user, r.email);
+        console.log(r.code, r.user?.email, r.email);
         if (r.email != null && us == null)
           us = await this.userDao.getByEmail(r.email);
         const result = await this.resultDao.findOne(r.code);
@@ -423,7 +423,7 @@ export class ExamService extends BaseService {
       total: count,
     };
   }
-  remove(id: number) {
-    return `This action removes a #${id} exam`;
+  async deleteResult(code: string) {
+    await this.resultDao.delete(code);
   }
 }

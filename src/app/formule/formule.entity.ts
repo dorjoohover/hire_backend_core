@@ -4,7 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { AssessmentFormulaEntity } from '../assessment/entities/assessment.formule.entity';
 
 @Entity('formule')
 export class FormulaEntity {
@@ -55,4 +57,14 @@ export class FormulaEntity {
   createdUser: number;
   @Column({ nullable: true })
   updatedUser: number;
+  @OneToMany(
+    () => AssessmentFormulaEntity,
+    (assessment) => assessment.formule,
+    {
+      nullable: true,
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    },
+  )
+  assessment: AssessmentFormulaEntity[];
 }
