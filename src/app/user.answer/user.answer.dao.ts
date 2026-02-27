@@ -75,7 +75,15 @@ export class UserAnswerDao {
     if (!rows.length) return;
 
     const entities = rows.map((dto) => {
-      const { exam, answer, matrix, question, answerCategory, questionCategory, ...rest } = dto;
+      const {
+        exam,
+        answer,
+        matrix,
+        question,
+        answerCategory,
+        questionCategory,
+        ...rest
+      } = dto;
       return {
         exam: { id: +exam },
         endDate: new Date(),
@@ -97,7 +105,6 @@ export class UserAnswerDao {
       .insert()
       .into(UserAnswerEntity)
       .values(entities)
-      .orUpdate(['point'], ['examId', 'questionId', 'answerId'])
       .execute();
   };
 
