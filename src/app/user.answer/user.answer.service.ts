@@ -124,6 +124,7 @@ export class UserAnswerService extends BaseService {
               : await this.questionAnswerDao.query(
                   `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
                 );
+          console.log(answerCategory, 'answerCategory');
 
           answerCategory = answerCategory?.[0];
           if (
@@ -240,14 +241,14 @@ export class UserAnswerService extends BaseService {
     const id = assessment?.id ?? assessment[0].id;
     const name = assessment?.name ?? assessment[0].name;
 
-    // await this.mailService.sendReportMail({
-    //   code: code,
-    //   email: email,
-    //   assessmentName: res.assessmentName,
-    //   id: id,
-    //   logId,
-    //   name: name,
-    // });
+    await this.mailService.sendReportMail({
+      code: code,
+      email: email,
+      assessmentName: res.assessmentName,
+      id: id,
+      logId,
+      name: name,
+    });
   }
 
   public async findAll() {
