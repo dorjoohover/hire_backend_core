@@ -96,6 +96,7 @@ export class UserAnswerDao {
         ip: rest.ip,
         device: rest.device,
         code: rest.code,
+        correct: rest.correct ?? null,
         value: rest.value ?? null,
       };
     });
