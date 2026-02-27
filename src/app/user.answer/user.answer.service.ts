@@ -121,7 +121,7 @@ export class UserAnswerService extends BaseService {
             answer.matrix,
             'existing answer check',
           );
-          if (result) continue;
+          if (result && result.length > 0) continue;
 
           let answerCategory = answer.matrix
             ? await this.questionAnswerMatrixDao.query(
