@@ -115,6 +115,12 @@ export class UserAnswerService extends BaseService {
                   `select id from "userAnswer" where "answerId" = ${answer.answer} and "examId" = ${exam.id} and code = '${code}'`,
                 )
             : null;
+          console.log(
+            result,
+            answer.answer,
+            answer.matrix,
+            'existing answer check',
+          );
           if (result) continue;
 
           let answerCategory = answer.matrix
