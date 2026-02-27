@@ -98,6 +98,8 @@ export class UserAnswerDao {
         code: rest.code,
         correct: rest.correct ?? null,
         value: rest.value ?? null,
+        startDate: rest.startDate ? new Date(rest.startDate) : null,
+        flag: rest.flag ?? null,
       };
     });
 
