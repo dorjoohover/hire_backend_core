@@ -122,7 +122,7 @@ export class UserAnswerService extends BaseService {
             ? await this.questionAnswerMatrixDao.query(
                 `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
               )
-            : !answer.answer && !is_calculated
+            : !answer.answer || !is_calculated
               ? null
               : await this.questionAnswerDao.query(
                   `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
