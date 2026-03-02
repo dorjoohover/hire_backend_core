@@ -58,7 +58,7 @@ export class AssessmentService {
 
   public async findHomePage() {
     const newAss = await Promise.all(
-      (await this.dao.find(AssessmentStatus.ACTIVE)).items.map((a) => {
+      (await this.dao.find(1, 3, true, AssessmentStatus.ACTIVE)).items.map((a) => {
         return {
           data: a,
         };
