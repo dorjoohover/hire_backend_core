@@ -122,7 +122,7 @@ export class UserAnswerService extends BaseService {
             ? await this.questionAnswerMatrixDao.query(
                 `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
               )
-            : !answer.answer || !is_calculated
+            : !answer.answer && !is_calculated
               ? null
               : await this.questionAnswerDao.query(
                   `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
@@ -176,8 +176,17 @@ export class UserAnswerService extends BaseService {
           if ((answerCategory as QuestionAnswerEntity)?.negative) {
             point = -point;
           }
+          let safeMatrix = null;
 
-          console.log(d.questionCategory);
+          if (answer.matrix) {
+            const exists = await this.questionAnswerMatrixDao.query(
+              `select * from "questionAnswerMatrix" where id = ${answer.matrix}`,
+            );
+
+            if (exists.length > 0) {
+              safeMatrix = answer.matrix;
+            }
+          }
           const body: CreateUserAnswerDto = {
             ...d,
             startDate: dto.startDate,
@@ -189,9 +198,8 @@ export class UserAnswerService extends BaseService {
             correct: answer.matrix
               ? false
               : ((answerCategory as QuestionAnswerEntity)?.correct ?? false),
-            matrix: answer.matrix,
+            matrix: safeMatrix,
             value: answer.value,
-            questionCategory: d.questionCategory,
             ip,
             exam: exam.id,
             device,
