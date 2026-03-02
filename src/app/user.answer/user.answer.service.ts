@@ -184,7 +184,7 @@ export class UserAnswerService extends BaseService {
             minPoint: question.minValue,
             maxPoint: question.maxValue,
             point,
-            answer: answer.answer,
+            answer: answer.answer && +answer.answer > 0 ? answer.answer : null,
             correct: answer.matrix
               ? false
               : ((answerCategory as QuestionAnswerEntity)?.correct ?? false),
