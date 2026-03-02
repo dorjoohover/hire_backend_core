@@ -177,6 +177,7 @@ export class UserAnswerService extends BaseService {
             point = -point;
           }
 
+          console.log(d.questionCategory);
           const body: CreateUserAnswerDto = {
             ...d,
             startDate: dto.startDate,
@@ -190,6 +191,7 @@ export class UserAnswerService extends BaseService {
               : ((answerCategory as QuestionAnswerEntity)?.correct ?? false),
             matrix: answer.matrix,
             value: answer.value,
+            questionCategory: d.questionCategory,
             ip,
             exam: exam.id,
             device,
