@@ -729,7 +729,7 @@ export class EmailService {
                         <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://srv666826.hstgr.cloud/api/v1/user/email/confirm/${email}>энд дарж</a> өөрийн и-мэйл хаягаа баталгаажуулна уу.                            </p>
+Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://api.hire.mn/api/v1/user/email/confirm/${email}>энд дарж</a> өөрийн и-мэйл хаягаа баталгаажуулна уу.                            </p>
                           </td>
                         </tr>
                         <tr>
