@@ -121,6 +121,79 @@ export class AssessmentService {
     };
   }
 
+  public async findNew(
+    page: number,
+    limit: number,
+    filters: {
+      name?: string;
+      category?: number;
+      status?: number;
+      type?: number;
+      createdUser?: number;
+    },
+    sortBy: 'updatedAt' | 'price' | 'count' | 'completeness' = 'updatedAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    const { items, total } = await this.dao.findNew(
+      page,
+      limit,
+      filters,
+      sortBy,
+      sortDir,
+    );
+
+    const withCompleteness = await Promise.all(
+      items.map(async (a) => {
+        const fields = [a.measure, a.icons, a.usage, a.author, a.description];
+        const filled = fields.filter(
+          (f) => f !== null && f !== undefined && f !== '',
+        ).length;
+        const completeness = Math.round((filled / fields.length) * 100);
+        const count = await this.userServiceDao.countByAssessment(a.id);
+
+        return {
+          id: a.id,
+          name: a.name,
+          status: a.status,
+          price: a.price,
+          updatedAt: a.updatedAt, // ← matches AS "updatedAt"
+          count,
+          category: a.categoryName ?? null, // ← matches AS "categoryName"
+          createdBy: a.firstName ? `${a.firstName} ${a.lastName}`.trim() : null, // ← matches AS "firstName"/"lastName"
+          completeness,
+        };
+      }),
+    );
+
+    const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
+
+    if (isComputedSort) {
+      const sorted = withCompleteness.sort((a, b) =>
+        sortDir === 'DESC' ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy],
+      );
+      const paginated = sorted.slice((page - 1) * limit, page * limit);
+      return {
+        data: paginated,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    return {
+      data: withCompleteness,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   public async findAllLevel() {}
 
   public async findOne(id: number) {

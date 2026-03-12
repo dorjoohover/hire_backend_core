@@ -157,6 +157,77 @@ export class AssessmentDao {
     };
   };
 
+  findNew = async (
+    page: number,
+    limit: number,
+    filters: {
+      name?: string;
+      category?: number;
+      status?: number;
+      type?: number;
+      createdUser?: number;
+    },
+    sortBy: 'updatedAt' | 'price' | 'completeness' | 'count' = 'updatedAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) => {
+    const query = this.db
+      .createQueryBuilder('a')
+      .select([
+        'a.id          AS id',
+        'a.name        AS name',
+        'a.status      AS status',
+        'a.price       AS price',
+        'a.updatedAt   AS "updatedAt"',
+        'a.measure     AS measure',
+        'a.icons       AS icons',
+        'a.usage       AS usage',
+        'a.author      AS author',
+        'a.description AS description',
+        'c.name        AS "categoryName"',
+        'u.firstname   AS "firstName"',
+        'u.lastname    AS "lastName"',
+      ])
+      .leftJoin('a.category', 'c')
+      .leftJoin('users', 'u', 'u.id = a.createdUser');
+
+    if (filters.name) {
+      query.andWhere('LOWER(a.name) LIKE LOWER(:name)', {
+        name: `%${filters.name}%`,
+      });
+    }
+    if (filters.category) {
+      query.andWhere('c.id = :category', { category: filters.category });
+    }
+    if (filters.status) {
+      query.andWhere('a.status = :status', { status: filters.status });
+    }
+    if (filters.type) {
+      query.andWhere('a.type = :type', { type: filters.type });
+    }
+    if (filters.createdUser) {
+      query.andWhere('a.createdUser = :createdUser', {
+        createdUser: filters.createdUser,
+      });
+    }
+
+    const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
+    if (!isComputedSort) {
+      query.orderBy(`a.${sortBy}`, sortDir);
+    } else {
+      query.orderBy('a.updatedAt', 'DESC');
+    }
+
+    const total = await query.getCount();
+
+    if (!isComputedSort) {
+      query.skip((page - 1) * limit).take(limit);
+    }
+
+    const items = await query.getRawMany();
+
+    return { items, total };
+  };
+
   updatePoint = async (id: number) => {
     const res = await this.db.findOne({
       where: { id: id },
@@ -188,7 +259,7 @@ export class AssessmentDao {
         'answerCategories',
         'category',
         'questionCategories',
-        'owner'
+        'owner',
       ],
     });
     return res;
