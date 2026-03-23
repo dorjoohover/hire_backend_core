@@ -17,16 +17,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
             entities: [__dirname + '/../**/*.entity{.ts,.js}'],
             synchronize: false,
             extra: {
-              max: Number(25), // pool хэмжээ
-              idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30_000),
+              max: 50, // 🔥 25 → 50 (instance бүр)
+              idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 30000),
               connectionTimeoutMillis: Number(
-                process.env.DB_CONN_TIMEOUT_MS ?? 15_000,
+                process.env.DB_CONN_TIMEOUT_MS ?? 15000,
               ),
               keepAlive: true,
+
+              // ⏱ timeout-ууд
               statement_timeout: Number(
-                process.env.DB_STATEMENT_TIMEOUT_MS ?? 30_000,
+                process.env.DB_STATEMENT_TIMEOUT_MS ?? 30000,
               ),
-              query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 35_000),
+              query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 35000),
+
+              // 🔥 PgBouncer-д хамгийн чухал
+              prepareThreshold: 0,
             },
           });
           await dataSource.initialize();
