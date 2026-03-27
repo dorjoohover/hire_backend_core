@@ -126,7 +126,7 @@ export class AssessmentService {
     limit: number,
     filters: {
       name?: string;
-      category?: number;
+      category?: string;
       status?: number;
       type?: number;
       createdUser?: number;

@@ -55,7 +55,7 @@ export class AssessmentController {
   @ApiQuery({ name: 'page', required: true, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: true, type: Number, example: 10 })
   @ApiQuery({ name: 'name', required: false, type: String })
-  @ApiQuery({ name: 'category', required: false, type: Number })
+  @ApiQuery({ name: 'category', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, type: Number })
   @ApiQuery({ name: 'type', required: false, type: Number })
   @ApiQuery({ name: 'createdUser', required: false, type: Number })
@@ -87,7 +87,7 @@ export class AssessmentController {
       +limit,
       {
         name,
-        category: category ? +category : undefined,
+        category,
         status: status ? +status : undefined,
         type: type ? +type : undefined,
         createdUser: createdUser ? +createdUser : undefined,

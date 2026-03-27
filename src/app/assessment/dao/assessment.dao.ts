@@ -162,7 +162,7 @@ export class AssessmentDao {
     limit: number,
     filters: {
       name?: string;
-      category?: number;
+      category?: string;
       status?: number;
       type?: number;
       createdUser?: number;
@@ -199,7 +199,9 @@ export class AssessmentDao {
       });
     }
     if (filters.category) {
-      query.andWhere('c.id = :category', { category: filters.category });
+      query.andWhere('LOWER(c.name) LIKE LOWER(:category)', {
+        category: `%${filters.category}%`,
+      });
     }
     if (filters.status) {
       query.andWhere('a.status = :status', { status: filters.status });
