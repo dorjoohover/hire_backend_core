@@ -170,6 +170,9 @@ export class AssessmentDao {
     sortBy: 'updatedAt' | 'price' | 'completeness' | 'count' = 'updatedAt',
     sortDir: 'ASC' | 'DESC' = 'DESC',
   ) => {
+    const p = +page || 1;
+    const l = +limit || 20;
+
     const query = this.db
       .createQueryBuilder('a')
       .select([
@@ -211,6 +214,7 @@ export class AssessmentDao {
     }
 
     const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
+
     if (!isComputedSort) {
       query.orderBy(`a.${sortBy}`, sortDir);
     } else {
@@ -220,7 +224,7 @@ export class AssessmentDao {
     const total = await query.getCount();
 
     if (!isComputedSort) {
-      query.skip((page - 1) * limit).take(limit);
+      query.limit(l).offset((p - 1) * l);
     }
 
     const items = await query.getRawMany();

@@ -52,8 +52,8 @@ export class AssessmentController {
 
   @Public()
   @Get('new')
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'page', required: true, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: true, type: Number, example: 10 })
   @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({ name: 'category', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, type: Number })
@@ -61,19 +61,19 @@ export class AssessmentController {
   @ApiQuery({ name: 'createdUser', required: false, type: Number })
   @ApiQuery({
     name: 'sortBy',
-    required: false,
+    required: true,
     enum: ['updatedAt', 'price', 'count', 'completeness'],
     example: 'updatedAt',
   })
   @ApiQuery({
     name: 'sortDir',
-    required: false,
+    required: true,
     enum: ['ASC', 'DESC'],
     example: 'DESC',
   })
   findNew(
     @Query('page') page = '1',
-    @Query('limit') limit = '20',
+    @Query('limit') limit = '10',
     @Query('name') name?: string,
     @Query('category') category?: string,
     @Query('status') status?: string,
