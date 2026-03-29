@@ -162,12 +162,17 @@ export class AssessmentDao {
     limit: number,
     filters: {
       name?: string;
-      category?: string;
+      category?: number;
       status?: number;
       type?: number;
       createdUser?: number;
     },
-    sortBy: 'updatedAt' | 'price' | 'completeness' | 'count' = 'updatedAt',
+    sortBy:
+      | 'updatedAt'
+      | 'price'
+      | 'completeness'
+      | 'count'
+      | 'createdAt' = 'createdAt',
     sortDir: 'ASC' | 'DESC' = 'DESC',
   ) => {
     const p = +page || 1;
@@ -180,7 +185,9 @@ export class AssessmentDao {
         'a.name        AS name',
         'a.status      AS status',
         'a.price       AS price',
+        'a.type        AS type',
         'a.updatedAt   AS "updatedAt"',
+        'a.createdAt   AS "createdAt"',
         'a.measure     AS measure',
         'a.icons       AS icons',
         'a.usage       AS usage',
@@ -199,9 +206,7 @@ export class AssessmentDao {
       });
     }
     if (filters.category) {
-      query.andWhere('LOWER(c.name) LIKE LOWER(:category)', {
-        category: `%${filters.category}%`,
-      });
+      query.andWhere('c.id = :category', { category: filters.category });
     }
     if (filters.status) {
       query.andWhere('a.status = :status', { status: filters.status });
@@ -220,10 +225,15 @@ export class AssessmentDao {
     if (!isComputedSort) {
       query.orderBy(`a.${sortBy}`, sortDir);
     } else {
-      query.orderBy('a.updatedAt', 'DESC');
+      query.orderBy('a.createdAt', 'DESC');
     }
 
     const total = await query.getCount();
+
+    const featured = await this.db
+      .createQueryBuilder('a')
+      .where('a.status = :status', { status: 30 })
+      .getCount();
 
     if (!isComputedSort) {
       query.limit(l).offset((p - 1) * l);
@@ -231,7 +241,7 @@ export class AssessmentDao {
 
     const items = await query.getRawMany();
 
-    return { items, total };
+    return { items, total, featured };
   };
 
   updatePoint = async (id: number) => {

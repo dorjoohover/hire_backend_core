@@ -55,15 +55,15 @@ export class AssessmentController {
   @ApiQuery({ name: 'page', required: true, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: true, type: Number, example: 10 })
   @ApiQuery({ name: 'name', required: false, type: String })
-  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, type: Number })
   @ApiQuery({ name: 'type', required: false, type: Number })
   @ApiQuery({ name: 'createdUser', required: false, type: Number })
   @ApiQuery({
     name: 'sortBy',
     required: true,
-    enum: ['updatedAt', 'price', 'count', 'completeness'],
-    example: 'updatedAt',
+    enum: ['updatedAt', 'price', 'count', 'completeness', 'createdAt'],
+    example: 'createdAt',
   })
   @ApiQuery({
     name: 'sortDir',
@@ -79,7 +79,7 @@ export class AssessmentController {
     @Query('status') status?: string,
     @Query('type') type?: string,
     @Query('createdUser') createdUser?: string,
-    @Query('sortBy') sortBy: string = 'updatedAt',
+    @Query('sortBy') sortBy: string = 'createdAt',
     @Query('sortDir') sortDir: string = 'DESC',
   ) {
     return this.assessmentService.findNew(
@@ -87,7 +87,7 @@ export class AssessmentController {
       +limit,
       {
         name,
-        category,
+        category: category ? +category : undefined,
         status: status ? +status : undefined,
         type: type ? +type : undefined,
         createdUser: createdUser ? +createdUser : undefined,

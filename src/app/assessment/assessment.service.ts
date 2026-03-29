@@ -126,15 +126,20 @@ export class AssessmentService {
     limit: number,
     filters: {
       name?: string;
-      category?: string;
+      category?: number;
       status?: number;
       type?: number;
       createdUser?: number;
     },
-    sortBy: 'updatedAt' | 'price' | 'count' | 'completeness' = 'updatedAt',
+    sortBy:
+      | 'updatedAt'
+      | 'price'
+      | 'count'
+      | 'completeness'
+      | 'createdAt' = 'createdAt',
     sortDir: 'ASC' | 'DESC' = 'DESC',
   ) {
-    const { items, total } = await this.dao.findNew(
+    const { items, total, featured } = await this.dao.findNew(
       page,
       limit,
       filters,
@@ -156,10 +161,12 @@ export class AssessmentService {
           name: a.name,
           status: a.status,
           price: a.price,
-          updatedAt: a.updatedAt, // ← matches AS "updatedAt"
+          updatedAt: a.updatedAt,
+          createdAt: a.createdAt,
           count,
-          category: a.categoryName ?? null, // ← matches AS "categoryName"
-          createdBy: a.firstName ? `${a.firstName} ${a.lastName}`.trim() : null, // ← matches AS "firstName"/"lastName"
+          type: a.type,
+          category: a.categoryName ?? null,
+          createdBy: a.firstName ? `${a.firstName} ${a.lastName}`.trim() : null,
           completeness,
         };
       }),
@@ -172,6 +179,7 @@ export class AssessmentService {
         sortDir === 'DESC' ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy],
       );
       const paginated = sorted.slice((page - 1) * limit, page * limit);
+
       return {
         data: paginated,
         pagination: {
@@ -179,6 +187,9 @@ export class AssessmentService {
           limit,
           total,
           totalPages: Math.ceil(total / limit),
+        },
+        meta: {
+          featured,
         },
       };
     }
@@ -190,6 +201,9 @@ export class AssessmentService {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+      },
+      meta: {
+        featured,
       },
     };
   }
