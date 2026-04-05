@@ -18,6 +18,7 @@ import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
 import { AssessmentAudience } from 'src/base/constants';
 import { UserEntity } from 'src/app/user/entities/user.entity';
 import { AssessmentFormulaEntity } from './assessment.formule.entity';
+import { StudioEntity } from 'src/app/report/studio.entity';
 
 @Entity('assessment')
 export class AssessmentEntity {
@@ -134,4 +135,8 @@ export class AssessmentEntity {
     onUpdate: 'CASCADE',
   })
   formules: AssessmentFormulaEntity[];
+  @OneToMany(() => StudioEntity, (studio) => studio.assessment, {
+    nullable: true,
+  })
+  studios?: StudioEntity[];
 }
