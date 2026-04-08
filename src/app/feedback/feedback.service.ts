@@ -19,9 +19,11 @@ export class FeedbackService extends BaseService {
   public async create(dto: CreateFeedbackDto, user?: string) {
     const res = await this._db.create({
       ...dto,
-      user: user ? {
-        id: +user,
-      } : null,
+      user: user
+        ? {
+            id: +user,
+          }
+        : null,
       assessment: {
         id: dto.assessment,
       },

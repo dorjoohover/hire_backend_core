@@ -139,7 +139,7 @@ export class AssessmentService {
       | 'createdAt' = 'createdAt',
     sortDir: 'ASC' | 'DESC' = 'DESC',
   ) {
-    const { items, total, featured } = await this.dao.findNew(
+    const { items, total, featured, createdUsers } = await this.dao.findNew(
       page,
       limit,
       filters,
@@ -149,12 +149,34 @@ export class AssessmentService {
 
     const withCompleteness = await Promise.all(
       items.map(async (a) => {
-        const fields = [a.measure, a.icons, a.usage, a.author, a.description];
+        const fields = [
+          a.categoryName,
+          a.measure,
+          a.icons,
+          a.usage,
+          a.author,
+          a.description,
+          a.duration,
+          a.report,
+          a.exampleReport,
+          a.formule,
+          a.advice,
+        ];
         const filled = fields.filter(
           (f) => f !== null && f !== undefined && f !== '',
         ).length;
         const completeness = Math.round((filled / fields.length) * 100);
         const count = await this.userServiceDao.countByAssessment(a.id);
+        const feed10 = Number(a.feed10 || 0);
+        const feed20 = Number(a.feed20 || 0);
+        const feed30 = Number(a.feed30 || 0);
+        const feedback = Number(a.feedback || 0);
+        const comments = Number(a.comments || 0);
+
+        const percentage =
+          feedback > 0
+            ? Math.round((feed10 * 100 + feed20 * 50 + feed30 * 0) / feedback)
+            : 0;
 
         return {
           id: a.id,
@@ -168,6 +190,13 @@ export class AssessmentService {
           category: a.categoryName ?? null,
           createdBy: a.firstName ? `${a.firstName} ${a.lastName}`.trim() : null,
           completeness,
+          description: a.description,
+          icons: a.icons,
+          duration: a.duration,
+          author: a.author,
+          feedback,
+          percentage,
+          comments,
         };
       }),
     );
@@ -190,6 +219,7 @@ export class AssessmentService {
         },
         meta: {
           featured,
+          createdUsers,
         },
       };
     }
@@ -204,6 +234,7 @@ export class AssessmentService {
       },
       meta: {
         featured,
+        createdUsers,
       },
     };
   }
