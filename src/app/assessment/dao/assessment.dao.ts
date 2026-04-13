@@ -81,6 +81,11 @@ export class AssessmentDao {
             id: dto.level,
           }
         : null,
+      owner: dto.owner
+        ? {
+            id: dto.owner,
+          }
+        : null,
     });
     await this.db.save(res);
     return res.id;
@@ -364,6 +369,11 @@ export class AssessmentDao {
       level: {
         id: dto.level,
       },
+      owner: dto.owner
+        ? {
+            id: dto.owner,
+          }
+        : null,
     };
 
     await this.db.save({ ...res, ...body, updatedUser: user });
