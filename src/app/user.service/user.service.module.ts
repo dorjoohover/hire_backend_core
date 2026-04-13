@@ -34,6 +34,7 @@ import { EmailLogService } from '../email_log/email_log.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { EmailModule } from '../email/email.module';
 import { ReportLogDao } from '../report/report.log.dao';
+import { StudioDao } from '../report/studio.dao';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { ReportLogDao } from '../report/report.log.dao';
     UserAnswerDao,
     AssessmentDao,
     ExamDao,
+    StudioDao,
     QpayService,
   ],
   exports: [UserServiceService, UserServiceDao],

@@ -31,6 +31,7 @@ import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
+import { StudioDao } from '../report/studio.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -46,8 +47,32 @@ export class ExamService extends BaseService {
     @Inject(forwardRef(() => UserServiceDao))
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private studioDao: StudioDao,
   ) {
     super();
+  }
+
+  private async getSavedTemplateForExam(
+    assessmentId?: number,
+    reportTypeCode?: number | null,
+  ) {
+    if (!assessmentId) {
+      return null;
+    }
+
+    if (reportTypeCode !== undefined && reportTypeCode !== null) {
+      const exact =
+        await this.studioDao.findLatestByAssessmentAndReportTypeCode(
+          assessmentId,
+          reportTypeCode,
+        );
+
+      if (exact) {
+        return exact;
+      }
+    }
+
+    return null;
   }
 
   public async getPdf(id: number | string, role?: number) {
@@ -180,6 +205,10 @@ export class ExamService extends BaseService {
     const orgName = exam.service?.user?.organizationName ?? null;
 
     const icons = exam.assessment?.icons ?? null;
+    const reportTemplate = await this.getSavedTemplateForExam(
+      exam.assessment?.id,
+      result?.type ?? exam.assessment?.report ?? null,
+    );
 
     return {
       assessmentName: exam.assessmentName,
@@ -195,6 +224,28 @@ export class ExamService extends BaseService {
       isInvited,
       orgName,
       icons,
+      templateApplied: Boolean(reportTemplate),
+      reportTemplate: reportTemplate
+        ? {
+            id: reportTemplate.id,
+            key: reportTemplate.key,
+            assessmentId: reportTemplate.assessmentId ?? null,
+            reportType: reportTemplate.reportType,
+            reportTypeCode: reportTemplate.reportTypeCode ?? null,
+            renderer: reportTemplate.renderer,
+            name: reportTemplate.name,
+            description: reportTemplate.description ?? null,
+            canvas: reportTemplate.canvas ?? null,
+            pages: reportTemplate.pages ?? [],
+            defaultBody: reportTemplate.defaultBody ?? null,
+            detailGrouping: reportTemplate.detailGrouping ?? null,
+            logicNotes: reportTemplate.logicNotes ?? [],
+            variables: reportTemplate.variables ?? [],
+            elements: reportTemplate.elements ?? [],
+            previewData: reportTemplate.previewData ?? null,
+            updatedAt: reportTemplate.updatedAt,
+          }
+        : null,
     };
   }
 
