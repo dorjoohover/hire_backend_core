@@ -13,6 +13,7 @@ import http from 'http';
 import { StudioDao } from './studio.dao';
 import { StudioDto } from './studio.dto';
 import * as puppeteer from 'puppeteer';
+import { existsSync } from 'fs';
 const agent = new http.Agent({
   keepAlive: false, // 👈 маш чухал
   maxSockets: 50,
@@ -105,6 +106,23 @@ export class ReportService {
     }
   }
 
+  private resolvePuppeteerExecutablePath() {
+    const configuredPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+
+    if (configuredPath && existsSync(configuredPath)) {
+      return configuredPath;
+    }
+
+    const candidates = [
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/google-chrome',
+    ];
+
+    return candidates.find((path) => existsSync(path));
+  }
+
   private buildStudioTemplatePdfHtml(runtime: {
     html?: string | null;
     title?: string | null;
@@ -189,10 +207,11 @@ export class ReportService {
     html?: string | null;
     title?: string | null;
   }) {
+    const executablePath = this.resolvePuppeteerExecutablePath();
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      executablePath,
     });
 
     try {
