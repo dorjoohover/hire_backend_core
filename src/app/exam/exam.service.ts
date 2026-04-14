@@ -47,6 +47,7 @@ export class ExamService extends BaseService {
     @Inject(forwardRef(() => UserServiceDao))
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private report: ReportService,
     private studioDao: StudioDao,
   ) {
     super();
@@ -209,6 +210,11 @@ export class ExamService extends BaseService {
       exam.assessment?.id,
       result?.type ?? exam.assessment?.report ?? null,
     );
+    const reportCalculation = reportTemplate
+      ? await this.report.getCalculation(code)
+      : null;
+    const reportTemplateRuntime =
+      reportCalculation?.reportTemplateRuntime ?? null;
 
     return {
       assessmentName: exam.assessmentName,
@@ -225,6 +231,7 @@ export class ExamService extends BaseService {
       orgName,
       icons,
       templateApplied: Boolean(reportTemplate),
+      reportTemplateRuntime,
       reportTemplate: reportTemplate
         ? {
             id: reportTemplate.id,

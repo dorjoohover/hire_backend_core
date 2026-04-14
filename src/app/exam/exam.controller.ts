@@ -105,11 +105,28 @@ export class ExamController {
 
     if (doc) {
       const response = await this.file.getReport(filename);
-      await this.examService.getExamInfoByCode(
+      const examInfo = await this.examService.getExamInfoByCode(
         code,
         user,
         response != null && response?.status === 200,
       );
+
+      if (examInfo?.reportTemplateRuntime?.html) {
+        try {
+          const pdf = await this.report.renderStudioPdf(
+            examInfo.reportTemplateRuntime,
+          );
+
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+          res.setHeader('Cache-Control', 'no-store');
+          res.send(pdf);
+          return;
+        } catch (error) {
+          console.error('Studio template PDF render error:', error);
+        }
+      }
+
       const report = await this.report.getByCode(code);
       // if(!report) throw new HttpException('Тайлан олдсонгүй...', 404);
       if (

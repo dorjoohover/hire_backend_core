@@ -12,6 +12,7 @@ import { ReportLogDao } from './report.log.dao';
 import http from 'http';
 import { StudioDao } from './studio.dao';
 import { StudioDto } from './studio.dto';
+import * as puppeteer from 'puppeteer';
 const agent = new http.Agent({
   keepAlive: false, // 👈 маш чухал
   maxSockets: 50,
@@ -20,6 +21,10 @@ const agent = new http.Agent({
 @Injectable()
 export class ReportService {
   private userAnswer: UserAnswerService;
+  private webOrigin = (process.env.WEB || 'http://localhost:3000').replace(
+    /\/$/,
+    '',
+  );
   constructor(
     private moduleRef: ModuleRef,
     private dao: ReportLogDao,
@@ -83,6 +88,163 @@ export class ReportService {
     if (prev.status != REPORT_STATUS.SENT) {
       await this.dao.updateByCode(code, { status: REPORT_STATUS.SENT });
       await this.userAnswer.sendEmail(code);
+    }
+  }
+
+  async getCalculation(code: string) {
+    try {
+      const response = await axios.get(`${this.REPORT}calculate/${code}`, {
+        httpAgent: agent,
+        timeout: 20000,
+      });
+
+      return response?.data?.payload ?? response?.data ?? null;
+    } catch (err) {
+      console.error('Report calculation error:', err?.message ?? err);
+      return null;
+    }
+  }
+
+  private buildStudioTemplatePdfHtml(runtime: {
+    html?: string | null;
+    title?: string | null;
+  }) {
+    const rawHtml = runtime?.html ?? '';
+    const title = runtime?.title ?? 'Studio report';
+    const sections = rawHtml.match(/<section[\s\S]*?<\/section>/g) ?? [];
+    const pages =
+      sections.length > 0
+        ? sections
+            .map(
+              (section) => `
+                <div class="pdf-page">
+                  <div class="pdf-scale">${section}</div>
+                </div>
+              `,
+            )
+            .join('\n')
+        : '<div class="pdf-page"><div class="pdf-scale"></div></div>';
+
+    return `<!DOCTYPE html>
+<html lang="mn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="${this.webOrigin}/" />
+    <title>${title}</title>
+    <style>
+      @page {
+        size: 595pt 842pt;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+      }
+
+      body {
+        font-family: "Gilroy", "Arial", sans-serif;
+      }
+
+      .pdf-page {
+        width: 595pt;
+        height: 842pt;
+        overflow: hidden;
+        position: relative;
+        page-break-after: always;
+      }
+
+      .pdf-page:last-child {
+        page-break-after: auto;
+      }
+
+      .pdf-scale {
+        width: 595px;
+        height: 842px;
+        transform: scale(1.3333333333);
+        transform-origin: top left;
+      }
+
+      .pdf-scale > section[data-page] {
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+    </style>
+  </head>
+  <body>
+    ${pages}
+  </body>
+</html>`;
+  }
+
+  async renderStudioPdf(runtime: {
+    html?: string | null;
+    title?: string | null;
+  }) {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    });
+
+    try {
+      const page = await browser.newPage();
+      await page.setViewport({
+        width: 794,
+        height: 1123,
+        deviceScaleFactor: 1,
+      });
+
+      await page.setContent(this.buildStudioTemplatePdfHtml(runtime), {
+        waitUntil: 'networkidle0',
+      });
+
+      await page.evaluate(async () => {
+        const images = Array.from(document.images);
+        await Promise.all(
+          images.map(
+            (image) =>
+              new Promise<void>((resolve) => {
+                if (image.complete) {
+                  resolve();
+                  return;
+                }
+
+                image.addEventListener('load', () => resolve(), {
+                  once: true,
+                });
+                image.addEventListener('error', () => resolve(), {
+                  once: true,
+                });
+              }),
+          ),
+        );
+      });
+
+      const pdf = await page.pdf({
+        printBackground: true,
+        preferCSSPageSize: true,
+        width: '595pt',
+        height: '842pt',
+        margin: {
+          top: '0',
+          right: '0',
+          bottom: '0',
+          left: '0',
+        },
+      });
+
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
     }
   }
 
