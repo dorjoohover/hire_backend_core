@@ -251,8 +251,7 @@ export class ReportService {
       const pdf = await page.pdf({
         printBackground: true,
         preferCSSPageSize: true,
-        width: '595pt',
-        height: '842pt',
+        format: 'A4',
         margin: {
           top: '0',
           right: '0',
