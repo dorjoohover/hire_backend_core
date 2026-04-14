@@ -20,7 +20,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { UserEntity } from '../user/entities/user.entity';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { AuthService } from 'src/auth/auth.service';
-import { CLIENT, ORGANIZATION, ReportType } from 'src/base/constants';
+import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { UserDao } from '../user/user.dao';
 import { ResultDao } from './dao/result.dao';
 import { ResultDetailDto } from './dto/result.dto';
@@ -31,7 +31,6 @@ import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
-import { StudioDao } from '../report/studio.dao';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -48,7 +47,6 @@ export class ExamService extends BaseService {
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
     private report: ReportService,
-    private studioDao: StudioDao,
   ) {
     super();
   }
@@ -61,19 +59,13 @@ export class ExamService extends BaseService {
       return null;
     }
 
-    if (reportTypeCode !== undefined && reportTypeCode !== null) {
-      const exact =
-        await this.studioDao.findLatestByAssessmentAndReportTypeCode(
-          assessmentId,
-          reportTypeCode,
-        );
-
-      if (exact) {
-        return exact;
-      }
-    }
-
-    return null;
+    return await this.report.resolveTemplate({
+      assessmentId,
+      reportTypeCode:
+        reportTypeCode !== undefined && reportTypeCode !== null
+          ? reportTypeCode
+          : undefined,
+    });
   }
 
   public async getPdf(id: number | string, role?: number) {
