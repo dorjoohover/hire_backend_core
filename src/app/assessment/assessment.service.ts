@@ -121,6 +121,124 @@ export class AssessmentService {
     };
   }
 
+  public async findNew(
+    page: number,
+    limit: number,
+    filters: {
+      name?: string;
+      category?: number;
+      status?: number;
+      type?: number;
+      createdUser?: number;
+    },
+    sortBy:
+      | 'updatedAt'
+      | 'price'
+      | 'count'
+      | 'completeness'
+      | 'createdAt' = 'createdAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    const { items, total, featured, createdUsers } = await this.dao.findNew(
+      page,
+      limit,
+      filters,
+      sortBy,
+      sortDir,
+    );
+
+    const withCompleteness = await Promise.all(
+      items.map(async (a) => {
+        const fields = [
+          a.categoryName,
+          a.measure,
+          a.icons,
+          a.usage,
+          a.author,
+          a.description,
+          a.duration,
+          a.report,
+          a.exampleReport,
+          a.formule,
+          a.advice,
+        ];
+        const filled = fields.filter(
+          (f) => f !== null && f !== undefined && f !== '',
+        ).length;
+        const completeness = Math.round((filled / fields.length) * 100);
+        const count = await this.userServiceDao.countByAssessment(a.id);
+        const feed10 = Number(a.feed10 || 0);
+        const feed20 = Number(a.feed20 || 0);
+        const feed30 = Number(a.feed30 || 0);
+        const feedback = Number(a.feedback || 0);
+        const comments = Number(a.comments || 0);
+
+        const percentage =
+          feedback > 0
+            ? Math.round((feed10 * 100 + feed20 * 50 + feed30 * 0) / feedback)
+            : 0;
+
+        return {
+          id: a.id,
+          name: a.name,
+          status: a.status,
+          price: a.price,
+          updatedAt: a.updatedAt,
+          createdAt: a.createdAt,
+          count,
+          type: a.type,
+          category: a.categoryName ?? null,
+          createdBy: a.firstName ? `${a.firstName} ${a.lastName}`.trim() : null,
+          completeness,
+          description: a.description,
+          icons: a.icons,
+          duration: a.duration,
+          author: a.author,
+          feedback,
+          percentage,
+          comments,
+        };
+      }),
+    );
+
+    const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
+
+    if (isComputedSort) {
+      const sorted = withCompleteness.sort((a, b) =>
+        sortDir === 'DESC' ? b[sortBy] - a[sortBy] : a[sortBy] - b[sortBy],
+      );
+      const paginated = sorted.slice((page - 1) * limit, page * limit);
+
+      return {
+        data: paginated,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+        meta: {
+          featured,
+          createdUsers,
+        },
+      };
+    }
+
+    return {
+      data: withCompleteness,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      meta: {
+        featured,
+        createdUsers,
+      },
+    };
+  }
+
   public async findAllLevel() {}
 
   public async findOne(id: number) {

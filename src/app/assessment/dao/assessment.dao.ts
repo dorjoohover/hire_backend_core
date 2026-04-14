@@ -81,6 +81,11 @@ export class AssessmentDao {
             id: dto.level,
           }
         : null,
+      owner: dto.owner
+        ? {
+            id: dto.owner,
+          }
+        : null,
     });
     await this.db.save(res);
     return res.id;
@@ -157,6 +162,145 @@ export class AssessmentDao {
     };
   };
 
+  findNew = async (
+    page: number,
+    limit: number,
+    filters: {
+      name?: string;
+      category?: number;
+      status?: number;
+      type?: number;
+      createdUser?: number;
+    },
+    sortBy:
+      | 'updatedAt'
+      | 'price'
+      | 'completeness'
+      | 'count'
+      | 'createdAt' = 'createdAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) => {
+    const p = +page || 1;
+    const l = +limit || 10;
+
+    const feedbackSubQuery = this.dataSource
+      .createQueryBuilder()
+      .from('feedback', 'f')
+      .select('f.assessmentId', 'assessment_id')
+      .addSelect(
+        'SUM(CASE WHEN f.type = 20 AND f.status = 10 THEN 1 ELSE 0 END)',
+        'feed10',
+      )
+      .addSelect(
+        'SUM(CASE WHEN f.type = 20 AND f.status = 20 THEN 1 ELSE 0 END)',
+        'feed20',
+      )
+      .addSelect(
+        'SUM(CASE WHEN f.type = 20 AND f.status = 30 THEN 1 ELSE 0 END)',
+        'feed30',
+      )
+      .addSelect('SUM(CASE WHEN f.type = 20 THEN 1 ELSE 0 END)', 'feedback')
+      .addSelect(
+        `SUM(
+        CASE
+          WHEN f.type = 20
+            AND f.message IS NOT NULL
+            AND TRIM(f.message) <> ''
+          THEN 1
+          ELSE 0
+        END
+      )`,
+        'comments',
+      )
+      .groupBy('f.assessmentId');
+
+    const query = this.db
+      .createQueryBuilder('a')
+      .select([
+        'a.*',
+        'c.name        AS "categoryName"',
+        'u.firstname   AS "firstName"',
+        'u.lastname    AS "lastName"',
+        `COALESCE(fb.feed10, 0)   AS "feed10"`,
+        `COALESCE(fb.feed20, 0)   AS "feed20"`,
+        `COALESCE(fb.feed30, 0)   AS "feed30"`,
+        `COALESCE(fb.feedback, 0) AS "feedback"`,
+        `COALESCE(fb.comments, 0) AS "comments"`,
+      ])
+      .leftJoin('a.category', 'c')
+      .leftJoin('c.parent', 'cp')
+      .leftJoin('users', 'u', 'u.id = a.createdUser')
+      .leftJoin(
+        '(' + feedbackSubQuery.getQuery() + ')',
+        'fb',
+        'fb.assessment_id = a.id',
+      )
+      .setParameters(feedbackSubQuery.getParameters());
+
+    if (filters.name) {
+      query.andWhere('LOWER(a.name) LIKE LOWER(:name)', {
+        name: `%${filters.name}%`,
+      });
+    }
+    if (filters.category) {
+      query.andWhere('(c.id = :category OR cp.id = :category)', {
+        category: filters.category,
+      });
+    }
+    if (filters.status) {
+      query.andWhere('a.status = :status', { status: filters.status });
+    }
+    if (filters.type) {
+      query.andWhere('a.type = :type', { type: filters.type });
+    }
+    if (filters.createdUser) {
+      query.andWhere('a.createdUser = :createdUser', {
+        createdUser: filters.createdUser,
+      });
+    }
+
+    const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
+
+    if (!isComputedSort) {
+      query.orderBy(`a.${sortBy}`, sortDir);
+    } else {
+      query.orderBy('a.createdAt', 'DESC');
+    }
+
+    const total = await query.getCount();
+
+    const featured = await this.db
+      .createQueryBuilder('a')
+      .where('a.status = :status', { status: 30 })
+      .getCount();
+
+    const createdUsersRaw = await this.db
+      .createQueryBuilder('a')
+      .select('u.id', 'id')
+      .addSelect('u.firstname', 'firstName')
+      .addSelect('u.lastname', 'lastName')
+      .leftJoin('users', 'u', 'u.id = a.createdUser')
+      .where('a.createdUser IS NOT NULL')
+      .groupBy('u.id')
+      .addGroupBy('u.firstname')
+      .addGroupBy('u.lastname')
+      .orderBy('u.firstname', 'ASC')
+      .getRawMany();
+
+    const createdUsers = createdUsersRaw.map((u) => ({
+      id: +u.id,
+      name: `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || `User ${u.id}`,
+    }));
+
+    if (!isComputedSort) {
+      query.limit(l).offset((p - 1) * l);
+    }
+
+    const items = await query.getRawMany();
+
+    return { items, total, featured, createdUsers };
+  };
+
   updatePoint = async (id: number) => {
     const res = await this.db.findOne({
       where: { id: id },
@@ -188,7 +332,7 @@ export class AssessmentDao {
         'answerCategories',
         'category',
         'questionCategories',
-        'owner'
+        'owner',
       ],
     });
     return res;
@@ -225,6 +369,11 @@ export class AssessmentDao {
       level: {
         id: dto.level,
       },
+      owner: dto.owner
+        ? {
+            id: dto.owner,
+          }
+        : null,
     };
 
     await this.db.save({ ...res, ...body, updatedUser: user });
