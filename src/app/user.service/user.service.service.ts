@@ -196,43 +196,104 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(assId: number, id: number, email: string) {
-    const { data, count, total } = await this.dao.findByUser(assId, id, 0);
-    const res = [];
-    const ex = [];
-    const exam = await this.examDao.findByUser([], email, assId);
-    for (const response of data) {
-      const { exams, user, ...body } = response;
-      const examResults = [];
-      for (const exam of exams) {
-        const result = await this.result.findOne(exam.code);
-        examResults.push({
-          ...exam,
-          result: result,
-        });
-        ex.push(exam);
+  private normalizeSortDir(sortDir?: string): 'ASC' | 'DESC' {
+    return `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  }
+
+  private sortExamLikeItems<T extends Record<string, any>>(
+    items: T[],
+    sortBy?: string,
+    sortDir?: string,
+  ) {
+    const direction = this.normalizeSortDir(sortDir) === 'ASC' ? 1 : -1;
+    const getValue = (item: T) => {
+      switch (sortBy) {
+        case 'assessmentName':
+          return `${item.assessment?.name ?? item.assessmentName ?? ''}`.toLowerCase();
+        case 'endDate':
+          return new Date(item.endDate ?? 0).getTime();
+        case 'startDate':
+          return new Date(item.startDate ?? 0).getTime();
+        case 'userStartDate':
+          return new Date(item.userStartDate ?? 0).getTime();
+        case 'userEndDate':
+          return new Date(item.userEndDate ?? 0).getTime();
+        case 'createdAt':
+        default:
+          return new Date(item.createdAt ?? 0).getTime();
+      }
+    };
+
+    return [...items].sort((a, b) => {
+      const left = getValue(a);
+      const right = getValue(b);
+
+      if (left === right) {
+        return 0;
       }
 
-      res.push({ ...body, user, exams: examResults });
-    }
-    const filtered = exam.filter(
-      (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
+      return left > right ? direction : -direction;
+    });
+  }
+
+  public async findByUser(
+    assId: number,
+    id: number,
+    email: string,
+    pg: PaginationDto,
+  ) {
+    const { data, count, total, page, limit, sortBy, sortDir } =
+      await this.dao.findByUser(assId, id, 0, pg);
+    const exam = await this.examDao.findByUser([], email, assId);
+    const resultCodes = [
+      ...data.flatMap((item) => (item.exams ?? []).map((itemExam) => itemExam.code)),
+      ...exam.map((item) => item.code),
+    ];
+    const resultMap = new Map(
+      (
+        await this.result.findByCodes(resultCodes)
+      ).map((item) => [item.code, item]),
     );
 
-    const invited = await Promise.all(
-      filtered.map(async (f) => {
-        const result = await this.result.findOne(f.code);
-        return {
-          ...f,
-          result,
-        };
-      }),
+    const res = data.map((response) => {
+      const { exams, user, ...body } = response;
+      const examResults = (exams ?? []).map((itemExam) => ({
+        ...itemExam,
+        result: resultMap.get(itemExam.code) ?? null,
+      }));
+
+      return {
+        ...body,
+        user,
+        exams: this.sortExamLikeItems(examResults, sortBy, sortDir),
+      };
+    });
+
+    const usedExamCodes = new Set(
+      res.flatMap((item) => item.exams.map((itemExam) => itemExam.code)),
+    );
+
+    const filtered = exam.filter(
+      (item) => !usedExamCodes.has(item.code),
+    );
+
+    const invited = this.sortExamLikeItems(
+      filtered.map((item) => ({
+        ...item,
+        result: resultMap.get(item.code) ?? null,
+      })),
+      sortBy,
+      sortDir,
     );
 
     return {
       data: res,
-      count: res.length,
+      count,
       total,
+      page,
+      limit,
+      sortBy,
+      sortDir,
       invited,
     };
     // const exams = await this.examDao.findAll(assId, email);
@@ -284,6 +345,7 @@ export class UserServiceService extends BaseService {
 
     return code;
   }
+
   public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
     Promise.all(
       dto.links.map(async (email) => {

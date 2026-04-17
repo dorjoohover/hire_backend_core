@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { ResultEntity } from '../entities/result.entity';
 import { ResultDetailEntity } from '../entities/result.detail.entity';
 import { ResultDetailDto, ResultDto } from '../dto/result.dto';
@@ -40,6 +40,21 @@ export class ResultDao {
     return await this.db.findOne({
       where: {
         code,
+      },
+      relations: ['details'],
+    });
+  };
+
+  findByCodes = async (codes: string[]) => {
+    const uniqueCodes = [...new Set(codes.filter(Boolean))];
+
+    if (uniqueCodes.length === 0) {
+      return [];
+    }
+
+    return await this.db.find({
+      where: {
+        code: In(uniqueCodes),
       },
       relations: ['details'],
     });
