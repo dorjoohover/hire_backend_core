@@ -12,6 +12,7 @@ import {
   HttpException,
   HttpStatus,
   Response as NestResponse,
+  Query,
 } from '@nestjs/common';
 import * as mime from 'mime-types';
 import { ExamService } from './exam.service';
@@ -22,7 +23,7 @@ import {
   FindExamByCodeDto,
 } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { createReadStream, createWriteStream, existsSync, mkdirSync } from 'fs';
 import type { Response as ExpressRes, Response } from 'express';
@@ -40,10 +41,12 @@ import { Pagination } from 'src/base/decorator/pagination.decorator';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { ReportService } from '../report/report.service';
 import { REPORT_STATUS } from 'src/base/constants';
+
 @Controller('exam')
 @ApiBearerAuth('access-token')
 export class ExamController {
   private readonly cachePath = join(__dirname, '..', '..', 'cache');
+
   constructor(
     private readonly examService: ExamService,
     private readonly report: ReportService,
@@ -88,10 +91,8 @@ export class ExamController {
     }
   }
 
-  // @Public()
   @Get('/pdf/:code')
   @ApiParam({ name: 'code' })
-  // for report development
   async requestPdf(
     @Param('code') code: string,
     @Request() { user },
@@ -100,7 +101,6 @@ export class ExamController {
     const role = user?.['role'];
     const filename = `report-${code}.pdf`;
 
-    // PDFKit.PDFDocument үүсгэнэ
     const doc = await this.examService.getPdf(code, role);
     await this.examService.getExamInfoByCode(code, user);
 
@@ -123,7 +123,7 @@ export class ExamController {
         );
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
 
-        response.data.pipe(res); // ⭐ STREAM → RESPONSE
+        response.data.pipe(res);
         return;
       } else if (report.status === REPORT_STATUS.UPLOADING) {
         throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
@@ -146,15 +146,15 @@ export class ExamController {
     const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
     return result.data;
   }
+
   @Public()
   @Get('/regenerate/:code')
   async regenerate(@Param('code') code: string, @Res() res: Response) {
     const url = `${process.env.REPORT}test/${code}`;
     const response = await axios.get(url, {
-      responseType: 'stream', // ⬅️ stream болгож авна
+      responseType: 'stream',
     });
 
-    // Microservice-ээс ирсэн header-уудыг дамжуулах
     res.setHeader('Content-Type', response.headers['content-type']);
     res.setHeader(
       'Content-Disposition',
@@ -162,35 +162,8 @@ export class ExamController {
     );
     res.setHeader('Cache-Control', 'no-store');
 
-    // Stream-ийг хэрэглэгч рүү шууд урсгах
     response.data.pipe(res);
   }
-  // async requestPdf(@Param('code') code: string, @Res() res: Response) {
-  //   const filename = `report-${code}.pdf`;
-
-  //   // (шаардлагатай бол эрх шалгалтаа энд)
-  //   await this.examService.checkExam(+code);
-
-  //   const { path, size } = await this.fileService.getFileBuf(filename);
-  //   const type = (mime.lookup(filename) as string) || 'application/pdf';
-
-  //   // Толгойг тодорхой тавина — зарим прокси/шахалтэнд зайлшгүй хэрэгтэй
-  //   res.setHeader('Content-Type', type);
-  //   res.setHeader('Content-Length', size.toString());
-  //   res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  //   res.status(HttpStatus.OK);
-
-  //   const stream = createReadStream(path);
-  //   stream.on('open', () => {
-  //     // шууд дамжуулна
-  //     stream.pipe(res);
-  //   });
-  //   stream.on('error', (err) => {
-  //     // stream алдаа гарвал 500 хэлээд хаая
-  //     if (!res.headersSent) res.status(500);
-  //     res.end(`Stream error: ${err?.message ?? 'unknown'}`);
-  //   });
-  // }
 
   @Public()
   @Get('exam/:code')
@@ -229,6 +202,70 @@ export class ExamController {
   @PQ(['assessment', 'email', 'startDate', 'endDate'])
   findByAdmin(@Pagination() pg: PaginationDto) {
     return this.examService.findByAdmin(pg);
+  }
+
+  @Roles(Role.admin, Role.tester, Role.super_admin)
+  @Get('allNew')
+  @ApiQuery({ name: 'page', required: true, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: true, type: Number, example: 10 })
+  @ApiQuery({ name: 'assessment', required: false, type: Number })
+  @ApiQuery({ name: 'buyer', required: false, type: Number })
+  @ApiQuery({ name: 'email', required: false, type: String })
+  @ApiQuery({ name: 'examstatus', required: false, enum: [10, 20, 30] })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiQuery({
+    name: 'sortBy',
+    required: true,
+    enum: [
+      'createdAt',
+      'userStartDate',
+      'userEndDate',
+      'startDate',
+      'endDate',
+      'email',
+      'firstname',
+      'lastname',
+      'code',
+      'visible',
+      'assessmentName',
+      'buyerOrganizationName',
+      'examstatus',
+    ],
+    example: 'createdAt',
+  })
+  @ApiQuery({
+    name: 'sortDir',
+    required: true,
+    enum: ['ASC', 'DESC'],
+    example: 'DESC',
+  })
+  findAllNew(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('assessment') assessment?: string,
+    @Query('buyer') buyer?: string,
+    @Query('email') email?: string,
+    @Query('examstatus') examstatus?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('sortBy') sortBy: string = 'createdAt',
+    @Query('sortDir') sortDir: string = 'DESC',
+  ) {
+    return this.examService.findAllNew(
+      +page,
+      +limit,
+      {
+        assessment: assessment ? +assessment : undefined,
+        buyer: buyer ? +buyer : undefined,
+        email,
+        examstatus: examstatus ? +examstatus : undefined,
+        startDate,
+        endDate,
+      },
+      sortBy as any,
+      sortDir.toUpperCase() as 'ASC' | 'DESC',
+    );
   }
 
   @Post('user')

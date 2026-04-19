@@ -113,6 +113,283 @@ export class ExamDao {
     });
   };
 
+  findAllNew = async (
+    page: number,
+    limit: number,
+    filters: {
+      assessment?: number;
+      buyer?: number;
+      email?: string;
+      examstatus?: number;
+      startDate?: string;
+      endDate?: string;
+    },
+    sortBy:
+      | 'createdAt'
+      | 'userStartDate'
+      | 'userEndDate'
+      | 'startDate'
+      | 'endDate'
+      | 'email'
+      | 'firstname'
+      | 'lastname'
+      | 'code'
+      | 'visible'
+      | 'assessmentName'
+      | 'buyerOrganizationName'
+      | 'examstatus' = 'createdAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) => {
+    const p = +page || 1;
+    const l = +limit || 10;
+
+    const examStatusCase = `
+    CASE
+      WHEN e."userStartDate" IS NOT NULL AND e."userEndDate" IS NULL THEN 10
+      WHEN e."userStartDate" IS NOT NULL AND e."userEndDate" IS NOT NULL THEN 20
+      WHEN e."userStartDate" IS NULL AND e."userEndDate" IS NULL THEN 30
+      ELSE 30
+    END
+  `;
+
+    const safeSortMap: Record<string, string> = {
+      createdAt: 'e."createdAt"',
+      userStartDate: 'e."userStartDate"',
+      userEndDate: 'e."userEndDate"',
+      startDate: 'e."startDate"',
+      endDate: 'e."endDate"',
+      email: 'e.email',
+      firstname: 'e.firstname',
+      lastname: 'e.lastname',
+      code: 'e.code',
+      visible: 'e.visible',
+      assessmentName: 'a.name',
+      buyerOrganizationName: 'b."organizationName"',
+      examstatus: examStatusCase,
+    };
+
+    const orderBy = safeSortMap[sortBy] || 'e."createdAt"';
+
+    const query = this.db
+      .createQueryBuilder('e')
+      .select([
+        'e.*',
+        `a.id AS "assessmentId"`,
+        `a.name AS "assessmentName"`,
+
+        `b.id AS "buyerUserId"`,
+        `b."organizationName" AS "buyerOrganizationName"`,
+        `b.firstname AS "buyerFirstName"`,
+        `b.lastname AS "buyerLastName"`,
+
+        `${examStatusCase} AS "examstatus"`,
+
+        `
+      CASE
+        WHEN b."organizationName" IS NOT NULL
+          AND TRIM(b."organizationName") <> ''
+        THEN true
+        ELSE false
+      END AS "isInvited"
+      `,
+
+        `
+      CASE
+        WHEN b."organizationName" IS NOT NULL
+          AND TRIM(b."organizationName") <> ''
+        THEN e.firstname
+        ELSE NULL
+      END AS "invitedFirstName"
+      `,
+
+        `
+      CASE
+        WHEN b."organizationName" IS NOT NULL
+          AND TRIM(b."organizationName") <> ''
+        THEN e.lastname
+        ELSE NULL
+      END AS "invitedLastName"
+      `,
+
+        `r.point AS "point"`,
+        `r.result AS "result"`,
+        `r.value AS "value"`,
+        `r.segment AS "segment"`,
+      ])
+      .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
+      .leftJoin('userService', 'us', 'us.id = e."serviceId"')
+      .leftJoin('users', 'b', 'b.id = us."userId"')
+      .leftJoin('result', 'r', 'r.code = e.code');
+
+    if (filters.assessment) {
+      query.andWhere('e."assessmentId" = :assessment', {
+        assessment: filters.assessment,
+      });
+    }
+
+    if (filters.buyer) {
+      query.andWhere('b.id = :buyer', {
+        buyer: filters.buyer,
+      });
+    }
+
+    if (filters.email) {
+      query.andWhere('LOWER(e.email) LIKE LOWER(:email)', {
+        email: `%${filters.email}%`,
+      });
+    }
+
+    if (filters.examstatus) {
+      query.andWhere(`${examStatusCase} = :examstatus`, {
+        examstatus: filters.examstatus,
+      });
+    }
+
+    if (filters.startDate && filters.endDate) {
+      query.andWhere('e."createdAt" BETWEEN :startDate AND :endDate', {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      });
+    }
+
+    const total = await query.getCount();
+
+    query
+      .orderBy(orderBy, sortDir)
+      .limit(l)
+      .offset((p - 1) * l);
+
+    const rows = await query.getRawMany();
+
+    const items = rows.map((row) => ({
+      ...row,
+      assessmentId: row.assessmentId ? +row.assessmentId : null,
+      buyerUserId: row.buyerUserId ? +row.buyerUserId : null,
+      examstatus: row.examstatus ? +row.examstatus : 30,
+      isInvited:
+        row.isInvited === true ||
+        row.isInvited === 'true' ||
+        row.isInvited === 1 ||
+        row.isInvited === '1',
+      point: row.point ?? null,
+      result: row.result ?? null,
+      value: row.value ?? null,
+      segment: row.segment ?? null,
+    }));
+
+    const assessmentsRaw = await this.db
+      .createQueryBuilder('e')
+      .select('a.id', 'id')
+      .addSelect('a.name', 'name')
+      .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
+      .where('e."assessmentId" IS NOT NULL')
+      .groupBy('a.id')
+      .addGroupBy('a.name')
+      .orderBy('a.name', 'ASC')
+      .getRawMany();
+
+    const assessments = assessmentsRaw.map((a) => ({
+      id: +a.id,
+      name: a.name,
+    }));
+
+    const buyersRaw = await this.db
+      .createQueryBuilder('e')
+      .select('b.id', 'userId')
+      .addSelect('b."organizationName"', 'organizationName')
+      .leftJoin('userService', 'us', 'us.id = e."serviceId"')
+      .leftJoin('users', 'b', 'b.id = us."userId"')
+      .where('b.id IS NOT NULL')
+      .andWhere('b."organizationName" IS NOT NULL')
+      .andWhere(`TRIM(b."organizationName") <> ''`)
+      .groupBy('b.id')
+      .addGroupBy('b."organizationName"')
+      .orderBy('b."organizationName"', 'ASC')
+      .getRawMany();
+
+    const buyers = buyersRaw.map((b) => ({
+      userId: +b.userId,
+      organizationName: b.organizationName,
+    }));
+
+    const countsRaw = await this.db
+      .createQueryBuilder('e')
+      .select([
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= CURRENT_DATE
+         AND e."createdAt" < CURRENT_DATE + INTERVAL '1 day'
+        THEN 1 ELSE 0
+      END
+    ) AS "today"
+    `,
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= CURRENT_DATE - INTERVAL '1 day'
+         AND e."createdAt" < CURRENT_DATE
+        THEN 1 ELSE 0
+      END
+    ) AS "yesterday"
+    `,
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= date_trunc('week', CURRENT_DATE)
+         AND e."createdAt" < date_trunc('week', CURRENT_DATE) + INTERVAL '7 day'
+        THEN 1 ELSE 0
+      END
+    ) AS "thisWeek"
+    `,
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= date_trunc('week', CURRENT_DATE) - INTERVAL '7 day'
+         AND e."createdAt" < date_trunc('week', CURRENT_DATE)
+        THEN 1 ELSE 0
+      END
+    ) AS "lastWeek"
+    `,
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= date_trunc('month', CURRENT_DATE)
+         AND e."createdAt" < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'
+        THEN 1 ELSE 0
+      END
+    ) AS "thisMonth"
+    `,
+        `
+    SUM(
+      CASE
+        WHEN e."createdAt" >= date_trunc('month', CURRENT_DATE) - INTERVAL '1 month'
+         AND e."createdAt" < date_trunc('month', CURRENT_DATE)
+        THEN 1 ELSE 0
+      END
+    ) AS "lastMonth"
+    `,
+      ])
+      .getRawOne();
+
+    const counts = {
+      today: +(countsRaw?.today || 0),
+      yesterday: +(countsRaw?.yesterday || 0),
+      thisWeek: +(countsRaw?.thisWeek || 0),
+      lastWeek: +(countsRaw?.lastWeek || 0),
+      thisMonth: +(countsRaw?.thisMonth || 0),
+      lastMonth: +(countsRaw?.lastMonth || 0),
+    };
+
+    return {
+      items,
+      total,
+      assessments,
+      buyers,
+      counts,
+    };
+  };
+
   findOne = async (id: number) => {
     return await this.db.findOne({
       where: {
