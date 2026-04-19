@@ -448,6 +448,53 @@ export class ExamService extends BaseService {
       total: count,
     };
   }
+
+  public async findAllNew(
+    page: number,
+    limit: number,
+    filters: {
+      assessment?: number;
+      buyer?: number;
+      email?: string;
+      examstatus?: number;
+      startDate?: string;
+      endDate?: string;
+    },
+    sortBy:
+      | 'createdAt'
+      | 'userStartDate'
+      | 'userEndDate'
+      | 'startDate'
+      | 'endDate'
+      | 'email'
+      | 'firstname'
+      | 'lastname'
+      | 'code'
+      | 'visible'
+      | 'assessmentName'
+      | 'buyerOrganizationName'
+      | 'examstatus' = 'createdAt',
+    sortDir: 'ASC' | 'DESC' = 'DESC',
+  ) {
+    const { items, total, assessments, buyers, counts } =
+      await this.dao.findAllNew(page, limit, filters, sortBy, sortDir);
+
+    return {
+      data: items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      meta: {
+        assessments,
+        buyers,
+        counts,
+      },
+    };
+  }
+
   async deleteResult(code: string) {
     await this.resultDao.delete(code);
   }
