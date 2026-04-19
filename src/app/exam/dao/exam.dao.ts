@@ -162,6 +162,72 @@ export class ExamDao {
       },
     });
   };
+
+  private applyUserExamSort(
+    sortBy?: string,
+    sortDir?: string,
+  ): { order: Record<string, 'ASC' | 'DESC'>; sortBy: string; sortDir: 'ASC' | 'DESC' } {
+    const direction: 'ASC' | 'DESC' =
+      `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const allowedSorts: Record<string, string> = {
+      createdAt: 'exam.createdAt',
+      assessmentName: 'assessment.name',
+      startDate: 'exam.startDate',
+      endDate: 'exam.endDate',
+      userStartDate: 'exam.userStartDate',
+      userEndDate: 'exam.userEndDate',
+    };
+    const normalizedSortBy = allowedSorts[sortBy] ? sortBy : 'createdAt';
+
+    return {
+      order: {
+        [allowedSorts[normalizedSortBy]]: direction,
+      },
+      sortBy: normalizedSortBy,
+      sortDir: direction,
+    };
+  }
+
+  findInvitedByUser = async (
+    userId: number,
+    email: string,
+    assId: number,
+    pg: PaginationDto,
+  ) => {
+    const page = Math.max(+(pg?.page ?? 1), 1);
+    const limit = Math.max(+(pg?.limit ?? 20), 1);
+    const normalizedSort = this.applyUserExamSort(pg?.sortBy, pg?.sortDir);
+    const query = this.db
+      .createQueryBuilder('exam')
+      .leftJoinAndSelect('exam.assessment', 'assessment')
+      .leftJoinAndSelect('exam.service', 'service')
+      .leftJoinAndSelect('service.user', 'serviceUser')
+      .where('exam.email = :email', { email })
+      .andWhere('serviceUser.id != :userId', { userId });
+
+    if (assId !== 0) {
+      query.andWhere('assessment.id = :assId', { assId });
+    }
+
+    const sortColumn = Object.keys(normalizedSort.order)[0];
+    query.orderBy(sortColumn, normalizedSort.sortDir);
+    query.addOrderBy('exam.createdAt', 'DESC');
+
+    const [data, total] = await query
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      count: data.length,
+      total,
+      page,
+      limit,
+      sortBy: normalizedSort.sortBy,
+      sortDir: normalizedSort.sortDir,
+    };
+  };
   findByAdmin = async (pg: PaginationDto) => {
     const { assessment, page, limit, email, startDate, endDate } = pg;
 

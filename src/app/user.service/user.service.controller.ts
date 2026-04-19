@@ -126,6 +126,22 @@ export class UserServiceController {
     return this.userServiceService.findAll(pg);
   }
   @PQ(['sortBy', 'sortDir'])
+  @Get('user/:id/invited')
+  @ApiParam({ name: 'id' })
+  findInvitedById(
+    @Param('id') id: string,
+    @Pagination() pg: PaginationDto,
+    @Request() { user },
+  ) {
+    return this.userServiceService.findInvitedByUser(
+      +id,
+      +user['id'],
+      user['email'],
+      pg,
+    );
+  }
+
+  @PQ(['sortBy', 'sortDir'])
   @Get('user/:id')
   @ApiParam({ name: 'id' })
   findById(

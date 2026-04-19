@@ -236,6 +236,12 @@ export class UserServiceService extends BaseService {
     });
   }
 
+  private async getResultMap(codes: string[]) {
+    return new Map(
+      (await this.result.findByCodes(codes)).map((item) => [item.code, item]),
+    );
+  }
+
   public async findByUser(
     assId: number,
     id: number,
@@ -244,15 +250,8 @@ export class UserServiceService extends BaseService {
   ) {
     const { data, count, total, page, limit, sortBy, sortDir } =
       await this.dao.findByUser(assId, id, 0, pg);
-    const exam = await this.examDao.findByUser([], email, assId);
-    const resultCodes = [
-      ...data.flatMap((item) => (item.exams ?? []).map((itemExam) => itemExam.code)),
-      ...exam.map((item) => item.code),
-    ];
-    const resultMap = new Map(
-      (
-        await this.result.findByCodes(resultCodes)
-      ).map((item) => [item.code, item]),
+    const resultMap = await this.getResultMap(
+      data.flatMap((item) => (item.exams ?? []).map((itemExam) => itemExam.code)),
     );
 
     const res = data.map((response) => {
@@ -269,23 +268,6 @@ export class UserServiceService extends BaseService {
       };
     });
 
-    const usedExamCodes = new Set(
-      res.flatMap((item) => item.exams.map((itemExam) => itemExam.code)),
-    );
-
-    const filtered = exam.filter(
-      (item) => !usedExamCodes.has(item.code),
-    );
-
-    const invited = this.sortExamLikeItems(
-      filtered.map((item) => ({
-        ...item,
-        result: resultMap.get(item.code) ?? null,
-      })),
-      sortBy,
-      sortDir,
-    );
-
     return {
       data: res,
       count,
@@ -294,7 +276,6 @@ export class UserServiceService extends BaseService {
       limit,
       sortBy,
       sortDir,
-      invited,
     };
     // const exams = await this.examDao.findAll(assId, email);
     // const res = [];
@@ -308,6 +289,34 @@ export class UserServiceService extends BaseService {
     //   });
     // }
     // return res;
+  }
+
+  public async findInvitedByUser(
+    assId: number,
+    id: number,
+    email: string,
+    pg: PaginationDto,
+  ) {
+    const { data, count, total, page, limit, sortBy, sortDir } =
+      await this.examDao.findInvitedByUser(id, email, assId, pg);
+    const resultMap = await this.getResultMap(data.map((item) => item.code));
+
+    return {
+      data: this.sortExamLikeItems(
+        data.map((item) => ({
+          ...item,
+          result: resultMap.get(item.code) ?? null,
+        })),
+        sortBy,
+        sortDir,
+      ),
+      count,
+      total,
+      page,
+      limit,
+      sortBy,
+      sortDir,
+    };
   }
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {
