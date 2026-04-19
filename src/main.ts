@@ -62,6 +62,7 @@ async function bootstrap() {
   });
   app.useGlobalInterceptors(new LoggingInterceptor());
   const port = process.env.CORE_PORT || 5000;
+  // const port = 5050
   console.log(port)
   await app.listen(port, '0.0.0.0');
 
