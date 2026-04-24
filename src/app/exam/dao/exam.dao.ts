@@ -165,6 +165,7 @@ export class ExamDao {
       visible: 'e.visible',
       assessmentName: 'a.name',
       assessmentType: 'a.type',
+      totalPoint: 'a.totalPoint',
       buyerOrganizationName: 'b."organizationName"',
       examstatus: examStatusCase,
     };
@@ -178,6 +179,7 @@ export class ExamDao {
         `a.id AS "assessmentId"`,
         `a.name AS "assessmentName"`,
         `a.type AS "assessmentType"`,
+        `a.totalPoint AS "totalPoint"`,
         `b.id AS "buyerUserId"`,
         `b."organizationName" AS "buyerOrganizationName"`,
         `b.firstname AS "buyerFirstName"`,
