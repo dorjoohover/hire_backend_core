@@ -164,6 +164,7 @@ export class ExamDao {
       code: 'e.code',
       visible: 'e.visible',
       assessmentName: 'a.name',
+      assessmentType: 'a.type',
       buyerOrganizationName: 'b."organizationName"',
       examstatus: examStatusCase,
     };
@@ -176,7 +177,7 @@ export class ExamDao {
         'e.*',
         `a.id AS "assessmentId"`,
         `a.name AS "assessmentName"`,
-
+        `a.type AS "assessmentType"`,
         `b.id AS "buyerUserId"`,
         `b."organizationName" AS "buyerOrganizationName"`,
         `b.firstname AS "buyerFirstName"`,
@@ -443,7 +444,11 @@ export class ExamDao {
   private applyUserExamSort(
     sortBy?: string,
     sortDir?: string,
-  ): { order: Record<string, 'ASC' | 'DESC'>; sortBy: string; sortDir: 'ASC' | 'DESC' } {
+  ): {
+    order: Record<string, 'ASC' | 'DESC'>;
+    sortBy: string;
+    sortDir: 'ASC' | 'DESC';
+  } {
     const direction: 'ASC' | 'DESC' =
       `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     const allowedSorts: Record<string, string> = {
