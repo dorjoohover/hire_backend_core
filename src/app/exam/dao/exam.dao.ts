@@ -222,7 +222,7 @@ export class ExamDao {
       .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
       .leftJoin('userService', 'us', 'us.id = e."serviceId"')
       .leftJoin('users', 'b', 'b.id = us."userId"')
-      .leftJoin('result', 'r', 'r.code = e.code');
+      .leftJoin('result', 'r', 'r.code = e.code AND r."parentId" IS NULL');
 
     if (filters.assessment) {
       query.andWhere('e."assessmentId" = :assessment', {
