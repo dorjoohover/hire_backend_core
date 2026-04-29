@@ -6,7 +6,6 @@ import {
   Like,
   Not,
   Repository,
-  SelectQueryBuilder,
 } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
@@ -115,53 +114,31 @@ export class UserServiceDao {
     });
   };
 
-  private applyUserSort(
-    query: SelectQueryBuilder<UserServiceEntity>,
-    sortBy?: string,
-    sortDir?: string,
-  ) {
-    const direction: 'ASC' | 'DESC' =
-      `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-    const allowedSorts: Record<string, string> = {
-      createdAt: 'service.createdAt',
-      price: 'service.price',
-      count: 'service.count',
-      usedUserCount: 'service.usedUserCount',
-      status: 'service.status',
-      assessmentName: 'assessment.name',
-    };
-    const sortColumn = allowedSorts[sortBy] ?? allowedSorts.createdAt;
+  findByUser = async (assId: number, id: number, service: number) => {
+    const query = this.db
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.assessment', 'assessment')
+      .leftJoinAndSelect('service.exams', 'exams')
+      .leftJoinAndSelect('service.user', 'user')
+      .where('user.id = :userId', { userId: id });
 
-    query.orderBy(sortColumn, direction);
+    if (service !== 0) {
+      query.andWhere('service.id = :serviceId', { serviceId: service });
+    }
+
+    if (assId !== 0) {
+      query.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
+    }
+
     query.addOrderBy('exams.userEndDate', 'DESC');
     query.addOrderBy('exams.createdAt', 'DESC');
 
-    return {
-      sortBy: allowedSorts[sortBy] ? sortBy : 'createdAt',
-      sortDir: direction,
-    };
-  }
+    const [data, count] = await query.getManyAndCount();
 
-  findByUser = async (assId: number, id: number, service: number) => {
-    const [data, count] = await this.db.findAndCount({
-      where: {
-        id: service == 0 ? Not(IsNull()) : service,
-        user: {
-          id: id,
-        },
-        assessment: {
-          id: assId == 0 ? Not(assId) : assId,
-        },
-      },
-      order: {
-        exams: {
-          userEndDate: 'desc',
-        },
-      },
-      relations: ['assessment', 'exams', 'user'],
-    });
-    const total = await this.db.count();
-    return { data, count, total };
-  
+    return {
+      data,
+      count: data.length,
+      total: count,
+    };
   };
 }

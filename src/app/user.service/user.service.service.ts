@@ -248,34 +248,53 @@ export class UserServiceService extends BaseService {
     email: string,
     pg: PaginationDto,
   ) {
-    const { data, count, total, page, limit, sortBy, sortDir } =
-      await this.dao.findByUser(assId, id, 0, pg);
-    const resultMap = await this.getResultMap(
-      data.flatMap((item) => (item.exams ?? []).map((itemExam) => itemExam.code)),
+    const { data: ownedServices, count, total } = await this.dao.findByUser(
+      assId,
+      id,
+      0,
     );
+    const invitedExams = await this.examDao.findByUser([], email, assId);
 
-    const res = data.map((response) => {
-      const { exams, user, ...body } = response;
-      const examResults = (exams ?? []).map((itemExam) => ({
-        ...itemExam,
-        result: resultMap.get(itemExam.code) ?? null,
-      }));
+    const ownedExamCodes = new Set<string>();
+    for (const service of ownedServices) {
+      for (const exam of service.exams ?? []) {
+        if (exam.code) {
+          ownedExamCodes.add(exam.code);
+        }
+      }
+    }
+
+    const invited = invitedExams.filter((exam) => !ownedExamCodes.has(exam.code));
+    const resultMap = await this.getResultMap([
+      ...ownedExamCodes,
+      ...invited.map((exam) => exam.code),
+    ]);
+
+    const data = ownedServices.map((service) => {
+      const { exams, user, ...body } = service;
 
       return {
         ...body,
         user,
-        exams: this.sortExamLikeItems(examResults, sortBy, sortDir),
+        exams: (exams ?? []).map((exam) => ({
+          ...exam,
+          result: resultMap.get(exam.code) ?? null,
+        })),
       };
     });
 
     return {
-      data: res,
+      data,
       count,
       total,
-      page,
-      limit,
-      sortBy,
-      sortDir,
+      page: pg?.page,
+      limit: pg?.limit,
+      sortBy: pg?.sortBy,
+      sortDir: pg?.sortDir,
+      invited: invited.map((exam) => ({
+        ...exam,
+        result: resultMap.get(exam.code) ?? null,
+      })),
     };
     // const exams = await this.examDao.findAll(assId, email);
     // const res = [];
