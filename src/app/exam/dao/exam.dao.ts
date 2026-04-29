@@ -164,6 +164,8 @@ export class ExamDao {
       code: 'e.code',
       visible: 'e.visible',
       assessmentName: 'a.name',
+      assessmentType: 'a.type',
+      totalPoint: 'a.totalPoint',
       buyerOrganizationName: 'b."organizationName"',
       examstatus: examStatusCase,
     };
@@ -176,7 +178,8 @@ export class ExamDao {
         'e.*',
         `a.id AS "assessmentId"`,
         `a.name AS "assessmentName"`,
-
+        `a.type AS "assessmentType"`,
+        `a.totalPoint AS "totalPoint"`,
         `b.id AS "buyerUserId"`,
         `b."organizationName" AS "buyerOrganizationName"`,
         `b.firstname AS "buyerFirstName"`,
@@ -219,7 +222,7 @@ export class ExamDao {
       .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
       .leftJoin('userService', 'us', 'us.id = e."serviceId"')
       .leftJoin('users', 'b', 'b.id = us."userId"')
-      .leftJoin('result', 'r', 'r.code = e.code');
+      .leftJoin('result', 'r', 'r.code = e.code AND r."parentId" IS NULL');
 
     if (filters.assessment) {
       query.andWhere('e."assessmentId" = :assessment', {
@@ -443,7 +446,11 @@ export class ExamDao {
   private applyUserExamSort(
     sortBy?: string,
     sortDir?: string,
-  ): { order: Record<string, 'ASC' | 'DESC'>; sortBy: string; sortDir: 'ASC' | 'DESC' } {
+  ): {
+    order: Record<string, 'ASC' | 'DESC'>;
+    sortBy: string;
+    sortDir: 'ASC' | 'DESC';
+  } {
     const direction: 'ASC' | 'DESC' =
       `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
     const allowedSorts: Record<string, string> = {
