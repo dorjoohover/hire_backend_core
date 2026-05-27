@@ -136,6 +136,18 @@ export class QuestionDao {
     return await this.db.query(query);
   };
 
+  // Олон асуултын min/max-ийг ганц query-ээр (batch preload).
+  findMinMaxByIds = async (
+    ids: number[],
+  ): Promise<{ id: number; minValue: number; maxValue: number }[]> => {
+    if (!ids.length) return [];
+    return await this.db.query(
+      `SELECT id, "minValue" AS "minValue", "maxValue" AS "maxValue"
+       FROM question WHERE id = ANY($1)`,
+      [ids],
+    );
+  };
+
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };

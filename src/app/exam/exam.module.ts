@@ -9,6 +9,7 @@ import { QuestionService } from '../question/question.service';
 import { QuestionAnswerDao } from '../question/dao/question.answer.dao';
 import { QuestionAnswerMatrixDao } from '../question/dao/question.answer.matrix.dao';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
+import { QuestionRuleDao } from '../question/dao/question.rule.dao';
 import { FormuleService } from '../formule/formule.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { AuthService } from 'src/auth/auth.service';
@@ -56,6 +57,7 @@ import { ReportLogDao } from '../report/report.log.dao';
     FileService,
     AuthService,
     QuestionAnswerCategoryDao,
+    QuestionRuleDao,
   ],
   exports: [ExamService, ExamDao],
 })

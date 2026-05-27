@@ -43,32 +43,159 @@ export class UserAnswerService extends BaseService {
     device: string,
     user?: any,
   ) {
-    const res = [];
     const message = (msg: string) =>
       new HttpException(msg, HttpStatus.BAD_REQUEST);
 
-    const startAll = performance.now(); // ✅ нийт хугацааг эхлүүлэх
+    const startAll = performance.now();
 
     try {
       // Validate input
       if (!dto.data?.length) throw message('Асуултууд ирсэнгүй');
 
-      console.time('⏱ examDao.findByCodeOnly');
       const exam = await this.examDao.findByCodeOnly(dto.data[0].code);
-      console.timeEnd('⏱ examDao.findByCodeOnly');
-
       if (!exam) throw message('Тест олдсонгүй');
+
+      const code = dto.data[0].code;
+
+      // ---- Бүх лавлах (reference) датаг урьдчилан БАГЦААР ачаална.
+      // Өмнө нь асуулт/хариулт бүрд тус тусдаа raw SQL явуулдаг (N+1) байсан.
+      const questionIds = [
+        ...new Set(dto.data.map((d) => +d.question).filter(Boolean)),
+      ];
+      const categoryIds = [
+        ...new Set(dto.data.map((d) => +d.questionCategory).filter(Boolean)),
+      ];
+      const answerIds = [
+        ...new Set(
+          dto.data
+            .flatMap((d) => d.answers ?? [])
+            .map((a) => a.answer)
+            .filter((x) => x != null)
+            .map(Number),
+        ),
+      ];
+      const matrixIds = [
+        ...new Set(
+          dto.data
+            .flatMap((d) => d.answers ?? [])
+            .map((a) => a.matrix)
+            .filter((x) => x != null)
+            .map(Number),
+        ),
+      ];
+
+      const [
+        questionRows,
+        answerMetaRows,
+        matrixMetaRows,
+        categoryRows,
+        existingRows,
+      ] = await Promise.all([
+        this.questionDao.findMinMaxByIds(questionIds),
+        this.questionAnswerDao.findMetaByIds(answerIds),
+        this.questionAnswerMatrixDao.findMetaByIds(matrixIds),
+        this.questionCategoryDao.findIsCalculatedByIds(categoryIds),
+        this.dao.findExistingByCode(code),
+      ]);
+
+      const questionMap = new Map(questionRows.map((q) => [Number(q.id), q]));
+      const answerMetaMap = new Map(
+        answerMetaRows.map((a) => [Number(a.id), a]),
+      );
+      const matrixMetaMap = new Map(
+        matrixMetaRows.map((m) => [Number(m.id), m]),
+      );
+      const catCalcMap = new Map(
+        categoryRows.map((c) => [Number(c.id), c.is_calculated]),
+      );
+
+      // --- Хэрэглэгч буцаж очоод хариултаа сольсон тохиолдолд хуучин мөрүүд DB-д
+      // үлдэхгүй байх. Энэ submit-д ирсэн асуулт бүрт зөвхөн "одоогийн сонгосон"
+      // (answer/matrix) хослолыг хадгална; өмнө хадгалагдсан ч одоо сонгоогүй
+      // мөрүүдийг устгана.
+      const submittedQuestionIds = new Set<number>();
+      const submittedKeys = new Set<string>();
+      const buildKey = (qid: number, aId: any, mId: any) =>
+        `${qid}::${aId == null ? 'null' : Number(aId)}::${mId == null ? 'null' : Number(mId)}`;
       for (const d of dto.data) {
-        const startQuestionLoop = performance.now();
+        const qid = +d.question;
+        submittedQuestionIds.add(qid);
+        if (!d.answers || d.answers.length === 0) {
+          submittedKeys.add(buildKey(qid, null, null));
+        } else {
+          for (const a of d.answers) {
+            submittedKeys.add(buildKey(qid, a.answer ?? null, a.matrix ?? null));
+          }
+        }
+      }
+      const obsoleteIds: number[] = [];
+      const remainingExisting = existingRows.filter((r) => {
+        const qid = Number(r.questionId);
+        if (!submittedQuestionIds.has(qid)) return true; // энэ submit-д огт ороогүй — хадгална
+        const k = buildKey(qid, r.answerId, r.matrixId);
+        if (submittedKeys.has(k)) return true; // одоо ч сонгогдсон хэвээр — хадгална
+        obsoleteIds.push(Number(r.id));
+        return false; // өмнө сонгосон ч одоо сонгоогүй — устгана
+      });
+
+      // Code-ийн өмнө бүртгэгдсэн хариултууд (dedup-д).
+      const existByAnswer = new Map<number, any>();
+      const existByMatrix = new Map<number, any>();
+      const existByWriteKey = new Map<string, any>();
+      for (const r of remainingExisting) {
+        if (r.answerId != null) existByAnswer.set(Number(r.answerId), r);
+        if (r.matrixId != null) existByMatrix.set(Number(r.matrixId), r);
+        const wk =
+          r.matrixId != null
+            ? `m:${r.questionId}:${r.matrixId}`
+            : `a:${r.questionId}:${r.answerId ?? 'null'}`;
+        existByWriteKey.set(wk, r);
+      }
+
+      const newBodies: CreateUserAnswerDto[] = [];
+      const newBodyIndexByKey = new Map<string, number>();
+      const updates: {
+        id: number;
+        point: number;
+        value?: string;
+        correct?: boolean;
+        flag?: boolean;
+        ip?: string;
+        device?: string;
+      }[] = [];
+
+      const pushBody = (key: string, body: CreateUserAnswerDto) => {
+        const existing = existByWriteKey.get(key);
+        if (existing) {
+          // Дахин хариулсан — оноо болон value/correct/flag/ip/device-ийг хамтад
+          // нь шинэчилнэ. Урьд нь зөвхөн point шинэчилдэгээс болж текст хариултын
+          // солих үед value хуучин хэвээрээ үлддэг алдаа байсан.
+          const p = Number(body.point);
+          updates.push({
+            id: existing.id,
+            point: Number.isFinite(p) ? p : 0,
+            value: body.value,
+            correct: body.correct,
+            flag: body.flag,
+            ip: body.ip,
+            device: body.device,
+          });
+          return;
+        }
+        // Нэг submission дотор ижил key давтагдвал сүүлийнх нь дарж бичнэ.
+        if (newBodyIndexByKey.has(key)) {
+          newBodies[newBodyIndexByKey.get(key)] = body;
+        } else {
+          newBodyIndexByKey.set(key, newBodies.length);
+          newBodies.push(body);
+        }
+      };
+
+      for (const d of dto.data) {
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
-        console.time(`⏱ question ${d.question} fetch`);
-        const question = await this.questionDao.query(
-          `select "minValue", "maxValue"  from question where id = ${d.question}`,
-        );
-        console.timeEnd(`⏱ question ${d.question} fetch`);
-
+        const question = questionMap.get(+d.question);
         if (!question) throw message('Асуулт олдсонгүй');
 
         // No answer case
@@ -87,98 +214,82 @@ export class UserAnswerService extends BaseService {
             exam: exam.id,
             device,
           };
-
-          console.time(`⏱ dao.create (no answer q=${d.question})`);
-          const r = await this.dao.create(body);
-          console.timeEnd(`⏱ dao.create (no answer q=${d.question})`);
-
-          res.push(r);
+          pushBody(`a:${+d.question}:null`, body);
           continue;
         }
 
-        // Multiple answers
-        const code = dto.data[0].code;
-        const answers = d.answers;
-        const category = await this.questionCategoryDao.findOne(
-          d.questionCategory,
-        );
-        const is_calculated = category.is_calculated;
-        for (const answer of answers) {
-          const loopStart = performance.now();
+        const is_calculated = catCalcMap.get(+d.questionCategory);
 
-          const result = answer.matrix
-            ? await this.dao.findByAnswerMatrixId(answer.matrix, code)
-            : await this.dao.findByAnswerId(answer.answer, code);
-          if (result && is_calculated) continue;
-          let answerCategory = answer.matrix
-            ? await this.questionAnswerMatrixDao.query(
-                `select "categoryId" from "questionAnswerMatrix" where id = ${answer.matrix}`,
-              )
+        for (const answer of d.answers) {
+          // Урьд нь "result && is_calculated => continue" гэх шалгуур байсныг
+          // арилгав. Энэ нь slider зэрэг ижил answer-ийн point солих үед DB
+          // дэх онооны шинэчлэлтийг хааж байсан. dedup-ийг доорх pushBody
+          // (existByWriteKey)-аар оновчтой шийднэ — байгаа бол update, байхгүй
+          // бол insert.
+          const answerCategory = answer.matrix
+            ? matrixMetaMap.get(Number(answer.matrix))
             : !answer.answer && !is_calculated
               ? null
-              : await this.questionAnswerDao.query(
-                  `select reverse, negative, correct, "categoryId" from "questionAnswer" where id = ${answer.answer}`,
-                );
+              : answerMetaMap.get(Number(answer.answer));
 
-          answerCategory = answerCategory?.[0];
           if (
             !answer?.answer &&
             answer?.answer == null &&
             !answer?.point &&
             !answer?.matrix &&
+            !answer?.value &&
             is_calculated
           )
             continue;
-          let point: number;
 
+          let point: number;
           if (
             !answer.matrix &&
-            (answerCategory as QuestionAnswerEntity)?.reverse &&
+            (answerCategory as any)?.reverse &&
             is_calculated
           ) {
             point =
-              Number(question?.maxValue ?? question[0]?.maxValue ?? 0) -
+              Number(question.maxValue ?? 0) -
               Number(answer.point ?? 0) +
-              Number(question?.minValue ?? question[0]?.minValue ?? 0);
+              Number(question.minValue ?? 0);
           } else {
-            let p;
-
+            let p: any;
             if (answer.point != null) {
               p = answer.point;
             } else if (answer.matrix) {
-              const matrixResult = await this.questionAnswerMatrixDao.query(
-                `SELECT point FROM "questionAnswerMatrix" WHERE id = ${answer.matrix}`,
-              );
-              p = matrixResult[0]?.point;
+              p = matrixMetaMap.get(Number(answer.matrix))?.point;
             } else {
               if (!answer.answer && !is_calculated) {
                 p = null;
               } else {
-                const answerResult = await this.questionAnswerDao.query(
-                  `SELECT point FROM "questionAnswer" WHERE id = ${answer.answer}`,
-                );
-                p = answerResult[0]?.point;
+                p = answerMetaMap.get(Number(answer.answer))?.point;
               }
             }
-
-            point = typeof p === 'number' ? +p : +p;
+            point = +p;
           }
 
-          if ((answerCategory as QuestionAnswerEntity)?.negative) {
+          if ((answerCategory as any)?.negative) {
             point = -point;
+          }
+
+          // Текст/info хариултын point Infinity/NaN болохоос сэргийлж null болгоно
+          // (Postgres numeric багана Infinity/NaN авдаг тул урьд нь "Infinity"-ээр
+          // хадгалагдаж байсан).
+          if (!Number.isFinite(point)) {
+            point = null as any;
           }
 
           const body: CreateUserAnswerDto = {
             ...d,
             startDate: dto.startDate,
-            answerCategory: answerCategory?.categoryId ?? null,
+            answerCategory: (answerCategory as any)?.categoryId ?? null,
             minPoint: question.minValue,
             maxPoint: question.maxValue,
             point,
             answer: answer.answer,
             correct: answer.matrix
               ? false
-              : ((answerCategory as QuestionAnswerEntity)?.correct ?? false),
+              : ((answerCategory as any)?.correct ?? false),
             matrix: answer.matrix,
             value: answer.value,
             ip,
@@ -186,33 +297,21 @@ export class UserAnswerService extends BaseService {
             device,
           };
 
-          console.time(`⏱ dao.create (q=${d.question}, a=${answer.answer})`);
-          const r = await this.dao.create(body);
-          console.timeEnd(
-            `⏱ dao.create (q=${d.question}, a=${answer.answer})`,
-          );
-
-          res.push(r);
-
-          console.log(
-            `✅ Answer save (q=${d.question}, a=${answer.answer}) хугацаа: ${(
-              performance.now() - loopStart
-            ).toFixed(2)} ms`,
-          );
+          const wk = answer.matrix
+            ? `m:${+d.question}:${answer.matrix}`
+            : `a:${+d.question}:${answer.answer ?? 'null'}`;
+          pushBody(wk, body);
         }
-
-        console.log(
-          `✅ Question ${d.question} нийт хугацаа: ${(
-            performance.now() - startQuestionLoop
-          ).toFixed(2)} ms`,
-        );
       }
+
+      // ---- Хуучин (одоо сонгоогүй) мөрүүдийг устгана → дараа нь batch insert + update.
+      await this.dao.deleteByIds(obsoleteIds);
+      await this.dao.bulkInsert(newBodies);
+      await this.dao.bulkUpdatePoints(updates);
 
       // Тест дууссан эсэх
       if (dto.end) {
-        console.time('⏱ createReport');
         this.createReport(dto.data[0].code);
-        console.timeEnd('⏱ createReport');
         return {
           visible: exam.visible,
         };
@@ -221,7 +320,7 @@ export class UserAnswerService extends BaseService {
       console.log(
         `🎯 Бүх create() нийт хугацаа: ${(performance.now() - startAll).toFixed(
           2,
-        )} ms`,
+        )} ms (insert=${newBodies.length}, update=${updates.length})`,
       );
     } catch (error) {
       console.error('❌ Хэрэглэгчийн хариулт бүртгэх үед алдаа:', error);

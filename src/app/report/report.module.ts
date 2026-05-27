@@ -26,6 +26,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
 import { ReportLogDao } from './report.log.dao';
+import { QuestionRuleDao } from '../question/dao/question.rule.dao';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ReportLogDao } from './report.log.dao';
     ExamDetailDao,
     QuestionService,
     AuthService,
+    QuestionRuleDao,
     ResultDao,
     TransactionDao,
     UserServiceDao,

@@ -12,12 +12,15 @@ import { QuestionAnswerCategoryService } from './question.answer.category.servic
 import { QuestionAnswerService } from './question.answer.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
+import { QuestionRuleController } from './question.rule.controller';
+import { QuestionRuleDao } from './dao/question.rule.dao';
 
 @Module({
   controllers: [
     QuestionController,
     QuestionAnswerController,
     QuestionAnswerCategoryController,
+    QuestionRuleController,
   ],
   providers: [
     QuestionService,
@@ -30,6 +33,7 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
     QuestionAnswerDao,
+    QuestionRuleDao,
   ],
   exports: [
     QuestionService,

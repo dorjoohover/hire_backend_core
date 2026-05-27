@@ -589,8 +589,16 @@ export class ExamDao {
     };
   };
 
-  query = async (q: string) => {
-    return await this.db.query(q);
+  query = async (q: string, params: any[] = []) => {
+    return await this.db.query(q, params);
+  };
+
+  getVisibleByCode = async (code: string) => {
+    const r = await this.db.query(
+      'SELECT visible FROM exam WHERE code = $1 LIMIT 1',
+      [String(code)],
+    );
+    return r[0];
   };
 
   // findQuartile = async (assessment: number, r: number) => {

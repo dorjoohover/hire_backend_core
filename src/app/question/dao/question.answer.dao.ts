@@ -153,6 +153,28 @@ export class QuestionAnswerDao {
   query = async (q: string) => {
     return await this.db.query(q);
   };
+
+  // Олон хариултын оноо тооцоход хэрэгтэй мета мэдээллийг ганц query-ээр.
+  findMetaByIds = async (
+    ids: number[],
+  ): Promise<
+    {
+      id: number;
+      reverse: boolean;
+      negative: boolean;
+      correct: boolean;
+      categoryId: number | null;
+      point: number | null;
+    }[]
+  > => {
+    if (!ids.length) return [];
+    return await this.db.query(
+      `SELECT id, reverse, negative, correct, "categoryId" AS "categoryId", point
+       FROM "questionAnswer" WHERE id = ANY($1)`,
+      [ids],
+    );
+  };
+
   clear = async () => {
     return await this.db.createQueryBuilder().delete().execute();
   };

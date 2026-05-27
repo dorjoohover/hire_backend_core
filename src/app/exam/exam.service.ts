@@ -11,6 +11,8 @@ import { ExamDetailDao } from './dao/exam.detail.dao';
 import { BaseService } from 'src/base/base.service';
 import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
+import { QuestionRuleDao } from '../question/dao/question.rule.dao';
+import { QuestionRuleAction } from '../question/entities/question.rule.entity';
 import { QuestionEntity } from '../question/entities/question.entity';
 import { QuestionCategoryEntity } from '../question/entities/question.category.entity';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
@@ -31,6 +33,7 @@ import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -46,6 +49,7 @@ export class ExamService extends BaseService {
     @Inject(forwardRef(() => UserServiceDao))
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private questionRuleDao: QuestionRuleDao,
   ) {
     super();
   }
@@ -74,11 +78,24 @@ export class ExamService extends BaseService {
   }
 
   public checkExam = async (code: string) => {
-    const res = await this.dao
-      .query(`select visible from exam where code = ${code}`)
-      .then((d) => d[0]);
-    return res.visible;
+    // Parameterized query — өмнө нь code-ийг шууд string interpolation хийдэг
+    // байсан нь SQL injection эрсдэлтэй байв.
+    const res = await this.dao.getVisibleByCode(code);
+    return res?.visible;
   };
+
+  // Байгууллага нэг хэрэглэгчид зориулж тест (code) үүсгээд, тэр code-оор QR
+  // үүсгэнэ. Клиент QR уншаад и-мэйлгүйгээр тест өгөх боломжтой.
+  public async generateQr(code: string) {
+    const exam = await this.dao.findByCode(code);
+    if (!exam) {
+      throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    const base = process.env.WEB_URL ?? 'https://hire.mn';
+    const url = `${base.replace(/\/$/, '')}/exam/${code}`;
+    const qr = await QRCode.toDataURL(url, { width: 400, margin: 1 });
+    return { code, url, qr };
+  }
   // public endExam = async (code: string) => {
   //   await this.dao.endExam(code);
   //   console.log('start', code);
@@ -264,16 +281,13 @@ export class ExamService extends BaseService {
 
       if (con) {
         console.time('⏱ check userAnswer by categories');
+        // Өмнө нь category тус бүрд тусдаа query явуулдаг байсныг (N round-trip)
+        // ганц query-ээр бөглөгдсөн category-уудыг татаж орлуулав.
+        const answeredCategoryIds = new Set(
+          await this.userAnswer.findAnsweredCategoryIds(res.code),
+        );
         for (let i = 0; i < categoriesByAssessment.length; i++) {
-          const t0 = performance.now();
-          const userAnswer = await this.userAnswer.findByQuestionCategory(
-            categoriesByAssessment[i].id,
-            res.code,
-          );
-          console.log(
-            `   ↪ findByQuestionCategory(cat=${categoriesByAssessment[i].id}) = ${(performance.now() - t0).toFixed(2)} ms`,
-          );
-          if (userAnswer == null) {
+          if (!answeredCategoryIds.has(categoriesByAssessment[i].id)) {
             categoryIndex = i;
             break;
           }
@@ -332,6 +346,7 @@ export class ExamService extends BaseService {
           currentCategory,
           answerShuffle,
           prevQuestions,
+          res.code,
         );
         console.timeEnd('⏱ getQuestions');
 
@@ -350,10 +365,24 @@ export class ExamService extends BaseService {
           ).toFixed(2)} ms`,
         );
 
+        // Бүх хэсгийн жагсаалт болон бөглөгдсөн төлөв (D#4 буцаж очих UI-д
+        // хэрэгтэй). categories: дараа үлдсэн id-уудыг хадгална (хуучин үйлдэл).
+        const answeredSet = new Set(
+          await this.userAnswer.findAnsweredCategoryIds(res.code),
+        );
+        const allCategoriesDetailed = categoriesByAssessment.map((c) => ({
+          id: c.id,
+          name: c.name,
+          orderNumber: c.orderNumber,
+          answered: answeredSet.has(c.id),
+        }));
+
         return {
           questions: result.questions,
           category: result.category,
           categories: allCategories.slice(1),
+          allCategories: allCategoriesDetailed,
+          rules: (result as any).rules ?? [],
           assessment: res.assessment,
           visible: res.visible,
           token,
@@ -391,21 +420,82 @@ export class ExamService extends BaseService {
     id: number,
     answerShuffle: boolean,
     questions: number[] = [],
+    code?: string,
   ) {
     const category = await this.questionCategoryDao.findOne(id);
-    const q = await this.questionService.findForExam(
+    let q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,
       id,
       answerShuffle,
       questions,
     );
-    const res = {
+
+    // Нөхцөлт алгасах (branching) дүрмийг хэрэглэнэ.
+    // Server тал: өмнө илгээсэн хариултад тулгуурлан хэсэг хооронд асуулт шүүх.
+    // Client тал: тухайн хуудсан дотор (live skip) ашиглах rules-ийг буцаана.
+    let rules: any[] = [];
+    if (code) {
+      const allIds = q
+        .map((x) => Number(x.question?.id))
+        .filter(Boolean) as number[];
+      if (allIds.length) {
+        const fetchedRules =
+          await this.questionRuleDao.findByTargetQuestionIds(allIds);
+        if (fetchedRules.length) {
+          const prior = await this.userAnswer.findExistingByCode(code);
+          const answeredPairs = new Set(
+            prior
+              .filter((p) => p.answerId != null)
+              .map((p) => `${Number(p.questionId)}:${Number(p.answerId)}`),
+          );
+          const answeredQuestions = new Set(
+            prior.map((p) => Number(p.questionId)),
+          );
+          const skip = new Set<number>();
+          for (const rule of fetchedRules) {
+            if (rule.action !== QuestionRuleAction.SKIP) continue;
+            const dq = Number(rule.dependsOnQuestionId);
+            const matched =
+              rule.dependsOnAnswerId != null
+                ? answeredPairs.has(`${dq}:${Number(rule.dependsOnAnswerId)}`)
+                : answeredQuestions.has(dq);
+            if (matched) skip.add(Number(rule.targetQuestionId));
+          }
+          if (skip.size) {
+            q = q.filter((x) => !skip.has(Number(x.question?.id)));
+          }
+          // Зөвхөн энэ хуудсанд live skip хэрэглэгдэх дүрмүүдийг л буцаана
+          // (target ба depends хоёулаа одоо харагдах асуултуудын дотор).
+          const remainingIds = new Set(
+            q.map((x) => Number(x.question?.id)),
+          );
+          rules = fetchedRules
+            .filter(
+              (r) =>
+                r.action === QuestionRuleAction.SKIP &&
+                remainingIds.has(Number(r.targetQuestionId)) &&
+                remainingIds.has(Number(r.dependsOnQuestionId)),
+            )
+            .map((r) => ({
+              id: r.id,
+              targetQuestionId: Number(r.targetQuestionId),
+              dependsOnQuestionId: Number(r.dependsOnQuestionId),
+              dependsOnAnswerId:
+                r.dependsOnAnswerId != null
+                  ? Number(r.dependsOnAnswerId)
+                  : null,
+              action: r.action,
+            }));
+        }
+      }
+    }
+
+    return {
       questions: q,
       category: category,
+      rules,
     };
-    // console.log('getQuestion Res:', res);
-    return res;
   }
 
   public async findExamByService(service: number) {
