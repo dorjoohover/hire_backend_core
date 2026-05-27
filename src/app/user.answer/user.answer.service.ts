@@ -20,6 +20,7 @@ import { ReportService } from '../report/report.service';
 import { performance } from 'perf_hooks';
 import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
+import { ResultDao } from '../exam/dao/result.dao';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -33,6 +34,7 @@ export class UserAnswerService extends BaseService {
 
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private resultDao: ResultDao,
   ) {
     super();
   }
@@ -357,6 +359,57 @@ export class UserAnswerService extends BaseService {
 
   public async findAll() {
     return await this.dao.findAll();
+  }
+
+  // ---- Studio (pdf builder) / report-ийн зориулалттай ----
+  // Тухайн тестийн (code) бүх хариултыг category-аар бүлэглэн авна.
+  public async getReportAnswers(code: string) {
+    return await this.dao.getAnswerAll(code);
+  }
+
+  // Нэг category-ийн хариултууд (studio placeholder {category:id} зориулалт).
+  // ID-уудыг string-ээр дамжуулна (URL param) — precision алдалтаас сэргийлнэ.
+  public async getAnswersByCategory(code: string, categoryId: string) {
+    return await this.dao.getAnswersByCategory(code, categoryId);
+  }
+
+  // Нэг асуултын хариулт(ууд) (studio placeholder {question:id} зориулалт).
+  public async getAnswerByQuestion(code: string, questionId: string) {
+    return await this.dao.getAnswerByQuestion(code, questionId);
+  }
+
+  // PDF generation-д шаардлагатай бүх дата нэг round-trip-ээр.
+  // exam + assessment + result (parent + children) + answers (category-аар) бүгд.
+  public async getReportPdfData(code: string) {
+    const [exam, result, children, answers] = await Promise.all([
+      this.examDao.findByCode(code),
+      this.resultDao.findOne(code),
+      this.resultDao.findChild(code),
+      this.dao.getAnswerAll(code),
+    ]);
+    if (!exam) {
+      throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    return {
+      exam: {
+        code: exam.code,
+        firstname: exam.firstname,
+        lastname: exam.lastname,
+        email: exam.email,
+        phone: exam.phone,
+        visible: exam.visible,
+        assessmentName: exam.assessmentName,
+        createdAt: exam.createdAt,
+        startDate: exam.startDate,
+        endDate: exam.endDate,
+        userStartDate: exam.userStartDate,
+        userEndDate: exam.userEndDate,
+      },
+      assessment: exam.assessment ?? null,
+      result, // parent result (point, total, type, details, г.м)
+      children, // SEMUT-ийн sub-test result-ууд
+      answers, // category-аар бүлэгсэн хариултууд
+    };
   }
 
   public async findByCode(code: string) {

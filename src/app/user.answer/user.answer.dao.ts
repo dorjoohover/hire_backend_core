@@ -215,6 +215,75 @@ export class UserAnswerDao {
     });
   };
 
+  // ---- Studio (pdf builder) / report-ийн зориулалт ----
+  // Тухайн code-ын хариултуудыг category-аар бүлэглэж, дотроо question.orderNumber
+  // дарааллаар буцаана. Front-end placeholder бүрд тус тусдаа дуудалт явуулахгүй,
+  // нэг round-trip-ээр бүх report-д хэрэгтэй дата.
+  getAnswerAll = async (code: string) => {
+    return await this.db.query(
+      `SELECT ua."questionCategoryId"            AS "questionCategoryId",
+              JSON_AGG(
+                JSON_BUILD_OBJECT(
+                  'questionId',   ua."questionId",
+                  'questionName', q.name,
+                  'orderNumber',  q."orderNumber",
+                  'value',        ua.value,
+                  'point',        ua.point,
+                  'answerValue',  qa.value,
+                  'matrixValue',  qm.value
+                )
+                ORDER BY q."orderNumber" ASC, ua.id ASC
+              ) AS answers
+       FROM "userAnswer" ua
+       JOIN question q                  ON q.id = ua."questionId"
+       LEFT JOIN "questionAnswer" qa    ON qa.id = ua."answerId"
+       LEFT JOIN "questionAnswerMatrix" qm ON qm.id = ua."matrixId"
+       WHERE ua.code = $1
+       GROUP BY ua."questionCategoryId"
+       ORDER BY ua."questionCategoryId" ASC`,
+      [code],
+    );
+  };
+
+  // Studio placeholder {category:42} → тухайн category-ийн хариулт жагсаалт.
+  // categoryId-ыг string-ээр хүлээж авна (URL param) — Postgres int багана руу
+  // parameterized query-ийн дотор coerce хийгдэнэ.
+  getAnswersByCategory = async (code: string, categoryId: string) => {
+    return await this.db.query(
+      `SELECT ua."questionId"     AS "questionId",
+              q.name               AS "questionName",
+              q."orderNumber"      AS "orderNumber",
+              ua.value             AS value,
+              ua.point             AS point,
+              qa.value             AS "answerValue",
+              qm.value             AS "matrixValue"
+       FROM "userAnswer" ua
+       JOIN question q                  ON q.id = ua."questionId"
+       LEFT JOIN "questionAnswer" qa    ON qa.id = ua."answerId"
+       LEFT JOIN "questionAnswerMatrix" qm ON qm.id = ua."matrixId"
+       WHERE ua.code = $1 AND ua."questionCategoryId" = $2
+       ORDER BY q."orderNumber" ASC, ua.id ASC`,
+      [code, categoryId],
+    );
+  };
+
+  // Studio placeholder {question:1879} → тухайн нэг асуултын хариулт(ууд)
+  getAnswerByQuestion = async (code: string, questionId: string) => {
+    return await this.db.query(
+      `SELECT ua."questionId" AS "questionId",
+              ua.value         AS value,
+              ua.point         AS point,
+              qa.value         AS "answerValue",
+              qm.value         AS "matrixValue"
+       FROM "userAnswer" ua
+       LEFT JOIN "questionAnswer" qa    ON qa.id = ua."answerId"
+       LEFT JOIN "questionAnswerMatrix" qm ON qm.id = ua."matrixId"
+       WHERE ua.code = $1 AND ua."questionId" = $2
+       ORDER BY ua.id ASC`,
+      [code, questionId],
+    );
+  };
+
   findAll = async () => {
     return await this.db.find({});
   };

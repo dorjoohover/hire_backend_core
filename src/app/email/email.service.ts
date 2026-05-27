@@ -85,7 +85,7 @@ export class EmailService {
     assessmentName?: string;
     logId?: number;
   }) {
-    const html = this.generateReportTemplate(input.id, input.name, +input.code);
+    const html = this.generateReportTemplate(input.id, input.name, input.code);
 
     await this.logAndQueue({
       type: EmailLogType.REPORT,
@@ -187,7 +187,7 @@ export class EmailService {
   private generateReportTemplate(
     id: number,
     name: string,
-    code: number,
+    code: string,
   ): string {
     return this.generateEmailTemplate(id, name, code);
   }
@@ -258,7 +258,7 @@ export class EmailService {
   private generateEmailTemplate(
     id: number,
     name: string,
-    code: number,
+    code: string,
   ): string {
     return `
  <!DOCTYPE html>
