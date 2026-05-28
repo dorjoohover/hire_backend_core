@@ -375,8 +375,14 @@ export class UserServiceService extends BaseService {
   }
 
   public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
-    Promise.all(
-      dto.links.map(async (email) => {
+    const BATCH_SIZE = 5;
+    const results: { code: string; email: string; ok: boolean; error?: string }[] = [];
+
+    const processOne = async (email: SendLinkToEmails['links'][number]) => {
+      try {
+        if (!email.email) {
+          throw new Error('email is empty');
+        }
         await this.examService.updateExamByCode(email.code, {
           email: email.email,
           firstname: email.firstname,
@@ -385,14 +391,12 @@ export class UserServiceService extends BaseService {
           visible: email.visible,
         });
 
-        // Check if user exists in database
         const existingUser = await this.userDao.findByEmail(email.email);
         const isNewUser = !existingUser;
-        let password;
         let generatedPassword = '';
         if (isNewUser) {
           generatedPassword = generatePassword();
-          password = await bcrypt.hash(generatedPassword, saltOrRounds);
+          const password = await bcrypt.hash(generatedPassword, saltOrRounds);
           await this.userDao.add({
             email: email.email,
             firstname: email.firstname,
@@ -403,6 +407,9 @@ export class UserServiceService extends BaseService {
           });
         }
         const exam = await this.examDao.findByCode(email.code);
+        if (!exam) {
+          throw new Error(`exam not found for code ${email.code}`);
+        }
         const date = new Date(exam.endDate);
         const year = `${date.getFullYear()}`;
         let month = `${date.getMonth() + 1}`;
@@ -413,8 +420,6 @@ export class UserServiceService extends BaseService {
         if (+hour < 10) hour = `0${hour}`;
         let minute = `${date.getMinutes()}`;
         if (+minute < 10) minute = `0${minute}`;
-        let second = `${date.getSeconds()}`;
-        if (+second < 10) second = `0${second}`;
 
         await this.mailer.sendInvitation({
           assessment: exam.assessment,
@@ -431,11 +436,35 @@ export class UserServiceService extends BaseService {
           lastname: email.lastname,
           phone: email.phone,
           visible: email.visible,
-          orgName: exam.service.user?.organizationName,
+          orgName: exam.service?.user?.organizationName,
           password: generatedPassword,
         });
-      }),
-    );
+
+        results.push({ code: email.code, email: email.email, ok: true });
+      } catch (err: any) {
+        console.error('[sendLinkToMail] failed for', email.code, email.email, err?.message);
+        results.push({
+          code: email.code,
+          email: email.email,
+          ok: false,
+          error: err?.message?.slice(0, 500),
+        });
+      }
+    };
+
+    // DB pool ачаалал даалгахгүйн тулд batch-аар боловсруулна
+    for (let i = 0; i < dto.links.length; i += BATCH_SIZE) {
+      const batch = dto.links.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(processOne));
+    }
+
+    const failed = results.filter((r) => !r.ok);
+    return {
+      total: results.length,
+      sent: results.length - failed.length,
+      failed: failed.length,
+      errors: failed,
+    };
   }
   public async updateCount(
     service: number,

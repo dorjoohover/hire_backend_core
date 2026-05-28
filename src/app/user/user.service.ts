@@ -117,6 +117,7 @@ export class UserService {
   }
 
   async getUser(dto: string) {
+    if (!dto) return null;
     return await this.dao.getByEmail(dto.toLowerCase());
   }
   public async update(id: number, dto: CreateUserDto) {

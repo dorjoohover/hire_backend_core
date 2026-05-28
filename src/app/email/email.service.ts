@@ -49,6 +49,15 @@ export class EmailService {
       },
       {
         delay: 10000,
+        // 🔥 429 эсвэл 5xx гарвал автомат retry хийх
+        attempts: 6,
+        backoff: {
+          type: 'exponential',
+          delay: 5000, // 5s → 10s → 20s → 40s → 80s → 160s
+        },
+        // Redis-д job-ийн хог хуримтлахаас сэргийлэх
+        removeOnComplete: { count: 1000, age: 24 * 3600 },
+        removeOnFail: { count: 5000, age: 7 * 24 * 3600 },
       },
     );
   }
