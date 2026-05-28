@@ -54,8 +54,8 @@ export class UserServiceController {
   @Post('send')
   @Public()
   // @Roles(Role.organization)
-  sendCodeToEmail(@Body() dto: SendLinkToEmails) {
-    this.userServiceService.sendLinkToMail(dto);
+  async sendCodeToEmail(@Body() dto: SendLinkToEmails) {
+    return await this.userServiceService.sendLinkToMail(dto);
   }
 
   @Post('exam')
