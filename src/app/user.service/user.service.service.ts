@@ -375,6 +375,23 @@ export class UserServiceService extends BaseService {
   }
 
   public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
+    // 🔥 Том ажлыг background-д шилжүүлэх → frontend timeout-оос сэргийлнэ
+    // Frontend шууд { queued: N } авна, бодит ажил background-д явагдана
+    this.processLinksInBackground(dto, id).catch((err) => {
+      console.error('[sendLinkToMail] background task crashed:', err);
+    });
+
+    return {
+      queued: dto.links.length,
+      message: 'Имэйлүүдийг боловсруулж байна. email_log хүснэгтээс хяна.',
+    };
+  }
+
+  private async processLinksInBackground(
+    dto: SendLinkToEmails,
+    id?: number,
+  ): Promise<void> {
+    const startedAt = Date.now();
     const BATCH_SIZE = 5;
     const results: { code: string; email: string; ok: boolean; error?: string }[] = [];
 
@@ -456,15 +473,26 @@ export class UserServiceService extends BaseService {
     for (let i = 0; i < dto.links.length; i += BATCH_SIZE) {
       const batch = dto.links.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(processOne));
+
+      // Тус бүрийн batch-ийн дараа log хийнэ → progress хянагдана
+      const done = Math.min(i + BATCH_SIZE, dto.links.length);
+      const failedSoFar = results.filter((r) => !r.ok).length;
+      console.log(
+        `[sendLinkToMail] progress ${done}/${dto.links.length} (failed: ${failedSoFar})`,
+      );
     }
 
     const failed = results.filter((r) => !r.ok);
-    return {
-      total: results.length,
-      sent: results.length - failed.length,
-      failed: failed.length,
-      errors: failed,
-    };
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    console.log(
+      `[sendLinkToMail] DONE in ${elapsed}s — total=${results.length}, sent=${results.length - failed.length}, failed=${failed.length}`,
+    );
+    if (failed.length > 0) {
+      console.error(
+        `[sendLinkToMail] failures:`,
+        failed.slice(0, 10).map((f) => `${f.email}: ${f.error}`).join('\n'),
+      );
+    }
   }
   public async updateCount(
     service: number,
