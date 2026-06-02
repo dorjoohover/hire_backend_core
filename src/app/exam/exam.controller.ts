@@ -119,7 +119,7 @@ export class ExamController {
 
         res.setHeader(
           'Content-Type',
-          response.headers['content-type'] || 'application/pdf',
+          String(response.headers['content-type'] || 'application/pdf'),
         );
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
 
@@ -155,10 +155,13 @@ export class ExamController {
       responseType: 'stream',
     });
 
-    res.setHeader('Content-Type', response.headers['content-type']);
+    res.setHeader(
+      'Content-Type',
+      String(response.headers['content-type'] || 'application/pdf'),
+    );
     res.setHeader(
       'Content-Disposition',
-      response.headers['content-disposition'],
+      String(response.headers['content-disposition'] || ''),
     );
     res.setHeader('Cache-Control', 'no-store');
 

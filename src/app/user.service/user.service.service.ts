@@ -402,6 +402,11 @@ export class UserServiceService extends BaseService {
             password,
           });
         }
+
+        if (dto.noEmail) {
+          return;
+        }
+
         const exam = await this.examDao.findByCode(email.code);
         const date = new Date(exam.endDate);
         const year = `${date.getFullYear()}`;

@@ -39,4 +39,7 @@ export class SendLinkToEmail {
 export class SendLinkToEmails {
   @ApiProperty({ isArray: true, type: SendLinkToEmail })
   links: SendLinkToEmail[];
+
+  @ApiProperty({ required: false })
+  noEmail?: boolean;
 }
