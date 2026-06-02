@@ -5,14 +5,13 @@ import { EmailLogService } from '../email_log/email_log.service';
 import { EmailLogStatus } from 'src/base/constants';
 import { ResendService } from './resend.service';
 
+// BullMQ-ийн limiter нь Redis-ээр түгширсэн → бүх 3 core instance-ийн дунд хуваагдана.
+// Resend Pro = 10/sec, биднийх 8/sec (буфертэй).
 @Processor('email', {
-  // Resend Pro = 10 req/sec → параллел 5-аар явуулж секундэд 10 хүртэл хүрнэ
-  concurrency: 5,
+  concurrency: 3, // worker тус бүр зэрэг 3 job (3 instance × 3 = 9 зэрэг)
   lockDuration: 5 * 60 * 1000,
-  // 🔥 Resend Pro plan-ийн rate limit = 10/sec
-  // 8 болгож бага зэрэг буфер үлдээв
   limiter: {
-    max: 8,
+    max: 8, // 🔥 БҮХ instance-ийн нийлбэр = 8 мэйл/sec
     duration: 1000,
   },
 })
