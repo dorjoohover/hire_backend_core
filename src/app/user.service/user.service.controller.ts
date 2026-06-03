@@ -54,8 +54,17 @@ export class UserServiceController {
   @Post('send')
   @Public()
   // @Roles(Role.organization)
-  sendCodeToEmail(@Body() dto: SendLinkToEmails) {
-    this.userServiceService.sendLinkToMail(dto);
+  async sendCodeToEmail(@Body() dto: SendLinkToEmails) {
+    try {
+      const result = await this.userServiceService.sendLinkToMail(dto);
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message || 'Failed to send invites',
+        status: error?.status,
+      };
+    }
   }
 
   @Post('exam')

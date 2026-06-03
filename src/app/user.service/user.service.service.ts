@@ -8,6 +8,7 @@ import {
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
 import { UserServiceDao } from './user.service.dao';
@@ -375,24 +376,31 @@ export class UserServiceService extends BaseService {
   }
 
   public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
-    Promise.all(
-      dto.links.map(async (email) => {
-        await this.examService.updateExamByCode(email.code, {
-          email: email.email,
-          firstname: email.firstname,
-          lastname: email.lastname,
-          phone: email.phone,
-          visible: email.visible,
-        });
+    const links = dto.links || [];
+    if (links.length === 0) {
+      return { success: true, processed: 0, failed: 0 };
+    }
 
-        // Check if user exists in database
-        const existingUser = await this.userDao.findByEmail(email.email);
-        const isNewUser = !existingUser;
-        let password;
-        let generatedPassword = '';
-        if (isNewUser) {
-          generatedPassword = generatePassword();
-          password = await bcrypt.hash(generatedPassword, saltOrRounds);
+    // Bounded concurrency to avoid bursting DB / Resend when many invites
+    // are submitted in quick succession (e.g. 50 x 3 batches).
+    const CONCURRENCY = 3;
+
+    const processOne = async (email: SendLinkToEmail) => {
+      await this.examService.updateExamByCode(email.code, {
+        email: email.email,
+        firstname: email.firstname,
+        lastname: email.lastname,
+        phone: email.phone,
+        visible: email.visible,
+      });
+
+      const existingUser = await this.userDao.findByEmail(email.email);
+      const isNewUser = !existingUser;
+      let generatedPassword = '';
+      if (isNewUser) {
+        generatedPassword = generatePassword();
+        const password = await bcrypt.hash(generatedPassword, saltOrRounds);
+        try {
           await this.userDao.add({
             email: email.email,
             firstname: email.firstname,
@@ -401,46 +409,83 @@ export class UserServiceService extends BaseService {
             wallet: 0,
             password,
           });
+        } catch (err) {
+          // Likely a race with a concurrent invite for the same email —
+          // ignore unique-violation and treat as existing user.
+          // eslint-disable-next-line no-console
+          console.warn(
+            `userDao.add race for ${email.email}: ${err?.message || err}`,
+          );
         }
+      }
 
-        if (dto.noEmail) {
-          return;
+      if (dto.noEmail) return;
+
+      const exam = await this.examDao.findByCode(email.code);
+      const date = new Date(exam.endDate);
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+      const year = `${date.getFullYear()}`;
+      const month = pad(date.getMonth() + 1);
+      const day = pad(date.getDate());
+      const hour = pad(date.getHours());
+      const minute = pad(date.getMinutes());
+
+      await this.mailer.sendInvitation({
+        assessment: exam.assessment,
+        code: `${email.code}`,
+        day,
+        month,
+        year,
+        minute,
+        hour,
+        firstname: email.firstname,
+        id,
+        email: email.email,
+        isNewUser,
+        lastname: email.lastname,
+        phone: email.phone,
+        visible: email.visible,
+        orgName: exam.service.user?.organizationName,
+        password: generatedPassword,
+      });
+    };
+
+    let cursor = 0;
+    let processed = 0;
+    let failed = 0;
+    const failures: { email: string; error: string }[] = [];
+
+    const worker = async () => {
+      while (cursor < links.length) {
+        const idx = cursor++;
+        const link = links[idx];
+        try {
+          await processOne(link);
+          processed++;
+        } catch (err: any) {
+          failed++;
+          failures.push({
+            email: link?.email,
+            error: err?.message?.slice(0, 500) || 'unknown',
+          });
+          // eslint-disable-next-line no-console
+          console.error(`sendLinkToMail failed for ${link?.email}:`, err);
         }
+      }
+    };
 
-        const exam = await this.examDao.findByCode(email.code);
-        const date = new Date(exam.endDate);
-        const year = `${date.getFullYear()}`;
-        let month = `${date.getMonth() + 1}`;
-        if (+month < 10) month = `0${month}`;
-        let day = `${date.getDate()}`;
-        if (+day < 10) day = `0${day}`;
-        let hour = `${date.getHours()}`;
-        if (+hour < 10) hour = `0${hour}`;
-        let minute = `${date.getMinutes()}`;
-        if (+minute < 10) minute = `0${minute}`;
-        let second = `${date.getSeconds()}`;
-        if (+second < 10) second = `0${second}`;
-
-        await this.mailer.sendInvitation({
-          assessment: exam.assessment,
-          code: `${email.code}`,
-          day,
-          month,
-          year,
-          minute,
-          hour,
-          firstname: email.firstname,
-          id,
-          email: email.email,
-          isNewUser: isNewUser,
-          lastname: email.lastname,
-          phone: email.phone,
-          visible: email.visible,
-          orgName: exam.service.user?.organizationName,
-          password: generatedPassword,
-        });
-      }),
+    const workers = Array.from(
+      { length: Math.min(CONCURRENCY, links.length) },
+      () => worker(),
     );
+    await Promise.all(workers);
+
+    return {
+      success: failed === 0,
+      processed,
+      failed,
+      failures: failures.length ? failures : undefined,
+    };
   }
   public async updateCount(
     service: number,
