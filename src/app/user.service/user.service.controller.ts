@@ -171,9 +171,28 @@ export class UserServiceController {
     return this.userServiceService.findOne(+id);
   }
 
-  // @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
-  // @Patch('date/:id')
-  // update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
-  //   return this.userServiceService.update(+id, dto);
-  // }
+  /**
+   * Байгууллагын үйлчилгээнд зориулсан public QR код үүсгэнэ.
+   * QR-ийг уншсан хэн ч бүртгэл хийгээд тест эхлүүлэх боломжтой.
+   */
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Get(':id/public-qr')
+  @ApiParam({ name: 'id' })
+  getPublicQr(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.generatePublicQr(+id, +user['id']);
+  }
+
+  /**
+   * Public QR уншиж ирсэн хэрэглэгч мэдээллээ оруулаад шинэ шалгалт эхлүүлнэ.
+   * Нэвтрэлт шаардахгүй (нийтэд нээлттэй).
+   */
+  @Public()
+  @Post(':id/public-register')
+  @ApiParam({ name: 'id' })
+  publicRegister(
+    @Param('id') id: string,
+    @Body() dto: { firstname: string; lastname: string; email?: string; phone?: string },
+  ) {
+    return this.userServiceService.createPublicExam(+id, dto);
+  }
 }

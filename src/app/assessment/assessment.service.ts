@@ -14,6 +14,11 @@ import { AssessmentStatus } from 'src/base/constants';
 import { ExamService } from '../exam/exam.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { UserEntity } from '../user/entities/user.entity';
+import { CacheService } from 'src/base/cache.service';
+
+// TTL тогтмолууд (ms)
+const TTL_LEVELS = 5 * 60_000;      // 5 минут
+const TTL_CATEGORIES = 5 * 60_000;  // 5 минут
 
 @Injectable()
 export class AssessmentService {
@@ -25,6 +30,7 @@ export class AssessmentService {
     private answerCategory: QuestionAnswerCategoryDao,
     private userDao: UserDao,
     private exam: ExamService,
+    private cache: CacheService,
   ) {}
   public async create(dto: CreateAssessmentDto, user: number) {
     let level;
@@ -100,19 +106,33 @@ export class AssessmentService {
     }
     const { data, count, total } = await this.dao.findAll(pg);
     const assessments = [...data, ...orgAss];
-    const res = await Promise.all(
-      assessments.map(async (as) => {
-        const user = await this.getUser(as);
-        const category = await this.categoryDao.findOne(as.category.id);
-        const count = await this.userServiceDao.countByAssessment(as.id);
-        return {
-          data: { ...as, count },
-          user: user,
-          category: category,
-        };
-      }),
-    );
-    const level = await this.levelDao.findAll();
+
+    // Batch: нэг query-аар бүх userService тоог авна (N+1 арилгана)
+    const assessmentIds = assessments.map((a) => a.id);
+    const [countMap, allCategories, level] = await Promise.all([
+      this.userServiceDao.countByAssessmentBatch(assessmentIds),
+      this.cache.getOrSet('assessment_categories', () => this.categoryDao.findAll(), TTL_CATEGORIES),
+      this.cache.getOrSet('assessment_levels', () => this.levelDao.findAll(), TTL_LEVELS),
+    ]);
+    const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
+
+    // Хэрэглэгчийн мэдээллийг batch-аар авна
+    const creatorIds = [...new Set(assessments.map((a) => a.createdUser).filter(Boolean))];
+    const creators = creatorIds.length
+      ? await this.userDao.findByIds(creatorIds)
+      : [];
+    const creatorMap = new Map(creators.map((u) => [u.id, u]));
+
+    const res = assessments.map((as) => {
+      const createdUser = creatorMap.get(as.createdUser) ?? null;
+      const updatedUser = creatorMap.get(as.updatedUser) ?? createdUser;
+      return {
+        data: { ...as, count: countMap.get(as.id) ?? 0 },
+        user: { createdUser, updatedUser },
+        category: categoryMap.get(as.category?.id) ?? as.category,
+      };
+    });
+
     return {
       data: res,
       count: +count + orgAss.length,
@@ -147,8 +167,12 @@ export class AssessmentService {
       sortDir,
     );
 
-    const withCompleteness = await Promise.all(
-      items.map(async (a) => {
+    // Batch count — нэг query дотор бүх assessment-ийн тоог авна
+    const batchCountMap = await this.userServiceDao.countByAssessmentBatch(
+      items.map((a) => a.id),
+    );
+
+    const withCompleteness = items.map((a) => {
         const fields = [
           a.categoryName,
           a.measure,
@@ -166,7 +190,7 @@ export class AssessmentService {
           (f) => f !== null && f !== undefined && f !== '',
         ).length;
         const completeness = Math.round((filled / fields.length) * 100);
-        const count = await this.userServiceDao.countByAssessment(a.id);
+        const count = batchCountMap.get(a.id) ?? 0;
         const feed10 = Number(a.feed10 || 0);
         const feed20 = Number(a.feed20 || 0);
         const feed30 = Number(a.feed30 || 0);
@@ -198,8 +222,7 @@ export class AssessmentService {
           percentage,
           comments,
         };
-      }),
-    );
+      });
 
     const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
 

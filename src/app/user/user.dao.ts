@@ -148,6 +148,12 @@ export class UserDao {
     });
   };
 
+  /** Batch: нэг query-аар олон хэрэглэгч авна */
+  findByIds = async (ids: number[]) => {
+    if (!ids.length) return [];
+    return this._db.find({ where: { id: In(ids) } });
+  };
+
   getByEmail = async (email: string) => {
     if (!email) return null;
     let where;

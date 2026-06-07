@@ -280,42 +280,34 @@ export class ExamDao {
       segment: row.segment ?? null,
     }));
 
-    const assessmentsRaw = await this.db
-      .createQueryBuilder('e')
-      .select('a.id', 'id')
-      .addSelect('a.name', 'name')
-      .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
-      .where('e."assessmentId" IS NOT NULL')
-      .groupBy('a.id')
-      .addGroupBy('a.name')
-      .orderBy('a.name', 'ASC')
-      .getRawMany();
+    // Metadata queries: parallel-аар ажиллуулна (дараалсан await-ийг арилгана)
+    const [assessmentsRaw, buyersRaw, countsRaw] = await Promise.all([
+      this.db
+        .createQueryBuilder('e')
+        .select('a.id', 'id')
+        .addSelect('a.name', 'name')
+        .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
+        .where('e."assessmentId" IS NOT NULL')
+        .groupBy('a.id')
+        .addGroupBy('a.name')
+        .orderBy('a.name', 'ASC')
+        .getRawMany(),
 
-    const assessments = assessmentsRaw.map((a) => ({
-      id: +a.id,
-      name: a.name,
-    }));
+      this.db
+        .createQueryBuilder('e')
+        .select('b.id', 'userId')
+        .addSelect('b."organizationName"', 'organizationName')
+        .leftJoin('userService', 'us', 'us.id = e."serviceId"')
+        .leftJoin('users', 'b', 'b.id = us."userId"')
+        .where('b.id IS NOT NULL')
+        .andWhere('b."organizationName" IS NOT NULL')
+        .andWhere(`TRIM(b."organizationName") <> ''`)
+        .groupBy('b.id')
+        .addGroupBy('b."organizationName"')
+        .orderBy('b."organizationName"', 'ASC')
+        .getRawMany(),
 
-    const buyersRaw = await this.db
-      .createQueryBuilder('e')
-      .select('b.id', 'userId')
-      .addSelect('b."organizationName"', 'organizationName')
-      .leftJoin('userService', 'us', 'us.id = e."serviceId"')
-      .leftJoin('users', 'b', 'b.id = us."userId"')
-      .where('b.id IS NOT NULL')
-      .andWhere('b."organizationName" IS NOT NULL')
-      .andWhere(`TRIM(b."organizationName") <> ''`)
-      .groupBy('b.id')
-      .addGroupBy('b."organizationName"')
-      .orderBy('b."organizationName"', 'ASC')
-      .getRawMany();
-
-    const buyers = buyersRaw.map((b) => ({
-      userId: +b.userId,
-      organizationName: b.organizationName,
-    }));
-
-    const countsRaw = await this.db
+      this.db
       .createQueryBuilder('e')
       .select([
         `
@@ -373,7 +365,11 @@ export class ExamDao {
     ) AS "lastMonth"
     `,
       ])
-      .getRawOne();
+      .getRawOne(),
+    ]);
+
+    const assessments = assessmentsRaw.map((a) => ({ id: +a.id, name: a.name }));
+    const buyers = buyersRaw.map((b) => ({ userId: +b.userId, organizationName: b.organizationName }));
 
     const counts = {
       today: +(countsRaw?.today || 0),

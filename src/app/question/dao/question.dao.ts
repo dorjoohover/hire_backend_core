@@ -56,6 +56,7 @@ export class QuestionDao {
         'entity.orderNumber',
         'entity.file',
         'entity.point',
+        'entity.required',
       ])
       .where('entity.status = :status AND entity."categoryId" = :category', {
         status: QuestionStatus.ACTIVE,

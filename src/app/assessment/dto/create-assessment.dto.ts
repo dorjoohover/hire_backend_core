@@ -49,6 +49,10 @@ export class CreateAssessmentDto {
   audience?: number;
   @ApiProperty()
   icons?: string;
+  @ApiProperty()
+  showResultOnComplete?: boolean;
+  @ApiProperty()
+  blockNavigation?: boolean;
   @ApiProperty({ isArray: true, type: CreateQuestionAnswerCategoryDto })
   answerCategories?: CreateQuestionAnswerCategoryDto[];
 }

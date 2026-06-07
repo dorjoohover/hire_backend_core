@@ -17,6 +17,7 @@ import { EmailLogService } from '../email_log/email_log.service';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
+import { CacheService } from 'src/base/cache.service';
 
 @Module({
   imports: [ExamModule, UserAnswerModule, UserServiceModule, UserModule],
@@ -34,6 +35,7 @@ import { UserModule } from '../user/user.module';
     UserAnswerDao,
     QuestionAnswerCategoryDao,
     QuestionDao,
+    CacheService,
   ],
   exports: [AssessmentService, AssessmentLevelService],
 })

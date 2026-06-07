@@ -62,6 +62,12 @@ export class AssessmentEntity {
   answerShuffle: boolean;
   @Column({ nullable: true })
   page: number;
+  /** Шалгалт дуусмагц шалгуулагч өөрийн хариуг харж болох эсэх */
+  @Column({ default: false })
+  showResultOnComplete: boolean;
+  /** Шалгалтын блокуудын хооронд чөлөөтэй шилжих боломжтой эсэх */
+  @Column({ default: true })
+  blockNavigation: boolean;
 
   @Column({ nullable: true })
   totalPoint: number;

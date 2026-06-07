@@ -34,6 +34,7 @@ import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
 import * as QRCode from 'qrcode';
+import { generateQrWithLogo } from 'src/utils/qr.util';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -93,7 +94,7 @@ export class ExamService extends BaseService {
     }
     const base = process.env.WEB_URL ?? 'https://hire.mn';
     const url = `${base.replace(/\/$/, '')}/exam/${code}`;
-    const qr = await QRCode.toDataURL(url, { width: 400, margin: 1 });
+    const qr = await generateQrWithLogo(url);
     return { code, url, qr };
   }
   // public endExam = async (code: string) => {

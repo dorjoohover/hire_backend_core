@@ -42,6 +42,20 @@ export class UserServiceDao {
     return res;
   };
 
+  /** N+1 арилгах: олон assessment-ийн count-ийг нэг query-аар авна */
+  countByAssessmentBatch = async (ids: number[]): Promise<Map<number, number>> => {
+    if (!ids.length) return new Map();
+    const rows: { assessmentId: string; cnt: string }[] =
+      await this.dataSource.query(
+        `SELECT "assessmentId"::int AS "assessmentId", COUNT(*)::int AS cnt
+         FROM "userService"
+         WHERE "assessmentId" = ANY($1)
+         GROUP BY "assessmentId"`,
+        [ids],
+      );
+    return new Map(rows.map((r) => [Number(r.assessmentId), Number(r.cnt)]));
+  };
+
   updateStatus = async (id: number, status: number) => {
     const res = await this.db.findOne({
       where: {
@@ -114,7 +128,35 @@ export class UserServiceDao {
     });
   };
 
-  findByUser = async (assId: number, id: number, service: number) => {
+  findByUser = async (
+    assId: number,
+    id: number,
+    service: number,
+    pg?: PaginationDto,
+  ) => {
+    const page = pg?.page ?? 1;
+    const limit = pg?.limit ?? 20;
+    const sortDir: 'ASC' | 'DESC' =
+      (pg?.sortDir?.toUpperCase() as 'ASC' | 'DESC') ?? 'DESC';
+
+    // Нийт service тоог тодорхойлох (хурдан)
+    const countQuery = this.db
+      .createQueryBuilder('service')
+      .innerJoin('service.user', 'user')
+      .where('user.id = :userId', { userId: id });
+
+    if (assId !== 0) {
+      countQuery
+        .innerJoin('service.assessment', 'assessment')
+        .andWhere('assessment.id = :assessmentId', { assessmentId: assId });
+    }
+    if (service !== 0) {
+      countQuery.andWhere('service.id = :serviceId', { serviceId: service });
+    }
+
+    const total = await countQuery.getCount();
+
+    // Paginated data
     const query = this.db
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.assessment', 'assessment')
@@ -125,20 +167,33 @@ export class UserServiceDao {
     if (service !== 0) {
       query.andWhere('service.id = :serviceId', { serviceId: service });
     }
-
     if (assId !== 0) {
       query.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
     }
 
-    query.addOrderBy('exams.userEndDate', 'DESC');
-    query.addOrderBy('exams.createdAt', 'DESC');
+    query
+      .addOrderBy('service.createdAt', sortDir)
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    const [data, count] = await query.getManyAndCount();
+    const data = await query.getMany();
 
     return {
       data,
       count: data.length,
-      total: count,
+      total,
     };
+  };
+
+  /** Нийт шалгуулагчдын тоог тусад нь авах (applicants tab) */
+  countApplicantsByUser = async (userId: number) => {
+    const result = await this.dataSource.query(
+      `SELECT COUNT(e.id)::int AS total
+       FROM "userService" s
+       JOIN exam e ON e."serviceId" = s.id
+       WHERE s."userId" = $1`,
+      [userId],
+    );
+    return (result[0]?.total as number) ?? 0;
   };
 }

@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { generateQrWithLogo } from 'src/utils/qr.util';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
@@ -253,6 +254,7 @@ export class UserServiceService extends BaseService {
       assId,
       id,
       0,
+      pg,
     );
     const invitedExams = await this.examDao.findByUser([], email, assId);
 
@@ -288,8 +290,9 @@ export class UserServiceService extends BaseService {
       data,
       count,
       total,
-      page: pg?.page,
-      limit: pg?.limit,
+      page: pg?.page ?? 1,
+      limit: pg?.limit ?? 20,
+      totalPages: Math.ceil(total / (pg?.limit ?? 20)),
       sortBy: pg?.sortBy,
       sortDir: pg?.sortDir,
       invited: invited.map((exam) => ({
@@ -506,5 +509,82 @@ export class UserServiceService extends BaseService {
 
   public async findOne(id: number) {
     return await this.dao.findOne(id);
+  }
+
+  /**
+   * Байгууллагын үйлчилгээнд зориулсан public QR + print metadata үүсгэнэ.
+   * QR → ${WEB_URL}/exam/public/${serviceId}  (бүртгэлгүй оролцогч)
+   * Hire лого QR-ийн голд байрлана.
+   */
+  public async generatePublicQr(serviceId: number, requesterId: number) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+
+    const base = (process.env.WEB_URL ?? 'https://hire.mn').replace(/\/$/, '');
+    const url = `${base}/exam/public/${serviceId}`;
+
+    const qrDataUrl = await generateQrWithLogo(url);
+
+    const assessmentName = service.assessment?.name ?? '';
+    const orgName = service.user?.organizationName ?? service.user?.firstname ?? '';
+    const showResultOnComplete = (service.assessment as any)?.showResultOnComplete ?? false;
+
+    return {
+      qr: qrDataUrl,
+      url,
+      assessmentName,
+      orgName,
+      showResultOnComplete,
+    };
+  }
+
+  /**
+   * Public QR уншаад ирсэн хүний мэдээллийг авч, тухайн service дотор
+   * шинэ exam үүсгэнэ. Эхлүүлэх token-ийг буцаана.
+   */
+  public async createPublicExam(
+    serviceId: number,
+    dto: {
+      firstname: string;
+      lastname: string;
+      email?: string;
+      phone?: string;
+    },
+  ) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    if (service.count - service.usedUserCount <= 0) {
+      throw new HttpException(
+        'Тестийн эрх дууссан байна.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+
+    const examCode = await this.examService.create(
+      {
+        service: serviceId,
+        assessment: service.assessment,
+        endDate: null,
+        startDate: null,
+        created: service.user?.id,
+      },
+      null,
+    );
+
+    // Оролцогчийн мэдээллийг хадгалах
+    await this.examDao.update(examCode, {
+      firstname: dto.firstname,
+      lastname: dto.lastname,
+      email: dto.email ?? null,
+      phone: dto.phone ?? null,
+    });
+
+    await this.updateCount(serviceId, 0, 1, service.user?.id);
+
+    return { code: examCode };
   }
 }

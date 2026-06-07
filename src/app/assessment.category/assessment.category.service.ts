@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { CreateAssessmentCategoryDto } from './dto/create-assessment.category.dto';
 import { UpdateAssessmentCategoryDto } from './dto/update-assessment.category.dto';
 import { DataSource, Repository } from 'typeorm';
 import { AssessmentCategoryEntity } from './entities/assessment.category.entity';
 import { BaseService } from 'src/base/base.service';
 import { UserService } from '../user/user.service';
+import { CacheService } from 'src/base/cache.service';
+
+const TTL = 5 * 60_000;
 
 @Injectable()
 export class AssessmentCategoryService extends BaseService {
@@ -13,54 +16,53 @@ export class AssessmentCategoryService extends BaseService {
   constructor(
     private dataSource: DataSource,
     private userService: UserService,
+    @Optional() private cache?: CacheService,
   ) {
     super();
     this.db = this.dataSource.getRepository(AssessmentCategoryEntity);
   }
+
   public async create(dto: CreateAssessmentCategoryDto, user: number) {
     let res = this.db.create({
-      parent: {
-        id: dto.parent,
-      },
+      parent: { id: dto.parent },
       createdUser: user,
       name: dto.name,
     });
-
     res = await this.db.save(res);
     res.index = res.id;
     await this.db.save(res);
+    this.cache?.del('assessment_categories');
     return res.id;
   }
 
   public async findAll() {
-    const res = await this.db.find({
-      relations: ['parent', 'subcategories'],
-    });
-    return res;
+    const load = () =>
+      this.db.find({ relations: ['parent', 'subcategories'] });
+    return this.cache
+      ? this.cache.getOrSet('assessment_categories', load, TTL)
+      : load();
   }
 
   public async findOne(id: number) {
-    const res = await this.db.findOne({
-      where: {
-        id: id,
-      },
+    return this.db.findOne({
+      where: { id },
       relations: ['subcategories', 'parent'],
     });
-    return res;
   }
 
   update(id: number, updateAssessmentCategoryDto: UpdateAssessmentCategoryDto) {
+    this.cache?.del('assessment_categories');
     return `This action updates a #${id} assessmentCategory`;
   }
 
   public async remove(id: number) {
     const data = await this.findOne(id);
     if (data) await this.db.remove(data);
-
-    // return `This action removes a #${id} assessmentCategory`;
+    this.cache?.del('assessment_categories');
   }
 
   public async delete() {
     await this.db.createQueryBuilder().delete().execute();
+    this.cache?.del('assessment_categories');
   }
 }

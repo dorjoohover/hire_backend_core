@@ -4,11 +4,12 @@ import { AssessmentCategoryController } from './assessment.category.controller';
 import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
+import { CacheService } from 'src/base/cache.service';
 
 @Module({
   imports: [UserAnswerModule, UserServiceModule, UserModule],
   controllers: [AssessmentCategoryController],
-  providers: [AssessmentCategoryService],
+  providers: [AssessmentCategoryService, CacheService],
   exports: [AssessmentCategoryService],
 })
 export class AssessmentCategoryModule {}
