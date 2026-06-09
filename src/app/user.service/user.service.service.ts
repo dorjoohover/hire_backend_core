@@ -32,6 +32,7 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import * as bcrypt from 'bcryptjs';
 import { saltOrRounds } from '../user/user.service';
 import { EmailService } from '../email/email.service';
+import { generateQrWithLogo } from 'src/utils/qr.util';
 @Injectable()
 export class UserServiceService extends BaseService {
   constructor(
@@ -513,5 +514,77 @@ export class UserServiceService extends BaseService {
 
   public async findOne(id: number) {
     return await this.dao.findOne(id);
+  }
+
+  /**
+   * Байгууллагын үйлчилгээнд зориулсан public QR + print metadata үүсгэнэ.
+   * QR → ${WEB}/exam/public/${serviceId}  (бүртгэлгүй оролцогч)
+   * Hire лого QR-ийн голд байрлана.
+   */
+  public async generatePublicQr(serviceId: number, requesterId: number) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+
+    const base = (process.env.WEB ?? 'https://hire.mn').replace(/\/$/, '');
+    const url = `${base}/exam/public/${serviceId}`;
+    const qr = await generateQrWithLogo(url);
+
+    const assessmentName = service.assessment?.name ?? '';
+    const orgName =
+      (service.user as any)?.organizationName ??
+      (service.user as any)?.firstname ??
+      '';
+    const showResultOnComplete =
+      (service.assessment as any)?.showResultOnComplete ?? false;
+
+    return { qr, url, assessmentName, orgName, showResultOnComplete };
+  }
+
+  /**
+   * Public QR уншаад ирсэн хүний мэдээллийг авч, тухайн service дотор
+   * шинэ exam үүсгэнэ. Эхлүүлэх code-ийг буцаана.
+   */
+  public async createPublicExam(
+    serviceId: number,
+    dto: {
+      firstname: string;
+      lastname: string;
+      email?: string;
+      phone?: string;
+    },
+  ) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    if (service.count - service.usedUserCount <= 0) {
+      throw new HttpException(
+        'Тестийн эрх дууссан байна.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+
+    const examCode = await this.examService.create(
+      {
+        service: serviceId,
+        assessment: service.assessment,
+        endDate: null,
+        startDate: null,
+        created: (service.user as any)?.id,
+      },
+      null,
+    );
+
+    await this.examDao.update(examCode, {
+      firstname: dto.firstname,
+      lastname: dto.lastname,
+      email: dto.email ?? null,
+      phone: dto.phone ?? null,
+    });
+
+    await this.updateCount(serviceId, 0, 1, (service.user as any)?.id);
+    return { code: examCode };
   }
 }

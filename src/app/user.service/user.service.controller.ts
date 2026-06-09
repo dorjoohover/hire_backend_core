@@ -162,9 +162,26 @@ export class UserServiceController {
     return this.userServiceService.findOne(+id);
   }
 
-  // @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
-  // @Patch('date/:id')
-  // update(@Param('id') id: string, @Body() dto: UpdateDateDto) {
-  //   return this.userServiceService.update(+id, dto);
-  // }
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Get(':id/public-qr')
+  @ApiParam({ name: 'id' })
+  getPublicQr(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.generatePublicQr(+id, +user['id']);
+  }
+
+  @Public()
+  @Post(':id/public-register')
+  @ApiParam({ name: 'id' })
+  publicRegister(
+    @Param('id') id: string,
+    @Body()
+    dto: {
+      firstname: string;
+      lastname: string;
+      email?: string;
+      phone?: string;
+    },
+  ) {
+    return this.userServiceService.createPublicExam(+id, dto);
+  }
 }

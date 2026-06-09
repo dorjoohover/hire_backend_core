@@ -31,6 +31,8 @@ import { FileService } from 'src/file.service';
 import { ReportService } from '../report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
+import * as QRCode from 'qrcode';
+import { generateQrWithLogo } from 'src/utils/qr.util';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -84,6 +86,19 @@ export class ExamService extends BaseService {
   //   console.log('start', code);
   //   await this.report.createReport({ code });
   // };
+
+  /** Тест (code)-ийн QR үүсгэнэ. Голд нь Hire лого байна. */
+  public async generateQr(code: string) {
+    const exam = await this.dao.findByCode(code);
+    if (!exam) {
+      throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    const base = (process.env.WEB ?? 'https://hire.mn').replace(/\/$/, '');
+    const url = `${base}/exam/${code}`;
+    const qr = await generateQrWithLogo(url);
+    return { code, url, qr };
+  }
+
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
     const code = Number(

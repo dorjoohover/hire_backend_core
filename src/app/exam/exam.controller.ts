@@ -186,6 +186,14 @@ export class ExamController {
     }
   }
 
+  /** Байгууллага хэрэглэгчдээ зориулж QR гаргах (code-оор). */
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Get('qr/:code')
+  @ApiParam({ name: 'code' })
+  getQr(@Param('code') code: string) {
+    return this.examService.generateQr(code);
+  }
+
   @Get('service/:id')
   findByService(@Param('id') id: string) {
     return this.examService.findExamByService(+id);
