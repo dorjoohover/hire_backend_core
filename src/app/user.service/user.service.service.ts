@@ -522,7 +522,7 @@ export class UserServiceService extends BaseService {
       throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
     }
 
-    const base = (process.env.WEB_URL ?? 'https://hire.mn').replace(/\/$/, '');
+    const base = (process.env.WEB ?? 'https://hire.mn').replace(/\/$/, '');
     const url = `${base}/exam/public/${serviceId}`;
 
     const qrDataUrl = await generateQrWithLogo(url);

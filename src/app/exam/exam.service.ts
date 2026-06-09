@@ -92,7 +92,7 @@ export class ExamService extends BaseService {
     if (!exam) {
       throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
     }
-    const base = process.env.WEB_URL ?? 'https://hire.mn';
+    const base = process.env.WEB ?? 'https://hire.mn';
     const url = `${base.replace(/\/$/, '')}/exam/${code}`;
     const qr = await generateQrWithLogo(url);
     return { code, url, qr };
