@@ -43,7 +43,10 @@ export class CreateAssessmentDto {
   level: any;
   @ApiProperty()
   category: number;
-
+  @ApiProperty()
+  owner?: number;
+  @ApiProperty()
+  audience?: number;
   @ApiProperty()
   icons?: string;
   @ApiProperty({ isArray: true, type: CreateQuestionAnswerCategoryDto })

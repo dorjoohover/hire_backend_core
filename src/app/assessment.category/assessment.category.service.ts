@@ -34,7 +34,7 @@ export class AssessmentCategoryService extends BaseService {
 
   public async findAll() {
     const res = await this.db.find({
-      relations: ['parent', 'subcategories', 'assessments'],
+      relations: ['parent', 'subcategories'],
     });
     return res;
   }

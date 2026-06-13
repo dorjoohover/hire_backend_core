@@ -6,6 +6,7 @@
 /uploads
 docker-compose.yml
 # Logs
+package-lock.json
 logs
 *.log
 npm-debug.log*

@@ -32,6 +32,7 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import * as bcrypt from 'bcryptjs';
 import { saltOrRounds } from '../user/user.service';
 import { EmailService } from '../email/email.service';
+import { generateQrWithLogo } from 'src/utils/qr.util';
 @Injectable()
 export class UserServiceService extends BaseService {
   constructor(
@@ -196,44 +197,105 @@ export class UserServiceService extends BaseService {
 
   // public async
 
-  public async findByUser(assId: number, id: number, email: string) {
-    const { data, count, total } = await this.dao.findByUser(assId, id, 0);
-    const res = [];
-    const ex = [];
-    const exam = await this.examDao.findByUser([], email, assId);
-    for (const response of data) {
-      const { exams, user, ...body } = response;
-      const examResults = [];
-      for (const exam of exams) {
-        const result = await this.result.findOne(exam.code);
-        examResults.push({
-          ...exam,
-          result: result,
-        });
-        ex.push(exam);
+  private normalizeSortDir(sortDir?: string): 'ASC' | 'DESC' {
+    return `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  }
+
+  private sortExamLikeItems<T extends Record<string, any>>(
+    items: T[],
+    sortBy?: string,
+    sortDir?: string,
+  ) {
+    const direction = this.normalizeSortDir(sortDir) === 'ASC' ? 1 : -1;
+    const getValue = (item: T) => {
+      switch (sortBy) {
+        case 'assessmentName':
+          return `${item.assessment?.name ?? item.assessmentName ?? ''}`.toLowerCase();
+        case 'endDate':
+          return new Date(item.endDate ?? 0).getTime();
+        case 'startDate':
+          return new Date(item.startDate ?? 0).getTime();
+        case 'userStartDate':
+          return new Date(item.userStartDate ?? 0).getTime();
+        case 'userEndDate':
+          return new Date(item.userEndDate ?? 0).getTime();
+        case 'createdAt':
+        default:
+          return new Date(item.createdAt ?? 0).getTime();
+      }
+    };
+
+    return [...items].sort((a, b) => {
+      const left = getValue(a);
+      const right = getValue(b);
+
+      if (left === right) {
+        return 0;
       }
 
-      res.push({ ...body, user, exams: examResults });
-    }
-    const filtered = exam.filter(
-      (obj1) => !ex.some((obj2) => obj2.code === obj1.code),
-    );
+      return left > right ? direction : -direction;
+    });
+  }
 
-    const invited = await Promise.all(
-      filtered.map(async (f) => {
-        const result = await this.result.findOne(f.code);
-        return {
-          ...f,
-          result,
-        };
-      }),
+  private async getResultMap(codes: string[]) {
+    return new Map(
+      (await this.result.findByCodes(codes)).map((item) => [item.code, item]),
     );
+  }
+
+  public async findByUser(
+    assId: number,
+    id: number,
+    email: string,
+    pg: PaginationDto,
+  ) {
+    const { data: ownedServices, count, total } = await this.dao.findByUser(
+      assId,
+      id,
+      0,
+    );
+    const invitedExams = await this.examDao.findByUser([], email, assId);
+
+    const ownedExamCodes = new Set<string>();
+    for (const service of ownedServices) {
+      for (const exam of service.exams ?? []) {
+        if (exam.code) {
+          ownedExamCodes.add(exam.code);
+        }
+      }
+    }
+
+    const invited = invitedExams.filter((exam) => !ownedExamCodes.has(exam.code));
+    const resultMap = await this.getResultMap([
+      ...ownedExamCodes,
+      ...invited.map((exam) => exam.code),
+    ]);
+
+    const data = ownedServices.map((service) => {
+      const { exams, user, ...body } = service;
+
+      return {
+        ...body,
+        user,
+        exams: (exams ?? []).map((exam) => ({
+          ...exam,
+          result: resultMap.get(exam.code) ?? null,
+        })),
+      };
+    });
 
     return {
-      data: res,
-      count: res.length,
+      data,
+      count,
       total,
-      invited,
+      page: pg?.page,
+      limit: pg?.limit,
+      sortBy: pg?.sortBy,
+      sortDir: pg?.sortDir,
+      invited: invited.map((exam) => ({
+        ...exam,
+        result: resultMap.get(exam.code) ?? null,
+      })),
     };
     // const exams = await this.examDao.findAll(assId, email);
     // const res = [];
@@ -247,6 +309,34 @@ export class UserServiceService extends BaseService {
     //   });
     // }
     // return res;
+  }
+
+  public async findInvitedByUser(
+    assId: number,
+    id: number,
+    email: string,
+    pg: PaginationDto,
+  ) {
+    const { data, count, total, page, limit, sortBy, sortDir } =
+      await this.examDao.findInvitedByUser(id, email, assId, pg);
+    const resultMap = await this.getResultMap(data.map((item) => item.code));
+
+    return {
+      data: this.sortExamLikeItems(
+        data.map((item) => ({
+          ...item,
+          result: resultMap.get(item.code) ?? null,
+        })),
+        sortBy,
+        sortDir,
+      ),
+      count,
+      total,
+      page,
+      limit,
+      sortBy,
+      sortDir,
+    };
   }
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {
@@ -284,7 +374,25 @@ export class UserServiceService extends BaseService {
 
     return code;
   }
+
   public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
+    // 🔥 Том ажлыг background-д шилжүүлэх → frontend timeout-оос сэргийлнэ
+    // Frontend шууд { queued: N } авна, бодит ажил background-д явагдана
+    this.processLinksInBackground(dto, id).catch((err) => {
+      console.error('[sendLinkToMail] background task crashed:', err);
+    });
+
+    return {
+      queued: dto.links.length,
+      message: 'Имэйлүүдийг боловсруулж байна. email_log хүснэгтээс хяна.',
+    };
+  }
+
+  private async processLinksInBackground(
+    dto: SendLinkToEmails,
+    id?: number,
+  ): Promise<void> {
+    const startedAt = Date.now();
     const BATCH_SIZE = 5;
     const results: { code: string; email: string; ok: boolean; error?: string }[] = [];
 
@@ -362,19 +470,30 @@ export class UserServiceService extends BaseService {
       }
     };
 
-    // Process in batches to avoid exhausting DB pool / Redis
+    // DB pool ачаалал даалгахгүйн тулд batch-аар боловсруулна
     for (let i = 0; i < dto.links.length; i += BATCH_SIZE) {
       const batch = dto.links.slice(i, i + BATCH_SIZE);
       await Promise.all(batch.map(processOne));
+
+      // Тус бүрийн batch-ийн дараа log хийнэ → progress хянагдана
+      const done = Math.min(i + BATCH_SIZE, dto.links.length);
+      const failedSoFar = results.filter((r) => !r.ok).length;
+      console.log(
+        `[sendLinkToMail] progress ${done}/${dto.links.length} (failed: ${failedSoFar})`,
+      );
     }
 
     const failed = results.filter((r) => !r.ok);
-    return {
-      total: results.length,
-      sent: results.length - failed.length,
-      failed: failed.length,
-      errors: failed,
-    };
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    console.log(
+      `[sendLinkToMail] DONE in ${elapsed}s — total=${results.length}, sent=${results.length - failed.length}, failed=${failed.length}`,
+    );
+    if (failed.length > 0) {
+      console.error(
+        `[sendLinkToMail] failures:`,
+        failed.slice(0, 10).map((f) => `${f.email}: ${f.error}`).join('\n'),
+      );
+    }
   }
   public async updateCount(
     service: number,
@@ -395,5 +514,77 @@ export class UserServiceService extends BaseService {
 
   public async findOne(id: number) {
     return await this.dao.findOne(id);
+  }
+
+  /**
+   * Байгууллагын үйлчилгээнд зориулсан public QR + print metadata үүсгэнэ.
+   * QR → ${WEB}/exam/public/${serviceId}  (бүртгэлгүй оролцогч)
+   * Hire лого QR-ийн голд байрлана.
+   */
+  public async generatePublicQr(serviceId: number, requesterId: number) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+
+    const base = (process.env.WEB ?? 'https://hire.mn').replace(/\/$/, '');
+    const url = `${base}/exam/public/${serviceId}`;
+    const qr = await generateQrWithLogo(url);
+
+    const assessmentName = service.assessment?.name ?? '';
+    const orgName =
+      (service.user as any)?.organizationName ??
+      (service.user as any)?.firstname ??
+      '';
+    const showResultOnComplete =
+      (service.assessment as any)?.showResultOnComplete ?? false;
+
+    return { qr, url, assessmentName, orgName, showResultOnComplete };
+  }
+
+  /**
+   * Public QR уншаад ирсэн хүний мэдээллийг авч, тухайн service дотор
+   * шинэ exam үүсгэнэ. Эхлүүлэх code-ийг буцаана.
+   */
+  public async createPublicExam(
+    serviceId: number,
+    dto: {
+      firstname: string;
+      lastname: string;
+      email?: string;
+      phone?: string;
+    },
+  ) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    if (service.count - service.usedUserCount <= 0) {
+      throw new HttpException(
+        'Тестийн эрх дууссан байна.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+
+    const examCode = await this.examService.create(
+      {
+        service: serviceId,
+        assessment: service.assessment,
+        endDate: null,
+        startDate: null,
+        created: (service.user as any)?.id,
+      },
+      null,
+    );
+
+    await this.examDao.update(examCode, {
+      firstname: dto.firstname,
+      lastname: dto.lastname,
+      email: dto.email ?? null,
+      phone: dto.phone ?? null,
+    });
+
+    await this.updateCount(serviceId, 0, 1, (service.user as any)?.id);
+    return { code: examCode };
   }
 }

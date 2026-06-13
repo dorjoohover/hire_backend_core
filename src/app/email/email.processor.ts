@@ -5,14 +5,13 @@ import { EmailLogService } from '../email_log/email_log.service';
 import { EmailLogStatus } from 'src/base/constants';
 import { ResendService } from './resend.service';
 
+// BullMQ-ийн limiter нь Redis-ээр түгширсэн → бүх 3 core instance-ийн дунд хуваагдана.
+// Resend Pro = 10/sec, биднийх 8/sec (буфертэй).
 @Processor('email', {
-  // Resend Pro = 10 req/sec → параллел 5-аар явуулж секундэд 10 хүрэх
-  concurrency: 5,
+  concurrency: 3, // worker тус бүр зэрэг 3 job (3 instance × 3 = 9 зэрэг)
   lockDuration: 5 * 60 * 1000,
-  // 🔥 Resend Pro plan-ийн rate limit = 10/sec
-  // 8 болгож бага зэрэг буфер үлдээв (бусад call-д зориулж)
   limiter: {
-    max: 8,
+    max: 8, // 🔥 БҮХ instance-ийн нийлбэр = 8 мэйл/sec
     duration: 1000,
   },
 })
@@ -44,7 +43,7 @@ export class EmailProcessor extends WorkerHost {
         console.log(res.error);
 
         const code = res.error?.statusCode ?? 0;
-        // 🔴 429 (rate limit) эсвэл 5xx (сервер унасан) → retry хийх
+        // 🔴 429 (rate limit) эсвэл 5xx (Resend сервер унасан) → retry
         const isTransient = code === 429 || (code >= 500 && code < 600);
 
         if (isTransient) {
@@ -53,11 +52,11 @@ export class EmailProcessor extends WorkerHost {
             status: EmailLogStatus.RETRYING,
             error: `${code}: ${res.error.message}`,
           });
-          // BullMQ exponential backoff-р дахин оролдоно
+          // BullMQ-н exponential backoff-р автомат retry хийнэ
           throw new Error(`TRANSIENT_${code}`);
         }
 
-        // ❌ 4xx (буруу хаяг, invalid email гэх мэт) — retry хийх ёсгүй
+        // ❌ 4xx (invalid email гэх мэт permanent алдаа) → retry хийхгүй
         await this.maillog.updateStatus({
           id: logId,
           status: EmailLogStatus.FAILED,

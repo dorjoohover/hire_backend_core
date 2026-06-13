@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Between, DataSource, IsNull, Like, Not, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  IsNull,
+  Like,
+  Not,
+  Repository,
+} from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { AssessmentStatus, PaymentStatus } from 'src/base/constants';
@@ -108,24 +115,30 @@ export class UserServiceDao {
   };
 
   findByUser = async (assId: number, id: number, service: number) => {
-    const [data, count] = await this.db.findAndCount({
-      where: {
-        id: service == 0 ? Not(IsNull()) : service,
-        user: {
-          id: id,
-        },
-        assessment: {
-          id: assId == 0 ? Not(assId) : assId,
-        },
-      },
-      order: {
-        exams: {
-          userEndDate: 'desc',
-        },
-      },
-      relations: ['assessment', 'exams', 'user'],
-    });
-    const total = await this.db.count();
-    return { data, count, total };
+    const query = this.db
+      .createQueryBuilder('service')
+      .leftJoinAndSelect('service.assessment', 'assessment')
+      .leftJoinAndSelect('service.exams', 'exams')
+      .leftJoinAndSelect('service.user', 'user')
+      .where('user.id = :userId', { userId: id });
+
+    if (service !== 0) {
+      query.andWhere('service.id = :serviceId', { serviceId: service });
+    }
+
+    if (assId !== 0) {
+      query.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
+    }
+
+    query.addOrderBy('exams.userEndDate', 'DESC');
+    query.addOrderBy('exams.createdAt', 'DESC');
+
+    const [data, count] = await query.getManyAndCount();
+
+    return {
+      data,
+      count: data.length,
+      total: count,
+    };
   };
 }
