@@ -63,7 +63,7 @@ export class AssessmentEntity {
   @Column({ nullable: true })
   page: number;
   /** Шалгалт дуусмагц шалгуулагч өөрийн хариуг харж болох эсэх */
-  @Column({ default: false })
+  @Column({ default: true })
   showResultOnComplete: boolean;
   /** Шалгалтын блокуудын хооронд чөлөөтэй шилжих боломжтой эсэх */
   @Column({ default: true })
