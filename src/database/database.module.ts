@@ -1,6 +1,37 @@
 import { Global, Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Runs idempotent performance bootstrap statements (materialized view +
+// indexes). Each statement is executed separately so one failure
+// (e.g. table not migrated yet) doesn't block the others.
+async function runPerfBootstrap(dataSource: DataSource) {
+  try {
+    const sqlPath = path.join(__dirname, 'sql', 'perf-bootstrap.sql');
+    const sql = fs.readFileSync(sqlPath, 'utf8');
+    const statements = sql
+      .split(/;\s*(?:\r?\n|$)/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('--'));
+
+    for (const statement of statements) {
+      try {
+        await dataSource.query(statement);
+      } catch (err) {
+        console.error(
+          '⚠️  perf-bootstrap statement failed:',
+          statement.slice(0, 80).replace(/\s+/g, ' '),
+          err?.message ?? err,
+        );
+      }
+    }
+    console.log('✅ Perf bootstrap (materialized view + indexes) checked');
+  } catch (err) {
+    console.error('⚠️  Perf bootstrap skipped:', err?.message ?? err);
+  }
+}
 
 @Global()
 @Module({
@@ -33,6 +64,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
           await dataSource.initialize();
           console.log('✅ Database Connected Successfully');
+          await runPerfBootstrap(dataSource);
           return dataSource;
         } catch (error) {
           console.error('❌ Database Connection Error:', error);

@@ -2,11 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { QuestionAnswerMatrixEntity } from '../entities/question.answer.matrix.entity';
 import { CreateQuestionAnswerMatrixDto } from '../dto/create-question.answer.matrix.dto';
+import { QuestionAnswerViewService } from '../question-answer-view.service';
 
 @Injectable()
 export class QuestionAnswerMatrixDao {
   private db: Repository<QuestionAnswerMatrixEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private viewService: QuestionAnswerViewService,
+  ) {
     this.db = this.dataSource.getRepository(QuestionAnswerMatrixEntity);
   }
 
@@ -24,11 +28,14 @@ export class QuestionAnswerMatrixDao {
       },
     });
     await this.db.save(res);
+    this.viewService.refresh();
     return res.id;
   };
 
   deleteOne = async (id: number) => {
-    return await this.db.delete(id);
+    const res = await this.db.delete(id);
+    this.viewService.refresh();
+    return res;
   };
 
   updateOne = async (id: number, dto: CreateQuestionAnswerMatrixDto) => {
@@ -54,6 +61,7 @@ export class QuestionAnswerMatrixDao {
         id: dto.answer,
       },
     });
+    this.viewService.refresh();
     return id;
   };
 
@@ -123,6 +131,7 @@ export class QuestionAnswerMatrixDao {
 
   clear = async () => {
     const res = await this.db.createQueryBuilder().delete().execute();
+    this.viewService.refresh();
     return res;
   };
 }

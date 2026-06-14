@@ -14,6 +14,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionRuleController } from './question.rule.controller';
 import { QuestionRuleDao } from './dao/question.rule.dao';
+import { QuestionAnswerViewService } from './question-answer-view.service';
 
 @Module({
   controllers: [
@@ -34,11 +35,13 @@ import { QuestionRuleDao } from './dao/question.rule.dao';
     QuestionAnswerCategoryDao,
     QuestionAnswerDao,
     QuestionRuleDao,
+    QuestionAnswerViewService,
   ],
   exports: [
     QuestionService,
     QuestionAnswerService,
     QuestionAnswerCategoryService,
+    QuestionAnswerViewService,
   ],
 })
 export class QuestionModule {}

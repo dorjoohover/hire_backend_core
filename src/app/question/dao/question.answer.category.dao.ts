@@ -2,11 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { QuestionAnswerCategoryEntity } from '../entities/question.answer.category.entity';
 import { CreateQuestionAnswerCategoryDto } from '../dto/create-question.answer.category.dto';
+import { QuestionAnswerViewService } from '../question-answer-view.service';
 
 @Injectable()
 export class QuestionAnswerCategoryDao {
   private db: Repository<QuestionAnswerCategoryEntity>;
-  constructor(private dataSource: DataSource) {
+  constructor(
+    private dataSource: DataSource,
+    private viewService: QuestionAnswerViewService,
+  ) {
     this.db = this.dataSource.getRepository(QuestionAnswerCategoryEntity);
   }
 
@@ -17,6 +21,7 @@ export class QuestionAnswerCategoryDao {
       assessment: dto.assessment ? { id: dto.assessment } : null,
     });
     await this.db.save(res);
+    this.viewService.refresh();
     return {
       name: res.name,
       id: res.id,
@@ -44,15 +49,18 @@ export class QuestionAnswerCategoryDao {
       },
     });
 
+    this.viewService.refresh();
     return id;
   };
 
   deleteOne = async (id: number) => {
-    return await this.db
+    const res = await this.db
       .createQueryBuilder()
       .delete()
       .where({ id: id })
       .execute();
+    this.viewService.refresh();
+    return res;
   };
 
   findOne = async (id: number) => {
@@ -86,6 +94,8 @@ export class QuestionAnswerCategoryDao {
     };
   };
   clear = async () => {
-    return await this.db.createQueryBuilder().delete().execute();
+    const res = await this.db.createQueryBuilder().delete().execute();
+    this.viewService.refresh();
+    return res;
   };
 }

@@ -347,19 +347,17 @@ export class QuestionService {
       category,
       prevQuestions,
     );
-    return Promise.all(
-      questions.map(async (question) => {
-        const answers = await this.questionAnswerDao.findByQuestion(
-          question.id,
-          answerShuffle,
-          false,
-        );
-        return {
-          question: question,
-          answers: answers,
-        };
-      }),
+    // Single batched query (mv_question_answer_full) instead of one
+    // join-heavy query per question.
+    const answersByQuestion = await this.questionAnswerDao.findByQuestionIds(
+      questions.map((q) => q.id),
+      answerShuffle,
+      false,
     );
+    return questions.map((question) => ({
+      question: question,
+      answers: answersByQuestion.get(question.id) ?? [],
+    }));
   }
 
   public async findOne(id: number) {
@@ -367,34 +365,36 @@ export class QuestionService {
   }
   public async findOneByAssessment(id: number, isAdmin: boolean) {
     const categories = await this.questionCategoryDao.findByAssessment(id);
-    return await Promise.all(
-      categories.map(async (category) => {
-        let questions = await this.questionDao.findByCategory(
-          null,
-          false,
-          category.id,
-          [],
-        );
 
-        let res = await Promise.all(
-          questions.map(async (question) => {
-            let answers = await this.questionAnswerDao.findByQuestion(
-              question.id,
-              category.assessment.answerShuffle,
-              isAdmin,
-            );
-            return {
-              ...question,
-              answers: answers,
-            };
-          }),
-        );
-        return {
-          category: category,
-          questions: res,
-        };
-      }),
+    // Fetch each category's questions, then batch-load ALL answers
+    // (across every category) in a single mv_question_answer_full query
+    // instead of one join-heavy query per question.
+    const categoryQuestions = await Promise.all(
+      categories.map((category) =>
+        this.questionDao.findByCategory(null, false, category.id, []),
+      ),
     );
+
+    const allQuestionIds = categoryQuestions
+      .flat()
+      .map((q) => q.id)
+      .filter((qid) => qid != null);
+
+    // answerShuffle is the same per assessment, so just read it once.
+    const answerShuffle = categories[0]?.assessment?.answerShuffle ?? false;
+    const answersByQuestion = await this.questionAnswerDao.findByQuestionIds(
+      allQuestionIds,
+      answerShuffle,
+      isAdmin,
+    );
+
+    return categories.map((category, idx) => ({
+      category: category,
+      questions: categoryQuestions[idx].map((question) => ({
+        ...question,
+        answers: answersByQuestion.get(question.id) ?? [],
+      })),
+    }));
   }
 
   public async deleteAll() {
