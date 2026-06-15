@@ -66,7 +66,7 @@ export class AssessmentEntity {
   @Column({ default: true })
   showResultOnComplete: boolean;
   /** Шалгалтын блокуудын хооронд чөлөөтэй шилжих боломжтой эсэх */
-  @Column({ default: true })
+  @Column({ default: false })
   blockNavigation: boolean;
 
   @Column({ nullable: true })
