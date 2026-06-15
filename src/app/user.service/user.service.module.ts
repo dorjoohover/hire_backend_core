@@ -35,6 +35,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { EmailModule } from '../email/email.module';
 import { ReportLogDao } from '../report/report.log.dao';
 import { QuestionRuleDao } from '../question/dao/question.rule.dao';
+import { QuestionAnswerViewService } from '../question/question-answer-view.service';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { QuestionRuleDao } from '../question/dao/question.rule.dao';
     QuestionAnswerCategoryDao,
     FormuleService,
     UserAnswerDao,
+    QuestionAnswerViewService,
     AssessmentDao,
     ExamDao,
     QpayService,

@@ -25,6 +25,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
 import { ReportLogDao } from '../report/report.log.dao';
+import { QuestionAnswerViewService } from '../question/question-answer-view.service';
 @Module({
   imports: [
     JwtModule.register({
@@ -57,6 +58,8 @@ import { ReportLogDao } from '../report/report.log.dao';
     FileService,
     AuthService,
     QuestionAnswerCategoryDao,
+    QuestionAnswerViewService
+    ,
     QuestionRuleDao,
   ],
   exports: [ExamService, ExamDao],
