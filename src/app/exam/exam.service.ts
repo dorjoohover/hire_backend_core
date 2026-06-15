@@ -170,13 +170,13 @@ export class ExamService extends BaseService {
       throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.BAD_REQUEST);
     }
 
-    if (!exam.visible && user.role == CLIENT) {
+    if (!exam.visible && user?.role == CLIENT) {
       throw new HttpException(
         'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
         HttpStatus.FORBIDDEN,
       );
     }
-    if (user && user.role == CLIENT && user?.id != exam.user.id) {
+    if (user && user.role == CLIENT && user?.id != exam.user?.id) {
       throw new HttpException(
         'Тайлан харах эрхгүй байна.',
         HttpStatus.BAD_REQUEST,
