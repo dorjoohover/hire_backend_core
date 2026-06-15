@@ -9,10 +9,6 @@
       {
         "include": "src/assets/**/*",
         "outDir": "dist/assets"
-      },
-      {
-        "include": "database/sql/**/*",
-        "outDir": "dist/database/sql"
       }
     ]
   }
