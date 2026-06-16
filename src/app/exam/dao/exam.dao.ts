@@ -473,10 +473,22 @@ export class ExamDao {
     email: string,
     assId: number,
     pg: PaginationDto,
+    examStatus?: string,
   ) => {
     const page = Math.max(+(pg?.page ?? 1), 1);
     const limit = Math.max(+(pg?.limit ?? 20), 1);
     const normalizedSort = this.applyUserExamSort(pg?.sortBy, pg?.sortDir);
+
+    const examStatusList = examStatus ? examStatus.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const applyExamStatus = (qb: any) => {
+      if (!examStatusList.length) return;
+      const conditions = [];
+      if (examStatusList.includes('notStarted'))  conditions.push('(exam.userStartDate IS NULL AND exam.userEndDate IS NULL)');
+      if (examStatusList.includes('started'))     conditions.push('(exam.userStartDate IS NOT NULL AND exam.userEndDate IS NULL)');
+      if (examStatusList.includes('completed'))   conditions.push('(exam.userEndDate IS NOT NULL)');
+      if (conditions.length) qb.andWhere(`(${conditions.join(' OR ')})`);
+    };
+
     const query = this.db
       .createQueryBuilder('exam')
       .leftJoinAndSelect('exam.assessment', 'assessment')
@@ -488,6 +500,8 @@ export class ExamDao {
     if (assId !== 0) {
       query.andWhere('assessment.id = :assId', { assId });
     }
+
+    applyExamStatus(query);
 
     const sortColumn = Object.keys(normalizedSort.order)[0];
     query.orderBy(sortColumn, normalizedSort.sortDir);

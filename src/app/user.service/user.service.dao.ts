@@ -133,11 +133,24 @@ export class UserServiceDao {
     id: number,
     service: number,
     pg?: PaginationDto,
+    status?: number,
+    examStatus?: string, // comma-separated: 'notStarted,started,completed'
   ) => {
     const page = pg?.page ?? 1;
     const limit = pg?.limit ?? 20;
     const sortDir: 'ASC' | 'DESC' =
       (pg?.sortDir?.toUpperCase() as 'ASC' | 'DESC') ?? 'DESC';
+
+    const examStatusList = examStatus ? examStatus.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    const applyExamStatus = (qb: any) => {
+      if (!examStatusList.length) return;
+      const conditions = [];
+      if (examStatusList.includes('notStarted'))  conditions.push('(exams.userStartDate IS NULL AND exams.userEndDate IS NULL)');
+      if (examStatusList.includes('started'))     conditions.push('(exams.userStartDate IS NOT NULL AND exams.userEndDate IS NULL)');
+      if (examStatusList.includes('completed'))   conditions.push('(exams.userEndDate IS NOT NULL)');
+      if (conditions.length) qb.andWhere(`(${conditions.join(' OR ')})`);
+    };
 
     // Нийт service тоог тодорхойлох (хурдан)
     const countQuery = this.db
@@ -152,6 +165,13 @@ export class UserServiceDao {
     }
     if (service !== 0) {
       countQuery.andWhere('service.id = :serviceId', { serviceId: service });
+    }
+    if (status !== undefined) {
+      countQuery.andWhere('service.status = :status', { status });
+    }
+    if (examStatus) {
+      countQuery.innerJoin('service.exams', 'exams');
+      applyExamStatus(countQuery);
     }
 
     const total = await countQuery.getCount();
@@ -169,6 +189,12 @@ export class UserServiceDao {
     }
     if (assId !== 0) {
       query.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
+    }
+    if (status !== undefined) {
+      query.andWhere('service.status = :status', { status });
+    }
+    if (examStatus) {
+      applyExamStatus(query);
     }
 
     query

@@ -249,14 +249,14 @@ export class UserServiceService extends BaseService {
     id: number,
     email: string,
     pg: PaginationDto,
+    status?: number,
+    examStatus?: string,
   ) {
-    const { data: ownedServices, count, total } = await this.dao.findByUser(
-      assId,
-      id,
-      0,
-      pg,
-    );
-    const invitedExams = await this.examDao.findByUser([], email, assId);
+    const {
+      data: ownedServices,
+      count,
+      total,
+    } = await this.dao.findByUser(assId, id, 0, pg, status, examStatus);
 
     const ownedExamCodes = new Set<string>();
     for (const service of ownedServices) {
@@ -267,11 +267,7 @@ export class UserServiceService extends BaseService {
       }
     }
 
-    const invited = invitedExams.filter((exam) => !ownedExamCodes.has(exam.code));
-    const resultMap = await this.getResultMap([
-      ...ownedExamCodes,
-      ...invited.map((exam) => exam.code),
-    ]);
+    const resultMap = await this.getResultMap([...ownedExamCodes]);
 
     const data = ownedServices.map((service) => {
       const { exams, user, ...body } = service;
@@ -295,10 +291,6 @@ export class UserServiceService extends BaseService {
       totalPages: Math.ceil(total / (pg?.limit ?? 20)),
       sortBy: pg?.sortBy,
       sortDir: pg?.sortDir,
-      invited: invited.map((exam) => ({
-        ...exam,
-        result: resultMap.get(exam.code) ?? null,
-      })),
     };
     // const exams = await this.examDao.findAll(assId, email);
     // const res = [];
@@ -319,9 +311,10 @@ export class UserServiceService extends BaseService {
     id: number,
     email: string,
     pg: PaginationDto,
+    examStatus?: string,
   ) {
     const { data, count, total, page, limit, sortBy, sortDir } =
-      await this.examDao.findInvitedByUser(id, email, assId, pg);
+      await this.examDao.findInvitedByUser(id, email, assId, pg, examStatus);
     const resultMap = await this.getResultMap(data.map((item) => item.code));
 
     return {
@@ -528,8 +521,10 @@ export class UserServiceService extends BaseService {
     const qrDataUrl = await generateQrWithLogo(url);
 
     const assessmentName = service.assessment?.name ?? '';
-    const orgName = service.user?.organizationName ?? service.user?.firstname ?? '';
-    const showResultOnComplete = (service.assessment as any)?.showResultOnComplete ?? false;
+    const orgName =
+      service.user?.organizationName ?? service.user?.firstname ?? '';
+    const showResultOnComplete =
+      (service.assessment as any)?.showResultOnComplete ?? false;
 
     return {
       qr: qrDataUrl,

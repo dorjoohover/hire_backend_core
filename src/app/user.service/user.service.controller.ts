@@ -141,12 +141,14 @@ export class UserServiceController {
     @Param('id') id: string,
     @Pagination() pg: PaginationDto,
     @Request() { user },
+    @Query('examStatus') examStatus?: string,
   ) {
     return this.userServiceService.findInvitedByUser(
       +id,
       +user['id'],
       user['email'],
       pg,
+      examStatus,
     );
   }
 
@@ -157,12 +159,16 @@ export class UserServiceController {
     @Param('id') id: string,
     @Pagination() pg: PaginationDto,
     @Request() { user },
+    @Query('status') status?: string,
+    @Query('examStatus') examStatus?: string,
   ) {
     return this.userServiceService.findByUser(
       +id,
       +user['id'],
       user['email'],
       pg,
+      status !== undefined ? +status : undefined,
+      examStatus,
     );
   }
 
