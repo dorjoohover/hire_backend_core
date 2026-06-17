@@ -208,29 +208,29 @@ export class UserServiceDao {
     let examsByService: Map<number, any[]> = new Map();
 
     if (serviceIds.length > 0) {
-      const examRepo = this.dataSource.getRepository(ExamEntity);
-      const examQuery = examRepo
-        .createQueryBuilder('exam')
-        .where('exam.serviceId IN (:...ids)', { ids: serviceIds });
-
-      if (examStatus) {
-        const examStatusList = examStatus
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const conditions: string[] = [];
+      let examStatusWhere = '';
+      const examStatusList = examStatus
+        ? examStatus.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+      if (examStatusList.length) {
+        const conds: string[] = [];
         if (examStatusList.includes('notStarted'))
-          conditions.push('(exam.userStartDate IS NULL AND exam.userEndDate IS NULL)');
+          conds.push(`("userStartDate" IS NULL AND "userEndDate" IS NULL)`);
         if (examStatusList.includes('started'))
-          conditions.push('(exam.userStartDate IS NOT NULL AND exam.userEndDate IS NULL)');
+          conds.push(`("userStartDate" IS NOT NULL AND "userEndDate" IS NULL)`);
         if (examStatusList.includes('completed'))
-          conditions.push('(exam.userEndDate IS NOT NULL)');
-        if (conditions.length) examQuery.andWhere(`(${conditions.join(' OR ')})`);
+          conds.push(`("userEndDate" IS NOT NULL)`);
+        if (conds.length) examStatusWhere = `AND (${conds.join(' OR ')})`;
       }
 
-      const allExams = await examQuery.getMany();
-      for (const exam of allExams) {
-        const sid = (exam as any).serviceId ?? (exam.service as any)?.id;
+      const placeholders = serviceIds.map((_, i) => `$${i + 1}`).join(',');
+      const rows: any[] = await this.dataSource.query(
+        `SELECT * FROM exam WHERE "serviceId" IN (${placeholders}) ${examStatusWhere}`,
+        serviceIds,
+      );
+
+      for (const exam of rows) {
+        const sid: number = exam.serviceId;
         if (sid == null) continue;
         if (!examsByService.has(sid)) examsByService.set(sid, []);
         examsByService.get(sid)!.push(exam);
