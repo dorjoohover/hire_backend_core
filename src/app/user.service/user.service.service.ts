@@ -580,7 +580,7 @@ export class UserServiceService extends BaseService {
 
     await this.updateCount(serviceId, 0, 1, service.user?.id);
 
-    return { succeed: true, payload: { code: examCode } };
+    return { code: examCode };
   }
 
   public async getPublicServiceInfo(serviceId: number) {
@@ -592,7 +592,8 @@ export class UserServiceService extends BaseService {
       succeed: true,
       payload: {
         assessmentName: service.assessment?.name ?? '',
-        orgName: service.user?.organizationName ?? service.user?.firstname ?? '',
+        orgName:
+          service.user?.organizationName ?? service.user?.firstname ?? '',
       },
     };
   }
