@@ -83,10 +83,8 @@ export class UserServiceService extends BaseService {
       price,
     );
     let invoice = null;
-    if (price > 0) {
-      invoice = await this.qpay.createInvoice(price, res.id, +user['id']);
-    }
     if (+user['role'] == Role.organization) {
+      // Байгуулллага wallet-аар шууд төлдөг — QPay invoice шаардлагагүй
       await this.transactionDao.create(
         {
           price: assessment.price,
@@ -99,6 +97,13 @@ export class UserServiceService extends BaseService {
         2,
       );
       await this.userDao.updateWallet(user['id'], -price);
+      // Wallet-аар шууд төлсөн тул status-ийг SUCCESS болгоно
+      if (price > 0) {
+        await this.dao.updateStatus(res.id, PaymentStatus.SUCCESS);
+      }
+    } else if (price > 0) {
+      // Байгуулллага биш хэрэглэгч QPay-аар төлнө
+      invoice = await this.qpay.createInvoice(price, res.id, +user['id']);
     }
     return {
       data: res,
