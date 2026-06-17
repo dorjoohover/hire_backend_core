@@ -230,8 +230,8 @@ export class UserServiceDao {
       );
 
       for (const exam of rows) {
-        const sid: number = exam.serviceId;
-        if (sid == null) continue;
+        const sid = Number(exam.serviceId);
+        if (!sid) continue;
         if (!examsByService.has(sid)) examsByService.set(sid, []);
         examsByService.get(sid)!.push(exam);
       }

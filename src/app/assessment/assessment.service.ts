@@ -104,7 +104,8 @@ export class AssessmentService {
       const owners = await this.exam.getOwners(user.email);
       orgAss = await this.dao.findOrg([...owners, user.id]);
     }
-    const { data, count, total } = await this.dao.findAll(pg);
+    const isAdmin = user?.role <= 40; // SUPER_ADMIN=10, ADMIN=40
+    const { data, count, total } = await this.dao.findAll(pg, isAdmin);
     const assessments = [...data, ...orgAss];
 
     // Batch: нэг query-аар бүх userService тоог авна (N+1 арилгана)

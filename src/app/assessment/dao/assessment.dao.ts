@@ -104,7 +104,7 @@ export class AssessmentDao {
     });
     return data;
   };
-  findAll = async (pg: PaginationDto) => {
+  findAll = async (pg: PaginationDto, showAll = false) => {
     const whereCondition: any = {};
     if (pg.type) {
       whereCondition.type = pg.type;
@@ -122,7 +122,7 @@ export class AssessmentDao {
         whereCondition.status = pg.status;
       }
     } else {
-      if (!pg.owners?.length) {
+      if (!showAll && !pg.owners?.length) {
         whereCondition.status = Not(AssessmentStatus.ONLY);
       }
     }
