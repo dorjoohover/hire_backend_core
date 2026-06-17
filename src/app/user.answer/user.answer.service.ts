@@ -72,7 +72,7 @@ export class UserAnswerService extends BaseService {
           dto.data
             .flatMap((d) => d.answers ?? [])
             .map((a) => a.answer)
-            .filter((x) => x != null)
+            .filter((x) => x != null && Number(x) > 0)
             .map(Number),
         ),
       ];
@@ -281,6 +281,27 @@ export class UserAnswerService extends BaseService {
             point = null as any;
           }
 
+          // Validate FK references: skip non-existent answer/matrix IDs to
+          // avoid FK violation when frontend sends stale IDs after admin edits.
+          const safeAnswerId =
+            answer.answer && answerMetaMap.has(Number(answer.answer))
+              ? answer.answer
+              : null;
+          const safeMatrixId =
+            answer.matrix && matrixMetaMap.has(Number(answer.matrix))
+              ? answer.matrix
+              : null;
+          if (answer.answer && !safeAnswerId) {
+            console.warn(
+              `⚠️  answerId=${answer.answer} not in questionAnswer — skipping FK`,
+            );
+          }
+          if (answer.matrix && !safeMatrixId) {
+            console.warn(
+              `⚠️  matrixId=${answer.matrix} not in questionAnswerMatrix — skipping FK`,
+            );
+          }
+
           const body: CreateUserAnswerDto = {
             ...d,
             startDate: dto.startDate,
@@ -288,11 +309,11 @@ export class UserAnswerService extends BaseService {
             minPoint: question.minValue,
             maxPoint: question.maxValue,
             point,
-            answer: answer.answer,
+            answer: safeAnswerId,
             correct: answer.matrix
               ? false
               : ((answerCategory as any)?.correct ?? false),
-            matrix: answer.matrix,
+            matrix: safeMatrixId,
             value: answer.value,
             ip,
             exam: exam.id,
@@ -301,7 +322,7 @@ export class UserAnswerService extends BaseService {
 
           const wk = answer.matrix
             ? `m:${+d.question}:${answer.matrix}`
-            : `a:${+d.question}:${answer.answer ?? 'null'}`;
+            : `a:${+d.question}:${answer.answer || 'null'}`;
           pushBody(wk, body);
         }
       }
