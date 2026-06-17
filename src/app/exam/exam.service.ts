@@ -307,10 +307,11 @@ export class ExamService extends BaseService {
         });
         console.timeEnd('⏱ dao.update (userStartDate)');
 
-        if (res.email && (res.lastname || res.firstname)) {
+        const loginEmail = res.email || (res.phone ? `${res.phone}@hire.mn` : null);
+        if (loginEmail && (res.lastname || res.firstname)) {
           console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
-            res.email,
+            loginEmail,
             res.phone,
             res.lastname ?? '',
             res.firstname ?? '',
@@ -356,7 +357,7 @@ export class ExamService extends BaseService {
           result.questions,
           res.id,
           result.category,
-          res.service.id,
+          res.service?.id ?? null,
         );
         console.timeEnd('⏱ createDetail');
 

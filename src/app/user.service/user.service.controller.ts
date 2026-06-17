@@ -189,6 +189,16 @@ export class UserServiceController {
   }
 
   /**
+   * Public хуудаснаас шалгалтын нэр, байгууллагын нэрийг авна (нэвтрэлтгүй).
+   */
+  @Public()
+  @Get(':id/public-info')
+  @ApiParam({ name: 'id' })
+  getPublicInfo(@Param('id') id: string) {
+    return this.userServiceService.getPublicServiceInfo(+id);
+  }
+
+  /**
    * Public QR уншиж ирсэн хэрэглэгч мэдээллээ оруулаад шинэ шалгалт эхлүүлнэ.
    * Нэвтрэлт шаардахгүй (нийтэд нээлттэй).
    */

@@ -580,6 +580,20 @@ export class UserServiceService extends BaseService {
 
     await this.updateCount(serviceId, 0, 1, service.user?.id);
 
-    return { code: examCode };
+    return { succeed: true, payload: { code: examCode } };
+  }
+
+  public async getPublicServiceInfo(serviceId: number) {
+    const service = await this.dao.findOne(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    return {
+      succeed: true,
+      payload: {
+        assessmentName: service.assessment?.name ?? '',
+        orgName: service.user?.organizationName ?? service.user?.firstname ?? '',
+      },
+    };
   }
 }
