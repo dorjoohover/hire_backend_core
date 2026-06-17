@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import {
   Between,
   DataSource,
+  In,
   IsNull,
   Like,
   Not,
   Repository,
 } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
+import { ExamEntity } from '../exam/entities/exam.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { AssessmentStatus, PaymentStatus } from 'src/base/constants';
 import { PaginationDto } from 'src/base/decorator/pagination';
@@ -176,33 +178,69 @@ export class UserServiceDao {
 
     const total = await countQuery.getCount();
 
-    // Paginated data
-    const query = this.db
+    // Paginated data — exam-ийг тусдаа ачаалж TypeORM-ийн
+    // leftJoinAndSelect + take() pagination bug-аас зайлсхийнэ.
+    const serviceQuery = this.db
       .createQueryBuilder('service')
       .leftJoinAndSelect('service.assessment', 'assessment')
-      .leftJoinAndSelect('service.exams', 'exams')
       .leftJoinAndSelect('service.user', 'user')
       .where('user.id = :userId', { userId: id });
 
     if (service !== 0) {
-      query.andWhere('service.id = :serviceId', { serviceId: service });
+      serviceQuery.andWhere('service.id = :serviceId', { serviceId: service });
     }
     if (assId !== 0) {
-      query.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
+      serviceQuery.andWhere('assessment.id = :assessmentId', { assessmentId: assId });
     }
     if (status !== undefined) {
-      query.andWhere('service.status = :status', { status });
-    }
-    if (examStatus) {
-      applyExamStatus(query);
+      serviceQuery.andWhere('service.status = :status', { status });
     }
 
-    query
+    serviceQuery
       .addOrderBy('service.createdAt', sortDir)
       .skip((page - 1) * limit)
       .take(limit);
 
-    const data = await query.getMany();
+    const services = await serviceQuery.getMany();
+
+    // examStatus filter байвал тухайн service-уудын exam-ийг тус тусад нь авна
+    const serviceIds = services.map((s) => s.id);
+    let examsByService: Map<number, any[]> = new Map();
+
+    if (serviceIds.length > 0) {
+      const examRepo = this.dataSource.getRepository(ExamEntity);
+      const examQuery = examRepo
+        .createQueryBuilder('exam')
+        .where('exam.serviceId IN (:...ids)', { ids: serviceIds });
+
+      if (examStatus) {
+        const examStatusList = examStatus
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const conditions: string[] = [];
+        if (examStatusList.includes('notStarted'))
+          conditions.push('(exam.userStartDate IS NULL AND exam.userEndDate IS NULL)');
+        if (examStatusList.includes('started'))
+          conditions.push('(exam.userStartDate IS NOT NULL AND exam.userEndDate IS NULL)');
+        if (examStatusList.includes('completed'))
+          conditions.push('(exam.userEndDate IS NOT NULL)');
+        if (conditions.length) examQuery.andWhere(`(${conditions.join(' OR ')})`);
+      }
+
+      const allExams = await examQuery.getMany();
+      for (const exam of allExams) {
+        const sid = (exam as any).serviceId ?? (exam.service as any)?.id;
+        if (sid == null) continue;
+        if (!examsByService.has(sid)) examsByService.set(sid, []);
+        examsByService.get(sid)!.push(exam);
+      }
+    }
+
+    const data = services.map((s) => ({
+      ...s,
+      exams: examsByService.get(s.id) ?? [],
+    }));
 
     return {
       data,

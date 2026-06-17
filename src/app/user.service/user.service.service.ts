@@ -589,12 +589,8 @@ export class UserServiceService extends BaseService {
       throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
     }
     return {
-      succeed: true,
-      payload: {
-        assessmentName: service.assessment?.name ?? '',
-        orgName:
-          service.user?.organizationName ?? service.user?.firstname ?? '',
-      },
+      assessmentName: service.assessment?.name ?? '',
+      orgName: service.user?.organizationName ?? service.user?.firstname ?? '',
     };
   }
 }
