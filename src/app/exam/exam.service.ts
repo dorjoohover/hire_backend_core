@@ -182,6 +182,16 @@ export class ExamService extends BaseService {
         exam.email && user.email && exam.email.toLowerCase() === user.email.toLowerCase();
       const matchesByPhone =
         exam.phone && user.phone && exam.phone === user.phone;
+      console.warn('[PDF ACCESS] mismatch', {
+        examCode: exam.code,
+        examUserId: exam.user?.id,
+        requestUserId: user?.id,
+        requestUserEmail: user?.email,
+        examEmail: exam.email,
+        examPhone: exam.phone,
+        matchesByEmail,
+        matchesByPhone,
+      });
       if (!matchesByEmail && !matchesByPhone) {
         throw new HttpException(
           'Тайлан харах эрхгүй байна.',
