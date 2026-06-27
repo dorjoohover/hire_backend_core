@@ -176,11 +176,18 @@ export class ExamService extends BaseService {
         HttpStatus.FORBIDDEN,
       );
     }
-    if (user && user.role == CLIENT && user?.id != exam.user?.id) {
-      throw new HttpException(
-        'Тайлан харах эрхгүй байна.',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (user && user.role == CLIENT && exam.user?.id && user?.id != exam.user?.id) {
+      // Public QR-аар тест өгсөн хэрэглэгч email/phone-оор тааралдах эсэхийг шалгана
+      const matchesByEmail =
+        exam.email && user.email && exam.email.toLowerCase() === user.email.toLowerCase();
+      const matchesByPhone =
+        exam.phone && user.phone && exam.phone === user.phone;
+      if (!matchesByEmail && !matchesByPhone) {
+        throw new HttpException(
+          'Тайлан харах эрхгүй байна.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
     if (
       user &&
