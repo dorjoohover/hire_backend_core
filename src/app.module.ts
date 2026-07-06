@@ -30,6 +30,7 @@ import { ReportModule } from './app/report/report.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
+import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { EmailModule } from './app/email/email.module';
     UserModule,
     UserServiceModule,
     ReportModule,
+    PdfTemplateModule,
   ],
   controllers: [AppController],
   providers: [

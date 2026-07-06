@@ -70,4 +70,91 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
 
   `CREATE INDEX IF NOT EXISTS idx_exam_code
   ON "exam" ("code")`,
+
+  // ===========================================================================
+  // 3) Studio (PDF builder) template storage — pdf_template. `synchronize` is
+  //    off, and this repo has no migration runner, so new tables are
+  //    provisioned here the same way as the indexes above (idempotent,
+  //    runs on every boot). See core/src/app/pdf-template/entities/pdf-template.entity.ts
+  // ===========================================================================
+  `CREATE TABLE IF NOT EXISTS pdf_template (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR NOT NULL,
+    key VARCHAR,
+    "assessmentId" INTEGER,
+    "assessmentTypeCode" VARCHAR,
+    context VARCHAR,
+    content JSONB,
+    "internalView" BOOLEAN NOT NULL DEFAULT false,
+    "fontFamily" VARCHAR,
+    "fontSize" INTEGER,
+    color VARCHAR,
+    "logoPosition" VARCHAR DEFAULT 'start',
+    pages JSONB NOT NULL DEFAULT '[]',
+    "aiConfig" JSONB,
+    "demoMode" BOOLEAN NOT NULL DEFAULT false,
+    "demoData" JSONB,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_pdf_template_assessment_type
+  ON pdf_template ("assessmentTypeCode")`,
+
+  // isActive: тухайн assessment дээр аль report generation-д ашиглагдахыг
+  // тэмдэглэнэ (studio-ийн "Ашиглах" товч). Хүснэгт өмнө үүссэн байж болох тул
+  // ADD COLUMN IF NOT EXISTS-аар аюулгүй нэмнэ.
+  `ALTER TABLE pdf_template
+   ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN NOT NULL DEFAULT false`,
+
+  `CREATE INDEX IF NOT EXISTS idx_pdf_template_active
+  ON pdf_template ("assessmentId", "isActive")`,
+
+  // AI Data tab-ийн JSON input feature (hire_mn_mapping.docx-ийн mapping
+  // schema-той тохирсон JSON) — зөвхөн Studio-ийн preview/token эх сурвалж.
+  // ⚠ Доорх assessment_ai_data хүснэгт үүсснээс хойш ЭНЭ багана нь зөвхөн
+  // in-memory (Zustand) кэш/backward-compat зорилготой — жинхэнэ хадгалалт
+  // assessment_ai_data руу шилжсэн (assessmentId-аар түлхүүрлэгдсэн, template
+  // бүрт биш).
+  `ALTER TABLE pdf_template
+   ADD COLUMN IF NOT EXISTS "aiJsonData" JSONB`,
+
+  // AI Data tab-ийн JSON өгөгдлийг pdf_template-ээс ТУСДАА, assessment
+  // бүрт ганцхан хадгална (олон template нэг assessment дээр байж болох тул
+  // template тус бүрт давхардуулахгүйн тулд). Уншихдаа/бичихдээ
+  // core/src/app/pdf-template/pdf-template.controller.ts-ийн
+  // GET/PUT ai-data/:assessmentId ашиглана.
+  `CREATE TABLE IF NOT EXISTS assessment_ai_data (
+    id SERIAL PRIMARY KEY,
+    "assessmentId" INTEGER NOT NULL UNIQUE,
+    data JSONB,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_assessment_ai_data_assessment
+  ON assessment_ai_data ("assessmentId")`,
+
+  // Studio-ийн "Хэрэглэгчийн variable" — тухайн assessment дээр хэрэглэгчийн
+  // өөрөө нэрлэж үүсгэсэн key->утга map-ууд (жиш нь "characterDescription":
+  // {d: "...", i: "...", ...}). Нэг assessment дээр ОЛОН variable (өөр
+  // key нэртэй) байж болно тул UNIQUE(assessmentId, key), assessment_ai_data
+  // шиг UNIQUE(assessmentId) биш. core/src/app/pdf-template/
+  // pdf-template.controller.ts-ийн GET/PUT/DELETE variables/:assessmentId
+  // [/:key] endpoint-ээр CRUD хийгдэнэ; hire_report/src/pdf/
+  // dynamic-template.renderer.ts render үед exam.assessment.id-аар татаж
+  // {{custom.<key>}} token болгон ашиглана.
+  `CREATE TABLE IF NOT EXISTS assessment_variable (
+    id SERIAL PRIMARY KEY,
+    "assessmentId" INTEGER NOT NULL,
+    key VARCHAR(100) NOT NULL,
+    label VARCHAR(255),
+    entries JSONB,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("assessmentId", key)
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_assessment_variable_assessment
+  ON assessment_variable ("assessmentId")`,
 ];

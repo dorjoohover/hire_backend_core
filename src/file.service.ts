@@ -194,8 +194,22 @@ export class FileService {
     };
   }
   async upload(key: string, ct: string, body) {
+    console.log(key);
+
+    // Local disk-рүү ЯМАГТ бичнэ — S3 амжилтгүй болсон ч (сүлжээ/эрх зэрэг
+    // шалтгаанаар) getFile()-ийн local unshtn уншилт ажиллаж чадах ёстой.
+    // Өмнө нь S3 upload-ын try/catch-ийн ДОТОР байрлаж байсан тул S3 throw
+    // хийвэл local бичилт бүр хийгдэхгүй өнгөрдөг байсан — Зураг блокийн
+    // upload хийсэн зураг "олдсонгүй" (404) болж харагдах шалтгаан нь энэ байсан.
     try {
-      console.log(key);
+      mkdirSync(this.localPath, { recursive: true });
+      const localFilePath = join(this.localPath, key);
+      writeFileSync(localFilePath, body);
+    } catch (error) {
+      console.log('local write failed', error);
+    }
+
+    try {
       await this.s3
         .upload({
           Bucket: this.bucketName,
@@ -204,17 +218,13 @@ export class FileService {
           ContentType: ct,
         })
         .promise();
-
-      // Optional: Save locally
-      const localFilePath = join(this.localPath, key);
-      writeFileSync(localFilePath, body);
-
-      // Add public S3 URL
-      const fileUrl = `${key}`;
-      return fileUrl;
     } catch (error) {
-      console.log(error);
+      console.log('s3 upload failed', error);
     }
+
+    // Add public S3 URL
+    const fileUrl = `${key}`;
+    return fileUrl;
   }
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
