@@ -21,6 +21,7 @@ import { performance } from 'perf_hooks';
 import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
+import { getAssessmentScoring } from './assessment-scoring.config';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -434,7 +435,23 @@ export class UserAnswerService extends BaseService {
   }
 
   public async findByCode(code: string) {
-    return await this.dao.findByCode(code, 0);
+    const [answers, exam] = await Promise.all([
+      this.dao.findByCode(code, 0),
+      this.examDao.findByCode(code),
+    ]);
+    console.log(code, answers)
+
+    const assessment = exam?.assessment
+      ? {
+          ...exam.assessment,
+          result: getAssessmentScoring(exam.assessment.id),
+        }
+      : null;
+
+    return {
+      answers,
+      assessment,
+    };
   }
   public async findOne(id: number, code: string) {
     let res = await this.dao.findByCode(code, id);
