@@ -1,60 +1,60 @@
-// Assessment-ийн онооны тайлбар (scale, bands, чиглэл г.м) — hardcode mapping.
+// Assessment-ийн онооны тайлбар (scale, bands, subscaleMax) — тухайн assessment-ийн
+// questionCategory-дуудаас (өөрөөр хэлбэл "totalPoint" талбараас) шууд тооцоолно.
 // UserAnswerService.findByCode()-ийн буцаах "assessment" block-д "result" талбар
-// болгон нэмэгддэг. Тухайн assessment-д тусгайлсан тохиргоо хэрэгтэй бол
-// ASSESSMENT_SCORING_OVERRIDES доторх map-д assessment.id-гаараа нэмнэ — энэ нь
-// DEFAULT_ASSESSMENT_SCORING-ийг талбар тус бүрээр дарж бичнэ.
+// болгон нэмэгддэг.
+//
+// totalPoint нь questionCategory болон assessment хүснэгтэд аль хэдийн хадгалагдсан
+// байдаг (харах: QuestionCategoryDao.updatePoint, AssessmentDao.updatePoint) — тэр
+// category/асуулт бүрийн "хамгийн их авах боломжтой оноо" тул scale.max, bands,
+// subscaleMax-ийг үүгээр шууд тооцоолж болно.
 
 export interface ScoreBand {
-  /** [доод хязгаар, дээд хязгаар] хамтдаа хамаарна */
+  questionCategory?: number;
+  name: string;
+  /** [доод хязгаар, дээд хязгаар] — тухайн questionCategory-д авах боломжтой оноо */
   range: [number, number];
-  label: string;
 }
 
 export interface AssessmentScoringConfig {
-  /** доод/дээд хязгаар */
+  /** тухайн assessment-ийн хамгийн бага болон хамгийн их авах боломжтой оноо */
   scale: { min: number; max: number };
+  /** label-гүйгээр questionCategory тус бүрийн min/max оноог харуулна */
   bands: ScoreBand[];
-  /** өндөр оноо сайн уу, муу юу */
-  scoreDirection: 'low-good' | 'high-good';
-  /** дэд бүлгийн дээд оноо */
+  // scoreDirection: өндөр оноо сайн уу, муу юу — assessment бүрээр ялгаатай бөгөөд
+  // одоогоор тодорхойгүй тул түр comment.
+  // scoreDirection?: 'low-good' | 'high-good';
+  /** хамгийн өндөр questionCategory-гийн оноо */
   subscaleMax: number;
 }
 
-export const DEFAULT_ASSESSMENT_SCORING: AssessmentScoringConfig = {
-  scale: { min: 0, max: 40 },
-  bands: [
-    { range: [0, 12], label: 'Хэвийн' },
-    { range: [13, 40], label: 'Эмнэл зүйн шинж илэрсэн' },
-  ],
-  scoreDirection: 'low-good',
-  subscaleMax: 4,
-};
+export interface ScoringCategoryInput {
+  id?: number;
+  name: string;
+  totalPoint?: number | string | null;
+}
 
-// assessment.id -> тухайн assessment-д зориулсан тусгай тохиргоо (шаардлагатай үед нэмнэ)
-export const ASSESSMENT_SCORING_OVERRIDES: Record<
-  number,
-  Partial<AssessmentScoringConfig>
-> = {
-  // Жишээ:
-  // 12: {
-  //   scale: { min: 0, max: 60 },
-  //   bands: [
-  //     { range: [0, 20], label: 'Хэвийн' },
-  //     { range: [21, 60], label: 'Эмнэл зүйн шинж илэрсэн' },
-  //   ],
-  // },
-};
+export interface ScoringAssessmentInput {
+  totalPoint?: number | string | null;
+}
 
-export function getAssessmentScoring(
-  assessmentId?: number,
+export function buildAssessmentScoring(
+  assessment: ScoringAssessmentInput,
+  categories: ScoringCategoryInput[],
 ): AssessmentScoringConfig {
-  const override = assessmentId
-    ? ASSESSMENT_SCORING_OVERRIDES[assessmentId]
-    : undefined;
+  const categoryMaxes = categories.map((c) => +(c.totalPoint ?? 0));
+
+  const scaleMax =
+    assessment.totalPoint != null
+      ? +assessment.totalPoint
+      : categoryMaxes.reduce((sum, p) => sum + p, 0);
 
   return {
-    ...DEFAULT_ASSESSMENT_SCORING,
-    ...override,
-    scale: { ...DEFAULT_ASSESSMENT_SCORING.scale, ...override?.scale },
+    scale: { min: 0, max: scaleMax },
+    bands: categories.map((c) => ({
+      questionCategory: c.id,
+      name: c.name,
+      range: [0, +(c.totalPoint ?? 0)],
+    })),
+    subscaleMax: categoryMaxes.length ? Math.max(...categoryMaxes) : 0,
   };
 }

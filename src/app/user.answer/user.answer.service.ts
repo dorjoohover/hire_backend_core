@@ -21,7 +21,7 @@ import { performance } from 'perf_hooks';
 import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
-import { getAssessmentScoring } from './assessment-scoring.config';
+import { buildAssessmentScoring } from './assessment-scoring.config';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -439,14 +439,17 @@ export class UserAnswerService extends BaseService {
       this.dao.findByCode(code, 0),
       this.examDao.findByCode(code),
     ]);
-    console.log(code, answers)
 
-    const assessment = exam?.assessment
-      ? {
-          ...exam.assessment,
-          result: getAssessmentScoring(exam.assessment.id),
-        }
-      : null;
+    let assessment = null;
+    if (exam?.assessment) {
+      const categories = await this.questionCategoryDao.findByAssessmentId(
+        exam.assessment.id,
+      );
+      assessment = {
+        ...exam.assessment,
+        result: buildAssessmentScoring(exam.assessment, categories),
+      };
+    }
 
     return {
       answers,
