@@ -557,7 +557,7 @@ export class UserServiceService extends BaseService {
     if (!service) {
       throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
     }
-    if (service.count - service.usedUserCount <= 0) {
+    if (service.count - service.usedUserCount <= 0 && service.price != 0) {
       throw new HttpException(
         'Тестийн эрх дууссан байна.',
         HttpStatus.PAYMENT_REQUIRED,
