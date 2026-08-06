@@ -49,14 +49,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ip: (request as any)?.ip ?? '',
             user: (request as any)?.user ?? undefined,
           });
+          // Admin панелийн "Алдааны лог" хэсэгт харуулахын тулд DB-д
+          // бичнэ (fileLog-той ижил шүүлтүүр — 400/404/Forbidden noise-г
+          // алгасна).
+          await this.errorLogService.logError(
+            exception,
+            message,
+            status,
+            clientIp,
+            request,
+          );
         }
-      // await this.errorLogService.logError(
-      //   exception,
-      //   message,
-      //   status,
-      //   clientIp,
-      //   request,
-      // );
       logger.error({
         message: message,
         event: exception.name,

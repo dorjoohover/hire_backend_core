@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ErrorLog } from './error-log.entity';
+import { PaginationDto } from 'src/base/decorator/pagination';
 
 @Injectable()
 export class ErrorLogService {
@@ -9,6 +10,27 @@ export class ErrorLogService {
     @InjectRepository(ErrorLog)
     private readonly errorLogRepository: Repository<ErrorLog>,
   ) {}
+
+  async findAll(pg: PaginationDto) {
+    const { limit, page, status, method } = pg;
+    const [res, count] = await this.errorLogRepository.findAndCount({
+      where: {
+        ...(status ? { status: +status } : {}),
+        ...(method ? { method } : {}),
+      },
+      take: limit,
+      skip: (page - 1) * limit,
+      order: {
+        timestamp: 'desc',
+      },
+    });
+    const total = await this.errorLogRepository.count();
+    return {
+      data: res,
+      count,
+      total,
+    };
+  }
 
   async logError(
     exception: Error,
