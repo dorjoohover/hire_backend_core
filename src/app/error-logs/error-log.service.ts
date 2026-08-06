@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { Like, MoreThan, Repository } from 'typeorm';
 import { ErrorLog } from './error-log.entity';
 import { PaginationDto } from 'src/base/decorator/pagination';
 
@@ -36,6 +36,14 @@ export class ErrorLogService {
   async countSince(since: Date): Promise<number> {
     return this.errorLogRepository.count({
       where: { timestamp: MoreThan(since) },
+    });
+  }
+
+  /** `since`-ээс хойш, `urlPrefix`-ээр эхэлсэн route-д гарсан алдааны тоо
+   * (жишээ нь: чухал flow-ийн — /exam, /userAnswer — алдааг ялгаж харах) */
+  async countSinceByUrlPrefix(since: Date, urlPrefix: string): Promise<number> {
+    return this.errorLogRepository.count({
+      where: { timestamp: MoreThan(since), url: Like(`${urlPrefix}%`) },
     });
   }
 

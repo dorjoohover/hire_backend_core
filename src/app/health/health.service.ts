@@ -5,8 +5,16 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import axios from 'axios';
 import Redis from 'ioredis';
+import { LessThan, MoreThan, Not, IsNull, In } from 'typeorm';
 import { MetricsService } from 'src/base/metrics.service';
 import { ErrorLogService } from '../error-logs/error-log.service';
+import { UserServiceEntity } from '../user.service/entities/user.service.entity';
+import { ReportLogEntity } from '../report/report.log.entity';
+import { PaymentStatus, REPORT_STATUS } from 'src/base/constants';
+
+// Хэдэн минутаас дээш "гацсан" гэж үзэх вэ (тохиргоо шаардлагатай бол env-ээр)
+const PAYMENT_STUCK_MIN = Number(process.env.PAYMENT_STUCK_MIN ?? 30);
+const REPORT_STUCK_MIN = Number(process.env.REPORT_STUCK_MIN ?? 15);
 
 const execAsync = promisify(exec);
 const mb = (bytes: number) => Math.round(bytes / (1024 * 1024));
@@ -165,6 +173,83 @@ export class HealthService implements OnModuleDestroy {
     };
   }
 
+  /**
+   * Чухал бизнес flow-уудын "гацсан/амжилтгүй" тохиолдлыг харна. Эдгээр
+   * нь ихэвчлэн exception шиддэггүй (try/catch-аар дотроо зөөлөн барьчихдаг,
+   * ж: qpay.service.ts-ийн createInvoice/getInvoice) тул ердийн
+   * "Алдааны лог"-д огт ордоггүй — тиймээс тусдаа шалгана.
+   */
+  private async getFlows() {
+    const userServiceRepo = this.dataSource.getRepository(UserServiceEntity);
+    const reportLogRepo = this.dataSource.getRepository(ReportLogEntity);
+
+    const paymentStuckSince = new Date(
+      Date.now() - PAYMENT_STUCK_MIN * 60_000,
+    );
+    const reportStuckSince = new Date(
+      Date.now() - REPORT_STUCK_MIN * 60_000,
+    );
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60_000);
+
+    const [
+      paymentStuckCount,
+      paymentTodayTotal,
+      paymentTodaySuccess,
+      reportStuckCount,
+      reportFailedToday,
+      examErrors,
+      answerErrors,
+    ] = await Promise.all([
+      // Төлбөр: PENDING-ээс шилжээгүй, threshold-оос хуучин — QPay invoice
+      // үүсээгүй эсвэл webhook ирээгүй байж болзошгүй "алга болсон" төлбөр
+      userServiceRepo.count({
+        where: {
+          status: PaymentStatus.PENDING,
+          createdAt: LessThan(paymentStuckSince),
+        },
+      }),
+      userServiceRepo.count({ where: { createdAt: MoreThan(todayStart) } }),
+      userServiceRepo.count({
+        where: {
+          createdAt: MoreThan(todayStart),
+          status: PaymentStatus.SUCCESS,
+        },
+      }),
+      // Тайлан (PDF/S3): COMPLETED/SENT болоогүй, threshold-оос удаан үргэлжилсэн
+      reportLogRepo.count({
+        where: {
+          status: Not(In([REPORT_STATUS.COMPLETED, REPORT_STATUS.SENT])),
+          updatedAt: LessThan(reportStuckSince),
+        },
+      }),
+      // Тайлан: error багана бичигдсэн (өнөөдөр үүссэн)
+      reportLogRepo.count({
+        where: { error: Not(IsNull()), createdAt: MoreThan(todayStart) },
+      }),
+      this.errorLogService.countSinceByUrlPrefix(oneDayAgo, '/exam'),
+      this.errorLogService.countSinceByUrlPrefix(oneDayAgo, '/userAnswer'),
+    ]);
+
+    return {
+      payment: {
+        stuckPending: paymentStuckCount,
+        stuckThresholdMin: PAYMENT_STUCK_MIN,
+        todayTotal: paymentTodayTotal,
+        todaySuccess: paymentTodaySuccess,
+      },
+      report: {
+        stuck: reportStuckCount,
+        stuckThresholdMin: REPORT_STUCK_MIN,
+        failedToday: reportFailedToday,
+      },
+      exam: {
+        errorsLast24h: examErrors + answerErrors,
+      },
+    };
+  }
+
   private getApp() {
     const last5 = this.metrics.stats(5);
     const last15 = this.metrics.stats(15);
@@ -180,7 +265,7 @@ export class HealthService implements OnModuleDestroy {
     const oneHourAgo = new Date(Date.now() - 60 * 60_000);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60_000);
 
-    const [disk, db, redis, services, errorsLast1h, errorsLast24h] =
+    const [disk, db, redis, services, errorsLast1h, errorsLast24h, flows] =
       await Promise.all([
         this.getDisk(),
         this.getDb(),
@@ -188,6 +273,7 @@ export class HealthService implements OnModuleDestroy {
         this.getServices(),
         this.errorLogService.countSince(oneHourAgo),
         this.errorLogService.countSince(oneDayAgo),
+        this.getFlows(),
       ]);
 
     return {
@@ -203,6 +289,7 @@ export class HealthService implements OnModuleDestroy {
         errorsLast1h,
         errorsLast24h,
       },
+      flows,
     };
   }
 }
