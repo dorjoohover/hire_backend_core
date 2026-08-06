@@ -31,6 +31,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
 import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
+import { HealthModule } from './app/health/health.module';
+import { MetricsInterceptor } from './base/metrics.interceptor';
 
 @Module({
   imports: [
@@ -68,6 +70,7 @@ import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
     UserServiceModule,
     ReportModule,
     PdfTemplateModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -91,6 +94,10 @@ import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: PostInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { ErrorLog } from './error-log.entity';
 import { PaginationDto } from 'src/base/decorator/pagination';
 
@@ -30,6 +30,13 @@ export class ErrorLogService {
       count,
       total,
     };
+  }
+
+  /** `since`-ээс хойших алдааны тоо (health/metrics-ийн error-rate хэсэгт) */
+  async countSince(since: Date): Promise<number> {
+    return this.errorLogRepository.count({
+      where: { timestamp: MoreThan(since) },
+    });
   }
 
   async logError(
