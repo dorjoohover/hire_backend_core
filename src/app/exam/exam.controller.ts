@@ -135,6 +135,14 @@ export class ExamController {
         throw new HttpException('Тайлан бодож эхэлсэн...', 202);
       } else if (report.status === REPORT_STATUS.PENDING) {
         throw new HttpException('Тайлан хүлээгдэж байна...', 202);
+      } else if (report.status === REPORT_STATUS.FAILED) {
+        // Worker талд 3 удаагийн retry (app.module.ts) бүгд амжилтгүй болсон
+        // тохиолдол. 202 буцаагаад мөнхөд client-ээр polling хийлгэхийн оронд
+        // тодорхой алдаа өгч, front-ээс "дахин оролдох" харуулах боломж олгоно.
+        throw new HttpException(
+          'Тайлан боловсруулахад алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
+          500,
+        );
       }
     }
   }
