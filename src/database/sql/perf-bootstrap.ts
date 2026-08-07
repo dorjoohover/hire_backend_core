@@ -157,4 +157,16 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
 
   `CREATE INDEX IF NOT EXISTS idx_assessment_variable_assessment
   ON assessment_variable ("assessmentId")`,
+
+  // "Тайлан уншаад гацдаг" гомдол: report_logs.status Postgres native enum
+  // тул TS enum-д REPORT_STATUS.FAILED нэмсэн ч (src/base/constants.ts,
+  // hire_report/src/base/constants.ts) DB-ийн enum type өөрөө шинэ утгыг
+  // мэдэхгүй байвал hire_report-ийн worker "FAILED" гэж бичихийг оролдоход
+  // "invalid input value for enum" алдаа шидэнэ. ADD VALUE IF NOT EXISTS
+  // (Postgres 12+) — аюулгүй, олон удаа ажиллуулж болно.
+  // ⚠️ Хэрэв enum type-ийн бодит нэр report_logs_status_enum биш бол энэ
+  // мөр алдаатай (console.error) боловч бусад bootstrap statement-д
+  // нөлөөлөхгүй — тухайн тохиолдолд \dT+ report_logs_status_enum-ээр
+  // жинхэнэ нэрийг psql-ээр шалгаад засах хэрэгтэй.
+  `ALTER TYPE report_logs_status_enum ADD VALUE IF NOT EXISTS 'FAILED'`,
 ];
