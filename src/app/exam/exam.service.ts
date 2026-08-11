@@ -333,7 +333,14 @@ export class ExamService extends BaseService {
       // чадахгүй үлддэг байсан. forceLogin idempotent (байгаа хэрэглэгчийг зүгээр
       // дахин авна) тул давхар дуудахад аюулгүй.
       if (category === undefined) {
-        const loginEmail = res.email || (res.phone ? `${res.phone}@hire.mn` : null);
+        // Lowercase хийж өгснөөр QR-ээр бичсэн и-мэйлийн casing өөр ч
+        // (жишээ нь "John@Gmail.com" vs "john@gmail.com") forceLogin дотоod
+        // getUser (мөн lowercase хайдаг) зөв тааруулж, ӨМНӨ БҮРТГЭЛТЭЙ
+        // хэрэглэгчийн дээр л token үүсгэнэ — шинэ давхар хэрэглэгч
+        // үүсгэхгүй.
+        const loginEmail = (
+          res.email || (res.phone ? `${res.phone}@hire.mn` : null)
+        )?.toLowerCase() ?? null;
         if (loginEmail && (res.lastname || res.firstname)) {
           console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
