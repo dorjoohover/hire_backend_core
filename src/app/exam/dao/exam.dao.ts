@@ -555,6 +555,39 @@ export class ExamDao {
       },
     });
   };
+  // Public/QR урсгалаар давхар бүртгэлээс сэргийлэхэд ашиглана: тухайн
+  // service (QR)-д ижил email/phone-тэй сүүлийн N цагийн дотор үүссэн
+  // exam байгаа эсэхийг шалгана. Байвал шинээр үүсгэхгүй, тэрийг нь
+  // буцааж үргэлжлүүлүүлнэ.
+  findByServiceAndContact = async (
+    serviceId: number,
+    email: string | null,
+    phone: string | null,
+    withinHours = 24,
+  ) => {
+    if (!email && !phone) return null;
+
+    const qb = this.db
+      .createQueryBuilder('exam')
+      .where('exam."serviceId" = :serviceId', { serviceId })
+      .andWhere(`exam."createdAt" >= NOW() - (:hours || ' hours')::interval`, {
+        hours: withinHours,
+      });
+
+    if (email && phone) {
+      qb.andWhere(
+        '(LOWER(exam.email) = LOWER(:email) OR exam.phone = :phone)',
+        { email, phone },
+      );
+    } else if (email) {
+      qb.andWhere('LOWER(exam.email) = LOWER(:email)', { email });
+    } else {
+      qb.andWhere('exam.phone = :phone', { phone });
+    }
+
+    return await qb.orderBy('exam."createdAt"', 'DESC').getOne();
+  };
+
   findByCode = async (code: string | number) => {
     const res = await this.db.findOne({
       where: {

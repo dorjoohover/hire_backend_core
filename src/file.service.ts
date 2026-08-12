@@ -345,11 +345,26 @@ export class FileService {
 
       if (e.code === 'ECONNRESET') {
         console.log('Retrying report fetch...');
-        return axios.get(`${process.env.REPORT}file/${filename}`, {
-          responseType: 'stream',
-          timeout: 30000,
-          headers: { Connection: 'close' },
-        });
+        // ⚠ Энэ retry дуудлага өмнө нь try/catch-гүй байсан тул амжилтгүй
+        // бол getReport()-оос catch-гүйгээр дээш шидэгдэж, requestPdf
+        // controller-т барихгүй, эцсийн хэрэглэгчид ил тод 500 болж
+        // харагддаг байсан. Одоо бусад алдаатай адил чимээгүй null буцаана
+        // — дуудагч тал (ExamController.requestPdf) үүнийг "File not
+        // found" 404 болгож зөв боловсруулна.
+        try {
+          return await axios.get(`${process.env.REPORT}file/${filename}`, {
+            responseType: 'stream',
+            timeout: 30000,
+            headers: { Connection: 'close' },
+          });
+        } catch (retryErr: any) {
+          console.error(
+            'REPORT FETCH RETRY ERROR:',
+            retryErr.code,
+            retryErr.message,
+          );
+          return null;
+        }
       }
 
       return null;
