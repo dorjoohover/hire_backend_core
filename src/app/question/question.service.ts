@@ -287,19 +287,42 @@ export class QuestionService {
     // for (const c of answerCategories) await ensureAnswerCategory(c);
 
     // 4) Асуултын категорийг хуулж, асуулт/хариулт/матрицыг нэг бүрчлэн үүсгэнэ
+    //
+    // ⚠️ АНХААРАХ ЗҮЙЛ (id-г хасахаас ГАДНА): `qc`/`question`/`answer` нь
+    // TypeORM-ээс relations-тайгаар (`answers`, `matrix`, `answers.category`,
+    // `answers.matrix`) ачаалагдсан ЭХ мөрүүд тул `{...qcRest}` /
+    // `{...questionRest}` / `{...answerRest}` гэж spread хийхэд `id`-г
+    // хассан ч дараах OneToMany relation массивууд бүтнээрээ (ЭХ
+    // мөрүүдийн бодит `id`-тай хамт) дотор нь үлдэж DTO-руу орсоор
+    // байсан юм:
+    //   - question.answers, question.matrix
+    //   - answer.matrix
+    // TypeORM `save()`-д ийм массив өгвол, `cascade: true` тохируулаагүй
+    // ч гэсэн OneToMany талын хүүхэд мөрүүдийн foreign key-г шинээр
+    // үүсгэсэн эцэг рүү УДИРДАЖ ШИНЭЧЛЭХ (`UPDATE ... SET "questionId" =
+    // <шинэ id>`) зан гаргадаг нь локал Postgres дээр SQL лог-оор
+    // баталгаажсан. Үүний улмаас хуулбарлах үед ЭХ questionAnswer/
+    // questionAnswerMatrix мөрүүд шинэ асуулт/хариулт руу "хулгайлагдаж",
+    // эх асуулт хариултгүй үлдэж, шинэ асуулт давхар хариулттай болж
+    // байсан нь "duplicate үүсгэхэд хариултууд үүсэхгүй байна" гэсэн
+    // алдааны жинхэнэ шалтгаан байв.
+    //
+    // Тиймээс доор `...spread` ашиглахгүйгээр зөвхөн шаардлагатай
+    // СКАЛЯР талбаруудыг тодорхой жагсаан (whitelist) дамжуулж, ямар ч
+    // relation объект/массив алдагдаж орохгүй байхаар бичив.
     for (const qc of questionCategories) {
       // эхлээд qc-т харьяалагдах асуултуудыг авчир
       const questions = await this.questionDao.findQuestions(qc.id);
 
-      // ⚠️ АНХААР: qc.id-г шинэ мөрөнд дамжуулбал TypeORM save() нь ЭХ
-      // мөрийг update хийчихдэг (insert биш) тул id-г заавал хасна.
-      const { id: _qcId, ...qcRest } = qc as any;
-
-      // шинэ question category
+      // шинэ question category (зөвхөн скаляр талбарууд)
       const newQCat = await this.questionCategoryDao.create({
-        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл (id-гүйгээр)
-        ...qcRest,
         name: qc.name,
+        value: qc.value,
+        duration: qc.duration,
+        orderNumber: qc.orderNumber,
+        status: qc.status,
+        url: qc.url,
+        sliced: qc.sliced,
         createdUser: userId,
         questionCount: questions.length,
         assessment: newAssessmentId,
@@ -308,9 +331,18 @@ export class QuestionService {
 
       // асуулт бүр
       for (const question of questions ?? []) {
-        const { id: _questionId, ...questionRest } = question as any;
         const newQ = await this.questionDao.create({
-          ...questionRest,
+          name: question.name,
+          type: question.type,
+          level: question.level,
+          status: question.status,
+          minValue: question.minValue,
+          maxValue: question.maxValue,
+          slider: question.slider,
+          point: question.point,
+          orderNumber: question.orderNumber,
+          file: question.file,
+          required: question.required,
           category: newQCatId,
           createdUser: userId,
         });
@@ -321,9 +353,14 @@ export class QuestionService {
           // хариултын category-г map-даж (parent chain-тэй бол parent-ийг нь эхлээд үүсгэнэ)
           const newCatId = await ensureAnswerCategory(answer.category);
 
-          const { id: _answerId, ...answerRest } = answer as any;
           const newA = await this.questionAnswerDao.create({
-            ...answerRest,
+            value: answer.value,
+            point: answer.point,
+            orderNumber: answer.orderNumber,
+            file: answer.file,
+            correct: answer.correct,
+            reverse: answer.reverse,
+            negative: answer.negative,
             category: newCatId,
             question: newQId,
           });
@@ -331,9 +368,10 @@ export class QuestionService {
 
           const matrix = answer.matrix ?? [];
           for (const mrtx of matrix) {
-            const { id: _mrtxId, ...mrtxRest } = mrtx as any;
             await this.questionAnswerMatrixDao.create({
-              ...mrtxRest,
+              value: mrtx.value,
+              point: mrtx.point,
+              orderNumber: mrtx.orderNumber,
               answer: newAId,
               category: newCatId,
               question: newQId,
