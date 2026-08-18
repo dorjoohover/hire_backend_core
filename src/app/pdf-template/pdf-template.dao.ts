@@ -36,6 +36,30 @@ export class PdfTemplateDao {
     return await this.db.findOne({ where: { id } });
   };
 
+  // AI export endpoint (pdf-template/ai-export/:code) — тухайн assessment
+  // дээр ОДОО report generation-д ашиглагдаж буй (isActive=true) загварыг
+  // олно (нэг assessment дээр зэрэг зөвхөн 1 мөр true байна). Түүний
+  // aiJsonData-г л AI agent руу явуулна — assessment_ai_data биш, учир нь
+  // энэ нь яг одоо ЛИВ ажиллаж буй загварт бодитоор хадгалагдсан хувилбар.
+  findActiveByAssessmentId = async (assessmentId: number) => {
+    return await this.db.findOne({ where: { assessmentId, isActive: true } });
+  };
+
+  // Studio-ийн "AI Data" tab бүр талбар өөрчлөгдөх бүрд (debounce-тэйгээр)
+  // дуудагдана — тухайн assessment дээр ОДОО идэвхтэй загвар байвал, түүний
+  // aiJsonData-г шууд синк хийж бичнэ. Ингэснээр хэрэглэгч тусад нь "Загвар
+  // хадгалах" товч дарахгүйгээр ч AI Data-ийн өөрчлөлт шууд
+  // ai-export/:assessmentId дээр гарч ирнэ (findActiveByAssessmentId яг үүнийг
+  // уншдаг). Идэвхтэй загвар байхгүй бол юу ч хийхгүй (assessment_ai_data
+  // мөрөнд л хадгалагдсан хэвээр байна, дараа template үүсгэх/идэвхжүүлэхэд
+  // load хийгдэнэ).
+  updateActiveAiJsonData = async (
+    assessmentId: number,
+    aiJsonData: Record<string, any> | null,
+  ) => {
+    await this.db.update({ assessmentId, isActive: true } as any, { aiJsonData: aiJsonData ?? null } as any);
+  };
+
   update = async (id: number, dto: UpdatePdfTemplateDto) => {
     // Энгийн "Хадгалах" (update) дараах isActive төлвийг өөрчлөхгүй —
     // идэвхжүүлэлт зөвхөн setActive()-ээр.

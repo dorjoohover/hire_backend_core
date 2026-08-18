@@ -7,6 +7,60 @@ import { QuestionAnswerCategoryService } from '../question/question.answer.categ
 import { AssessmentAiDataDao } from './assessment-ai-data.dao';
 import { AssessmentVariableDao } from './assessment-variable.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
+import { AssessmentDao } from '../assessment/dao/assessment.dao';
+
+// "AI Data" tab-ийн "Хувьсагчаас" талбарууд aiJsonData дотор {{custom.<key>}}
+// (эсвэл текст доторх {{custom.<key>}} орсон урт текст) хэлбэрээр хадгалагддаг —
+// Studio дээр засварлахад ойлгомжтой байхын тулд ЗАВСРЫН declarative token.
+// ai-export/:assessmentId дуудагдах бүрд, боломжтой бол, эдгээрийг БОДИТ
+// утгаар сольж өгнө: assessment_variable-ийн entries нь зөвхөн 1 мөртэй
+// (өөрөөр хэлбэл тухайн assessment дээр үр дүнгээс үл хамааран НЭГ л утгатай,
+// DISC маягийн олон үр дүнгээр ялгаатай биш) бол шууд тэр утгаар; хэд хэдэн
+// мөртэй (үр дүнгээс хамаарч өөр өөр текст) бол — тодорхой шалгуулагч/exam
+// энэ endpoint-д байхгүй тул аль нь тохирохыг мэдэхгүй — бүх entries-ийг
+// object хэлбэрээр дамжуулна (AI agent өөрөө сонгоно), ганц опаск {{token}}
+// хоосон харагдахаас илүү дор хаяж бодит датаг дамжуулна. Ердийн (custom биш,
+// жиш нь {{assessment.totalScore}}, {{user.firstname}}) token-ууд тодорхой
+// exam/шалгуулагчгүйгээр огт олдохгүй тул орлуулагдахгүй хэвээр үлдэнэ.
+const CUSTOM_TOKEN_FULL = /^\{\{custom\.([a-zA-Z0-9_]+)\}\}$/;
+const CUSTOM_TOKEN_ANY = /\{\{custom\.([a-zA-Z0-9_]+)\}\}/g;
+
+function resolveCustomTokensDeep(value: any, entriesByKey: Map<string, Record<string, string>>): any {
+  if (typeof value === 'string') {
+    const fullMatch = value.match(CUSTOM_TOKEN_FULL);
+    if (fullMatch) {
+      const entries = entriesByKey.get(fullMatch[1]);
+      if (entries) {
+        const keys = Object.keys(entries);
+        if (keys.length === 1) return entries[keys[0]];
+        if (keys.length > 1) return entries;
+      }
+      return value;
+    }
+    // Текст доторх (олон token хольсон) хэлбэрт зөвхөн ГАНЦ entry-тэй
+    // variable-уудыг л шууд орлуулж чадна (олон утгатайг текст рүү
+    // шууд шигтгэх боломжгүй тул хэвээр үлдээнэ).
+    return value.replace(CUSTOM_TOKEN_ANY, (full, key) => {
+      const entries = entriesByKey.get(key);
+      if (entries) {
+        const keys = Object.keys(entries);
+        if (keys.length === 1) return entries[keys[0]];
+      }
+      return full;
+    });
+  }
+  if (Array.isArray(value)) {
+    return value.map((v) => resolveCustomTokensDeep(v, entriesByKey));
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    Object.entries(value).forEach(([k, v]) => {
+      out[k] = resolveCustomTokensDeep(v, entriesByKey);
+    });
+    return out;
+  }
+  return value;
+}
 
 @Injectable()
 export class PdfTemplateService {
@@ -17,6 +71,7 @@ export class PdfTemplateService {
     private aiDataDao: AssessmentAiDataDao,
     private examDao: ExamDao,
     private variableDao: AssessmentVariableDao,
+    private assessmentDao: AssessmentDao,
   ) {}
 
   // Studio-ийн "Хэрэглэгчийн variable" — тухайн assessment дээр хэрэглэгчийн
@@ -72,11 +127,74 @@ export class PdfTemplateService {
     return this.getAiData(exam.assessment.id);
   }
 
+  // AI agent-аас дуудагдах экспорт — тухайн assessment дээр report
+  // generation-д ОДОО ашиглагдаж буй (isActive=true) загварын aiJsonData
+  // болон "Хэрэглэгчийн variable"-уудыг НЭГ payload болгож нэгтгэнэ.
+  // assessmentId-аар шүүнэ (тодорхой exam/code биш) — учир нь энэ дата
+  // (идэвхтэй загвар, variable-ууд) нь бүгд assessment-ийн түвшинд
+  // тодорхойлогддог, тухайн тестийг өгсөн хүн бүрд адилхан.
+  async getAiExportByAssessmentId(assessmentId: number) {
+    const assessment = await this.assessmentDao.findOne(assessmentId);
+    if (!assessment) {
+      throw new HttpException(
+        `Assessment олдсонгүй: "${assessmentId}"`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const [activeTemplate, variableRows] = await Promise.all([
+      // AI-д зориулсан дата авахдаа: тухайн assessmentId дээрх идэвхтэй
+      // (report generation-д яг одоо ашиглагдаж буй) загварыг олоод, ТҮҮНИЙ
+      // aiJsonData-г ашиглана — assessment_ai_data (assessmentId-аар шууд) биш.
+      this.dao.findActiveByAssessmentId(assessmentId),
+      this.variableDao.findAllByAssessmentId(assessmentId),
+    ]);
+
+    // Postgres "numeric" багана TypeORM-аар string болж ирдэг тул тоо болгож
+    // хөрвүүлнэ (формат хийх дунд шат) — AI agent талд string/number холилдохоос сэргийлнэ.
+    const toNum = (v: any): number | null =>
+      v === null || v === undefined || v === '' ? null : Number(v);
+
+    return {
+      assessment: {
+        id: assessment.id,
+        name: assessment.name,
+        author: assessment.author ?? null,
+        about: assessment.description ?? null,
+        usage: assessment.usage ?? null,
+        totalPoint: toNum(assessment.totalPoint),
+        type: assessment.type ?? null,
+        classificationCode: assessment.classificationCode ?? null,
+      },
+      // Идэвхтэй (report generation-д ашиглагдаж буй) загварт хадгалагдсан
+      // AI JSON (bandCode/bandLabel/interpretation, subscales[], bands[] гэх
+      // мэт) — Studio-ийн "AI Data" tab-аар бэлдэгдээд, тухайн загвар
+      // хадгалагдах бүрд aiJsonData болж бичигдсэн байдаг.
+      template: activeTemplate ? { id: activeTemplate.id, name: activeTemplate.name } : null,
+      aiData: resolveCustomTokensDeep(
+        activeTemplate?.aiJsonData ?? null,
+        new Map((variableRows || []).map((v) => [v.key, v.entries || {}])),
+      ),
+      // Studio-ийн "Хэрэглэгчийн variable" — key -> {label, entries} map.
+      variables: Object.fromEntries(
+        (variableRows || []).map((v) => [
+          v.key,
+          { label: v.label ?? null, entries: v.entries ?? {} },
+        ]),
+      ),
+    };
+  }
+
   async saveAiData(assessmentId: number, data: Record<string, any>) {
     if (!assessmentId) {
       throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
     }
     const row = await this.aiDataDao.upsert(assessmentId, data);
+    // Идэвхтэй загвар байвал шууд синк хийнэ — үгүй бол AI Data tab дээрх
+    // өөрчлөлт зөвхөн assessment_ai_data-д хадгалагдаад, ai-export/:assessmentId
+    // (идэвхтэй загварын aiJsonData-г л уншдаг) дээр "Загвар хадгалах" товч
+    // дарах хүртэл гарч ирэхгүй байх байсан.
+    await this.dao.updateActiveAiJsonData(assessmentId, data ?? null);
     return { data: row?.data ?? null };
   }
 

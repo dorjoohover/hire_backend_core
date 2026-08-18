@@ -10,10 +10,18 @@ import {
   Query,
   Res,
   UseInterceptors,
+  UseGuards,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiConsumes, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiHeader,
+  ApiParam,
+  ApiQuery,
+  ApiSecurity,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import axios from 'axios';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -23,6 +31,7 @@ import { CreatePdfTemplateDto } from './dto/create-pdf-template.dto';
 import { UpdatePdfTemplateDto } from './dto/update-pdf-template.dto';
 import { FileService } from 'src/file.service';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
 
 // Studio (PDF builder) загваруудыг хадгалах/ачаалах endpoint-ууд.
 // Frontend: studio/app/api/templates/route.ts, studio/app/api/templates/[id]/route.ts
@@ -93,12 +102,16 @@ export class PdfTemplateController {
         (() => {
           try {
             const raw = error?.response?.data;
-            const parsed = Buffer.isBuffer(raw) ? JSON.parse(raw.toString('utf-8')) : raw;
+            const parsed = Buffer.isBuffer(raw)
+              ? JSON.parse(raw.toString('utf-8'))
+              : raw;
             return parsed?.message;
           } catch {
             return undefined;
           }
-        })() || error.message || 'PDF preview generation failed';
+        })() ||
+        error.message ||
+        'PDF preview generation failed';
       res.status(status).json({ error: message });
     }
   }
@@ -137,6 +150,28 @@ export class PdfTemplateController {
     return this.service.getAiDataByExamCode(code);
   }
 
+  // AI agent-аас дуудагдах экспорт endpoint — тухайн assessment дээр
+  // ОДОО ашиглагдаж буй (isActive) загварын aiJsonData + "Хэрэглэгчийн
+  // variable"-уудыг НЭГ дор буцаана. assessmentId-аар шүүнэ (exam/code биш) —
+  // энэ дата assessment-ийн түвшинд тодорхойлогддог, тухайн тестийг өгсөн
+  // хүн бүрд адилхан. Хэрэглэгчийн JWT биш — AiAgentGuard-аар (core/.env-ийн
+  // AI_AGENT_KEY) шалгагдана, @Public() нь global JwtAuthGuard-ыг алгасна.
+  // ':id' зэрэг generic route-уудын ӨМНӨ байх ёстой.
+  @Public()
+  @UseGuards(AiAgentGuard)
+  @ApiSecurity('ai-agent-key')
+  @ApiHeader({
+    name: 'x-ai-agent-key',
+    description: 'A custom security token or track ID',
+    required: true,
+    schema: { type: 'string', example: '488dc7d5ae43e8f90849a8e8d8ce96b2659ff8dbe792b526' },
+  })
+  @Get('ai-export/:assessmentId')
+  @ApiParam({ name: 'assessmentId' })
+  getAiExport(@Param('assessmentId') assessmentId: string) {
+    return this.service.getAiExportByAssessmentId(+assessmentId);
+  }
+
   // Studio-ийн "Хэрэглэгчийн variable" — тухайн assessment дээр хэрэглэгчийн
   // өөрөө нэрлэж үүсгэсэн key->утга map-уудын CRUD (жиш нь
   // "characterDescription": {d: "...", i: "...", ...}). ':assessmentId'/
@@ -155,7 +190,12 @@ export class PdfTemplateController {
     @Param('key') key: string,
     @Body() dto: { label?: string; entries: Record<string, string> },
   ) {
-    return this.service.saveVariable(+assessmentId, key, dto.label, dto.entries);
+    return this.service.saveVariable(
+      +assessmentId,
+      key,
+      dto.label,
+      dto.entries,
+    );
   }
 
   @Delete('variables/:assessmentId/:key')
