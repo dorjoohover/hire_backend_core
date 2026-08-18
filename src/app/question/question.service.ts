@@ -24,6 +24,7 @@ import { QuestionAnswerEntity } from './entities/question.answer.entity';
 import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QuestionCategoryEntity } from './entities/question.category.entity';
+import { FormuleService } from '../formule/formule.service';
 
 @Injectable()
 export class QuestionService {
@@ -34,6 +35,7 @@ export class QuestionService {
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private questionAnswerCategoryDao: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private formuleService: FormuleService,
   ) {}
   public async create(dto: CreateQuestionDto) {
     return await this.questionDao.create(dto);
@@ -197,6 +199,30 @@ export class QuestionService {
     if (src.name.endsWith('copy')) throw new HttpException('Duplicated', 500);
     if (!src) throw new Error(`Assessment ${assessmentId} not found`);
 
+    // 1.1) Тайлангийн тооцооллын томьёо (formule) байвал тусад нь хуулж,
+    // шинэ FormulaEntity үүсгэнэ (эх болон шинэ assessment хоорондоо
+    // хамааралгүй, тус тусдаа засварлагдах ёстой тул адилхан id-г заахгүй)
+    let newFormuleId: number | undefined;
+    if (src.formule) {
+      const srcFormula = await this.formuleService.findOne(src.formule);
+      if (srcFormula) {
+        newFormuleId = await this.formuleService.create(
+          {
+            name: srcFormula.name,
+            formula: srcFormula.formula,
+            variables: srcFormula.variables,
+            groupBy: srcFormula.groupBy,
+            aggregations: srcFormula.aggregations,
+            filters: srcFormula.filters,
+            limit: srcFormula.limit,
+            order: srcFormula.order,
+            sort: srcFormula.sort,
+          } as any,
+          userId,
+        );
+      }
+    }
+
     // 2) Шинэ assessment үүсгэнэ
     const newAssessment = await this.assessmentDao.create({
       createdUser: userId,
@@ -218,7 +244,14 @@ export class QuestionService {
       questionCount: src.questionCount,
       questionShuffle: src.questionShuffle,
       type: src.type,
-    });
+      // "Ерөнхий мэдээлэл" таб-ын өмнө дутуу байсан талбарууд
+      blockNavigation: src.blockNavigation,
+      showResultOnComplete: src.showResultOnComplete,
+      // "Тайлан" таб-ын өмнө дутуу байсан талбарууд
+      report: src.report,
+      exampleReport: src.exampleReport,
+      formule: newFormuleId,
+    } as any);
 
     const newAssessmentId = newAssessment;
 
