@@ -291,10 +291,14 @@ export class QuestionService {
       // эхлээд qc-т харьяалагдах асуултуудыг авчир
       const questions = await this.questionDao.findQuestions(qc.id);
 
+      // ⚠️ АНХААР: qc.id-г шинэ мөрөнд дамжуулбал TypeORM save() нь ЭХ
+      // мөрийг update хийчихдэг (insert биш) тул id-г заавал хасна.
+      const { id: _qcId, ...qcRest } = qc as any;
+
       // шинэ question category
       const newQCat = await this.questionCategoryDao.create({
-        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл
-        ...qc,
+        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл (id-гүйгээр)
+        ...qcRest,
         name: qc.name,
         createdUser: userId,
         questionCount: questions.length,
@@ -304,8 +308,9 @@ export class QuestionService {
 
       // асуулт бүр
       for (const question of questions ?? []) {
+        const { id: _questionId, ...questionRest } = question as any;
         const newQ = await this.questionDao.create({
-          ...question,
+          ...questionRest,
           category: newQCatId,
           createdUser: userId,
         });
@@ -316,8 +321,9 @@ export class QuestionService {
           // хариултын category-г map-даж (parent chain-тэй бол parent-ийг нь эхлээд үүсгэнэ)
           const newCatId = await ensureAnswerCategory(answer.category);
 
+          const { id: _answerId, ...answerRest } = answer as any;
           const newA = await this.questionAnswerDao.create({
-            ...answer,
+            ...answerRest,
             category: newCatId,
             question: newQId,
           });
@@ -325,8 +331,9 @@ export class QuestionService {
 
           const matrix = answer.matrix ?? [];
           for (const mrtx of matrix) {
+            const { id: _mrtxId, ...mrtxRest } = mrtx as any;
             await this.questionAnswerMatrixDao.create({
-              ...mrtx,
+              ...mrtxRest,
               answer: newAId,
               category: newCatId,
               question: newQId,
