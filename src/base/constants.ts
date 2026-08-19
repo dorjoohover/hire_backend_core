@@ -78,6 +78,7 @@ export enum REPORT_STATUS {
   STARTED = 'STARTED',
   SENT = 'SENT',
   COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
 }
 
 export const ReportType = {

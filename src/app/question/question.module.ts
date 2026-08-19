@@ -15,8 +15,10 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionRuleController } from './question.rule.controller';
 import { QuestionRuleDao } from './dao/question.rule.dao';
 import { QuestionAnswerViewService } from './question-answer-view.service';
+import { FormuleModule } from '../formule/formule.module';
 
 @Module({
+  imports: [FormuleModule],
   controllers: [
     QuestionController,
     QuestionAnswerController,

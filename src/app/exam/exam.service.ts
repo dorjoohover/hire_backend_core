@@ -323,8 +323,24 @@ export class ExamService extends BaseService {
           userStartDate: date,
         });
         console.timeEnd('⏱ dao.update (userStartDate)');
+      }
 
-        const loginEmail = res.email || (res.phone ? `${res.phone}@hire.mn` : null);
+      // Public/QR шалгалтын хувьд нэвтрэх token-ийг зөвхөн ЭХНИЙ start дуудлагад
+      // биш, category === undefined (start/resume) дуудлага бүрд дахин олгоно.
+      // Учир нь эхний оролдлого session бэхжихээс өмнө тасалдвал (сүлжээ тасрах,
+      // reload гэх мэт) userStartDate аль хэдийн бичигдчихсэн байдаг тул хуучин
+      // логикоор token хэзээ ч дахин олгогдохгүй, хэрэглэгч мөнхөд нэвтэрч
+      // чадахгүй үлддэг байсан. forceLogin idempotent (байгаа хэрэглэгчийг зүгээр
+      // дахин авна) тул давхар дуудахад аюулгүй.
+      if (category === undefined) {
+        // Lowercase хийж өгснөөр QR-ээр бичсэн и-мэйлийн casing өөр ч
+        // (жишээ нь "John@Gmail.com" vs "john@gmail.com") forceLogin дотоod
+        // getUser (мөн lowercase хайдаг) зөв тааруулж, ӨМНӨ БҮРТГЭЛТЭЙ
+        // хэрэглэгчийн дээр л token үүсгэнэ — шинэ давхар хэрэглэгч
+        // үүсгэхгүй.
+        const loginEmail = (
+          res.email || (res.phone ? `${res.phone}@hire.mn` : null)
+        )?.toLowerCase() ?? null;
         if (loginEmail && (res.lastname || res.firstname)) {
           console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
@@ -335,13 +351,14 @@ export class ExamService extends BaseService {
           );
           console.timeEnd('⏱ authService.forceLogin');
 
-          console.time('⏱ dao.update (attach user)');
-          await this.dao.update(res.id, {
-            ...res,
-            userStartDate: date,
-            user: user.user,
-          });
-          console.timeEnd('⏱ dao.update (attach user)');
+          if (!res.user) {
+            console.time('⏱ dao.update (attach user)');
+            await this.dao.update(res.id, {
+              ...res,
+              user: user.user,
+            });
+            console.timeEnd('⏱ dao.update (attach user)');
+          }
 
           token = user.token;
         }

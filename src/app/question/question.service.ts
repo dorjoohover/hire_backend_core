@@ -24,6 +24,7 @@ import { QuestionAnswerEntity } from './entities/question.answer.entity';
 import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QuestionCategoryEntity } from './entities/question.category.entity';
+import { FormuleService } from '../formule/formule.service';
 
 @Injectable()
 export class QuestionService {
@@ -34,6 +35,7 @@ export class QuestionService {
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private questionAnswerCategoryDao: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private formuleService: FormuleService,
   ) {}
   public async create(dto: CreateQuestionDto) {
     return await this.questionDao.create(dto);
@@ -197,6 +199,30 @@ export class QuestionService {
     if (src.name.endsWith('copy')) throw new HttpException('Duplicated', 500);
     if (!src) throw new Error(`Assessment ${assessmentId} not found`);
 
+    // 1.1) Тайлангийн тооцооллын томьёо (formule) байвал тусад нь хуулж,
+    // шинэ FormulaEntity үүсгэнэ (эх болон шинэ assessment хоорондоо
+    // хамааралгүй, тус тусдаа засварлагдах ёстой тул адилхан id-г заахгүй)
+    let newFormuleId: number | undefined;
+    if (src.formule) {
+      const srcFormula = await this.formuleService.findOne(src.formule);
+      if (srcFormula) {
+        newFormuleId = await this.formuleService.create(
+          {
+            name: srcFormula.name,
+            formula: srcFormula.formula,
+            variables: srcFormula.variables,
+            groupBy: srcFormula.groupBy,
+            aggregations: srcFormula.aggregations,
+            filters: srcFormula.filters,
+            limit: srcFormula.limit,
+            order: srcFormula.order,
+            sort: srcFormula.sort,
+          } as any,
+          userId,
+        );
+      }
+    }
+
     // 2) Шинэ assessment үүсгэнэ
     const newAssessment = await this.assessmentDao.create({
       createdUser: userId,
@@ -218,7 +244,14 @@ export class QuestionService {
       questionCount: src.questionCount,
       questionShuffle: src.questionShuffle,
       type: src.type,
-    });
+      // "Ерөнхий мэдээлэл" таб-ын өмнө дутуу байсан талбарууд
+      blockNavigation: src.blockNavigation,
+      showResultOnComplete: src.showResultOnComplete,
+      // "Тайлан" таб-ын өмнө дутуу байсан талбарууд
+      report: src.report,
+      exampleReport: src.exampleReport,
+      formule: newFormuleId,
+    } as any);
 
     const newAssessmentId = newAssessment;
 
@@ -255,24 +288,33 @@ export class QuestionService {
 
     // 4) Асуултын категорийг хуулж, асуулт/хариулт/матрицыг нэг бүрчлэн үүсгэнэ
     //
-    // ⚠️ АНХААР: доор ХЭЗЭЭ Ч `{...qc}`, `{...question}`, `{...answer}`,
-    // `{...mrtx}` мэт бүтэн entity-г spread хийж болохгүй. `findQuestions()`
-    // нь `answers`, `matrix` зэрэг relation-уудыг ЗАГВАРЫН ХАМТ (жинхэнэ,
-    // өмнө нь persisted, бодит id-тай) ачаалдаг тул spread хийвэл дараах
-    // хоёр аюул зэрэг гарна:
-    //   1) `id` талбар дамжаад орчихвол TypeORM save() шинэ мөр INSERT
-    //      хийхийн оронд ЖИНХЭНЭ ЭХ МӨРИЙГ шууд UPDATE хийж болзошгүй.
-    //   2) `id`-г хассан ч, relation массив (answers/matrix) дотор орсон
-    //      ЖИНХЭНЭ хүүхэд entity-үүд hire cascade тохиргооноос үл хамааран
-    //      TypeORM-ийн FK-reassignment UPDATE-д өртөж, шинэ эх рүү
-    //      "хулгайлагдана" (энэ яг өмнө засварласан bug — 970f5c5).
-    // Тиймээс ЗӨВХӨН DTO-д зөвшөөрөгдсөн scalar талбаруудыг тодорхой
-    // whitelist хийж дамжуулна.
+    // ⚠️ АНХААРАХ ЗҮЙЛ (id-г хасахаас ГАДНА): `qc`/`question`/`answer` нь
+    // TypeORM-ээс relations-тайгаар (`answers`, `matrix`, `answers.category`,
+    // `answers.matrix`) ачаалагдсан ЭХ мөрүүд тул `{...qcRest}` /
+    // `{...questionRest}` / `{...answerRest}` гэж spread хийхэд `id`-г
+    // хассан ч дараах OneToMany relation массивууд бүтнээрээ (ЭХ
+    // мөрүүдийн бодит `id`-тай хамт) дотор нь үлдэж DTO-руу орсоор
+    // байсан юм:
+    //   - question.answers, question.matrix
+    //   - answer.matrix
+    // TypeORM `save()`-д ийм массив өгвол, `cascade: true` тохируулаагүй
+    // ч гэсэн OneToMany талын хүүхэд мөрүүдийн foreign key-г шинээр
+    // үүсгэсэн эцэг рүү УДИРДАЖ ШИНЭЧЛЭХ (`UPDATE ... SET "questionId" =
+    // <шинэ id>`) зан гаргадаг нь локал Postgres дээр SQL лог-оор
+    // баталгаажсан. Үүний улмаас хуулбарлах үед ЭХ questionAnswer/
+    // questionAnswerMatrix мөрүүд шинэ асуулт/хариулт руу "хулгайлагдаж",
+    // эх асуулт хариултгүй үлдэж, шинэ асуулт давхар хариулттай болж
+    // байсан нь "duplicate үүсгэхэд хариултууд үүсэхгүй байна" гэсэн
+    // алдааны жинхэнэ шалтгаан байв.
+    //
+    // Тиймээс доор `...spread` ашиглахгүйгээр зөвхөн шаардлагатай
+    // СКАЛЯР талбаруудыг тодорхой жагсаан (whitelist) дамжуулж, ямар ч
+    // relation объект/массив алдагдаж орохгүй байхаар бичив.
     for (const qc of questionCategories) {
       // эхлээд qc-т харьяалагдах асуултуудыг авчир
       const questions = await this.questionDao.findQuestions(qc.id);
 
-      // шинэ question category
+      // шинэ question category (зөвхөн скаляр талбарууд)
       const newQCat = await this.questionCategoryDao.create({
         name: qc.name,
         value: qc.value,

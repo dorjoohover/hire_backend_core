@@ -10,14 +10,20 @@ export class AssessmentFormulaEntity {
 
   @ManyToOne(() => AssessmentFormulaEntity, (user) => user.id, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   parent: AssessmentFormulaEntity;
   @Column({ nullable: true })
   type: number;
   @ManyToOne(() => FormulaEntity, (user) => user.assessment)
   formule: FormulaEntity;
-  @ManyToOne(() => AssessmentEntity, (user) => user.formules)
+  @ManyToOne(() => AssessmentEntity, (user) => user.formules, {
+    onDelete: 'CASCADE',
+  })
   assessment: AssessmentEntity;
-  @ManyToOne(() => QuestionCategoryEntity, (category) => category.formulas)
+  @ManyToOne(() => QuestionCategoryEntity, (category) => category.formulas, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   question_category: QuestionCategoryEntity;
 }

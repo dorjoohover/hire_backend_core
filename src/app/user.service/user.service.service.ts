@@ -557,7 +557,36 @@ export class UserServiceService extends BaseService {
     if (!service) {
       throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
     }
-    if (service.count - service.usedUserCount <= 0) {
+
+    const email = dto.email?.trim() ? dto.email.trim().toLowerCase() : null;
+    const phone = dto.phone?.trim() || null;
+
+    // И-мэйл заавал биш, гэхдээ бичсэн бол зөв форматтай байх ёстой
+    // (production дээр "@" дутуу и-мэйл давхар бичлэг үүсгэсэн тохиолдол
+    // ажиглагдсан).
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new HttpException(
+        'И-мэйл хаяг буруу форматтай байна.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // Ижил email/phone-тэй хүн энэ QR (service) дээр сүүлийн 24 цагийн
+    // дотор аль хэдийн бүртгүүлсэн бол ШИНЭ exam үүсгэхгүй (quota дахин
+    // зарцуулахгүй, давхар мөр үүсгэхгүй) — байгаа кодыг нь буцаана.
+    // /exam/:code хуудас руу орохдоо updateByCode нь category===undefined
+    // үед forceLogin-ийг заавал (дахин) хийдэг тул тухайн хүн шууд өөрийн
+    // эрхээр нэвтэрнэ ("бүртгэлтэй бол force login").
+    const existing = await this.examDao.findByServiceAndContact(
+      serviceId,
+      email,
+      phone,
+    );
+    if (existing) {
+      return { code: existing.code };
+    }
+
+    if (service.count - service.usedUserCount <= 0 && service.price != 0) {
       throw new HttpException(
         'Тестийн эрх дууссан байна.',
         HttpStatus.PAYMENT_REQUIRED,
@@ -579,8 +608,8 @@ export class UserServiceService extends BaseService {
     await this.examDao.update(examCode, {
       firstname: dto.firstname,
       lastname: dto.lastname,
-      email: dto.email ?? null,
-      phone: dto.phone ?? null,
+      email,
+      phone,
     });
 
     await this.updateCount(serviceId, 0, 1, service.user?.id);

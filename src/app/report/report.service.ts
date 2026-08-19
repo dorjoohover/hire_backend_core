@@ -23,15 +23,29 @@ export class ReportService {
     this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
   }
   async createReport(data: any, role?: number) {
-    axios.post(
-      this.REPORT,
-      { ...data, role },
-      {
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      await axios.post(
+        this.REPORT,
+        { ...data, role },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    );
+      );
+    } catch (err) {
+      // ⚠️ FIX: өмнө нь await/catch-гүй байсан тул энэ хүсэлт амжилтгүй
+      // болоход (жишээ нь REPORT env буруу URL заасан, эсвэл report VPS
+      // хариу өгөхгүй үед) "Unhandled Rejection" болж процесст дуулгавартай
+      // алдаа гарч, report_logs мөр hire_report талд хэзээ ч үүсдэггүй тул
+      // GET /exam/pdf/:code polling мөнхөд "PENDING" (202) буцаадаг байсан —
+      // алдаа хаана ч бичигдэхгүй, chase хийхэд боломжгүй болдог байсан.
+      console.error(
+        `❌ createReport: report руу хүсэлт илгээхэд алдаа гарлаа (REPORT=${this.REPORT}):`,
+        (err as any)?.response?.status,
+        (err as any)?.message,
+      );
+    }
   }
 
   // async updateStatus(body: any) {

@@ -37,7 +37,11 @@ export class AssessmentDao {
         statusCondition = status;
       }
     } else {
-      statusCondition = Not(AssessmentStatus.ONLY);
+      // Тодорхой status заагаагүй үед (нийтэд харагдах жагсаалт: нүүр
+      // хуудасны "шинээр нэмэгдсэн" гэх мэт) ARCHIVE болон ONLY хоёуланг
+      // нь хасна — эс тэгвэл дөнгөж үүсгээд архивт байгаа (нийтэд
+      // хараахан гараагүй) тест шууд нийтэд харагдаж эхэлнэ.
+      statusCondition = Not(In([AssessmentStatus.ARCHIVE, AssessmentStatus.ONLY]));
     }
 
     const [items, total] = await this.db.findAndCount({
