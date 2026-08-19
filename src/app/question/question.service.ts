@@ -254,15 +254,33 @@ export class QuestionService {
     // for (const c of answerCategories) await ensureAnswerCategory(c);
 
     // 4) Асуултын категорийг хуулж, асуулт/хариулт/матрицыг нэг бүрчлэн үүсгэнэ
+    //
+    // ⚠️ АНХААР: доор ХЭЗЭЭ Ч `{...qc}`, `{...question}`, `{...answer}`,
+    // `{...mrtx}` мэт бүтэн entity-г spread хийж болохгүй. `findQuestions()`
+    // нь `answers`, `matrix` зэрэг relation-уудыг ЗАГВАРЫН ХАМТ (жинхэнэ,
+    // өмнө нь persisted, бодит id-тай) ачаалдаг тул spread хийвэл дараах
+    // хоёр аюул зэрэг гарна:
+    //   1) `id` талбар дамжаад орчихвол TypeORM save() шинэ мөр INSERT
+    //      хийхийн оронд ЖИНХЭНЭ ЭХ МӨРИЙГ шууд UPDATE хийж болзошгүй.
+    //   2) `id`-г хассан ч, relation массив (answers/matrix) дотор орсон
+    //      ЖИНХЭНЭ хүүхэд entity-үүд hire cascade тохиргооноос үл хамааран
+    //      TypeORM-ийн FK-reassignment UPDATE-д өртөж, шинэ эх рүү
+    //      "хулгайлагдана" (энэ яг өмнө засварласан bug — 970f5c5).
+    // Тиймээс ЗӨВХӨН DTO-д зөвшөөрөгдсөн scalar талбаруудыг тодорхой
+    // whitelist хийж дамжуулна.
     for (const qc of questionCategories) {
       // эхлээд qc-т харьяалагдах асуултуудыг авчир
       const questions = await this.questionDao.findQuestions(qc.id);
 
       // шинэ question category
       const newQCat = await this.questionCategoryDao.create({
-        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл
-        ...qc,
         name: qc.name,
+        value: qc.value,
+        duration: qc.duration,
+        orderNumber: qc.orderNumber,
+        status: qc.status,
+        url: qc.url,
+        sliced: qc.sliced,
         createdUser: userId,
         questionCount: questions.length,
         assessment: newAssessmentId,
@@ -272,7 +290,17 @@ export class QuestionService {
       // асуулт бүр
       for (const question of questions ?? []) {
         const newQ = await this.questionDao.create({
-          ...question,
+          name: question.name,
+          type: question.type,
+          level: question.level,
+          status: question.status,
+          minValue: question.minValue,
+          maxValue: question.maxValue,
+          slider: question.slider,
+          point: question.point,
+          orderNumber: question.orderNumber,
+          file: question.file,
+          required: question.required,
           category: newQCatId,
           createdUser: userId,
         });
@@ -284,7 +312,13 @@ export class QuestionService {
           const newCatId = await ensureAnswerCategory(answer.category);
 
           const newA = await this.questionAnswerDao.create({
-            ...answer,
+            value: answer.value,
+            point: answer.point,
+            orderNumber: answer.orderNumber,
+            file: answer.file,
+            correct: answer.correct,
+            reverse: answer.reverse,
+            negative: answer.negative,
             category: newCatId,
             question: newQId,
           });
@@ -293,7 +327,9 @@ export class QuestionService {
           const matrix = answer.matrix ?? [];
           for (const mrtx of matrix) {
             await this.questionAnswerMatrixDao.create({
-              ...mrtx,
+              value: mrtx.value,
+              point: mrtx.point,
+              orderNumber: mrtx.orderNumber,
               answer: newAId,
               category: newCatId,
               question: newQId,
