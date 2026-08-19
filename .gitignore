@@ -2,6 +2,14 @@
 /dist
 /node_modules
 /build
+# ⚠️ TypeScript incremental build cache. Хэрэв энэ файл алдаагаар commit
+# хийгдвэл Docker build (`COPY . .` → `RUN npm run build`) дотор tsc
+# stale cache-аа "аль хэдийн build хийгдсэн" гэж андуурч, dist/*.js
+# файлуудыг огт emit хийхгүй өнгөрч болно (dist/*.d.ts л үлддэг) —
+# энэ нь "Cannot find module '/app/dist/main.js'" эвдрэлийн шалтгаан
+# байсан (2026-08-19).
+tsconfig.build.tsbuildinfo
+*.tsbuildinfo
 .env.local
 /uploads
 # Logs
