@@ -142,18 +142,31 @@ export class PdfTemplateService {
       );
     }
 
-    const [activeTemplate, variableRows] = await Promise.all([
+    const [activeTemplate, variableRows, standaloneAiData] = await Promise.all([
       // AI-д зориулсан дата авахдаа: тухайн assessmentId дээрх идэвхтэй
       // (report generation-д яг одоо ашиглагдаж буй) загварыг олоод, ТҮҮНИЙ
       // aiJsonData-г ашиглана — assessment_ai_data (assessmentId-аар шууд) биш.
       this.dao.findActiveByAssessmentId(assessmentId),
       this.variableDao.findAllByAssessmentId(assessmentId),
+      // ⚠️ FALLBACK: хэрэв тухайн assessment дээр идэвхтэй template огт
+      // байхгүй (эсвэл идэвхжсэн ч aiJsonData нь sync хийгдээгүй, жиш нь
+      // template үүсэхээс өмнө AI Data tab-д бичигдсэн) бол Studio-ийн AI
+      // Data tab-д хэрэглэгчийн шууд бичиж хадгалсан assessment_ai_data-г
+      // доор нь fallback болгож уншина. updateActiveAiJsonData() нь
+      // ЗӨВХӨН идэвхтэй template байгаа үед л sync хийдэг тул (2026-08-20
+      // баталгаажсан: assessmentId 4, 57 дээр assessment_ai_data-д мөр
+      // байсан ч active_template огт байхгүй байсан) энэ fallback-гүйгээр
+      // хэрэглэгч өгөгдөл бичсэн ч ai-export/AI agent дээр хоосон харагддаг байв.
+      this.aiDataDao.findByAssessmentId(assessmentId),
     ]);
 
     // Postgres "numeric" багана TypeORM-аар string болж ирдэг тул тоо болгож
     // хөрвүүлнэ (формат хийх дунд шат) — AI agent талд string/number холилдохоос сэргийлнэ.
     const toNum = (v: any): number | null =>
       v === null || v === undefined || v === '' ? null : Number(v);
+
+    const rawAiData =
+      activeTemplate?.aiJsonData ?? standaloneAiData?.data ?? null;
 
     return {
       assessment: {
@@ -169,10 +182,11 @@ export class PdfTemplateService {
       // Идэвхтэй (report generation-д ашиглагдаж буй) загварт хадгалагдсан
       // AI JSON (bandCode/bandLabel/interpretation, subscales[], bands[] гэх
       // мэт) — Studio-ийн "AI Data" tab-аар бэлдэгдээд, тухайн загвар
-      // хадгалагдах бүрд aiJsonData болж бичигдсэн байдаг.
+      // хадгалагдах бүрд aiJsonData болж бичигдсэн байдаг. Идэвхтэй template
+      // байхгүй/sync хийгдээгүй бол дээрх standaloneAiData-руу fallback хийнэ.
       template: activeTemplate ? { id: activeTemplate.id, name: activeTemplate.name } : null,
       aiData: resolveCustomTokensDeep(
-        activeTemplate?.aiJsonData ?? null,
+        rawAiData,
         new Map((variableRows || []).map((v) => [v.key, v.entries || {}])),
       ),
       // Studio-ийн "Хэрэглэгчийн variable" — key -> {label, entries} map.

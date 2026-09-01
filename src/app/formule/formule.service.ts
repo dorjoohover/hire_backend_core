@@ -77,6 +77,99 @@ export class FormuleService extends BaseService {
     return await this.db.findOne({ where: { id: id } });
   }
 
+  // Assessment-ийг "Хуулах" (duplicate) хийхэд ашиглагдана
+  // (question.service.ts-ийн copy()) — эх assessment дээрх бүх
+  // assessment_formulas мөрийг (толгой "root" formule + үүнд хамаарах дэд
+  // "child" formule-ууд, HADS/DASS-21/Тархины ачаалал/WHOQOL-BREF шиг олон
+  // дэд-оноотой сорилуудын тооцоолол яг эдгээр мөрөөр удирддаг) шинэ
+  // assessment-д зориулж ДАХИН үүсгэнэ. Хуучин мөрүүдийг зүгээр л
+  // assessment/category-г нь солиод дахин ашиглахгүй байгаагийн шалтгаан:
+  // FormulaEntity, AssessmentFormulaEntity бүр ЯГ НЭГ assessment-д харьяалагдах
+  // ёстой (Studio дээр тус тусад нь засварлагдах учиртай тул) — copy()-ийн
+  // өөр хэсгүүдийн адил зарчмаар бүрэн шинэ мөр/багана үүсгэнэ.
+  //
+  // `categoryIdMap`: эх assessment-ийн questionCategory.id -> шинэ
+  // assessment дээр үүссэн харгалзах questionCategory.id (question.service.ts-
+  // ийн copy()-д qc давталтын үед бүрдүүлдэг). Үүнгүйгээр child мөрүүдийн
+  // question_category нь ХУУЧИН (буруу) ID рүү заасаар үлдэж, тайлан
+  // тооцоолохдоо "олдсонгүй" гэдэг шинж чанартай яг адилхан алдаа гаргана.
+  public async copyAssessmentFormulas(
+    srcAssessmentId: number,
+    newAssessmentId: number,
+    categoryIdMap: Map<number, number>,
+    userId: number,
+  ) {
+    try {
+      const rows = await this.assFormula.find({
+        where: { assessment: { id: srcAssessmentId } },
+        relations: ['formule', 'parent', 'question_category'],
+      });
+      if (!rows || rows.length === 0) return;
+
+      const roots = rows.filter((r) => !r.parent);
+      const children = rows.filter((r) => !!r.parent);
+
+      const mapCategory = (oldId?: number | null) => {
+        if (!oldId) return null;
+        const newId = categoryIdMap.get(oldId);
+        return newId ?? null;
+      };
+
+      const copyFormula = async (formule: FormulaEntity | null | undefined) => {
+        if (!formule) return null;
+        const created: any = this.db.create({
+          name: formule.name,
+          formula: formule.formula,
+          variables: formule.variables,
+          groupBy: formule.groupBy,
+          aggregations: formule.aggregations,
+          filters: formule.filters,
+          limit: formule.limit,
+          order: formule.order,
+          sort: formule.sort,
+          createdUser: userId,
+        } as any);
+        await this.db.save(created);
+        return created.id;
+      };
+
+      for (const root of roots) {
+        const newRootFormuleId = await copyFormula(root.formule);
+        const newRootCategoryId = mapCategory(root.question_category?.id);
+
+        const newRoot = this.assFormula.create({
+          assessment: { id: newAssessmentId },
+          formule: newRootFormuleId ? { id: newRootFormuleId } : null,
+          parent: null,
+          type: root.type,
+          question_category: newRootCategoryId
+            ? { id: newRootCategoryId }
+            : null,
+        });
+        await this.assFormula.save(newRoot);
+
+        const kids = children.filter((c) => c.parent?.id === root.id);
+        for (const kid of kids) {
+          const newKidFormuleId = await copyFormula(kid.formule);
+          const newKidCategoryId = mapCategory(kid.question_category?.id);
+
+          const newKid = this.assFormula.create({
+            assessment: { id: newAssessmentId },
+            formule: newKidFormuleId ? { id: newKidFormuleId } : null,
+            parent: { id: newRoot.id },
+            type: kid.type,
+            question_category: newKidCategoryId
+              ? { id: newKidCategoryId }
+              : null,
+          });
+          await this.assFormula.save(newKid);
+        }
+      }
+    } catch (error) {
+      console.log(error, 'copyAssessmentFormulas');
+    }
+  }
+
   async aggregate(dto: FormulaEntity, w: string): Promise<any[]> {
     try {
       const { groupBy, aggregations, filters, limit, order, sort } = dto;

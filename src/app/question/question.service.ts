@@ -261,6 +261,14 @@ export class QuestionService {
     // 3) Хариултын категорийн map (хуучин id -> шинэ id), parent-тай бол бас зохицуулна
     const catIdMap = new Map<number, number>();
 
+    // 3.0) Асуултын категорийн map (хуучин questionCategory.id -> шинэ id).
+    // Доор qc давталтад бөглөгдөж, төгсгөлд assessment_formulas-ыг (HADS/
+    // DASS-21/Тархины ачаалал/WHOQOL-BREF шиг олон дэд-оноотой сорилуудын
+    // тооцооллын томьёо) шинэ category ID-үүд рүү зөв заалгаж хуулахад
+    // хэрэглэгдэнэ (эс тэгвэл эдгээр сорил duplicate хийсний дараа
+    // "асуулт алгассан" гэж тайланд гардаг байсан).
+    const qCatIdMap = new Map<number, number>();
+
     const ensureAnswerCategory = async (
       oldCat: any | null | undefined,
     ): Promise<number | null> => {
@@ -328,6 +336,7 @@ export class QuestionService {
         assessment: newAssessmentId,
       });
       const newQCatId = newQCat;
+      qCatIdMap.set(qc.id, newQCatId);
 
       // асуулт бүр
       for (const question of questions ?? []) {
@@ -380,6 +389,22 @@ export class QuestionService {
         }
       }
     }
+
+    // 5) Тайлангийн олон-дэд-ангилалт томьёог (assessment_formulas —
+    // HADS/DASS-21/Тархины хэт ачааллыг үнэлэх/WHOQOL-BREF шиг олон дэд
+    // оноотой сорилуудын тооцоолол яг эдгээр мөрөөр удирддаг) шинэ
+    // assessment рүү, дээрх qCatIdMap-аар шинэ category ID-үүд рүү дахин
+    // холбож хуулна. Үүнийг өмнө нь хийдэггүй байсан тул "Хуулах" товчоор
+    // duplicate хийсэн ийм төрлийн сорилын тайланд эдгээр дэд сорил "Оноо
+    // бүртгэгдээгүй (асуулт алгассан)" гэж гардаг байсан — FormuleDao-ийн
+    // getFormula() шинэ assessment дээр ямар ч assessment_formulas мөр
+    // олдоогүй тул хоосон буцаадаг байсан нь жинхэнэ шалтгаан.
+    await this.formuleService.copyAssessmentFormulas(
+      assessmentId,
+      newAssessmentId,
+      qCatIdMap,
+      userId,
+    );
 
     return newAssessment;
   }
