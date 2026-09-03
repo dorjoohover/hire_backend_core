@@ -212,6 +212,61 @@ export class PdfTemplateService {
     return { data: row?.data ?? null };
   }
 
+  // Тухайн assessmentId дээр PDF report үүсгэхэд аль зам ашиглагдахыг
+  // тодорхойлно — hire_report/src/pdf.services.ts-ийн createPdfInOneFile()
+  // дотор бодитоор хэрэгждэг дараалалтай ЯГ ИЖИЛ (core өөрөө PDF зурдаггүй,
+  // зөвхөн pdf_template өгөгдлийг эзэмшдэг тул энд зөвхөн ТОДОРХОЙЛНО):
+  //   1) assessmentId-аар idэвхтэй (isActive=true) Studio template байгаа
+  //      эсэхийг эхэлж шалгана (findActiveByAssessmentId).
+  //   2) байвал: "dynamic" — тэр template ашиглагдана (DynamicTemplateRenderer,
+  //      hire_report талд). Идэвхтэй template сонгогдсон бол ямар ч тохиолдолд
+  //      hardcoded руу чимээгүй буцахгүй (hire_report-ийн render error дээр
+  //      throw хийдэгтэй адил санаа) — иймд эндээс "dynamic" гэж буцсан үед
+  //      legacyReportType-ыг үл тоомсорлоно.
+  //   3) идэвхтэй template байхгүй бол: "legacy" — assessment.report
+  //      (ReportType enum)-д харгалзах hardcoded renderer ашиглагдана.
+  async resolveRenderTarget(assessmentId: number): Promise<{
+    mode: 'dynamic' | 'legacy';
+    assessmentId: number;
+    template: { id: number; name: string } | null;
+    legacyReportType: number | null;
+  }> {
+    if (!assessmentId) {
+      throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
+    }
+
+    const [activeTemplate, assessment] = await Promise.all([
+      this.dao.findActiveByAssessmentId(assessmentId),
+      this.assessmentDao.findOne(assessmentId),
+    ]);
+
+    if (!assessment) {
+      throw new HttpException(
+        `Assessment олдсонгүй: "${assessmentId}"`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // hire_report-ийн createPdfInOneFile()-тэй адил: template мөр байгаа ч
+    // pages нь хоосон бол идэвхтэй гэж тооцохгүй (хуучин руу унана) —
+    // "template" мөр үүссэн ч Studio дээр хуудас/блок огт нэмээгүй тохиолдол.
+    if (activeTemplate?.pages?.length) {
+      return {
+        mode: 'dynamic',
+        assessmentId,
+        template: { id: activeTemplate.id, name: activeTemplate.name },
+        legacyReportType: null,
+      };
+    }
+
+    return {
+      mode: 'legacy',
+      assessmentId,
+      template: null,
+      legacyReportType: assessment.report ?? null,
+    };
+  }
+
   // Studio-ийн AI Data tab-д "Асуултын ангилал" (score-section-ийн адилхан,
   // жишээ нь "Section 1") болон "Хариултын ангилал" (DISC-ийн D/i/S/C гэх
   // мэт) сонголтуудыг тухайн assessment дээр бодитоор байгаа нэрсээр нь

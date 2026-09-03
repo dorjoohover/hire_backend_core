@@ -172,6 +172,19 @@ export class PdfTemplateController {
     return this.service.getAiExportByAssessmentId(+assessmentId);
   }
 
+  // Тухайн assessment дээр PDF report generation аль замаар (Studio-ийн
+  // dynamic template, эсвэл hardcoded ReportType) явахыг буцаана — жинхэнэ
+  // рендэр хийхгүй (энэ codebase PDF зурдаггүй, hire_report л зурна), зөвхөн
+  // ямар зам сонгогдохыг ТОДОРХОЙЛНО. Studio-ийн UI-д "энэ тест идэвхтэй
+  // template ашиглаж байна / hardcoded '<type>' ашиглаж байна" гэсэн статус
+  // харуулах, эсвэл дэмжлэгийн үед аль assessment template-гүй үлдсэнийг
+  // шалгахад хэрэглэгдэнэ. ':id' generic route-ийн ӨМНӨ байх ёстой.
+  @Get('resolve/:assessmentId')
+  @ApiParam({ name: 'assessmentId' })
+  resolveRenderTarget(@Param('assessmentId') assessmentId: string) {
+    return this.service.resolveRenderTarget(+assessmentId);
+  }
+
   // Studio-ийн "Хэрэглэгчийн variable" — тухайн assessment дээр хэрэглэгчийн
   // өөрөө нэрлэж үүсгэсэн key->утга map-уудын CRUD (жиш нь
   // "characterDescription": {d: "...", i: "...", ...}). ':assessmentId'/
