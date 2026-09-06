@@ -106,6 +106,11 @@ export class ExamController {
     // 💰 Monetization: "PDF татахад төлбөртэй" / "нэг удаа үнэгүй" дүрэм.
     const access = await this.reportAccess.resolve(code, user);
     if (!access.canDownload) {
+      console.log(
+        `💰 [paywall/pdf] code=${code} reason=${access.reason} ` +
+          `pdfPaid=${access.pdfPaid} free=${access.usedViews}/${access.freeViews} ` +
+          `role=${user?.['role'] ?? '-'}`,
+      );
       throw new HttpException(
         access.pdfPaid
           ? 'Тайлангийн PDF татахын тулд төлбөр төлнө үү.'
@@ -135,6 +140,21 @@ export class ExamController {
           String(response.headers['content-type'] || 'application/pdf'),
         );
         res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+        // 💰 Тайланг PDF-ээр нээх нь ч бас "нэг харалт".
+        //
+        // ⚠️ Өмнө нь харалтыг ЗӨВХӨН `GET /exam/exam/:code` (дэлгэц дээрх үр
+        // дүн) дээр тоолдог байсан. Гэтэл тест дуусмагц гарах Completion
+        // дэлгэц нь хэрэглэгчийг ШУУД "Тайлан татах" (энэ endpoint) руу
+        // чиглүүлдэг. Иймд ердийн урсгалаар явсан хэрэглэгчийн тоолуур 0
+        // хэвээр үлдэж, үнэгүй эрх нь хэзээ ч зарцуулагдахгүй, 30 минут
+        // өнгөрсөн ч paywall гардаггүй байв.
+        //
+        // `registerView` нь дотроо хамгаалалттай: paywall унтраалттай,
+        // төлбөр төлсөн, эсвэл үнэгүй эрх аль хэдийн дууссан үед юу ч
+        // хийхгүй. Мөн 30 минутын сеансын цонх үйлчилнэ — дэлгэц дээр
+        // хараад дараа нь PDF татах нь НЭГ л харалтад тооцогдоно.
+        await this.reportAccess.registerView(code, access);
 
         response.data.pipe(res);
         return;
@@ -251,6 +271,16 @@ export class ExamController {
       // 💰 Monetization: үнэгүй харах эрх дууссан бол дата буцаахгүй,
       // харин front-д paywall харуулах мэдээллийг буцаана.
       const access = await this.reportAccess.resolve(code, user);
+
+      // Paywall-ийн шийдвэрийг ил гаргана — "яагаад төлбөр нэхэж/нэхэхгүй
+      // байна вэ?" гэдгийг таамаглахгүйгээр core.log-оос шууд харна.
+      console.log(
+        `💰 [paywall] code=${code} reason=${access.reason} ` +
+          `paywall=${access.paywall} free=${access.usedViews}/${access.freeViews} ` +
+          `session=${access.withinFreeSession} canView=${access.canView} ` +
+          `canDownload=${access.canDownload} role=${user?.role ?? '-'}`,
+      );
+
       if (!access.canView) {
         return { locked: true, access };
       }

@@ -1,3 +1,9 @@
+// ⚠️ ЗААВАЛ ХАМГИЙН ЭХНИЙ IMPORT БАЙХ ЁСТОЙ.
+// Доорх бүх import-ууд (эцэстээ auth/constants.ts, base/constants.ts гэх мэт)
+// модулийн түвшинд `process.env`-ээс уншдаг тул `.env` үүнээс өмнө ачаалагдсан
+// байх шаардлагатай. Дэлгэрэнгүйг `src/load-env.ts`-ээс үзнэ үү.
+import './load-env';
+
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';

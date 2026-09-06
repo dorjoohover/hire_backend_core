@@ -44,13 +44,29 @@ function makeService(opts: {
   const dao: any = {
     findPaidByCode: async () => (opts.purchased ? { id: 1 } : null),
   };
+  const calls = { increments: 0 };
   const examDao: any = {
     findByCode: async () => exam,
-    incrementReportView: async () => undefined,
+    incrementReportView: async () => {
+      // ExamDao-ийн WHERE нөхцөлийг дуурайна: grace цонхны дотор бол
+      // тоолуур нэмэгдэхгүй (жинхэнэ SQL-ийг Postgres дээр тусад нь шалгасан).
+      const viewedAt = exam.reportViewedAt
+        ? new Date(exam.reportViewedAt).getTime()
+        : null;
+      const graceMs = REPORT_VIEW_GRACE_MINUTES * 60 * 1000;
+      if (viewedAt == null || Date.now() - viewedAt >= graceMs) {
+        exam.reportViewCount += 1;
+        exam.reportViewedAt = new Date();
+        calls.increments += 1;
+      }
+    },
   };
   const qpay: any = {};
 
-  return new ReportAccessService(dao, examDao, qpay);
+  const service = new ReportAccessService(dao, examDao, qpay);
+  (service as any).__calls = calls;
+  (service as any).__exam = exam;
+  return service;
 }
 
 let failed = 0;
@@ -154,6 +170,71 @@ const check = (name: string, actual: any, expected: any) => {
     freeViews: 1, pdfPaid: true, price: 0, viewCount: 5, viewedAt: minutesAgo(999),
   }).resolve('12345');
   check('D4 үнэ 0 → paywall унтраалттай', [s.paywall, s.canView], [false, true]);
+
+  // --- Сценар E: харалт тоолох (registerView) ---
+  // Гол кейс: тест дуусаад Completion дэлгэцээс ШУУД PDF татах нь эхний
+  // үнэгүй харалт болж тоологдох ЁСТОЙ. Өмнө нь зөвхөн дэлгэц дээрх үр дүн
+  // (`/exam/exam/:code`) тоологддог байсан тул энэ урсгалаар явсан хэрэглэгч
+  // хэзээ ч эрхээ зарцуулдаггүй, paywall хэзээ ч гардаггүй байв.
+  console.log('\n— E: харалт тоолох');
+
+  {
+    const svc: any = makeService({
+      freeViews: 1, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
+    });
+
+    // 1) Тест дуусаад PDF-ээр тайлангаа нээв
+    let st = await svc.resolve('12345');
+    check('E1 PDF нээхэд зөвшөөрөгдөнө', [st.canDownload, st.reason],
+      [true, 'free-view']);
+    await svc.registerView('12345', st);
+    check('E2 → тоолуур 1 болов', svc.__exam.reportViewCount, 1);
+
+    // 2) Тэр дороо дэлгэц дээрээс дахин нээв (нэг сеанс)
+    st = await svc.resolve('12345');
+    check('E3 сеансын дотор дахин нээх', [st.canView, st.reason],
+      [true, 'free-session']);
+    await svc.registerView('12345', st);
+    check('E4 → тоолуур ХЭВЭЭР 1 (давхар тоолохгүй)',
+      svc.__exam.reportViewCount, 1);
+  }
+
+  {
+    // 3) Сеанс дууссаны дараа
+    const svc: any = makeService({
+      freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1,
+      viewedAt: minutesAgo(G + 1),
+    });
+    const st = await svc.resolve('12345');
+    check('E5 30 мин өнгөрсний дараа PDF хаагдана',
+      [st.canView, st.canDownload, st.reason],
+      [false, false, 'payment-required']);
+    await svc.registerView('12345', st);
+    check('E6 → хаагдсан үед тоолуур нэмэгдэхгүй',
+      svc.__exam.reportViewCount, 1);
+  }
+
+  {
+    // 4) PDF төлбөртэй горим: дэлгэцийн харалт тоологдохгүй (freeViews=0)
+    const svc: any = makeService({
+      freeViews: 0, pdfPaid: true, price: 5000, viewCount: 0, viewedAt: null,
+    });
+    const st = await svc.resolve('12345');
+    await svc.registerView('12345', st);
+    check('E7 pdfPaid горимд харалт тоолохгүй',
+      [st.canView, st.canDownload, svc.__exam.reportViewCount],
+      [true, false, 0]);
+  }
+
+  {
+    // 5) Чөлөөлөгдсөн хэрэглэгч дээр огт тоолохгүй
+    const svc: any = makeService({
+      freeViews: 1, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
+    });
+    const st = await svc.resolve('12345', { role: 40, id: 1 });
+    await svc.registerView('12345', st);
+    check('E8 админ дээр тоолуур хөдлөхгүй', svc.__exam.reportViewCount, 0);
+  }
 
   console.log(failed === 0 ? '\n✅ БҮГД АМЖИЛТТАЙ' : `\n❌ ${failed} тест унасан`);
   process.exit(failed === 0 ? 0 : 1);

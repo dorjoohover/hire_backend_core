@@ -62,6 +62,12 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `CREATE INDEX IF NOT EXISTS idx_result_code
   ON "result" ("code")`,
 
+  // Тайлан бодох/уншихад `result` нь `relations: ['details']`-ээр
+  // resultDetail-тэй join хийдэг. FK багана дээр индекс байхгүй бол
+  // тайлан бүрд seq scan болно.
+  `CREATE INDEX IF NOT EXISTS idx_resultdetail_resultid
+  ON "resultDetail" ("resultId")`,
+
   `CREATE INDEX IF NOT EXISTS idx_userservice_userid
   ON "userService" ("userId")`,
 
