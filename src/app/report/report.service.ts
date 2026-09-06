@@ -73,13 +73,21 @@ export class ReportService {
       report.status == REPORT_STATUS.COMPLETED &&
       report.code
     ) {
-      this.sendMail(report.code);
+      // ⚠️ Энэ нь awaitлагдаагүй "floating promise". Дотор нь алдаа гарвал
+      // Node 15+ дээр unhandled rejection → процесс унах эрсдэлтэй байсан
+      // (public/QR тестийн exam.user = null үед sendEmail дотор
+      // `const { email } = user` TypeError өгдөг байсан). Тайлангийн төлөв
+      // буцаах нь мэйл илгээхээс хамаарах ёсгүй тул энд catch хийнэ.
+      this.sendMail(report.code).catch((error) =>
+        console.error('❌ sendMail алдаа:', error?.message),
+      );
     }
     return report;
   }
 
   async sendMail(code: string) {
     const prev = await this.dao.getOne(code);
+    if (!prev) return;
     if (prev.status != REPORT_STATUS.SENT) {
       await this.dao.updateByCode(code, { status: REPORT_STATUS.SENT });
       await this.userAnswer.sendEmail(code);

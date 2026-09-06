@@ -11,7 +11,8 @@ export class ReportController {
 
   @Post()
   async create(@Body() dto: any, @Request() { user }) {
-    return this.reportsService.createReport(dto, user.role);
+    // @Public() controller тул user undefined байж болно.
+    return this.reportsService.createReport(dto, user?.role);
   }
 
   @Get(':id/status')

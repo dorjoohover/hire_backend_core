@@ -263,10 +263,25 @@ export class AssessmentDao {
       });
     }
 
+    // ⚠️ SQL injection: `sortBy` нь @Public `GET /assessment/new` endpoint-ийн
+    // query параметрээс шууд ирж, `a.${sortBy}` гэж ORDER BY-д шигдэж байсан
+    // (TypeORM orderBy нь параметржүүлдэггүй, түүхий SQL болгодог). Одоо
+    // зөвхөн зөвшөөрөгдсөн баганы жагсаалтаас сонгоно.
+    const allowedSorts: Record<string, string> = {
+      createdAt: 'a.createdAt',
+      updatedAt: 'a.updatedAt',
+      price: 'a.price',
+      name: 'a.name',
+      status: 'a.status',
+      type: 'a.type',
+    };
+    const safeDir: 'ASC' | 'DESC' =
+      `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
 
-    if (!isComputedSort) {
-      query.orderBy(`a.${sortBy}`, sortDir);
+    if (!isComputedSort && allowedSorts[sortBy]) {
+      query.orderBy(allowedSorts[sortBy], safeDir);
     } else {
       query.orderBy('a.createdAt', 'DESC');
     }

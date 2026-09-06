@@ -80,6 +80,28 @@ export class AssessmentEntity {
   report: number;
   @Column({ nullable: true, default: false })
   partialScore: boolean;
+
+  // ---------------------------------------------------------------------
+  // Тайлангийн monetization (paywall) — тест бүрээр admin-аас тохируулна.
+  // ---------------------------------------------------------------------
+  /**
+   * Тайланг үнэгүй харах эрхийн тоо.
+   * 0 = харах paywall унтраалттай (хязгааргүй үнэгүй).
+   * 1 = зөвхөн НЭГ удаа үнэгүй, дараа нь төлбөртэй.
+   */
+  @Column({ default: 0 })
+  reportFreeViews: number;
+
+  /** true бол дэлгэц дээр харах үнэгүй, харин PDF татахад төлбөртэй. */
+  @Column({ default: false })
+  reportPdfPaid: boolean;
+
+  /**
+   * Тайланг нэг удаа "нээх"-ийн үнэ (₮). 0 бол paywall идэвхгүй.
+   * Нэг удаа төлөхөд тухайн exam code дээр хязгааргүй харах + PDF нээгдэнэ.
+   */
+  @Column({ default: 0 })
+  reportPrice: number;
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

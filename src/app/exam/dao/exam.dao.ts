@@ -96,6 +96,26 @@ export class ExamDao {
     await this.db.save({ ...res, job });
   };
 
+  /**
+   * Тайлангийн үзсэн тоог атомаар нэмэгдүүлнэ (monetization: үнэгүй харалт).
+   * `findOne` + `save` биш SQL UPDATE ашиглаж байгаа нь зэрэгцээ хүсэлт
+   * дээр тоолуур алдагдахаас сэргийлнэ.
+   */
+  incrementReportView = async (code: string, graceMinutes = 30) => {
+    // Санамсаргүй refresh нэг "үнэгүй харалт"-ыг хэд хэдэн удаа
+    // зарцуулахгүйн тулд сүүлийн харалтаас хойш graceMinutes өнгөрсөн үед л
+    // тоолно (нэг "харалт" = нэг сеанс).
+    await this.db.query(
+      `UPDATE exam
+         SET "reportViewCount" = COALESCE("reportViewCount", 0) + 1,
+             "reportViewedAt" = NOW()
+       WHERE code = $1
+         AND ("reportViewedAt" IS NULL
+              OR "reportViewedAt" < NOW() - ($2 || ' minutes')::interval)`,
+      [String(code), String(graceMinutes)],
+    );
+  };
+
   endExam = async (code: string) => {
     const res = await this.db.findOne({ where: { code } });
     await this.db.save({ ...res, userEndDate: new Date() });

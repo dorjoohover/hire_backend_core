@@ -44,6 +44,9 @@ export class PasswordDto {
   password: string;
   @ApiProperty()
   email: string;
+  /** И-мэйлээр илгээсэн 6 оронтой OTP. Сервер тал ЗААВАЛ шалгана. */
+  @ApiProperty()
+  code: string;
 }
 export class UserDto {
   @ApiProperty()

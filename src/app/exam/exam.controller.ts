@@ -41,6 +41,7 @@ import { Pagination } from 'src/base/decorator/pagination.decorator';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { ReportService } from '../report/report.service';
 import { REPORT_STATUS } from 'src/base/constants';
+import { ReportAccessService } from '../report-access/report-access.service';
 
 @Controller('exam')
 @ApiBearerAuth('access-token')
@@ -51,6 +52,7 @@ export class ExamController {
     private readonly examService: ExamService,
     private readonly report: ReportService,
     private readonly file: FileService,
+    private readonly reportAccess: ReportAccessService,
   ) {
     if (!existsSync(this.cachePath)) {
       mkdirSync(this.cachePath, { recursive: true });
@@ -100,6 +102,17 @@ export class ExamController {
   ) {
     const role = user?.['role'];
     const filename = `report-${code}.pdf`;
+
+    // 💰 Monetization: "PDF татахад төлбөртэй" / "нэг удаа үнэгүй" дүрэм.
+    const access = await this.reportAccess.resolve(code, user);
+    if (!access.canDownload) {
+      throw new HttpException(
+        access.pdfPaid
+          ? 'Тайлангийн PDF татахын тулд төлбөр төлнө үү.'
+          : 'Үнэгүй харах эрх дууссан байна. Тайланг дахин харахын тулд төлбөр төлнө үү.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
 
     const doc = await this.examService.getPdf(code, role);
     await this.examService.getExamInfoByCode(code, user);
@@ -176,18 +189,82 @@ export class ExamController {
     response.data.pipe(res);
   }
 
+  /**
+   * Шалгуулагчийн эрхийг сэргээх (session recovery) endpoint.
+   * Тест ДУУССАН эсэхээс үл хамааран token олгоно — ингэснээр хэрэглэгч
+   * тестээ дуусгасны дараа хуудсаа refresh хийхэд, эсвэл тайлангийн линкээ
+   * дахин нээхэд өөрийн эрхээрээ буцаж орж, тайлангаа харах боломжтой.
+   */
+  @Public()
+  @Get('access/:code')
+  @ApiParam({ name: 'code' })
+  async examAccess(@Param('code') code: string) {
+    const access = await this.examService.getExamAccess(code);
+
+    let report: any = null;
+    try {
+      report = await this.report.getStatus(code);
+    } catch (error) {
+      console.error('❌ examAccess report status алдаа:', error?.message);
+    }
+
+    return {
+      ...access,
+      report: report
+        ? { status: report.status, progress: report.progress ?? 0 }
+        : null,
+    };
+  }
+
+  /**
+   * Сошиал сүлжээнд хуваалцах зургийг (OG image) үүсгэхэд шаардлагатай
+   * ХЯЗГААРЛАГДМАЛ дата. Тайлангийн paywall энд хамаарахгүй, мөн үнэгүй
+   * харалтыг ТООЛОХГҮЙ — эс бөгөөс Facebook-ийн crawler хэрэглэгчийн
+   * үнэгүй харалтыг зарцуулчихна.
+   */
+  @Public()
+  @Get('share/:code')
+  @ApiParam({ name: 'code' })
+  async getShareInfo(@Param('code') code: string) {
+    const info: any = await this.examService.getExamInfoByCode(code);
+    if (!info) {
+      throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      assessmentName: info.assessmentName,
+      firstname: info.firstname,
+      lastname: info.lastname,
+      icons: info.icons,
+      type: info.type,
+      point: info.point,
+      total: info.total,
+      result: info.result,
+      value: info.value,
+    };
+  }
+
   @Public()
   @Get('exam/:code')
   @ApiParam({ name: 'code' })
-  async getExamInfo(@Param('code') code: string) {
+  async getExamInfo(@Param('code') code: string, @Request() { user }) {
     try {
-      const examInfo = await this.examService.getExamInfoByCode(code);
+      // 💰 Monetization: үнэгүй харах эрх дууссан бол дата буцаахгүй,
+      // харин front-д paywall харуулах мэдээллийг буцаана.
+      const access = await this.reportAccess.resolve(code, user);
+      if (!access.canView) {
+        return { locked: true, access };
+      }
+
+      const examInfo = await this.examService.getExamInfoByCode(code, user);
 
       if (!examInfo) {
         throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
       }
 
-      return examInfo;
+      // Амжилттай харуулсны дараа л үнэгүй харалтыг тоолно.
+      await this.reportAccess.registerView(code, access);
+
+      return { ...examInfo, locked: false, access };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to retrieve exam info';

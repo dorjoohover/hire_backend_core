@@ -169,4 +169,55 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   // нөлөөлөхгүй — тухайн тохиолдолд \dT+ report_logs_status_enum-ээр
   // жинхэнэ нэрийг psql-ээр шалгаад засах хэрэгтэй.
   `ALTER TYPE report_logs_status_enum ADD VALUE IF NOT EXISTS 'FAILED'`,
+
+  // ===========================================================================
+  // 4) Тайлангийн monetization (paywall).
+  //    Загвар: тест (assessment) БҮРЭЭР admin-аас тохируулна.
+  //      • reportFreeViews = 0  → харах paywall УНТРААЛТТАЙ (хязгааргүй үнэгүй)
+  //      • reportFreeViews = 1  → тайланг нэг л удаа үнэгүй харна, дараа нь төлбөртэй
+  //      • reportPdfPaid = true → дэлгэц дээр харах үнэгүй ч PDF татахад төлбөртэй
+  //      • reportPrice          → нэг удаа "нээх"-ийн үнэ (₮). 0 бол paywall идэвхгүй.
+  //    Нэг удаа төлсний дараа тухайн exam code дээр ХЯЗГААРГҮЙ харах + PDF
+  //    татах эрх нээгдэнэ (хоёр тохиргоо нэг худалдан авалтаар нээгдэнэ).
+  // ===========================================================================
+  `ALTER TABLE assessment
+   ADD COLUMN IF NOT EXISTS "reportFreeViews" INTEGER NOT NULL DEFAULT 0`,
+
+  `ALTER TABLE assessment
+   ADD COLUMN IF NOT EXISTS "reportPdfPaid" BOOLEAN NOT NULL DEFAULT false`,
+
+  `ALTER TABLE assessment
+   ADD COLUMN IF NOT EXISTS "reportPrice" INTEGER NOT NULL DEFAULT 0`,
+
+  // Тухайн тестийн тайланг хэдэн удаа үзсэн (үнэгүй харалтыг тоолоход).
+  `ALTER TABLE exam
+   ADD COLUMN IF NOT EXISTS "reportViewCount" INTEGER NOT NULL DEFAULT 0`,
+
+  // Сүүлд үзсэн хугацаа — санамсаргүй refresh нэг "үнэгүй харалт"-ыг
+  // хэд хэдэн удаа зарцуулахаас сэргийлэх 30 минутын цонхонд ашиглана.
+  `ALTER TABLE exam
+   ADD COLUMN IF NOT EXISTS "reportViewedAt" TIMESTAMP`,
+
+  // Тайлан нээх эрхийн бүртгэл. Нэг exam code дээр PAID мөр байвал тухайн
+  // тайланг хязгааргүй харах + PDF татах эрхтэй.
+  `CREATE TABLE IF NOT EXISTS report_access (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR NOT NULL,
+    "userId" INTEGER,
+    "assessmentId" INTEGER,
+    status INTEGER NOT NULL DEFAULT 10,
+    price INTEGER NOT NULL DEFAULT 0,
+    "invoiceId" VARCHAR,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "paidAt" TIMESTAMP
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_report_access_code
+  ON report_access ("code")`,
+
+  `CREATE INDEX IF NOT EXISTS idx_report_access_code_status
+  ON report_access ("code", "status")`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_report_access_invoice
+  ON report_access ("invoiceId") WHERE "invoiceId" IS NOT NULL`,
 ];

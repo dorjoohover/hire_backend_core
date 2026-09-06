@@ -53,6 +53,17 @@ export class CreateAssessmentDto {
   showResultOnComplete?: boolean;
   @ApiProperty()
   blockNavigation?: boolean;
+
+  // --- Тайлангийн monetization (paywall) ---
+  /** Үнэгүй харах эрхийн тоо. 0 = хязгааргүй үнэгүй, 1 = зөвхөн нэг удаа. */
+  @ApiProperty()
+  reportFreeViews?: number;
+  /** true бол дэлгэц дээр харах үнэгүй, PDF татахад төлбөртэй. */
+  @ApiProperty()
+  reportPdfPaid?: boolean;
+  /** Тайлан нээх үнэ (₮). 0 бол paywall идэвхгүй. */
+  @ApiProperty()
+  reportPrice?: number;
   @ApiProperty({ isArray: true, type: CreateQuestionAnswerCategoryDto })
   answerCategories?: CreateQuestionAnswerCategoryDto[];
 }

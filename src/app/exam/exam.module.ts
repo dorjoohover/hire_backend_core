@@ -26,6 +26,7 @@ import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
 import { ReportLogDao } from '../report/report.log.dao';
 import { QuestionAnswerViewService } from '../question/question-answer-view.service';
+import { ReportAccessModule } from '../report-access/report-access.module';
 @Module({
   imports: [
     JwtModule.register({
@@ -36,6 +37,8 @@ import { QuestionAnswerViewService } from '../question/question-answer-view.serv
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserModule),
     forwardRef(() => UserServiceModule),
+    // 💰 Тайлангийн paywall (ExamController-т ReportAccessService хэрэгтэй).
+    forwardRef(() => ReportAccessModule),
   ],
   controllers: [ExamController],
   providers: [

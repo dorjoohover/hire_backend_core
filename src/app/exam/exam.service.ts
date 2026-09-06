@@ -78,6 +78,84 @@ export class ExamService extends BaseService {
     // return doc;
   }
 
+  /**
+   * Public/QR урсгалаар тест өгсөн шалгуулагч тестээ дуусгасны дараа хуудсаа
+   * refresh хийх, эсвэл тайлангийн линкээ дахин нээхэд өөрийн эрхээ (session)
+   * сэргээж, тайлангаа харах боломжтой байх зорилготой READ-ONLY endpoint.
+   *
+   * Асуудал (production): `updateByCode` нь `userEndDate != null` үед
+   * 'Эрх дууссан байна.' гэж throw хийдэг ба энэ шалгуур нь forceLogin
+   * хийхээс ӨМНӨ ажилладаг. Front тал нь `/exam/:code` руу орох бүрдээ
+   * эхлээд signOut() хийчихээд дараа нь token авахаар оролддог тул, тест
+   * дуусгасан хэрэглэгч refresh хийхэд:
+   *   1) session нь устана,
+   *   2) шинэ token хэзээ ч олгогдохгүй,
+   *   3) улмаар /me, /api/report/:code, PDF аль нь ч нээгдэхгүй
+   * болж "буцаж орж чадахгүй" гацаанд ордог байсан.
+   *
+   * Энэ endpoint нь тестийн төлөв ямар ч байсан (дууссан эсэхээс үл
+   * хамааран) forceLogin-оор token олгоно — forceLogin нь idempotent тул
+   * давхар хэрэглэгч үүсгэхгүй.
+   */
+  public async getExamAccess(code: string) {
+    const res = await this.dao.findByCode(code);
+    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
+
+    const finished = res.userEndDate != null;
+    const started = res.userStartDate != null;
+
+    // Тестийн хугацаа дууссан эсэх (эрхийн шалгуур биш, зөвхөн мэдээлэл).
+    const expired =
+      res.endDate != null && res.startDate != null && res.endDate < new Date();
+
+    let token: string | null = null;
+    const loginEmail =
+      (
+        res.email || (res.phone ? `${res.phone}@hire.mn` : null)
+      )?.toLowerCase() ?? null;
+
+    if (loginEmail && (res.lastname || res.firstname)) {
+      try {
+        const auth = await this.authService.forceLogin(
+          loginEmail,
+          res.phone,
+          res.lastname ?? '',
+          res.firstname ?? '',
+        );
+        if (!res.user) {
+          await this.dao.update(res.code, { user: auth.user });
+        }
+        token = auth.token;
+      } catch (error) {
+        // Token олгож чадахгүй байсан ч access мэдээллийг буцаана — front
+        // тал нь дор хаяж "тест дууссан" төлвийг зөв харуулна.
+        console.error(
+          '❌ getExamAccess forceLogin алдаа:',
+          (error as any)?.message,
+        );
+      }
+    }
+
+    const result = await this.resultDao.findOne(code);
+
+    return {
+      code: res.code,
+      finished,
+      started,
+      expired,
+      visible: res.visible ?? true,
+      hasResult: result != null,
+      assessment: res.assessment
+        ? {
+            id: res.assessment.id,
+            name: res.assessment.name,
+            showResultOnComplete: res.assessment.showResultOnComplete,
+          }
+        : null,
+      token,
+    };
+  }
+
   public checkExam = async (code: string) => {
     // Parameterized query — өмнө нь code-ийг шууд string interpolation хийдэг
     // байсан нь SQL injection эрсдэлтэй байв.

@@ -98,6 +98,42 @@ export class UserService {
     await this.dao.updateByEmail({ email, password: hashed });
   }
 
+  /**
+   * 🔐 Нууц үг сэргээх (forget) урсгал.
+   *
+   * ⚠️ Өмнө нь `POST /user/forget/password` нь @Public бөгөөд зөвхөн
+   * { email, password } авдаг, OTP-г огт шалгадаггүй байсан. Код баталгаажуулах
+   * нь ЗӨВХӨН front талд (Signin.js) хийгддэг байсан тул хэн ч дурын и-мэйл
+   * (тэр дундаа super_admin) дээр нууц үгийг сольж бүрэн эрх авах боломжтой
+   * байв. Одоо серверийн талд OTP-г заавал шалгана.
+   */
+  public async resetPasswordWithOtp(
+    email: string,
+    password: string,
+    code: string,
+  ) {
+    const normalized = email?.toLowerCase();
+    if (!normalized || !password || !code) {
+      throw new HttpException(
+        'И-мэйл, баталгаажуулах код, шинэ нууц үг шаардлагатай.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const user = await this.dao.getByEmail(normalized);
+    if (!user || !user.forget || `${user.forget}` !== `${code}`) {
+      throw new HttpException(
+        'Баталгаажуулах код буруу байна.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const hashed = await bcrypt.hash(password, saltOrRounds);
+    await this.dao.updateByEmail({ email: normalized, password: hashed });
+    await this.dao.updateByEmail({ email: normalized, clearForget: true });
+    return true;
+  }
+
   public async payment(dto: PaymentUserDto) {
     const user = await this.dao.get(dto.id);
     const pay = user.wallet + dto.price;

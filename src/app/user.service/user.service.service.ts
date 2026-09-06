@@ -34,6 +34,7 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import * as bcrypt from 'bcryptjs';
 import { saltOrRounds } from '../user/user.service';
 import { EmailService } from '../email/email.service';
+import { AuthService } from 'src/auth/auth.service';
 @Injectable()
 export class UserServiceService extends BaseService {
   constructor(
@@ -49,6 +50,8 @@ export class UserServiceService extends BaseService {
     private qpay: QpayService,
     private result: ResultDao,
     private barimt: BarimtService,
+    @Inject(forwardRef(() => AuthService))
+    private authService: AuthService,
   ) {
     super();
   }
@@ -611,6 +614,38 @@ export class UserServiceService extends BaseService {
       email,
       phone,
     });
+
+    // ⚠️ Хэрэглэгчийг ЯГ ЭНД үүсгэнэ.
+    // Өмнө нь public QR-аар бүртгүүлэхэд зөвхөн exam мөр дээр firstname/
+    // lastname/email/phone хадгалагдаад, бодит UserEntity нь зөвхөн
+    // /exam/:code хуудас `updateByCode`-г (category === undefined) дуудах
+    // үед л lazy байдлаар үүсдэг байсан. Гэтэл `updateByCode` нь
+    // `userEndDate != null` (тест дууссан) үед forceLogin хийхээс өмнө
+    // throw хийдэг тул — хэрэглэгч эхний оролдлого дээр ямар нэг шалтгаанаар
+    // (сүлжээ тасрах, өөр төхөөрөмжөөс нээх, эсвэл тестээ дуусгасны дараа
+    // refresh хийх) token авч чадаагүй бол ХЭЗЭЭ Ч авч чадахгүй үлддэг
+    // байсан. Үүнээс болж тест өгсөн (тэр дундаа төлбөр төлсөн) хэрэглэгчид
+    // тайлангаа харж чаддаггүй байв.
+    const loginEmail =
+      (email ?? (phone ? `${phone}@hire.mn` : null))?.toLowerCase() ?? null;
+    if (loginEmail) {
+      try {
+        const auth = await this.authService.forceLogin(
+          loginEmail,
+          phone,
+          dto.lastname ?? '',
+          dto.firstname ?? '',
+        );
+        await this.examDao.update(examCode, { user: auth.user });
+      } catch (error) {
+        // Хэрэглэгч үүсгэж чадаагүй ч тест эхлүүлэхэд саад болохгүй —
+        // /exam/access/:code endpoint дараа нь дахин оролдоно.
+        console.error(
+          '❌ createPublicExam: хэрэглэгч үүсгэхэд алдаа гарлаа:',
+          (error as any)?.message,
+        );
+      }
+    }
 
     await this.updateCount(serviceId, 0, 1, service.user?.id);
 

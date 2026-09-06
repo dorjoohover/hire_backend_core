@@ -58,10 +58,14 @@ export class UserDao {
     email: string;
     password?: string;
     code?: string;
+    clearForget?: boolean;
   }) => {
     const res = await this._db.findOne({ where: { email: dto.email } });
+    if (!res) return;
     if (dto.password) await this._db.save({ ...res, password: dto.password });
     if (dto.code) await this._db.save({ ...res, forget: dto.code });
+    // OTP-г нэг удаа ашигласны дараа хүчингүй болгоно (replay-аас сэргийлнэ).
+    if (dto.clearForget) await this._db.save({ ...res, forget: null });
   };
 
   update = async (user: UpdateUserDto) => {

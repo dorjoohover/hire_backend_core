@@ -335,7 +335,17 @@ export class UserAnswerService extends BaseService {
 
       // Тест дууссан эсэх
       if (dto.end) {
-        this.createReport(dto.data[0].code);
+        // endExam (userEndDate бичих) нь заавал биелэх ёстой — үүнгүйгээр
+        // тест "дуусаагүй" хэвээр үлдэж, /exam/access/:code нь finished=false
+        // буцаана. Иймд үүнийг awaitлана. Тайлан үүсгэх хүсэлт нь удаан
+        // (сүлжээгээр) тул арын дэвсгэрт үлдээж, алдааг нь заавал барина —
+        // өмнө нь catch-гүй байсан тул unhandled rejection үүсгэдэг байв.
+        await this.examDao.endExam(dto.data[0].code);
+        this.report
+          .createReport({ code: dto.data[0].code })
+          .catch((error) =>
+            console.error('❌ createReport алдаа:', error?.message),
+          );
         return {
           visible: exam.visible,
         };
@@ -365,9 +375,16 @@ export class UserAnswerService extends BaseService {
     const res = await this.examDao.findByCode(+code);
     if (!res?.visible) return;
     const { user, assessment } = res;
-    const { email } = user;
-    const id = assessment?.id ?? assessment[0].id;
-    const name = assessment?.name ?? assessment[0].name;
+    // ⚠️ Public/QR урсгалаар өгсөн тест дээр exam.user null байж болно
+    // (хэрэглэгч lazy үүсдэг). Өмнө нь энд шууд destructure хийдэг байсан
+    // тул TypeError → unhandled rejection → /report/:id/status 500 буцааж,
+    // front тал нь "Тайлан боловсруулахад алдаа гарлаа" харуулж, хэрэглэгч
+    // тайлангаа хэзээ ч харж чаддаггүй байсан.
+    const email = user?.email ?? res.email ?? null;
+    if (!assessment) return;
+    const id = assessment?.id ?? assessment[0]?.id;
+    const name = assessment?.name ?? assessment[0]?.name;
+    if (!email) return;
 
     // await this.mailService.sendReportMail({
     //   code: code,

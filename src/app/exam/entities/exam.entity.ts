@@ -36,6 +36,14 @@ export class ExamEntity {
   @Column({ default: true, nullable: true })
   visible: boolean;
 
+  /** Тайланг хэдэн удаа үзсэн (үнэгүй харалтын тоолуур — paywall-д хэрэглэнэ). */
+  @Column({ default: 0 })
+  reportViewCount: number;
+
+  /** Сүүлд тайлан үзсэн хугацаа (30 минутын дотор дахин үзвэл дахин тоолохгүй). */
+  @Column({ nullable: true, type: 'timestamp' })
+  reportViewedAt: Date;
+
   @Column({ nullable: true })
   startDate: Date;
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

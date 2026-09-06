@@ -75,7 +75,12 @@ export class QpayService {
       );
       return response.data;
     } catch (error) {
-      console.log(error.response.data.message);
+      // ⚠️ `error.response.data.message` гэж шууд уншдаг байсан тул сүлжээний
+      // алдаа (response байхгүй) үед жинхэнэ алдааг далдалж TypeError өгдөг байв.
+      console.error(
+        '❌ QPay хүсэлтийн алдаа:',
+        error?.response?.data?.message ?? error?.message,
+      );
       if (error.response?.status === 401) {
         await this.refreshAccessToken();
         const retryResponse = await firstValueFrom(
@@ -120,9 +125,21 @@ export class QpayService {
   }
 
   // ✅ Invoice үүсгэх
-  async createInvoice(amount: number, invoiceId: number, userId: number) {
+  /**
+   * @param callbackUrl QPay-ийн callback хаяг. Өгөөгүй бол тестийн худалдан
+   *   авалтын анхдагч (`userService/callback/...`) хаяг руу заана. Тайлан нээх
+   *   (report-access) зэрэг өөр төрлийн төлбөрт өөрийн хаягаа дамжуулна.
+   */
+  async createInvoice(
+    amount: number,
+    invoiceId: number,
+    userId: number,
+    callbackUrl?: string,
+  ) {
     try {
-      const res = this.requestWithToken('POST', 'invoice', {
+      // ⚠️ Өмнө нь `await` дутуу байсан тул доорх try/catch хэзээ ч
+      // ажилладаггүй байв.
+      const res = await this.requestWithToken('POST', 'invoice', {
         invoice_code: 'AXIOM_INC_INVOICE',
         sender_invoice_no: `${invoiceId}`,
         sender_branch_code: 'hire',
@@ -135,12 +152,15 @@ export class QpayService {
         allow_exceed: false,
         maximum_amount: null,
         note: null,
-        callback_url: `${process.env.QPAY_CALLBACK}/${invoiceId}/${userId}`,
+        callback_url:
+          callbackUrl ??
+          `${process.env.QPAY_CALLBACK}/${invoiceId}/${userId}`,
       });
 
       return res;
     } catch (error) {
-      console.log(error);
+      console.error('❌ QPay createInvoice алдаа:', error?.message);
+      throw error;
     }
   }
 
@@ -157,7 +177,8 @@ export class QpayService {
 
   // ✅ Төлбөр шалгах
   async checkPayment(invoiceId: string) {
-    const res = this.requestWithToken('POST', '/payment/check', {
+    // ⚠️ Өмнө нь `await` дутуу байсан.
+    const res = await this.requestWithToken('POST', '/payment/check', {
       object_type: 'INVOICE',
       object_id: invoiceId,
       offset: {
