@@ -70,6 +70,19 @@ export const AssessmentAudience = {
   DEFAULT: 10,
   ORGANIZATION: 20,
 };
+/**
+ * Тайлангийн "нэг үнэгүй харалт" = нэг сеанс. Тайланг ЭХЭЛЖ нээснээс хойш
+ * энэ хугацааны дотор refresh хийх, хаагаад дахин нээх нь бүгд НЭГ харалтад
+ * тооцогдоно (тоолуур нэмэгдэхгүй, мөн paywall гарахгүй).
+ *
+ * ⚠️ Энэ утгыг ReportAccessService (эрх шалгах) болон ExamDao
+ * (тоолуур нэмэгдүүлэх) ХОЁУЛАА ашиглана — тусад нь бичиж болохгүй,
+ * зөрвөл "refresh хийхэд шууд төлбөр нэхэх" алдаа дахин үүснэ.
+ */
+export const REPORT_VIEW_GRACE_MINUTES = Number(
+  process.env.REPORT_VIEW_GRACE_MINUTES ?? 30,
+);
+
 export enum REPORT_STATUS {
   CALCULATING = 'CALCULATING',
   PENDING = 'PENDING',

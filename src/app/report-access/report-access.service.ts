@@ -8,7 +8,11 @@ import {
 import { ReportAccessDao } from './report-access.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { QpayService } from '../payment/qpay.service';
-import { PaymentStatus, ORGANIZATION } from 'src/base/constants';
+import {
+  PaymentStatus,
+  ORGANIZATION,
+  REPORT_VIEW_GRACE_MINUTES,
+} from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
 
 export interface ReportAccessState {
@@ -27,6 +31,10 @@ export interface ReportAccessState {
   pdfPaid: boolean;
   /** Төлбөр төлж нээсэн эсэх. */
   purchased: boolean;
+  /** Одоогийн үнэгүй харалтын сеанс идэвхтэй эсэх (refresh хийхэд хэвийн). */
+  withinFreeSession: boolean;
+  /** Идэвхтэй сеанс хэдэн минутын дараа дуусах (0 = сеансгүй). */
+  freeSessionMinutesLeft: number;
   canView: boolean;
   canDownload: boolean;
   reason: string | null;
@@ -60,6 +68,8 @@ export class ReportAccessService {
       remainingFreeViews: 0,
       pdfPaid: false,
       purchased: false,
+      withinFreeSession: false,
+      freeSessionMinutesLeft: 0,
       canView: true,
       canDownload: true,
       reason,
@@ -123,7 +133,26 @@ export class ReportAccessService {
     const usedViews = +(row.reportViewCount ?? 0);
     const remainingFreeViews = Math.max(0, freeViews - usedViews);
 
-    const canView = purchased || freeViews === 0 || usedViews < freeViews;
+    // ⚠️ Нэг "үнэгүй харалт" = нэг СЕАНС.
+    //
+    // Өмнө нь grace цонх нь зөвхөн тоолуурыг (ExamDao.incrementReportView)
+    // зогсоодог байсан ч эрхийн шалгуурт огт ороогүй. Үүнээс болж эхний
+    // харалтад usedViews 1 болмогц `usedViews < freeViews` худал болж,
+    // хэрэглэгч ХОРМЫН дараа refresh хийхэд шууд paywall гардаг байв.
+    //
+    // Тоолох цэг нь тайланг ЭХЭЛЖ нээсэн мөч (`reportViewedAt`) — цонх нь
+    // refresh бүрд сунахгүй, тогтмол.
+    const viewedAt = row.reportViewedAt ? new Date(row.reportViewedAt) : null;
+    const elapsedMs = viewedAt ? Date.now() - viewedAt.getTime() : null;
+    const graceMs = REPORT_VIEW_GRACE_MINUTES * 60 * 1000;
+    const withinFreeSession =
+      elapsedMs != null && elapsedMs >= 0 && elapsedMs < graceMs;
+    const freeSessionMinutesLeft = withinFreeSession
+      ? Math.max(1, Math.ceil((graceMs - elapsedMs) / 60000))
+      : 0;
+
+    const canView =
+      purchased || freeViews === 0 || usedViews < freeViews || withinFreeSession;
     const canDownload = purchased ? true : pdfPaid ? false : canView;
 
     return {
@@ -135,9 +164,17 @@ export class ReportAccessService {
       remainingFreeViews,
       pdfPaid,
       purchased,
+      withinFreeSession,
+      freeSessionMinutesLeft,
       canView,
       canDownload,
-      reason: purchased ? 'purchased' : canView ? 'free-view' : 'payment-required',
+      reason: purchased
+        ? 'purchased'
+        : usedViews < freeViews
+          ? 'free-view'
+          : withinFreeSession
+            ? 'free-session'
+            : 'payment-required',
     };
   }
 

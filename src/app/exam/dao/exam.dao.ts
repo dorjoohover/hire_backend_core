@@ -17,6 +17,7 @@ import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { ReportService } from 'src/app/report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { REPORT_VIEW_GRACE_MINUTES } from 'src/base/constants';
 
 @Injectable()
 export class ExamDao {
@@ -101,7 +102,10 @@ export class ExamDao {
    * `findOne` + `save` биш SQL UPDATE ашиглаж байгаа нь зэрэгцээ хүсэлт
    * дээр тоолуур алдагдахаас сэргийлнэ.
    */
-  incrementReportView = async (code: string, graceMinutes = 30) => {
+  incrementReportView = async (
+    code: string,
+    graceMinutes = REPORT_VIEW_GRACE_MINUTES,
+  ) => {
     // Санамсаргүй refresh нэг "үнэгүй харалт"-ыг хэд хэдэн удаа
     // зарцуулахгүйн тулд сүүлийн харалтаас хойш graceMinutes өнгөрсөн үед л
     // тоолно (нэг "харалт" = нэг сеанс).
