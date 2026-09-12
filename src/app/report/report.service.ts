@@ -23,28 +23,59 @@ export class ReportService {
     this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
   }
   async createReport(data: any, role?: number) {
-    try {
-      await axios.post(
-        this.REPORT,
-        { ...data, role },
-        {
-          headers: {
-            'Content-Type': 'application/json',
+    const { code } = data || {};
+    const maxAttempts = 3;
+    let lastError: any = null;
+
+    // ⚠️ FIX (2026-09-12): өмнө нь 1 удаа л оролддог, амжилтгүй бол зөвхөн
+    // console.error-т бичээд өнгөрдөг байсан тул hire_report түр
+    // хүрэлцэхгүй байх богино мөчид (жишээ нь healthcheck.sh-ийн
+    // auto-restart цонх) таарвал тэр тайлан ХЭЗЭЭ Ч үүсгэхгүй, ямар ч
+    // ул мөргүй мөнхед алга болдог байсан (нотолгоо: 2 бодит
+    // production кейс, 1 нь 19 хоног ийм байдалтайгаар олдсон).
+    // Одоо timeout-той, богино backoff-той 3 удаа дахин оролдно.
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await axios.post(
+          this.REPORT,
+          { ...data, role },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            timeout: 10_000,
           },
-        },
-      );
-    } catch (err) {
-      // ⚠️ FIX: өмнө нь await/catch-гүй байсан тул энэ хүсэлт амжилтгүй
-      // болоход (жишээ нь REPORT env буруу URL заасан, эсвэл report VPS
-      // хариу өгөхгүй үед) "Unhandled Rejection" болж процесст дуулгавартай
-      // алдаа гарч, report_logs мөр hire_report талд хэзээ ч үүсдэггүй тул
-      // GET /exam/pdf/:code polling мөнхөд "PENDING" (202) буцаадаг байсан —
-      // алдаа хаана ч бичигдэхгүй, chase хийхэд боломжгүй болдог байсан.
-      console.error(
-        `❌ createReport: report руу хүсэлт илгээхэд алдаа гарлаа (REPORT=${this.REPORT}):`,
-        (err as any)?.response?.status,
-        (err as any)?.message,
-      );
+        );
+        return;
+      } catch (err) {
+        lastError = err;
+        console.error(
+          `❌ createReport: report руу хүсэлт илгээхэд алдаа гарлаа (оролдлого ${attempt}/${maxAttempts}, REPORT=${this.REPORT}):`,
+          (err as any)?.response?.status,
+          (err as any)?.message,
+        );
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, attempt * 1500));
+        }
+      }
+    }
+
+    if (code) {
+      try {
+        await this.dao.create({
+          id: `core-failed-${code}-${Date.now()}`,
+          code,
+          role: role ?? Role.admin,
+          status: REPORT_STATUS.FAILED,
+          progress: 0,
+          error: `createReport ${maxAttempts} оролдлого амжилтгүй: ${lastError?.message ?? 'unknown'}`,
+        });
+      } catch (e) {
+        console.error(
+          '❌ createReport: FAILED мөр бичихэд алдаа гарлаа:',
+          (e as any)?.message,
+        );
+      }
     }
   }
 
