@@ -4,8 +4,15 @@
  * Ажиллуулах:
  *   npx ts-node -P tsconfig.json -r tsconfig-paths/register test/report-access.spec-lite.ts
  *
- * Гол шалгах зүйл: "нэг үнэгүй харалт = нэг сеанс" — тайланг нээснээс хойш
- * REPORT_VIEW_GRACE_MINUTES-ийн дотор refresh хийхэд paywall ГАРАХГҮЙ байх.
+ * Гол шалгах зүйл (2026-09-22 хялбарчлалын дараа): `reportPrice > 0` бол
+ * PDF ҮРГЭЛЖ шууд төлбөртэй — `reportPdfPaid` / `reportFreeViews` / grace-session
+ * ("нэг үнэгүй харалт = нэг сеанс") механизм БҮРЭН устгагдсан (хэрэглэгчийн
+ * хүсэлтээр, зөвхөн логик/UI — DB багана хэвээр, ашиглагдахаа больсон,
+ * report-access.service.ts). Байгууллага/admin/tester үргэлж чөлөөлөгдөнө
+ * (isExempt); `/result` дэлгэцийн үр дүн (canView) ҮРГЭЛЖ нээлттэй, PDF татах
+ * (canDownload) л reportPrice-аар хаагдана. `registerView()` одоо байнгын
+ * no-op (E хэсэг үүнийг баталгаажуулна — ирээдүйд санамсаргүй дахин асаавал
+ * энд танигдана).
  *
  * Мөн (F) QPay callback / polling: төлбөрийг ЗӨВХӨН мөрийн өөрийн invoice-аар
  * QPay-с дахин шалгадаг, callback давтагдахад аюулгүй, өөр нэхэмжлэхийн
@@ -203,42 +210,37 @@ const check = (name: string, actual: any, expected: any) => {
   console.log(`grace = ${REPORT_VIEW_GRACE_MINUTES} мин\n`);
   const G = REPORT_VIEW_GRACE_MINUTES;
 
-  // --- Сценар A: freeViews=1, PDF үнэгүй, үнэ 5000 ---
-  console.log('— A: reportFreeViews=1, reportPdfPaid=false, reportPrice=5000');
+  // --- Сценар A (2026-09-22 хялбарчлалаас хойш): reportPrice=5000 —
+  // pdfPaid / freeViews / хугацаанаас ҮЛ ХАМААРНА, зөвхөн price л шийднэ ---
+  console.log('— A: reportPrice=5000 — pdfPaid/freeViews/хугацаанаас үл хамаарна, шууд төлбөртэй');
 
   let s = await makeService({
     freeViews: 1, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
   }).resolve('12345');
-  check('A1 анх нээх (тоолуур 0)', [s.canView, s.canDownload, s.reason],
-    [true, true, 'free-view']);
+  check('A1 анх нээх ч шууд төлбөртэй (free-view механизм устсан)', [s.canView, s.canDownload, s.reason],
+    [true, false, 'payment-required']);
 
   s = await makeService({
-    freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1, viewedAt: minutesAgo(0),
+    freeViews: 5, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: minutesAgo(0),
   }).resolve('12345');
-  check('A2 ШУУД refresh (0 мин)', [s.canView, s.canDownload, s.reason],
-    [true, true, 'free-session']);
-
-  s = await makeService({
-    freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1, viewedAt: minutesAgo(G - 1),
-  }).resolve('12345');
-  check(`A3 refresh (${G - 1} мин — цонхны дотор)`, [s.canView, s.reason],
-    [true, 'free-session']);
+  check('A2 freeViews өндөр байсан ч нөлөөгүй', [s.canView, s.canDownload, s.reason],
+    [true, false, 'payment-required']);
 
   s = await makeService({
     freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1, viewedAt: minutesAgo(G + 1),
   }).resolve('12345');
-  check(`A4 ${G + 1} минутын дараа → PDF хаалттай, ҮР ДҮН нээлттэй (№6)`, [s.canView, s.canDownload, s.reason],
+  check(`A3 хугацаа (${G + 1} мин) ч нөлөөгүй — ҮР ДҮН нээлттэй (№6)`, [s.canView, s.canDownload, s.reason],
     [true, false, 'payment-required']);
 
   s = await makeService({
     freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1,
     viewedAt: minutesAgo(G + 1), purchased: true,
   }).resolve('12345');
-  check('A5 төлбөр төлсний дараа', [s.canView, s.canDownload, s.reason],
+  check('A4 төлбөр төлсний дараа', [s.canView, s.canDownload, s.reason],
     [true, true, 'purchased']);
 
-  // --- Сценар B: PDF төлбөртэй, харах үнэгүй ---
-  console.log('\n— B: reportFreeViews=0, reportPdfPaid=true, reportPrice=5000');
+  // --- Сценар B: reportPdfPaid=true ч А-тай ЯГ ИЖИЛ (хоёр горим нэгдсэн) ---
+  console.log('\n— B: reportPdfPaid=true — А-тай ижил үр дүн');
 
   s = await makeService({
     freeViews: 0, pdfPaid: true, price: 5000, viewCount: 3, viewedAt: minutesAgo(120),
@@ -251,20 +253,6 @@ const check = (name: string, actual: any, expected: any) => {
     viewedAt: minutesAgo(120), purchased: true,
   }).resolve('12345');
   check('B2 төлсний дараа PDF нээгдэнэ', [s.canView, s.canDownload], [true, true]);
-
-  // --- Сценар C: freeViews=2 (олон сеанс) ---
-  console.log('\n— C: reportFreeViews=2');
-
-  s = await makeService({
-    freeViews: 2, pdfPaid: false, price: 5000, viewCount: 1, viewedAt: minutesAgo(G + 5),
-  }).resolve('12345');
-  check('C1 1 сеанс зарцуулсан, 2 дахийг нээх', [s.canView, s.reason, s.remainingFreeViews],
-    [true, 'free-view', 1]);
-
-  s = await makeService({
-    freeViews: 2, pdfPaid: false, price: 5000, viewCount: 2, viewedAt: minutesAgo(G + 5),
-  }).resolve('12345');
-  check('C2 2 сеанс дууссан → PDF хаалттай, үр дүн нээлттэй (№6)', [s.canView, s.canDownload, s.reason], [true, false, 'payment-required']);
 
   // --- Сценар D: чөлөөлөлтүүд ---
   console.log('\n— D: чөлөөлөлт');
@@ -292,70 +280,49 @@ const check = (name: string, actual: any, expected: any) => {
   }).resolve('12345');
   check('D4 үнэ 0 → paywall унтраалттай', [s.paywall, s.canView], [false, true]);
 
-  // --- Сценар E: харалт тоолох (registerView) ---
-  // Гол кейс: тест дуусаад Completion дэлгэцээс ШУУД PDF татах нь эхний
-  // үнэгүй харалт болж тоологдох ЁСТОЙ. Өмнө нь зөвхөн дэлгэц дээрх үр дүн
-  // (`/exam/exam/:code`) тоологддог байсан тул энэ урсгалаар явсан хэрэглэгч
-  // хэзээ ч эрхээ зарцуулдаггүй, paywall хэзээ ч гардаггүй байв.
-  console.log('\n— E: харалт тоолох');
+  // --- Сценар E: registerView() одоо байнгын no-op (grace/freeViews тоолуур
+  // механизм бүрэн устгагдсан тул ямар ч нөхцөлд reportViewCount нэмэгдэхгүй) ---
+  console.log('\n— E: registerView (байнгын no-op)');
 
   {
     const svc: any = makeService({
-      freeViews: 1, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
-    });
-
-    // 1) Тест дуусаад PDF-ээр тайлангаа нээв
-    let st = await svc.resolve('12345');
-    check('E1 PDF нээхэд зөвшөөрөгдөнө', [st.canDownload, st.reason],
-      [true, 'free-view']);
-    await svc.registerView('12345', st);
-    check('E2 → тоолуур 1 болов', svc.__exam.reportViewCount, 1);
-
-    // 2) Тэр дороо дэлгэц дээрээс дахин нээв (нэг сеанс)
-    st = await svc.resolve('12345');
-    check('E3 сеансын дотор дахин нээх', [st.canView, st.reason],
-      [true, 'free-session']);
-    await svc.registerView('12345', st);
-    check('E4 → тоолуур ХЭВЭЭР 1 (давхар тоолохгүй)',
-      svc.__exam.reportViewCount, 1);
-  }
-
-  {
-    // 3) Сеанс дууссаны дараа
-    const svc: any = makeService({
-      freeViews: 1, pdfPaid: false, price: 5000, viewCount: 1,
-      viewedAt: minutesAgo(G + 1),
-    });
-    const st = await svc.resolve('12345');
-    check('E5 30 мин өнгөрсний дараа PDF хаагдана (үр дүн нээлттэй)',
-      [st.canView, st.canDownload, st.reason],
-      [true, false, 'payment-required']);
-    await svc.registerView('12345', st);
-    check('E6 → хаагдсан үед тоолуур нэмэгдэхгүй',
-      svc.__exam.reportViewCount, 1);
-  }
-
-  {
-    // 4) PDF төлбөртэй горим: дэлгэцийн харалт тоологдохгүй (freeViews=0)
-    const svc: any = makeService({
-      freeViews: 0, pdfPaid: true, price: 5000, viewCount: 0, viewedAt: null,
+      freeViews: 5, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
     });
     const st = await svc.resolve('12345');
     await svc.registerView('12345', st);
-    check('E7 pdfPaid горимд харалт тоолохгүй',
-      [st.canView, st.canDownload, svc.__exam.reportViewCount],
-      [true, false, 0]);
+    check('E1 PDF нээхэд шууд төлбөртэй, тоолуур хөдлөхгүй',
+      [st.canDownload, st.reason, svc.__exam.reportViewCount],
+      [false, 'payment-required', 0]);
   }
 
   {
-    // 5) Чөлөөлөгдсөн хэрэглэгч дээр огт тоолохгүй
+    const svc: any = makeService({
+      freeViews: 5, pdfPaid: false, price: 0, viewCount: 0, viewedAt: null,
+    });
+    const st = await svc.resolve('12345');
+    await svc.registerView('12345', st);
+    check('E2 price=0 (paywall унтраалттай) үед ч тоолуур хөдлөхгүй',
+      svc.__exam.reportViewCount, 0);
+  }
+
+  {
+    const svc: any = makeService({
+      freeViews: 5, pdfPaid: true, price: 5000, viewCount: 0, viewedAt: null,
+    });
+    const st = await svc.resolve('12345');
+    await svc.registerView('12345', st);
+    check('E3 pdfPaid=true горимд ч тоолохгүй', svc.__exam.reportViewCount, 0);
+  }
+
+  {
     const svc: any = makeService({
       freeViews: 1, pdfPaid: false, price: 5000, viewCount: 0, viewedAt: null,
     });
     const st = await svc.resolve('12345', { role: 40, id: 1 });
     await svc.registerView('12345', st);
-    check('E8 админ дээр тоолуур хөдлөхгүй', svc.__exam.reportViewCount, 0);
+    check('E4 админ дээр тоолуур хөдлөхгүй', svc.__exam.reportViewCount, 0);
   }
+
 
   // --- Сценар F: QPay callback ба polling ---
   // Callback нь public тул URL / query-д итгэхгүй: төлбөрийг ЗӨВХӨН мөрийн
@@ -577,8 +544,10 @@ const check = (name: string, actual: any, expected: any) => {
       { name: 'tester', user: { role: 50, id: 2 }, ownerRole: 30, servicePrice: 20000, serviceStatus: OK },
       { name: 'super_admin', user: { role: 10, id: 3 }, ownerRole: 30, servicePrice: 20000, serviceStatus: OK },
     ];
-    // Хүлээгдэх: [paywall, canView, canDownload] — (price 0) | (price>0, pdfPaid=false, freeViews=0) | (price>0, pdfPaid=true)
-    const payer: [boolean, boolean, boolean][] = [[false, true, true], [false, true, true], [true, true, false]];
+    // Хүлээгдэх: [paywall, canView, canDownload] — (price 0) | (price>0, pdfPaid=false) | (price>0, pdfPaid=true)
+    // 2026-09-22 хялбарчлалын дараа сүүлийн хоёр багана ХАРИЛЦАН АДИЛ (pdfPaid
+    // ямар ч байсан, price>0 бол non-exempt-д шууд төлбөртэй, free-view байхгүй).
+    const payer: [boolean, boolean, boolean][] = [[false, true, true], [true, true, false], [true, true, false]];
     const free: [boolean, boolean, boolean][] = [[false, true, true], [false, true, true], [false, true, true]];
     const expectedByWho = [payer, payer, free /* test-purchased */, payer, free, free, free, free];
     const configs = [
