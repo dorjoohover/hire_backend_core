@@ -35,6 +35,8 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
 import * as QRCode from 'qrcode';
 import { generateQrWithLogo } from 'src/utils/qr.util';
+import { nextCategoryStart, pickResumeIndex } from './exam-resume';
+import { effectiveShowResult } from '../user.service/show-result';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -149,7 +151,8 @@ export class ExamService extends BaseService {
         ? {
             id: res.assessment.id,
             name: res.assessment.name,
-            showResultOnComplete: res.assessment.showResultOnComplete,
+            // №6: service (QR) бүрийн тохиргоо assessment-ийн default-оос давуу.
+            showResultOnComplete: effectiveShowResult(res.service, res.assessment),
           }
         : null,
       token,
@@ -368,32 +371,35 @@ export class ExamService extends BaseService {
       allCategories = categories.map((cate) => cate.id);
       console.log('📌 allCategories:', allCategories);
 
-      let currentCategory = category ?? allCategories[0];
+      // Бөглөгдсөн хэсгүүд (нэг query) — resume-д ч, хариултын allCategories-д ч хэрэглэнэ.
+      console.time('⏱ check userAnswer by categories');
+      const answeredSet = new Set(
+        await this.userAnswer.findAnsweredCategoryIds(res.code),
+      );
+      console.timeEnd('⏱ check userAnswer by categories');
+
+      // №3: category заагаагүй (нээх / reload / дундаас орох) үед ХАРИУЛААГҮЙ ЭХНИЙ хэсгээс үргэлжилнэ.
+      // Өмнө нь `con` салбар индексийг тооцоод ашигладаггүй (dead code) → үргэлж 1-р хэсгээс эхэлдэг байв.
+      // (`con` нь URL param-аас "true"/"false" string ирдэг тул үнэн хэрэгтээ үргэлж truthy байсан;
+      // одоо `category === undefined`-ээр тодорхойлно, `con` нь зөвхөн хуучин клиентэд зориулсан.)
+      let currentCategory: number | undefined;
+      if (category !== undefined) {
+        currentCategory = category;
+      } else {
+        currentCategory = allCategories[pickResumeIndex(allCategories, answeredSet)];
+      }
       categoryIndex = allCategories.indexOf(currentCategory);
       allCategories =
         categoryIndex !== -1
           ? allCategories.slice(categoryIndex)
           : allCategories;
 
-      if (con) {
-        console.time('⏱ check userAnswer by categories');
-        // Өмнө нь category тус бүрд тусдаа query явуулдаг байсныг (N round-trip)
-        // ганц query-ээр бөглөгдсөн category-уудыг татаж орлуулав.
-        const answeredCategoryIds = new Set(
-          await this.userAnswer.findAnsweredCategoryIds(res.code),
-        );
-        for (let i = 0; i < categoriesByAssessment.length; i++) {
-          if (!answeredCategoryIds.has(categoriesByAssessment[i].id)) {
-            categoryIndex = i;
-            break;
-          }
-        }
-        console.timeEnd('⏱ check userAnswer by categories');
-      }
+      const now = new Date();
+      let userStart: Date = res.userStartDate;
 
       if (res.userStartDate == null && category === undefined) {
-        currentCategory = categories[0].id;
-        const date = new Date();
+        const date = now;
+        userStart = date;
 
         console.time('⏱ dao.update (userStartDate)');
         await this.dao.update(res.id, {
@@ -473,6 +479,22 @@ export class ExamService extends BaseService {
         );
         console.timeEnd('⏱ createDetail');
 
+        // №3: хэсгийн хугацааны серверийн эхлэл. Хэрэглэгч хэсэг рүү ШИЛЖСЭН (category заасан) бол шинэ;
+        // reload / дундаас орсон (category === undefined) бол ижил хэсэгт хуучин цаг хэвээр.
+        const catStart = nextCategoryStart(
+          res,
+          result.category.id,
+          category !== undefined,
+          now,
+        );
+        if (catStart.changed) {
+          await this.dao.setCategoryStart(
+            res.id,
+            result.category.id,
+            catStart.startedAt,
+          );
+        }
+
         console.log(
           `🎯 updateByCode нийт хугацаа: ${(
             performance.now() - startAll
@@ -481,9 +503,6 @@ export class ExamService extends BaseService {
 
         // Бүх хэсгийн жагсаалт болон бөглөгдсөн төлөв (D#4 буцаж очих UI-д
         // хэрэгтэй). categories: дараа үлдсэн id-уудыг хадгална (хуучин үйлдэл).
-        const answeredSet = new Set(
-          await this.userAnswer.findAnsweredCategoryIds(res.code),
-        );
         const allCategoriesDetailed = categoriesByAssessment.map((c) => ({
           id: c.id,
           name: c.name,
@@ -497,9 +516,18 @@ export class ExamService extends BaseService {
           categories: allCategories.slice(1),
           allCategories: allCategoriesDetailed,
           rules: (result as any).rules ?? [],
-          assessment: res.assessment,
+          // №6: `showResultOnComplete`-ыг service-ийн тохиргоогоор (эсвэл assessment default) тодорхойлно.
+          assessment: {
+            ...res.assessment,
+            showResultOnComplete: effectiveShowResult(res.service, res.assessment),
+          },
           visible: res.visible,
           token,
+          // №3: цагийг СЕРВЕРЭЭС — клиент өөрийн цагийн зөрүүг (serverNow − Date.now()) тооцож үлдсэн
+          // хугацааг бодно. `examStartedAt` = нийт (assessment) timer-ийн эхлэл, `categoryStartedAt` = хэсгийн.
+          serverNow: now.toISOString(),
+          examStartedAt: (userStart ?? now).toISOString(),
+          categoryStartedAt: catStart.startedAt.toISOString(),
         };
       }
     } catch (error) {
@@ -516,17 +544,15 @@ export class ExamService extends BaseService {
     category: QuestionCategoryEntity,
     service: number,
   ) => {
-    return Promise.all(
-      questions.map(async (question) => {
-        await this.detailDao.create({
-          exam: exam,
-          pageNumber: 0,
-          question: question.question.id,
-          questionCategory: category.id,
-          questionCategoryName: category.name,
-          service: service,
-        });
-      }),
+    // №3: нэг INSERT, байгааг алгасна (нээлт бүрд давхардахгүй).
+    return this.detailDao.createManyIfAbsent(
+      questions.map((question) => ({
+        exam: exam,
+        question: question.question.id,
+        questionCategory: category.id,
+        questionCategoryName: category.name,
+        service: service,
+      })),
     );
   };
   public async getQuestions(
@@ -543,6 +569,8 @@ export class ExamService extends BaseService {
       id,
       answerShuffle,
       questions,
+      // №3: exam code-оор тогтвортой shuffle — reload-д асуулт / хариултын дараалал өөрчлөгдөхгүй.
+      code ? String(code) : undefined,
     );
 
     // Нөхцөлт алгасах (branching) дүрмийг хэрэглэнэ.

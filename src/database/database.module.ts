@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PERF_BOOTSTRAP_STATEMENTS } from './sql/perf-bootstrap';
+import { assertSafeModeTargets } from '../utils/safe-mode';
 
 // Runs idempotent performance bootstrap statements (materialized view +
 // indexes). Each statement is executed separately so one failure
@@ -31,6 +32,9 @@ async function runPerfBootstrap(dataSource: DataSource) {
       provide: DataSource,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
+        // SAFE_MODE-д local биш DB-д холбогдохоос татгалзана (main.ts-ээс өөр
+        // орцоор эхэлсэн ч).
+        assertSafeModeTargets();
         try {
           const dataSource = new DataSource({
             type: 'postgres',

@@ -56,6 +56,16 @@ export class ExamEntity {
   @Column({ nullable: true })
   userStartDate: Date;
 
+  /**
+   * №3: тухайн хэсгийн (category) хугацаа серверт хэзээ эхэлсэн. Reload / дундаас орох үед хэсгийн
+   * timer дахин бүтнээрээ эхлэхгүй. `categoryStartedFor` = аль хэсгийн цаг вэ.
+   */
+  @Column({ nullable: true, type: 'timestamptz' })
+  categoryStartedAt: Date;
+
+  @Column({ nullable: true, type: 'int' })
+  categoryStartedFor: number;
+
   @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
     onDelete: 'CASCADE',
   })

@@ -18,6 +18,7 @@ import { ReportService } from 'src/app/report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { REPORT_VIEW_GRACE_MINUTES } from 'src/base/constants';
+import { decidePublicReuse, PUBLIC_OPEN_REUSE_DAYS } from '../exam-resume';
 
 @Injectable()
 export class ExamDao {
@@ -123,6 +124,20 @@ export class ExamDao {
   endExam = async (code: string) => {
     const res = await this.db.findOne({ where: { code } });
     await this.db.save({ ...res, userEndDate: new Date() });
+  };
+
+  /**
+   * Тестийг ДУУСГАХЫГ атомар "эзэмшинэ": `userEndDate`-ийг зөвхөн хоосон байхад
+   * л тавина. `true` буцаасан ганц дуудлага л тайлан үүсгэнэ → давтан /
+   * зэрэг дуудлага (refresh, double click, retry) давхар `report_logs` үүсгэхгүй.
+   * (endExam нь тусдаа: exam олдохгүй үед хоосон мөр үүсгэж, огноог дарж бичдэг.)
+   */
+  claimEnd = async (code: string): Promise<boolean> => {
+    const result = await this.db.update(
+      { code, userEndDate: IsNull() },
+      { userEndDate: new Date() },
+    );
+    return (result.affected ?? 0) > 0;
   };
 
   findAll = async (assessmendId: number, email: string) => {
@@ -583,19 +598,33 @@ export class ExamDao {
   // service (QR)-д ижил email/phone-тэй сүүлийн N цагийн дотор үүссэн
   // exam байгаа эсэхийг шалгана. Байвал шинээр үүсгэхгүй, тэрийг нь
   // буцааж үргэлжлүүлүүлнэ.
+  //
+  // №3: дүрэм — дуусаагүй exam 7 хоног хүртэл үргэлжилнэ, дууссан нь 24 цаг (давхар квот зарцуулахгүй).
+  // Шийдвэр `decidePublicReuse` (цэвэр функц)-д; энд зөвхөн нэр дэвшигчдийг татна.
   findByServiceAndContact = async (
     serviceId: number,
     email: string | null,
     phone: string | null,
-    withinHours = 24,
+    now: Date = new Date(),
+  ): Promise<{ code: string; finished: boolean } | null> => {
+    const rows = await this.findReuseCandidates(serviceId, email, phone);
+    return decidePublicReuse(rows, now);
+  };
+
+  findReuseCandidates = async (
+    serviceId: number,
+    email: string | null,
+    phone: string | null,
+    withinDays = PUBLIC_OPEN_REUSE_DAYS,
   ) => {
-    if (!email && !phone) return null;
+    if (!email && !phone) return [];
 
     const qb = this.db
       .createQueryBuilder('exam')
+      .select(['exam.id', 'exam.code', 'exam.createdAt', 'exam.userEndDate'])
       .where('exam."serviceId" = :serviceId', { serviceId })
-      .andWhere(`exam."createdAt" >= NOW() - (:hours || ' hours')::interval`, {
-        hours: withinHours,
+      .andWhere(`exam."createdAt" >= NOW() - (:days || ' days')::interval`, {
+        days: withinDays,
       });
 
     if (email && phone) {
@@ -609,7 +638,15 @@ export class ExamDao {
       qb.andWhere('exam.phone = :phone', { phone });
     }
 
-    return await qb.orderBy('exam."createdAt"', 'DESC').getOne();
+    return await qb.orderBy('exam."createdAt"', 'DESC').limit(20).getMany();
+  };
+
+  /** №3: хэсгийн хугацааны серверийн эхлэлийг тэмдэглэнэ (updateByCode-ийн ЭЦСИЙН бичилт). */
+  setCategoryStart = async (id: number, categoryId: number, at: Date) => {
+    await this.db.query(
+      `UPDATE exam SET "categoryStartedAt" = $1, "categoryStartedFor" = $2 WHERE id = $3`,
+      [at, categoryId, id],
+    );
   };
 
   findByCode = async (code: string | number) => {

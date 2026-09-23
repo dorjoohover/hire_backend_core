@@ -28,7 +28,7 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { createReadStream, createWriteStream, existsSync, mkdirSync } from 'fs';
 import type { Response as ExpressRes, Response } from 'express';
 import { UserEntity } from '../user/entities/user.entity';
-import { Roles } from 'src/auth/guards/role/role.decorator';
+import { ADMINS, Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { PassThrough } from 'stream';
@@ -180,17 +180,28 @@ export class ExamController {
     }
   }
 
-  @Public()
+  // 0.3(b): урьд нь @Public() байсан — хэн ч дурын кодын үр дүнг устгаж дахин
+  // бодуулах/PDF татах боломжтой байв. Одоо зөвхөн админ (Bearer token).
+  @ADMINS()
   @Get('/recalculate/:code')
   async recalculate(@Param('code') code: string) {
+    // №14: DEPRECATED — POST /ops/report/:code/recalculate (аудит + давхар job хамгаалалттай).
+    console.warn(
+      `⚠️ DEPRECATED GET /exam/recalculate/${code} → POST /ops/report/${code}/recalculate ашиглана уу`,
+    );
     await this.examService.deleteResult(code);
     const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
     return result.data;
   }
 
-  @Public()
+  @ADMINS()
   @Get('/regenerate/:code')
   async regenerate(@Param('code') code: string, @Res() res: Response) {
+    // №14: DEPRECATED — POST /ops/report/:code/regenerate.
+    console.warn(
+      `⚠️ DEPRECATED GET /exam/regenerate/${code} → POST /ops/report/${code}/regenerate ашиглана уу`,
+    );
+    res.setHeader('Deprecation', 'true');
     const url = `${process.env.REPORT}test/${code}`;
     const response = await axios.get(url, {
       responseType: 'stream',
@@ -281,19 +292,15 @@ export class ExamController {
           `canDownload=${access.canDownload} role=${user?.role ?? '-'}`,
       );
 
-      if (!access.canView) {
-        return { locked: true, access };
-      }
-
+      // №6: үр дүн ХЭЗЭЭ Ч түгжигдэхгүй (`access.canView` үргэлж true). Төлбөр зөвхөн дэлгэрэнгүй тайлан (PDF).
       const examInfo = await this.examService.getExamInfoByCode(code, user);
 
       if (!examInfo) {
         throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
       }
 
-      // Амжилттай харуулсны дараа л үнэгүй харалтыг тоолно.
-      await this.reportAccess.registerView(code, access);
-
+      // №6: харалтыг ЗӨВХӨН PDF endpoint тоолно — үнэгүй үр дүн харах нь (хуучин N-удаагийн горимын)
+      // үнэгүй PDF эрхийг зарцуулахгүй.
       return { ...examInfo, locked: false, access };
     } catch (error: unknown) {
       const errorMessage =

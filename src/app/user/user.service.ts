@@ -11,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { CLIENT, ORGANIZATION } from 'src/base/constants';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { EmailService } from '../email/email.service';
+import { verifyEmailToken } from 'src/utils/email-token';
 export const saltOrRounds = 1;
 
 @Injectable()
@@ -29,6 +30,23 @@ export class UserService {
   public async verifyMail(email: string) {
     const res = await this.dao.verify(email, true, email);
     return res;
+  }
+
+  /**
+   * Мэйлээр очсон гарын үсэгтэй token-оор и-мэйлийг баталгаажуулна. Хүчингүй /
+   * хугацаа дууссан бол 400 (хэрэглэгч нэвтрэх оролдлого хийвэл `AuthService.login`
+   * шинэ баталгаажуулах мэйлийг автоматаар дахин илгээнэ).
+   */
+  public async confirmEmail(token: string) {
+    const email = verifyEmailToken(token);
+    if (!email) {
+      throw new HttpException(
+        'Баталгаажуулах холбоос хүчингүй эсвэл хугацаа дууссан байна.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    await this.dao.verify(email, true, email);
+    return { email };
   }
   public async addUser(dto: CreateUserDto) {
     let user = await this.dao.getByEmail(

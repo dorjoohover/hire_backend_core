@@ -443,12 +443,15 @@ export class QuestionService {
     category: number,
     answerShuffle: boolean,
     prevQuestions: number[],
+    /** №3: exam code гэх мэт — өгвөл асуулт / хариултын shuffle тогтвортой (reload-д өөрчлөгдөхгүй). */
+    seed?: string,
   ) {
     const questions = await this.questionDao.findByCategory(
       limit,
       shuffle,
       category,
       prevQuestions,
+      seed ? `${seed}:c${category}` : undefined,
     );
     // Single batched query (mv_question_answer_full) instead of one
     // join-heavy query per question.
@@ -456,6 +459,7 @@ export class QuestionService {
       questions.map((q) => q.id),
       answerShuffle,
       false,
+      seed ? `${seed}:c${category}` : undefined,
     );
     return questions.map((question) => ({
       question: question,

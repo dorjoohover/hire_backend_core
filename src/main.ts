@@ -14,7 +14,11 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { LoggingInterceptor } from './base/logging.intercepter';
 import { FileErrorLogService } from './base/error-log.service';
 import { json, urlencoded } from 'express';
+import { enforceSafeModeOrExit } from './utils/safe-mode';
 async function bootstrap() {
+  // SAFE_MODE=1 бөгөөд DB / Redis / REPORT local биш бол ЭНД зогсоно (Nest-ийн
+  // модулиуд Redis-д холбогдохоос өмнө).
+  enforceSafeModeOrExit();
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });

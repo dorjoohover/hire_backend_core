@@ -226,4 +226,102 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
 
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_report_access_invoice
   ON report_access ("invoiceId") WHERE "invoiceId" IS NOT NULL`,
+
+  // ===========================================================================
+  // 0.3(d) userService төлбөрийг QPay нэхэмжлэхтэй холбох.
+  //   Өмнө нь callback / checkPayment нь ирсэн ямар ч төлөгдсөн payment-аар
+  //   дурын userService-ийг SUCCESS болгодог байв. Одоо нэхэмжлэх үүсгэхэд
+  //   invoice_id-г мөрөнд хадгалж, төлбөрийг зөвхөн тэр invoice-аар шалгана.
+  //   Нэг invoice нэг л userService-д хамаарна (partial UNIQUE).
+  // ===========================================================================
+  `ALTER TABLE "userService"
+   ADD COLUMN IF NOT EXISTS "qpayInvoiceId" VARCHAR`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_user_service_qpay_invoice
+  ON "userService" ("qpayInvoiceId") WHERE "qpayInvoiceId" IS NOT NULL`,
+
+  // ===========================================================================
+  // §2(5) Нөхцөлт алгасах (branching) дүрмийн хүснэгт. `synchronize: false` тул
+  //   энэ хүснэгт repo-д DDL-гүй байсан: шинэ / хоосон DB-д `questionRule` байхгүй
+  //   бол шалгалт бүрийн `getQuestions` (findByTargetQuestionIds) унаж, тест
+  //   эхлэхгүй байв. Prod-д аль хэдийн бий (үүсгэхгүй, IF NOT EXISTS).
+  //   Багана нь entity (question.rule.entity.ts) / 2026-06-17 prod схемтэй ижил.
+  // ===========================================================================
+  `CREATE TABLE IF NOT EXISTS "questionRule" (
+    id SERIAL PRIMARY KEY,
+    "targetQuestionId" INTEGER NOT NULL,
+    "dependsOnQuestionId" INTEGER NOT NULL,
+    "dependsOnAnswerId" INTEGER,
+    action VARCHAR NOT NULL DEFAULT 'skip',
+    active BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT now()
+  )`,
+
+  // ===========================================================================
+  // №14 ops үйлдлийн аудит (recalculate / regenerate / retry / PDF солих):
+  //   хэн, хэзээ, ямар код дээр, ямар үр дүнтэй. GET /ops/log-оор уншина.
+  // ===========================================================================
+  `CREATE TABLE IF NOT EXISTS ops_action_log (
+    id SERIAL PRIMARY KEY,
+    "actorId" INTEGER,
+    "actorEmail" VARCHAR,
+    action VARCHAR NOT NULL,
+    code VARCHAR,
+    status VARCHAR NOT NULL DEFAULT 'ok',
+    detail TEXT,
+    ip VARCHAR,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT now()
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_ops_action_log_code
+  ON ops_action_log ("code", "createdAt" DESC)`,
+
+  `CREATE INDEX IF NOT EXISTS idx_ops_action_log_actor
+  ON ops_action_log ("actorId", "createdAt" DESC)`,
+
+  // ===========================================================================
+  // №13-A хэмжилт / тайлангийн замд дутсан индексүүд.
+  //   • report_logs(code, createdAt): `getOne` (`WHERE id = $1 OR code = $1`),
+  //     hire_report `getLatestByCode`, ops `latestLog` — өмнө нь `code`-д индекс
+  //     байхгүй тул status polling бүр хүснэгт бүтнээр нь уншиж байв.
+  //   • report_logs(status, updatedAt): гацсан тайлан хайх (`find-stuck-reports.sh`,
+  //     Monitor).
+  //   • exam(userEndDate): admin жагсаалтын огнооны шүүлт / эрэмбэ, Monitor.
+  //   • error_logs(timestamp): Monitor-ын "сүүлийн N цагийн алдаа".
+  //   Том хүснэгт (exam / error_logs хэдэн зуун мянган мөр давсан) дээр boot-д
+  //   бүтээх нь бичилтийг түр түгжинэ — тэр үед deploy-оос ӨМНӨ гараар
+  //   `CREATE INDEX CONCURRENTLY IF NOT EXISTS …` (docs/runbook A5) хийвэл boot-ын
+  //   statement no-op болно.
+  // ===========================================================================
+  `CREATE INDEX IF NOT EXISTS idx_report_logs_code_created
+  ON report_logs ("code", "createdAt" DESC)`,
+
+  `CREATE INDEX IF NOT EXISTS idx_report_logs_status_updated
+  ON report_logs ("status", "updatedAt")`,
+
+  `CREATE INDEX IF NOT EXISTS idx_exam_userenddate
+  ON "exam" ("userEndDate")`,
+
+  `CREATE INDEX IF NOT EXISTS idx_error_logs_timestamp
+  ON error_logs ("timestamp")`,
+
+  // Monitor funnel (`exam."createdAt" >= now() - range`) ба admin жагсаалтын эрэмбэ.
+  `CREATE INDEX IF NOT EXISTS idx_exam_createdat
+  ON "exam" ("createdAt")`,
+
+  // №3: хэсгийн хугацааны серверийн эхлэл (дундаас үргэлжлүүлэхэд timer дахин эхлэхгүй).
+  // Nullable, default-гүй → PG-д хүснэгт дахин бичихгүй, агшин зуур.
+  `ALTER TABLE exam
+   ADD COLUMN IF NOT EXISTS "categoryStartedAt" TIMESTAMPTZ`,
+
+  `ALTER TABLE exam
+   ADD COLUMN IF NOT EXISTS "categoryStartedFor" INTEGER`,
+
+  // №6: "дууссаны дараа үр дүн харуулах"-ыг service (QR) бүрд хадгална (null = assessment-ийн default).
+  `ALTER TABLE "userService"
+   ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
+
+  // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
+  // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар
+  // (`CREATE UNIQUE INDEX CONCURRENTLY`): ops/shared/examdetail-unique.sql.
 ];

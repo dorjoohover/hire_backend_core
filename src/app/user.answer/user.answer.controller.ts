@@ -9,14 +9,18 @@ import {
   Ip,
   Request,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 import { UserAnswerService } from './user.answer.service';
 import {
   CreateUserAnswerDto,
+  FinishExamDto,
   UserAnswerDtoList,
 } from './dto/create-user.answer.dto';
 import { UpdateUserAnswerDto } from './dto/update-user.answer.dto';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
+import { SUPER } from 'src/auth/guards/role/role.decorator';
+import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
 import { ApiParam } from '@nestjs/swagger';
 
 @Controller('userAnswer')
@@ -42,8 +46,18 @@ export class UserAnswerController {
     }
   }
 
+  // Тестийг албан ёсоор дуусгана (сүлжээгээр давтагдсан ч идемпотент). Web `publish()` /
+  // auto-advance нь сүүлийн хэсэгт илгээх хариулт 0 үед (бүх асуулт skip) дууддаг.
+  // `create` шиг нэвтэрсэн (шалгалтын token-той) хэрэглэгчид.
+  @Post('finish')
+  finish(@Body() dto: FinishExamDto) {
+    return this.userAnswerService.finish(dto.code);
+  }
+
+  // 0.3(b): урьд нь @Public() — userAnswer хүснэгтийг (ip, device, exam code)
+  // бүтнээр нь хэн ч татах боломжтой байв. Одоо зөвхөн SUPER_ADMIN.
   @Get()
-  @Public()
+  @SUPER()
   findAll() {
     return this.userAnswerService.findAll();
   }
@@ -58,6 +72,7 @@ export class UserAnswerController {
   // exam + assessment + result (parent + children) + answers (category-аар).
   // Жишээ: GET /userAnswer/report/65042157713945110/full
   @Public()
+  @UseGuards(AiAgentGuard)
   @Get('report/:code/full')
   @ApiParam({ name: 'code' })
   getReportPdfData(@Param('code') code: string) {
@@ -67,6 +82,7 @@ export class UserAnswerController {
   // Тухайн тестийн бүх хариултыг category-аар бүлэглэн буцаах.
   // Жишээ: GET /userAnswer/report/65042157713945110
   @Public()
+  @UseGuards(AiAgentGuard)
   @Get('report/:code')
   @ApiParam({ name: 'code' })
   getReportAnswers(@Param('code') code: string) {
@@ -76,6 +92,7 @@ export class UserAnswerController {
   // Нэг category-ийн хариултуудыг буцаах (studio: {category:id} placeholder).
   // Жишээ: GET /userAnswer/report/65042157713945110/category/42
   @Public()
+  @UseGuards(AiAgentGuard)
   @Get('report/:code/category/:categoryId')
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'categoryId' })
@@ -89,6 +106,7 @@ export class UserAnswerController {
   // Нэг асуултын хариулт(ууд)-ыг буцаах (studio: {question:id} placeholder).
   // Жишээ: GET /userAnswer/report/65042157713945110/question/1879
   @Public()
+  @UseGuards(AiAgentGuard)
   @Get('report/:code/question/:questionId')
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'questionId' })
@@ -100,6 +118,7 @@ export class UserAnswerController {
   }
 
   @Public()
+  @UseGuards(AiAgentGuard)
   @Get('code/code/:code')
   @ApiParam({ name: 'code' })
   findByCode(@Param('code') code: string) {

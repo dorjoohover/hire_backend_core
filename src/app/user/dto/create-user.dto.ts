@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateOtp {
   @ApiProperty()
@@ -117,4 +117,13 @@ export const OrganizationExampleDto = {
 export class EmailSend {
   @ApiProperty()
   email: string;
+}
+
+/** И-мэйл баталгаажуулах холбоосны token (`/auth/confirm?token=…`). */
+export class ConfirmEmailDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2048)
+  token: string;
 }

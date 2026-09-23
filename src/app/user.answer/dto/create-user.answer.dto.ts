@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 class UserAnswer {
   @ApiProperty()
@@ -44,6 +45,13 @@ export class UserAnswerDtoList {
   startDate: Date;
   @ApiProperty()
   end: boolean;
+}
+export class FinishExamDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(64)
+  code: string;
 }
 export class CalculateUserAnswerDto {
   question: number;

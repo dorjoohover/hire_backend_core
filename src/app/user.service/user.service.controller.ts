@@ -126,6 +126,7 @@ export class UserServiceController {
       code,
       +user['id'],
       user['email'],
+      +user['role'],
     );
   }
 
@@ -184,8 +185,53 @@ export class UserServiceController {
   @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
   @Get(':id/public-qr')
   @ApiParam({ name: 'id' })
-  getPublicQr(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.generatePublicQr(+id, +user['id']);
+  getPublicQr(
+    @Param('id') id: string,
+    @Request() { user },
+    @Query('expires') expires?: string,
+  ) {
+    return this.userServiceService.generatePublicQr(
+      +id,
+      { id: +user['id'], role: +user['role'] },
+      expires,
+    );
+  }
+
+  /**
+   * №6: service бүрийн "дууссаны дараа үр дүн харуулах" тохиргоо (assessment-ийг глобалаар өөрчлөхгүй).
+   * Body: { showResult: boolean | null } — null = assessment-ийн default.
+   */
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Patch(':id/show-result')
+  @ApiParam({ name: 'id' })
+  setShowResult(
+    @Param('id') id: string,
+    @Body() body: { showResult?: boolean | null },
+    @Request() { user },
+  ) {
+    return this.userServiceService.setShowResult(
+      +id,
+      body?.showResult === undefined ? undefined : body.showResult,
+      { id: +user['id'], role: +user['role'] },
+    );
+  }
+
+  /**
+   * №8: "Эрх нэмэх". Байгууллага (эзэмшигч) — wallet-аас атомар хасна; admin / super_admin — үнэгүй (гараар, аудиттай).
+   * Body: { count: number }.
+   */
+  @Roles(Role.organization, Role.admin, Role.super_admin)
+  @Post(':id/topup')
+  @ApiParam({ name: 'id' })
+  topUp(
+    @Param('id') id: string,
+    @Body() body: { count?: number },
+    @Request() { user },
+  ) {
+    return this.userServiceService.topUp(+id, body?.count, {
+      id: +user['id'],
+      role: +user['role'],
+    });
   }
 
   /**
@@ -194,8 +240,12 @@ export class UserServiceController {
   @Public()
   @Get(':id/public-info')
   @ApiParam({ name: 'id' })
-  getPublicInfo(@Param('id') id: string) {
-    return this.userServiceService.getPublicServiceInfo(+id);
+  getPublicInfo(
+    @Param('id') id: string,
+    @Query('expires') expires?: string,
+    @Query('sig') sig?: string,
+  ) {
+    return this.userServiceService.getPublicServiceInfo(+id, { expires, sig });
   }
 
   /**
@@ -207,8 +257,21 @@ export class UserServiceController {
   @ApiParam({ name: 'id' })
   publicRegister(
     @Param('id') id: string,
-    @Body() dto: { firstname: string; lastname: string; email?: string; phone?: string },
+    @Body()
+    dto: {
+      firstname: string;
+      lastname: string;
+      email?: string;
+      phone?: string;
+      // №8: хугацаатай QR-ийн гарын үсэгтэй параметрүүд (URL-аас дамжина)
+      expires?: string | number;
+      sig?: string;
+    },
   ) {
-    return this.userServiceService.createPublicExam(+id, dto);
+    const { expires, sig, ...person } = dto ?? ({} as any);
+    return this.userServiceService.createPublicExam(+id, person, {
+      expires,
+      sig,
+    });
   }
 }

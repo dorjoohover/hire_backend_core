@@ -4,13 +4,54 @@ on:
   push:
     branches:
       - feature/v1.2.0
+  pull_request:
 
 permissions:
   contents: read
   packages: write   # ⭐ ЭНЭ ЧУХАЛ
 
 jobs:
+  # №9-L0/L2: улаан тест image-ийг гаргахгүй (`docker` job нь `needs`-тэй).
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # tsc --noEmit + script-style тестүүд (DB / HTTP-гүй)
+      - run: npm run test:ci
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hire_test
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hire_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:55432/hire_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node test/run-tests.js int
+
   docker:
+    needs: [test, integration]
+    # PR дээр image push хийхгүй (зөвхөн тест)
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:

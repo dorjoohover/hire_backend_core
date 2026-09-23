@@ -18,6 +18,8 @@ import * as mime from 'mime-types';
 import { PassThrough } from 'stream';
 import { Response } from 'express';
 import axios from 'axios';
+import { resolveInside } from './utils/safe-path';
+import { isSafeMode, safeLog } from './utils/safe-mode';
 
 @Injectable()
 export class FileService {
@@ -52,6 +54,10 @@ export class FileService {
   //   });
   // }
   async massRenameWithReportPrefix() {
+    if (isSafeMode()) {
+      safeLog('S3 massRename алгасав');
+      return { success: false, message: 'SAFE_MODE: S3 өөрчлөлт хийгдээгүй' };
+    }
     let continuationToken: string | undefined;
 
     do {
@@ -153,6 +159,10 @@ export class FileService {
   }
 
   async dryRunRenameWithReportPrefix() {
+    if (isSafeMode()) {
+      safeLog('S3 dryRun алгасав');
+      return { success: false, message: 'SAFE_MODE: S3 уншилт хийгдээгүй' };
+    }
     let continuationToken: string | undefined;
     console.log('start');
     do {
@@ -203,12 +213,16 @@ export class FileService {
     // upload хийсэн зураг "олдсонгүй" (404) болж харагдах шалтгаан нь энэ байсан.
     try {
       mkdirSync(this.localPath, { recursive: true });
-      const localFilePath = join(this.localPath, key);
+      const localFilePath = resolveInside(this.localPath, key);
       writeFileSync(localFilePath, body);
     } catch (error) {
       console.log('local write failed', error);
     }
 
+    if (isSafeMode()) {
+      safeLog('S3 upload алгасав (local uploads/-д л хадгалсан)', key);
+      return `${key}`;
+    }
     try {
       await this.s3
         .upload({
@@ -263,7 +277,7 @@ export class FileService {
   }
   async getFileBuf(filename: string): Promise<{ path: string; size: number }> {
     mkdirSync(this.localPath, { recursive: true });
-    const filePath = join(this.localPath, filename);
+    const filePath = resolveInside(this.localPath, filename);
 
     if (!existsSync(filePath)) {
       throw new NotFoundException('File not found');
@@ -273,7 +287,7 @@ export class FileService {
   }
   async getFile(filename: string): Promise<StreamableFile> {
     try {
-      const filePath = join(this.localPath, filename);
+      const filePath = resolveInside(this.localPath, filename);
       if (!existsSync(filePath)) {
         throw new NotFoundException('not found ');
       }
@@ -291,6 +305,7 @@ export class FileService {
     }
   }
   private async downloadFromS3(key: string): Promise<Buffer | null> {
+    if (isSafeMode()) return null;
     try {
       // Upload дээрээ "report/<filename>" болгож хадгалсан бол энд тааруулна
       const finalKey = `${key}`;

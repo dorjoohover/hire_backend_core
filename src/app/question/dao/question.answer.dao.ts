@@ -4,6 +4,7 @@ import { CreateQuestionAnswerDto } from '../dto/create-question.answer.dto';
 import { QuestionAnswerEntity } from '../entities/question.answer.entity';
 import { QuestionType } from 'src/base/constants';
 import { QuestionAnswerViewService } from '../question-answer-view.service';
+import { stableShuffle } from '../../exam/exam-resume';
 
 @Injectable()
 export class QuestionAnswerDao {
@@ -143,6 +144,8 @@ export class QuestionAnswerDao {
     questionIds: number[],
     shuffle: boolean,
     admin: boolean,
+    /** №3: өгвөл хариултын (мөн matrix-ын) shuffle seed-тэй тогтвортой. */
+    seed?: string,
   ): Promise<Map<number, any[]>> => {
     const result = new Map<number, any[]>();
     if (!questionIds?.length) return result;
@@ -205,7 +208,11 @@ export class QuestionAnswerDao {
             (a: any, b: any) => a.orderNumber - b.orderNumber,
           );
           const matrixOut = shuffle
-            ? await this.shuffle(sortedMatrix)
+            ? await this.shuffleList(
+                sortedMatrix,
+                seed ? `${seed}:q${questionId}:a${r.id}` : undefined,
+                (m: any) => m.id,
+              )
             : sortedMatrix;
           out.push(
             admin
@@ -216,13 +223,24 @@ export class QuestionAnswerDao {
       } else {
         out = !shuffle
           ? list.sort((a, b) => a.orderNumber - b.orderNumber)
-          : await this.shuffle(list);
+          : await this.shuffleList(
+              list,
+              seed ? `${seed}:q${questionId}` : undefined,
+              (a: any) => a.id,
+            );
       }
       result.set(questionId, out);
     }
 
     return result;
   };
+
+  /** seed байвал тогтвортой, үгүй бол (хуучин) санамсаргүй. */
+  private shuffleList = async (
+    list: any[],
+    seed: string | undefined,
+    idOf: (x: any) => string | number,
+  ) => (seed ? stableShuffle(list, seed, idOf) : this.shuffle(list));
 
   shuffle = async (list: any[]) => {
     return await Promise.all(

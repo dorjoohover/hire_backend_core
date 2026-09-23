@@ -44,6 +44,38 @@ export class QuestionRuleDao {
     });
   };
 
+  findOne = async (id: number) => {
+    return await this.db.findOne({ where: { id } });
+  };
+
+  updateOne = async (id: number, patch: Partial<QuestionRuleEntity>) => {
+    await this.db.update(id, patch);
+  };
+
+  // Дүрмийн шалгалтад: асуулт бүрийн төрөл, блок (order), тест.
+  findQuestionMeta = async (ids: number[]) => {
+    if (!ids.length) return [];
+    return await this.db.query(
+      `SELECT q.id, q.type,
+              q."categoryId" AS "categoryId",
+              c."orderNumber" AS "categoryOrder",
+              c."assessmentId" AS "assessmentId"
+       FROM question q
+       LEFT JOIN "questionCategory" c ON c.id = q."categoryId"
+       WHERE q.id = ANY($1)`,
+      [ids],
+    );
+  };
+
+  // Хариулт аль асуултынх вэ (dependsOnAnswerId нь нөхцөл асуултынх эсэхийг шалгахад).
+  findAnswerQuestionId = async (answerId: number): Promise<number | null> => {
+    const rows = await this.db.query(
+      `SELECT "questionId" FROM "questionAnswer" WHERE id = $1`,
+      [answerId],
+    );
+    return rows.length ? Number(rows[0].questionId) : null;
+  };
+
   deleteOne = async (id: number) => {
     return await this.db.delete(id);
   };

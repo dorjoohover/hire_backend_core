@@ -367,6 +367,43 @@ export class UserAnswerService extends BaseService {
     }
   }
 
+  /**
+   * Тестийг албан ёсоор дуусгах (`POST /userAnswer/finish`).
+   *
+   * Яагаад хэрэгтэй вэ: сүүлийн хэсгийн бүх асуулт нөхцөлт алгасалтаар нуугдсан
+   * (эсвэл зөвхөн заавал биш асуулт байгаад хариулаагүй) үед илгээх хариулт 0 тул
+   * `create()` дуудагддаггүй (эсвэл 'Асуултууд ирсэнгүй' гэж алдаа өгдөг) → `end`
+   * хэзээ ч ирэхгүй, `userEndDate` хоосон, `report_logs` мөргүй, хэрэглэгч тайлангаа
+   * харахгүй байв (0.х №2 (1)).
+   *
+   * Идемпотент: `claimEnd` (UPDATE … WHERE userEndDate IS NULL) — зөвхөн анх
+   * дуусгасан дуудлага тайлан үүсгэнэ. Аль хэдийн дууссан (жишээ нь `create(end)`-ээр)
+   * бол ямар ч тайлан дахин үүсгэхгүй, зөвхөн `visible` буцаана.
+   */
+  public async finish(code: string) {
+    if (!code || typeof code !== 'string')
+      throw new HttpException(
+        'Тестийн код буруу байна',
+        HttpStatus.BAD_REQUEST,
+      );
+    const exam = await this.examDao.findByCodeOnly(code);
+    if (!exam)
+      throw new HttpException('Тест олдсонгүй', HttpStatus.BAD_REQUEST);
+
+    const claimed = await this.examDao.claimEnd(code);
+    if (claimed) {
+      // Тайлан үүсгэх хүсэлт удаан (сүлжээ, 3 удаа retry) тул арын дэвсгэрт;
+      // алдааг нь заавал барина (unhandled rejection болохгүй) — createReport нь
+      // бүх оролдлого унавал өөрөө `FAILED` мөр бичдэг.
+      this.report
+        .createReport({ code })
+        .catch((error) =>
+          console.error('❌ finish → createReport алдаа:', error?.message),
+        );
+    }
+    return { visible: exam.visible, finished: true, alreadyFinished: !claimed };
+  }
+
   public async createReport(code: string) {
     await this.examDao.endExam(code);
     await this.report.createReport({ code });
@@ -479,8 +516,16 @@ export class UserAnswerService extends BaseService {
       res.map((r) => {
         const key = r.answer?.id;
         return {
+          id: r.id,
           answer: key,
           matrix: r.matrix != null ? r.matrix.id : null,
+          // TEXT (type 60) асуултад answer/matrix FK байхгүй, `value`
+          // баганад бодит бичсэн текст хадгалагддаг (`buildAnswerPayload`-
+          // ийн `{ value }` салбартай тохирно). Өмнө нь энэ талбар огт
+          // буцаагдаагүй тул client `answered id`-г дараа нь `answer id`
+          // гэж буруу ойлгодог байсан — үргэлжлүүлэх/дахин орох/refresh
+          // хийхэд TEXT хариулт харагдахгүй байсны СЕРВЕР талын шалтгаан.
+          value: r.value,
           type: r.question.type,
           flag: r.flag,
           point: r.point,
@@ -496,7 +541,11 @@ export class UserAnswerService extends BaseService {
         acc[questionId] = {};
       }
 
-      const key = item.answer ?? item.matrix;
+      // answer/matrix хоёул байхгүй (жишээ нь TEXT) үед өмнө нь key
+      // undefined болж БҮХ өмнөх мөрийг (`acc[questionId] = {}`) арчдаг
+      // байсан. Мөрийн өөрийн `id`-г нөөц key болгож ашиглавал TEXT ч
+      // алдагдахгүй бичигдэнэ.
+      const key = item.answer ?? item.matrix ?? item.id;
       if (key == undefined) {
         acc[questionId] = {};
       } else {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   Between,
   DataSource,
@@ -9,6 +9,7 @@ import {
   Repository,
 } from 'typeorm';
 import { UserServiceEntity } from './entities/user.service.entity';
+import { UserEntity } from '../user/entities/user.entity';
 import { ExamEntity } from '../exam/entities/exam.entity';
 import { CreateUserServiceDto } from './dto/create-user.service.dto';
 import { AssessmentStatus, PaymentStatus } from 'src/base/constants';
@@ -69,12 +70,135 @@ export class UserServiceDao {
     await this.db.save(res);
     return res;
   };
+  /** Төлбөрийн шалгалтад хэрэгтэй хөнгөн ачаалалт (exams-гүй). */
+  findForPayment = async (id: number) => {
+    return await this.db.findOne({
+      where: { id },
+      relations: ['assessment', 'user'],
+    });
+  };
+
+  findByInvoice = async (qpayInvoiceId: string) => {
+    return await this.db.findOne({ where: { qpayInvoiceId } });
+  };
+
+  setInvoiceId = async (id: number, qpayInvoiceId: string) => {
+    await this.db.update(id, { qpayInvoiceId });
+  };
+
+  /**
+   * PENDING → SUCCESS-ийг НЭГ атомар UPDATE-ээр хийнэ. Зөвхөн үүнийг амжилттай
+   * хийсэн (affected = 1) ганц дуудлага л payment / transaction / e-barimt
+   * бүртгэнэ; callback + polling зэрэг ирвэл нөгөө нь null авна.
+   * `invoiceId` өгвөл (хуучин мөр) тэр invoice-г мөрөнд холбоно.
+   */
+  claimSuccess = async (id: number, invoiceId?: string) => {
+    const set: any = { status: PaymentStatus.SUCCESS };
+    if (invoiceId) set.qpayInvoiceId = invoiceId;
+    const res = await this.db
+      .createQueryBuilder()
+      .update(UserServiceEntity)
+      .set(set)
+      .where('id = :id AND status = :pending', {
+        id,
+        pending: PaymentStatus.PENDING,
+      })
+      .execute();
+    if (!res.affected) return null;
+    return await this.findForPayment(id);
+  };
+
+  /** Атомар (`SET col = col + n`) — өмнөх read-modify-write нь зэрэг хүсэлтэд тоог алддаг байсан. */
   updateCount = async (id: number, count: number, used: number) => {
-    console.log(id, count, used);
-    const res = await this.db.findOne({ where: { id: id } });
-    res.count += count;
-    res.usedUserCount += used;
-    await this.db.save(res);
+    await this.db
+      .createQueryBuilder()
+      .update(UserServiceEntity)
+      .set({
+        count: () => '"count" + :dc',
+        usedUserCount: () => '"usedUserCount" + :du',
+      })
+      .setParameters({ dc: Math.trunc(count), du: Math.trunc(used) })
+      .where('id = :id', { id })
+      .execute();
+  };
+
+  /**
+   * №8: эрх (суудал) АТОМАР захиалах. `enforce` үед `(count − usedUserCount) >= n` байвал л
+   * `usedUserCount += n` — зэрэг 50 бүртгэлээс яг үлдсэн тоо л амжилттай болно (шалгалт ба нэмэлт
+   * хоёр тусдаа алхам байсан үеийн race арилна). `enforce=false` (үнэгүй service-ийн public QR) үед
+   * хязгааргүй, зөвхөн тоолно. Амжилттай бол true.
+   */
+  reserveSeats = async (id: number, n: number, enforce: boolean): Promise<boolean> => {
+    const qb = this.db
+      .createQueryBuilder()
+      .update(UserServiceEntity)
+      .set({ usedUserCount: () => '"usedUserCount" + :n' })
+      .setParameter('n', n)
+      .where('id = :id', { id });
+    if (enforce) qb.andWhere('("count" - "usedUserCount") >= :n');
+    const r = await qb.execute();
+    return (r.affected ?? 0) > 0;
+  };
+
+  /** Захиалсан суудлыг буцаана (exam үүсгэх амжилтгүй болбол). 0-с доош орохгүй. */
+  releaseSeats = async (id: number, n: number) => {
+    await this.db
+      .createQueryBuilder()
+      .update(UserServiceEntity)
+      .set({ usedUserCount: () => 'GREATEST(0, "usedUserCount" - :n)' })
+      .setParameter('n', n)
+      .where('id = :id', { id })
+      .execute();
+  };
+
+  /**
+   * №8: "Эрх нэмэх" — НЭГ транзакцад: (1) `debitUserId` өгвөл wallet-аас атомар хасна (хүрэлцэхгүй бол
+   * 402, юу ч өөрчлөгдөхгүй), (2) service-ийн `count += n`, `price += charge`.
+   */
+  topUpAtomic = async (
+    id: number,
+    n: number,
+    charge: number,
+    debitUserId: number | null,
+  ) => {
+    return this.dataSource.transaction(async (m) => {
+      if (debitUserId != null && charge > 0) {
+        const d = await m
+          .createQueryBuilder()
+          .update(UserEntity)
+          .set({ wallet: () => '"wallet" - :amt' })
+          .setParameter('amt', charge)
+          .where('id = :uid AND "wallet" >= :amt', { uid: debitUserId })
+          .execute();
+        if (!d.affected) {
+          throw new HttpException(
+            'Үлдэгдэл хүрэлцэхгүй байна.',
+            HttpStatus.PAYMENT_REQUIRED,
+          );
+        }
+      }
+      const u = await m
+        .createQueryBuilder()
+        .update(UserServiceEntity)
+        .set({ count: () => '"count" + :n', price: () => '"price" + :charge' })
+        .setParameters({ n, charge })
+        .where('id = :id', { id })
+        .execute();
+      if (!u.affected) {
+        throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+      }
+      const svc = await m.findOne(UserServiceEntity, { where: { id } });
+      const wallet =
+        debitUserId != null
+          ? (await m.findOne(UserEntity, { where: { id: debitUserId } }))?.wallet ?? null
+          : null;
+      return { count: svc.count, usedUserCount: svc.usedUserCount, price: svc.price, wallet };
+    });
+  };
+
+  /** №6: service-ийн "дууссаны дараа үр дүн харуулах" (null = assessment-ийн default). */
+  setShowResult = async (id: number, value: boolean | null) => {
+    await this.db.update(id, { showResult: value });
   };
 
   countDemand = async (limit: number) => {

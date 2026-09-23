@@ -32,6 +32,8 @@ import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
 import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
 import { ReportAccessModule } from './app/report-access/report-access.module';
+import { OpsModule } from './app/ops/ops.module';
+import { MonitorModule } from './app/monitor/monitor.module';
 
 @Module({
   imports: [
@@ -70,6 +72,8 @@ import { ReportAccessModule } from './app/report-access/report-access.module';
     ReportModule,
     PdfTemplateModule,
     ReportAccessModule,
+    OpsModule,
+    MonitorModule,
   ],
   controllers: [AppController],
   providers: [

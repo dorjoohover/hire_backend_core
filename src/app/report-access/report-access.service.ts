@@ -8,12 +8,20 @@ import {
 import { ReportAccessDao } from './report-access.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { QpayService } from '../payment/qpay.service';
-import {
-  PaymentStatus,
-  ORGANIZATION,
-  REPORT_VIEW_GRACE_MINUTES,
-} from 'src/base/constants';
+import { ReportAccessEntity } from './entities/report-access.entity';
+import { PaymentStatus, ORGANIZATION } from 'src/base/constants';
 import { Role } from 'src/auth/guards/role/role.enum';
+
+/**
+ * Нэхэмжлэх (invoice) spam хязгаар — `POST :code/invoice` нэвтрэлтгүй тул
+ * дурын хүн нэг кодоор мянган QPay нэхэмжлэх + DB мөр үүсгэж болохоос сэргийлнэ.
+ *  - нэг code: INVOICE_WINDOW_MIN минутад INVOICE_MAX_PER_CODE-с илүүгүй (DB-ээр);
+ *  - нийт: INVOICE_GLOBAL_PER_MIN / минут (процессын санах ойд).
+ * API `trust proxy`-гүй тул IP-аар хязгаарлахгүй (бүх хүсэлт proxy-ийн IP-тэй харагдана).
+ */
+export const INVOICE_WINDOW_MIN = 10;
+export const INVOICE_MAX_PER_CODE = 3;
+export const INVOICE_GLOBAL_PER_MIN = 60;
 
 export interface ReportAccessState {
   code: string;
@@ -37,15 +45,20 @@ export interface ReportAccessState {
   freeSessionMinutesLeft: number;
   canView: boolean;
   canDownload: boolean;
+  /** №4: assessment-ийн жишээ тайлангийн файл — төлбөрийн CTA-ны хажууд "Жишээ тайлан үзэх" товчинд. */
+  exampleReport?: string | null;
   reason: string | null;
 }
 
 /**
  * Тайлангийн monetization (paywall) — эрх шалгах, төлбөр бүртгэх.
  *
- * Хоёр дүрмийг дэмжинэ (тест бүрээр admin-аас тохируулна):
- *   1. `reportFreeViews` — тайланг N удаа үнэгүй харна, дараа нь төлбөртэй.
- *   2. `reportPdfPaid`   — дэлгэц дээр харах үнэгүй, PDF татахад төлбөртэй.
+ * №4 + №6 загвар: ҮР ДҮН (оноо / түвшин / товч тайлбар, `GET exam/exam/:code`) ХЭЗЭЭ Ч үнэгүй, хязгааргүй
+ * (`canView` үргэлж true). Төлбөртэй нь ДЭЛГЭРЭНГҮЙ тайлан (PDF, `canDownload`). Оролцогч төлнө;
+ * байгууллага (staff role) ба admin / tester үнэгүй. Хоёр дүрмийг дэмжинэ (тест бүрээр admin-аас тохируулна):
+ *   1. `reportPdfPaid`   — PDF татахад төлбөртэй (ЗӨВЛӨМЖТЭЙ, UI зөвхөн үүнийг үзүүлнэ).
+ *   2. `reportFreeViews` — (хуучин) PDF-ийг N удаа / 30 мин-ийн сеансаар үнэгүй татна, дараа нь төлбөртэй.
+ *      Үр дүн ЭНЭ горимд ч түгжигдэхгүй; харалтыг зөвхөн PDF endpoint тоолно.
  *
  * Хоёулаа нэг л худалдан авалтаар нээгддэг: `report_access` дээр тухайн
  * exam code-оор SUCCESS мөр үүсмэгц хязгааргүй харах + PDF татах эрхтэй.
@@ -57,6 +70,21 @@ export class ReportAccessService {
     @Inject(forwardRef(() => ExamDao)) private examDao: ExamDao,
     private qpay: QpayService,
   ) {}
+
+  /** Процесс дотор сүүлийн 1 минутад үүссэн нэхэмжлэхийн цагууд. */
+  private invoiceHits: number[] = [];
+
+  private assertInvoiceRate(): void {
+    const now = Date.now();
+    this.invoiceHits = this.invoiceHits.filter((t) => now - t < 60_000);
+    if (this.invoiceHits.length >= INVOICE_GLOBAL_PER_MIN) {
+      throw new HttpException(
+        'Хүсэлт хэт олон байна. Түр хүлээгээд дахин оролдоно уу.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    this.invoiceHits.push(now);
+  }
 
   private freeState(code: string, reason: string): ReportAccessState {
     return {
@@ -87,16 +115,15 @@ export class ReportAccessService {
     ) {
       return 'staff';
     }
-    // Ажил олгогч байгууллага худалдаж авсан тест — нэр дэвшигч төлөхгүй.
-    if (+exam?.service?.user?.role === ORGANIZATION) {
-      return 'organization-paid';
-    }
+    // №4: байгууллагын худалдаж авсан тест дээр оролцогч дэлгэрэнгүй тайланг ӨӨРӨӨ төлнө — өмнөх
+    // 'organization-paid' чөлөөлөлт ХАСАГДСАН. Байгууллага өөрөө (дээрх `staff`) үнэгүй.
+    const ownerIsOrganization = +exam?.service?.user?.role === ORGANIZATION;
 
-    // Тестийг өөрөө мөнгө төлж авсан бол тайлангийн төлбөрийг ДАХИН авахгүй
-    // (давхар төлбөрөөс сэргийлнэ). Тайлангийн paywall нь үндсэндээ ҮНЭГҮЙ
-    // тестүүд дээр орлого олох зорилготой. Хэрэв төлбөртэй тест дээр ч
-    // тайланг тусад нь зарах бол энэ шалгуурыг арилгана.
+    // Тестийг ӨӨРӨӨ (оролцогч = худалдан авагч) мөнгө төлж авсан бол тайлангийн төлбөрийг ДАХИН авахгүй
+    // (давхар төлбөрөөс сэргийлнэ). Байгууллагын wallet-аар төлсөн service энд ОРОХГҮЙ — тэр нь
+    // оролцогчийн төлбөр биш (`ownerIsOrganization`).
     if (
+      !ownerIsOrganization &&
       +(exam?.service?.price ?? 0) > 0 &&
       +(exam?.service?.status ?? 0) === PaymentStatus.SUCCESS
     ) {
@@ -118,11 +145,16 @@ export class ReportAccessService {
 
     const assessment = row.assessment;
     const price = +(assessment?.reportPrice ?? 0);
-    const freeViews = +(assessment?.reportFreeViews ?? 0);
     const pdfPaid = !!assessment?.reportPdfPaid;
 
-    // Үнэ тавиагүй, эсвэл хоёр дүрмийн аль нь ч асаагүй бол paywall байхгүй.
-    const enabled = price > 0 && (freeViews > 0 || pdfPaid);
+    // 2026-09-22: хялбарчлав (хэрэглэгчийн хүсэлтээр) — "Үнэгүй харах
+    // эрхийн тоо" (`reportFreeViews`) болон түүний сеансын grace-цонхны
+    // механизмыг ЭНД цаашид ашиглахгүй болгов. Одоо цэвэр хоёртын дүрэм:
+    // `reportPrice = 0` → тайлан (PDF) бүрэн үнэгүй; `reportPrice > 0` →
+    // худалдан авалгүйгээр PDF татах боломжгүй (үнэгүй харалт/сессийн
+    // хугацаа байхгүй болсон). `assessment.reportFreeViews` баганыг DB-ээс
+    // хасаагүй, зөвхөн энд уншихаа больсон — сэргээхэд амархан (reversible).
+    const enabled = price > 0;
     if (!enabled) return this.freeState(row.code, 'disabled');
 
     const exempt = this.isExempt(row, user);
@@ -130,51 +162,25 @@ export class ReportAccessService {
 
     const paid = await this.dao.findPaidByCode(row.code);
     const purchased = !!paid;
-    const usedViews = +(row.reportViewCount ?? 0);
-    const remainingFreeViews = Math.max(0, freeViews - usedViews);
-
-    // ⚠️ Нэг "үнэгүй харалт" = нэг СЕАНС.
-    //
-    // Өмнө нь grace цонх нь зөвхөн тоолуурыг (ExamDao.incrementReportView)
-    // зогсоодог байсан ч эрхийн шалгуурт огт ороогүй. Үүнээс болж эхний
-    // харалтад usedViews 1 болмогц `usedViews < freeViews` худал болж,
-    // хэрэглэгч ХОРМЫН дараа refresh хийхэд шууд paywall гардаг байв.
-    //
-    // Тоолох цэг нь тайланг ЭХЭЛЖ нээсэн мөч (`reportViewedAt`) — цонх нь
-    // refresh бүрд сунахгүй, тогтмол.
-    const viewedAt = row.reportViewedAt ? new Date(row.reportViewedAt) : null;
-    const elapsedMs = viewedAt ? Date.now() - viewedAt.getTime() : null;
-    const graceMs = REPORT_VIEW_GRACE_MINUTES * 60 * 1000;
-    const withinFreeSession =
-      elapsedMs != null && elapsedMs >= 0 && elapsedMs < graceMs;
-    const freeSessionMinutesLeft = withinFreeSession
-      ? Math.max(1, Math.ceil((graceMs - elapsedMs) / 60000))
-      : 0;
-
-    const canView =
-      purchased || freeViews === 0 || usedViews < freeViews || withinFreeSession;
-    const canDownload = purchased ? true : pdfPaid ? false : canView;
+    // №6: үр дүн ХЭЗЭЭ Ч үнэгүй — `canView` үргэлж true.
+    const canView = true;
+    const canDownload = purchased;
 
     return {
       code: row.code,
       paywall: true,
       price,
-      freeViews,
-      usedViews,
-      remainingFreeViews,
+      freeViews: 0,
+      usedViews: 0,
+      remainingFreeViews: 0,
       pdfPaid,
       purchased,
-      withinFreeSession,
-      freeSessionMinutesLeft,
+      withinFreeSession: false,
+      freeSessionMinutesLeft: 0,
       canView,
       canDownload,
-      reason: purchased
-        ? 'purchased'
-        : usedViews < freeViews
-          ? 'free-view'
-          : withinFreeSession
-            ? 'free-session'
-            : 'payment-required',
+      exampleReport: assessment?.exampleReport || null,
+      reason: purchased ? 'purchased' : 'payment-required',
     };
   }
 
@@ -204,6 +210,19 @@ export class ReportAccessService {
       return { alreadyPaid: true, invoice: null, access: state };
     }
 
+    // Spam хязгаар: эхлээд процессын нийт, дараа нь энэ code-ын сүүлийн цагийн тоо.
+    this.assertInvoiceRate();
+    const recent = await this.dao.countRecentByCode(
+      exam.code,
+      INVOICE_WINDOW_MIN,
+    );
+    if (recent >= INVOICE_MAX_PER_CODE) {
+      throw new HttpException(
+        `Нэхэмжлэх олон удаа үүсгэсэн байна. ${INVOICE_WINDOW_MIN} минутын дараа дахин оролдоно уу.`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     const row = await this.dao.create({
       code: exam.code,
       userId: user?.id ? +user.id : (exam.user?.id ?? null),
@@ -212,6 +231,9 @@ export class ReportAccessService {
       price: state.price,
     });
 
+    // QPAY_REPORT_CALLBACK = https://<api>/api/v1/report-access/callback
+    // → QPay төлбөр төлөгдмөгц `GET .../callback/<row.id>` дууддаг (handleCallback).
+    // Тохируулаагүй бол зөвхөн polling (checkPayment)-оор эрх нээгдэнэ.
     const callback = process.env.QPAY_REPORT_CALLBACK
       ? `${process.env.QPAY_REPORT_CALLBACK}/${row.id}`
       : undefined;
@@ -230,28 +252,74 @@ export class ReportAccessService {
     return { alreadyPaid: false, invoice, access: state, accessId: row.id };
   }
 
-  /** QPay-с төлбөрийг шалгаж, төлөгдсөн бол эрхийг нээнэ. */
+  /**
+   * `report_access` мөрийн нэхэмжлэхийг QPay-с шалгаж, төлөгдсөн бол SUCCESS
+   * болгоно. Polling (`checkPayment`) ба QPay callback (`handleCallback`)
+   * хоёул ЭНЭ нэг логикийг ашиглана. Идемпотент.
+   *
+   * ⚠️ Төлбөрийг ЗӨВХӨН мөрийн өөрийн `invoiceId`-аар асууна — URL / query-ээр
+   * ирсэн өөр ямар ч id-д итгэхгүй.
+   */
+  private async confirmPending(row: ReportAccessEntity): Promise<boolean> {
+    if (row.status === PaymentStatus.SUCCESS) return true;
+    if (row.status !== PaymentStatus.PENDING || !row.invoiceId) return false;
+
+    const payment: any = await this.qpay.checkPayment(row.invoiceId);
+    const paidAmount = +(payment?.paid_amount ?? 0);
+
+    // ⚠️ Төлсөн дүн үнээс бага бол эрх нээхгүй (underpayment хамгаалалт).
+    if (paidAmount <= 0 || paidAmount < row.price) return false;
+
+    await this.dao.markPaid(row.id);
+    return true;
+  }
+
+  /** QPay-с төлбөрийг шалгаж, төлөгдсөн бол эрхийг нээнэ (polling). */
   public async checkPayment(code: string, invoiceId: string, user?: any) {
     const existing = await this.dao.findPaidByCode(code);
     if (existing) return { paid: true, access: await this.resolve(code, user) };
 
-    const payment: any = await this.qpay.checkPayment(invoiceId);
-    const paidAmount = +(payment?.paid_amount ?? 0);
-
-    const pending = await this.dao.findPendingByCode(code);
-    if (!pending) {
-      throw new HttpException(
-        'Нэхэмжлэх олдсонгүй.',
-        HttpStatus.BAD_REQUEST,
-      );
+    // ⚠️ URL-ийн `invoiceId` нь ЭНЭ `code`-ынх байх ёстой. Өмнө нь QPay-с
+    // URL-ийн invoiceId-аар асууж, дараа нь кодын сүүлийн PENDING мөрийг
+    // нээдэг байсан тул өөр тайлан / бүтээгдэхүүний төлөгдсөн нэхэмжлэхээр
+    // дурын код дээр эрх нээж болдог байв.
+    const row = await this.dao.findByInvoice(invoiceId);
+    if (!row || row.code !== `${code}`) {
+      throw new HttpException('Нэхэмжлэх олдсонгүй.', HttpStatus.BAD_REQUEST);
     }
 
-    // ⚠️ Төлсөн дүн үнээс бага бол эрх нээхгүй (underpayment хамгаалалт).
-    if (paidAmount <= 0 || paidAmount < pending.price) {
-      return { paid: false, access: await this.resolve(code, user) };
+    const paid = await this.confirmPending(row);
+    return { paid, access: await this.resolve(code, user) };
+  }
+
+  /**
+   * QPay callback. Төлбөр төлөгдмөгц QPay
+   *   GET <QPAY_REPORT_CALLBACK>/<accessId>?qpay_payment_id=...
+   * хаяг руу дууддаг (`createInvoice` дотор `callback_url` болгож дамжуулсан),
+   * тиймээс хэрэглэгч хуудсаа хаасан / polling дууссан ч эрх автоматаар нээгдэнэ.
+   *
+   * ⚠️ Нэвтрэлтгүй (public) тул URL / query-д итгэхгүй: `accessId` нь зөвхөн
+   * `report_access` мөрийг олно, төлбөрийг QPay-с тэр мөрийн ӨӨРИЙН
+   * `invoiceId`-аар дахин асууж баталгаажуулна. `qpay_payment_id`-г ашиглахгүй
+   * (зөвхөн лог) — өөр нэхэмжлэхийн payment id-аар эрх нээх боломжгүй.
+   */
+  public async handleCallback(accessId: number, qpayPaymentId?: string) {
+    // report_access.id нь int4 — хэт том утга DB-д алдаа (500) өгөхөөс өмнө таслана.
+    if (!Number.isInteger(accessId) || accessId < 1 || accessId > 2147483647) {
+      throw new HttpException('Нэхэмжлэх олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    const row = await this.dao.findById(accessId);
+    if (!row) {
+      throw new HttpException('Нэхэмжлэх олдсонгүй.', HttpStatus.NOT_FOUND);
     }
 
-    await this.dao.markPaid(pending.id);
-    return { paid: true, access: await this.resolve(code, user) };
+    const paid = await this.confirmPending(row);
+    const paymentId = `${qpayPaymentId ?? ''}`
+      .replace(/[^\w-]/g, '')
+      .slice(0, 64);
+    console.log(
+      `[report-access] QPay callback #${row.id} paid=${paid} payment=${paymentId}`,
+    );
+    return { paid };
   }
 }

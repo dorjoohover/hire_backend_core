@@ -86,6 +86,24 @@ export class UserDao {
     return res;
   };
 
+  /**
+   * №8: wallet-аас АТОМАР хасна (`UPDATE … WHERE wallet >= amount`). Хүрэлцэхгүй бол false, өөрчлөлтгүй.
+   * (Өмнө нь JWT-д хадгалагдсан хуучин wallet-аар шалгаж, read-modify-write-аар хасдаг тул зэрэг
+   * хүсэлтээр давхар зарцуулах боломжтой байсан.)
+   */
+  debitWallet = async (id: number, amount: number): Promise<boolean> => {
+    if (!Number.isFinite(amount) || amount < 0) return false;
+    if (amount === 0) return true;
+    const r = await this._db
+      .createQueryBuilder()
+      .update(UserEntity)
+      .set({ wallet: () => '"wallet" - :amt' })
+      .setParameter('amt', amount)
+      .where('id = :id AND "wallet" >= :amt', { id })
+      .execute();
+    return (r.affected ?? 0) > 0;
+  };
+
   updateWallet = async (id: number, point: number) => {
     const user = await this._db.findOne({ where: { id: id } });
     user.wallet += point;

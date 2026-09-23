@@ -7,6 +7,7 @@ import { EmailJobPayload } from './email.dto';
 import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
+import { signEmailToken } from 'src/utils/email-token';
 
 @Injectable()
 export class EmailService {
@@ -140,7 +141,13 @@ export class EmailService {
     });
   }
   async sendVerification(input: { email }) {
-    const { html } = this.generateVerificationTemplate(input);
+    // Гарын үсэгтэй, 24 цагийн token-той холбоос — web-ийн `/auth/confirm` хуудас руу.
+    const token = signEmailToken(input.email);
+    const link = `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/auth/confirm?token=${encodeURIComponent(token)}`;
+    const { html } = this.generateVerificationTemplate({
+      email: input.email,
+      link,
+    });
 
     await this.logAndQueue({
       type: EmailLogType.VERIFICATION,
@@ -149,6 +156,55 @@ export class EmailService {
       html,
     });
   }
+  /**
+   * №3: public QR-аар бүртгүүлсэн хүнд "тестээ үргэлжлүүлэх" холбоос. Зөвхөн ШИНЭ exam үүсэх үед
+   * (давхар бүртгэлд дахин илгээхгүй → бусдын и-мэйлийг spam хийх боломжийг хязгаарлана).
+   * Холбоос = `/exam/<code>` — код нь нэг удаагийн "bearer" (аудитад тэмдэглэсэн), шинэ эрсдэл нэмэхгүй.
+   */
+  async sendPublicResume(input: {
+    email: string;
+    code: string;
+    firstname?: string;
+    lastname?: string;
+    assessmentName?: string;
+    phone?: string;
+  }) {
+    const esc = (v: any) =>
+      String(v ?? '').replace(
+        /[&<>"']/g,
+        (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+      );
+    const link = `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${encodeURIComponent(input.code)}`;
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:24px;font-family:Arial,sans-serif;color:#222;background:#fafafa">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:28px">
+<h2 style="margin:0 0 12px;color:#ff5000">Hire.mn</h2>
+<p>Сайн байна уу${input.firstname ? `, ${esc(input.firstname)}` : ''}!</p>
+<p>Та${input.assessmentName ? ` «${esc(input.assessmentName)}»` : ''} тестэд бүртгүүллээ. Тестээ дундаас нь орхисон ч доорх холбоосоор орж, орхисон хэсгээсээ үргэлжлүүлж болно.</p>
+<p style="margin:24px 0"><a href="${esc(link)}" style="background:#ff5000;color:#fff;padding:12px 22px;border-radius:99px;text-decoration:none;font-weight:600">Тестээ үргэлжлүүлэх</a></p>
+<p style="font-size:12px;color:#888">Энэ холбоосыг бусдад бүү дамжуул. Хэрэв та бүртгүүлээгүй бол энэ захидлыг үл тоомсорлоно уу.</p>
+</div></body></html>`;
+
+    await this.logAndQueue({
+      type: EmailLogType.INVITATION,
+      to: input.email,
+      subject: 'Тестээ үргэлжлүүлэх холбоос',
+      html,
+      meta: {
+        url: UserServiceService.name,
+        type: EmailLogType.INVITATION,
+        code: input.code,
+        assessmentName: input.assessmentName,
+        firstname: input.firstname,
+        lastname: input.lastname,
+        phone: input.phone,
+        visible: true,
+        action: 'sent public resume link',
+      },
+    });
+  }
+
   async sendOtp(input: { code: string; email: string }) {
     const { html } = this.generateOtpTemplate(input);
 
@@ -657,8 +713,8 @@ export class EmailService {
     return { html };
   }
 
-  private generateVerificationTemplate(input: { email: string }) {
-    const { email } = input;
+  private generateVerificationTemplate(input: { email: string; link: string }) {
+    const { link } = input;
     const html = `
           <!DOCTYPE html>
           <html>
@@ -729,7 +785,7 @@ export class EmailService {
                         <tr>
                           <td style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;">
                             <p style="margin: 0 0 15px 0;">
-Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href=https://api.hire.mn/api/v1/user/email/confirm/${email}>энд дарж</a> өөрийн и-мэйл хаягаа баталгаажуулна уу.                            </p>
+Таны онлайн тест, үнэлгээний Hire.mn платформын бүртгэл хийгдэж байна. Та <a style="color: #ff5000; text-decoration: none;" href="${link}">энд дарж</a> өөрийн и-мэйл хаягаа баталгаажуулна уу.                            </p>
                           </td>
                         </tr>
                         <tr>

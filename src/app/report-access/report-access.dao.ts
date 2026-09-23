@@ -21,11 +21,31 @@ export class ReportAccessDao {
     return await this.db.findOne({ where: { invoiceId } });
   };
 
+  findById = async (id: number) => {
+    return await this.db.findOne({ where: { id } });
+  };
+
   findPendingByCode = async (code: string) => {
     return await this.db.findOne({
       where: { code: `${code}`, status: PaymentStatus.PENDING },
       order: { createdAt: 'DESC' },
     });
+  };
+
+  /**
+   * Сүүлийн `minutes` минутад тухайн code дээр үүссэн нэхэмжлэхийн тоо
+   * (invoice spam хязгаарлахад). Цагийг DB-ийн NOW()-оор харьцуулна —
+   * `createdAt` нь DB-ийн CURRENT_TIMESTAMP default тул Node/DB цагийн бүс
+   * зөрсөн ч алдаа гарахгүй.
+   */
+  countRecentByCode = async (code: string, minutes: number) => {
+    return await this.db
+      .createQueryBuilder('r')
+      .where('r.code = :code', { code: `${code}` })
+      .andWhere(`r."createdAt" > NOW() - INTERVAL '1 minute' * :minutes`, {
+        minutes,
+      })
+      .getCount();
   };
 
   create = async (dto: Partial<ReportAccessEntity>) => {
@@ -37,11 +57,15 @@ export class ReportAccessDao {
     await this.db.update(id, { invoiceId });
   };
 
+  /**
+   * PENDING → SUCCESS. Идемпотент: polling ба QPay callback зэрэг ирвэл эхний
+   * нь л мөрийг шинэчилнэ (`paidAt` дарагдахгүй).
+   */
   markPaid = async (id: number) => {
-    await this.db.update(id, {
-      status: PaymentStatus.SUCCESS,
-      paidAt: new Date(),
-    });
+    await this.db.update(
+      { id, status: PaymentStatus.PENDING },
+      { status: PaymentStatus.SUCCESS, paidAt: new Date() },
+    );
     return await this.db.findOne({ where: { id } });
   };
 

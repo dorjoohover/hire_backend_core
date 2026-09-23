@@ -2,6 +2,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { isSafeMode, safeLog } from '../../utils/safe-mode';
+
+// SAFE_MODE-ийн mock invoice: id-д дүнг шингээсэн тул process дахин асахад ч
+// `checkPayment` дүнг сэргээж чадна (in-memory state хэрэггүй).
+// Формат: SAFE-<дүн>-<invoiceId>-<цаг>
+const SAFE_INVOICE_RE = /^SAFE-(\d+(?:\.\d+)?)-/;
+// 1x1 PNG — web-ийн `data:image/png;base64,${qr_image}` харагдацыг эвдэхгүй.
+const SAFE_QR_PNG =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 @Injectable()
 export class QpayService {
   private readonly logger = new Logger(QpayService.name);
@@ -136,6 +145,21 @@ export class QpayService {
     userId: number,
     callbackUrl?: string,
   ) {
+    if (isSafeMode()) {
+      const id = `SAFE-${amount}-${invoiceId}-${Date.now()}`;
+      safeLog(
+        'QPay invoice үүсгээгүй (mock)',
+        `invoice_id=${id} amount=${amount} user=${userId}`,
+      );
+      return {
+        invoice_id: id,
+        qr_text: 'SAFE_MODE',
+        qr_image: SAFE_QR_PNG,
+        qPay_shortUrl: '',
+        urls: [],
+        safeMode: true,
+      };
+    }
     try {
       // ⚠️ Өмнө нь `await` дутуу байсан тул доорх try/catch хэзээ ч
       // ажилладаггүй байв.
@@ -166,6 +190,10 @@ export class QpayService {
 
   // ✅ Invoice харах
   async getInvoice(id: string) {
+    if (isSafeMode()) {
+      const amount = SAFE_INVOICE_RE.exec(`${id}`)?.[1];
+      return amount ? { status: 'PAID', amount: +amount } : undefined;
+    }
     try {
       const res = await this.requestWithToken('GET', `payment/${id}`, {});
       return {
@@ -177,6 +205,21 @@ export class QpayService {
 
   // ✅ Төлбөр шалгах
   async checkPayment(invoiceId: string) {
+    if (isSafeMode()) {
+      // Mock invoice бол шууд төлөгдсөн гэж үзнэ; өөр (бодит prod) invoice бол төлөөгүй.
+      const amount = SAFE_INVOICE_RE.exec(`${invoiceId}`)?.[1];
+      safeLog(
+        'QPay checkPayment (mock)',
+        `invoice_id=${invoiceId} paid=${amount ?? 0}`,
+      );
+      return amount
+        ? {
+            count: 1,
+            paid_amount: +amount,
+            rows: [{ payment_status: 'PAID', payment_amount: +amount }],
+          }
+        : { count: 0, paid_amount: 0, rows: [] };
+    }
     // ⚠️ Өмнө нь `await` дутуу байсан.
     const res = await this.requestWithToken('POST', '/payment/check', {
       object_type: 'INVOICE',

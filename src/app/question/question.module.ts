@@ -14,6 +14,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
 import { QuestionRuleController } from './question.rule.controller';
 import { QuestionRuleDao } from './dao/question.rule.dao';
+import { QuestionRuleService } from './question.rule.service';
 import { QuestionAnswerViewService } from './question-answer-view.service';
 import { FormuleModule } from '../formule/formule.module';
 
@@ -37,6 +38,7 @@ import { FormuleModule } from '../formule/formule.module';
     QuestionAnswerCategoryDao,
     QuestionAnswerDao,
     QuestionRuleDao,
+    QuestionRuleService,
     QuestionAnswerViewService,
   ],
   exports: [

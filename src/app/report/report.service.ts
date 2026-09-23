@@ -117,11 +117,13 @@ export class ReportService {
   }
 
   async sendMail(code: string) {
-    const prev = await this.dao.getOne(code);
-    if (!prev) return;
-    if (prev.status != REPORT_STATUS.SENT) {
-      await this.dao.updateByCode(code, { status: REPORT_STATUS.SENT });
-      await this.userAnswer.sendEmail(code);
-    }
+    // ⚠️ Өмнө нь `status != SENT` бол (WRITING, FAILED … ч гэсэн) SENT болгож
+    // мэйл илгээдэг байсан тул `report/mail/:code`-г дуудсан хэн ч бэлэн болоогүй
+    // тайланг "SENT" болгож төлөв эвдэж чаддаг, зэрэг ирсэн 2 дуудлага давхар
+    // мэйл илгээж болдог байв. Одоо зөвхөн COMPLETED → SENT-ийг атомар авсан
+    // ганц дуудлага илгээнэ.
+    const claimed = await this.dao.claimSent(code);
+    if (!claimed) return;
+    await this.userAnswer.sendEmail(code);
   }
 }

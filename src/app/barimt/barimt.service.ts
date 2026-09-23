@@ -10,6 +10,7 @@ import { BarimtDto, BarimtResponseDto } from './dto/barimt.dto';
 import { UserEntity } from '../user/entities/user.entity';
 import { EmailService } from '../email/email.service';
 import { UserService } from '../user/user.service';
+import { isSafeMode, safeLog } from '../../utils/safe-mode';
 @Injectable()
 export class BarimtService {
   constructor(
@@ -22,6 +23,7 @@ export class BarimtService {
   private refreshing: Promise<string> | null = null;
   private token: string | null = null;
   public async loginEbarimt(): Promise<{ token: string; expiredIn: number }> {
+    if (isSafeMode()) return { token: 'safe-mode', expiredIn: 3600 };
     const now = Date.now();
 
     // Хэрвээ token хүчинтэй байвал шууд буцаана
@@ -99,6 +101,19 @@ export class BarimtService {
     price: number,
     service: number,
   ) {
+    if (isSafeMode()) {
+      // Татварын (ТӨБ) руу баримт ИЛГЭЭХГҮЙ, и-мэйл ч явуулахгүй.
+      safeLog(
+        'e-barimt баримт үүсгээгүй (mock)',
+        `billIdSuffix=${dto?.billIdSuffix} price=${price} service=${service}`,
+      );
+      return {
+        status: 'SUCCESS',
+        safeMode: true,
+        noat: 0,
+        totalAmount: price,
+      } as any;
+    }
     const { token } = await this.loginEbarimt();
     const d = {
       branchNo: '001',
@@ -191,6 +206,10 @@ export class BarimtService {
   }
 
   async getBarimt(id: number, email: string) {
+    if (isSafeMode()) {
+      safeLog('e-barimt getBarimt (mock)', `id=${id}`);
+      return { status: 'SUCCESS', id, safeMode: true } as any;
+    }
     try {
       const { token } = await this.loginEbarimt();
 
@@ -220,6 +239,7 @@ export class BarimtService {
   }
 
   async sendData() {
+    if (isSafeMode()) return safeLog('e-barimt sendData алгасав');
     try {
       const { token } = await this.loginEbarimt();
 
@@ -239,6 +259,7 @@ export class BarimtService {
     }
   }
   async getinformation() {
+    if (isSafeMode()) return { safeMode: true };
     try {
       const response = await axios.get(
         `${process.env.BARIMT_URL}receipt/info`,
@@ -256,6 +277,8 @@ export class BarimtService {
   }
 
   async deleteReceipt(id: number) {
+    if (isSafeMode())
+      return safeLog('e-barimt deleteReceipt алгасав', `id=${id}`);
     // Баримт хэвлэсэн огноо "yyyy-MM-dd HH:mm:ss" форматтай огноо
     const { token } = await this.loginEbarimt();
     try {

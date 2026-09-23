@@ -9,9 +9,10 @@ import {
 // Нөхцөлт алгасах (branching) дүрэм.
 // Жишээ: "Тамхи татдаггүй" (dependsOnAnswerId) гэж нэг асуултад (dependsOnQuestionId)
 // хариулсан бол тамхитай холбоотой асуултуудыг (targetQuestionId) алгасна.
+// ⚠️ Өмнө нь 'show' үйлдэл enum-д байсан ч client / server хоёул үл тоомсорлодог
+// (зөвхөн 'skip' хэрэгждэг) байсан тул хассан. DB-д үлдсэн 'show' мөрүүд нөлөөгүй.
 export const QuestionRuleAction = {
   SKIP: 'skip',
-  SHOW: 'show',
 };
 
 @Entity('questionRule')
