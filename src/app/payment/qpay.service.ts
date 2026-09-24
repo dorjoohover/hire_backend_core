@@ -17,50 +17,22 @@ export class QpayService {
 
   private baseUrl = 'https://merchant.qpay.mn/v2/';
   private accessToken: string;
-  private refreshToken: string;
   private expiresIn: Date;
-
+  // Access token-той хамт ирдэг `refresh_token`/`auth/refresh`-ийг ЭНЭ талаас
+  // 2026-09-24-нөөс хойш ашиглахгүй болгов (хэрэглэгчийн хүсэлтээр) — зөвхөн
+  // Basic auth-аар (`authenticate()`) 24 цаг тутам шинэ access token авна.
+  // QPay docs-ын "токен хугацаа дуусахаас өмнө ойр ойрхон олон дахин токен
+  // бүү ав" гэсэн анхааруулгыг зөрчихгүй (24 цаг = ховор, найдвартай давтамж),
+  // мөн refresh_token хугацаа дуусах/хүчингүй болох тохиолдолд гацдаг байсан
+  // fallback-гүй асуудлыг бүрмөсөн арилгана.
   constructor(private readonly httpService: HttpService) {}
-  private async refreshAccessToken() {
-    const response = await firstValueFrom(
-      this.httpService.post(
-        `${this.baseUrl}auth/refresh`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${this.refreshToken}`,
-          },
-        },
-      ),
-    );
-
-    const data = response.data;
-    this.accessToken = data.access_token;
-    this.refreshToken = data.refresh_token;
-    this.expiresIn = new Date(Date.now() + data.expires_in * 1000);
-    console.log(
-      'Access token refreshed:',
-      this.accessToken.slice(0, 20),
-      '...',
-      new Date(),
-    );
-  }
 
   private async ensureValidToken() {
     const now = new Date();
 
-    if (!this.accessToken || now > this.expiresIn) {
-      const diff = this.expiresIn
-        ? now.getTime() - this.expiresIn.getTime()
-        : 0;
-
-      if (this.refreshToken && diff < 24 * 60 * 60 * 1000) {
-        console.log('Token expired → Refreshing...');
-        await this.refreshAccessToken();
-      } else {
-        console.log('24 цаг өнгөрсөн → Re-authenticating...');
-        await this.authenticate();
-      }
+    if (!this.accessToken || now >= this.expiresIn) {
+      console.log('Access token байхгүй/24 цаг өнгөрсөн → Дахин нэвтэрч байна...');
+      await this.authenticate();
     }
   }
 
@@ -91,7 +63,8 @@ export class QpayService {
         error?.response?.data?.message ?? error?.message,
       );
       if (error.response?.status === 401) {
-        await this.refreshAccessToken();
+        console.log('QPay 401 → Дахин нэвтэрч (authenticate) байна...');
+        await this.authenticate();
         const retryResponse = await firstValueFrom(
           this.httpService.request({
             method,
@@ -125,8 +98,11 @@ export class QpayService {
       );
 
       this.accessToken = response.data.access_token;
-      this.refreshToken = response.data.refresh_token;
-      this.expiresIn = new Date(Date.now() + response.data.expires_in * 1000);
+      // Refresh token-ыг бүү ашигла — 24 цагийн дараа дахин Basic auth-аар
+      // (энэ функцээр) шинэ access token авна (QPay-ийн `expires_in`-ээс үл
+      // хамааран; ихэвчлэн энэ утга дан access token-д хэрэглэхэд хэт богино,
+      // refresh-тэй хослуулахад зориулагдсан байдаг).
+      this.expiresIn = new Date(Date.now() + 24 * 60 * 60 * 1000);
     } catch (e) {
       console.error('QPAY AUTH ERROR:', e.response?.data || e.message);
       throw e;
