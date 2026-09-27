@@ -24,7 +24,16 @@ export class ReportService {
   }
   async createReport(data: any, role?: number) {
     const { code } = data || {};
-    const maxAttempts = 3;
+    // ⚠️ 2026-09-28: 3 оролдлого x 10с timeout (1.5с/3с backoff-той, нийт ~34.5с) хэт
+    // богино болсныг илрvvлэв — hire_report (report-1/report-2) нь concurrency:1 тул
+    // тухайн container PDF бичиж байх vед (одоо 48-64с хvртэл vргэлжилж болдог) ӨӨРИЙН
+    // event loop-оороо шинэ HTTP хvсэлт (яг энэ createReport дуудлага) хvлээж авч чадахгvй
+    // болдог тул, хоёр instance хоёул завгvй vед 34.5с дотор аль нэг нь суллагдахгvй байх
+    // магадлал өндөр — тэгвэл createReport бvрмөсөн FAILED болж (`core-failed-*` мөр),
+    // BullMQ рvv ХЭЗЭЭ Ч орохгvй тайлан бvрмөсөн алга болдог (нотолгоо: 2026-09-27 load
+    // test vед 11 core-failed мөр vvссэн). Иймд оролдлого/хугацааг нэмж, дор хаяж нэг
+    // instance суллагдах хvртэл хvлээх боломж vлдээв.
+    const maxAttempts = 6;
     let lastError: any = null;
 
     // ⚠️ FIX (2026-09-12): өмнө нь 1 удаа л оролддог, амжилтгүй бол зөвхөн
@@ -43,7 +52,7 @@ export class ReportService {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 10_000,
+            timeout: 15_000,
           },
         );
         return;
@@ -55,7 +64,7 @@ export class ReportService {
           (err as any)?.message,
         );
         if (attempt < maxAttempts) {
-          await new Promise((r) => setTimeout(r, attempt * 1500));
+          await new Promise((r) => setTimeout(r, attempt * 3000));
         }
       }
     }
