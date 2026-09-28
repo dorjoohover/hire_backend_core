@@ -164,6 +164,15 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `CREATE INDEX IF NOT EXISTS idx_assessment_variable_assessment
   ON assessment_variable ("assessmentId")`,
 
+  // Studio "Нөхцөлт хувьсагч" (оноо/хувиар текст сонгох) — kind='score' үед
+  // rules JSONB-д нөхцлүүд хадгалагдана. Nullable тул агшин зуур.
+  // ⚠ hire_report эдгээр баганыг SELECT хийдэг тул core-г ЭХЭЛЖ deploy хийнэ.
+  `ALTER TABLE assessment_variable
+   ADD COLUMN IF NOT EXISTS kind VARCHAR(20) DEFAULT 'map'`,
+
+  `ALTER TABLE assessment_variable
+   ADD COLUMN IF NOT EXISTS rules JSONB`,
+
   // "Тайлан уншаад гацдаг" гомдол: report_logs.status Postgres native enum
   // тул TS enum-д REPORT_STATUS.FAILED нэмсэн ч (src/base/constants.ts,
   // hire_report/src/base/constants.ts) DB-ийн enum type өөрөө шинэ утгыг

@@ -37,6 +37,19 @@ export class AssessmentVariableEntity {
   @Column({ type: 'jsonb', nullable: true })
   entries?: Record<string, string>;
 
+  // 'map' (анхдагч) — result.result кодоор entries-ээс сонгоно.
+  // 'score' — НӨХЦӨЛТ хувьсагч: rules.source (нийт оноо / онооны хувь /
+  // ангиллын оноо)-ийн утгыг rules.conditions-ийн дарааллаар шалгаж
+  // эхний тохирсон нөхцөлийн текстийг (эсвэл rules.elseText) буцаана.
+  @Column({ length: 20, nullable: true, default: 'map' })
+  kind?: string;
+
+  // { source: {type:'total'|'percent'|'category'|'categoryPercent', category?},
+  //   conditions: [{op:'<'|'<='|'>'|'>='|'='|'between', value, value2?, text}],
+  //   elseText }
+  @Column({ type: 'jsonb', nullable: true })
+  rules?: any;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;
 

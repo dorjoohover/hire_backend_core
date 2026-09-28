@@ -201,13 +201,21 @@ export class PdfTemplateController {
   saveVariable(
     @Param('assessmentId') assessmentId: string,
     @Param('key') key: string,
-    @Body() dto: { label?: string; entries: Record<string, string> },
+    @Body()
+    dto: {
+      label?: string;
+      entries: Record<string, string>;
+      kind?: 'map' | 'score';
+      rules?: any;
+    },
   ) {
     return this.service.saveVariable(
       +assessmentId,
       key,
       dto.label,
       dto.entries,
+      dto.kind,
+      dto.rules,
     );
   }
 

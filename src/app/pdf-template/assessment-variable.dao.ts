@@ -25,13 +25,15 @@ export class AssessmentVariableDao {
     key: string,
     label: string | undefined,
     entries: Record<string, string>,
+    kind: string = 'map',
+    rules: any = null,
   ) => {
     const existing = await this.findOne(assessmentId, key);
     if (existing) {
-      await this.db.update(existing.id, { label, entries });
+      await this.db.update(existing.id, { label, entries, kind, rules });
       return await this.findOne(assessmentId, key);
     }
-    const entity = this.db.create({ assessmentId, key, label, entries });
+    const entity = this.db.create({ assessmentId, key, label, entries, kind, rules });
     return await this.db.save(entity);
   };
 

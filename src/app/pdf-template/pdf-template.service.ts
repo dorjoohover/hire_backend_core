@@ -62,6 +62,34 @@ function resolveCustomTokensDeep(value: any, entriesByKey: Map<string, Record<st
   return value;
 }
 
+// Нөхцөлт (kind='score') хувьсагчийн rules-ийг шалгаж цэвэрлэнэ —
+// hire_report/src/pdf/score-rules.ts evaluateScoreRules()-тэй ижил бүтэц.
+const SCORE_RULE_OPS = new Set(['<', '<=', '>', '>=', '=', 'between']);
+const SCORE_RULE_SOURCES = new Set(['total', 'percent', 'category', 'categoryPercent']);
+function normalizeScoreRules(rules: any): any | null {
+  if (!rules || typeof rules !== 'object') return null;
+  const sourceType = rules.source?.type;
+  if (!SCORE_RULE_SOURCES.has(sourceType)) return null;
+  const conditions = Array.isArray(rules.conditions)
+    ? rules.conditions
+        .filter((c: any) => c && SCORE_RULE_OPS.has(c.op))
+        .map((c: any) => ({
+          op: c.op,
+          value: c.value === '' || c.value == null ? null : Number(c.value),
+          value2: c.value2 === '' || c.value2 == null ? null : Number(c.value2),
+          text: String(c.text ?? ''),
+        }))
+    : [];
+  return {
+    source: {
+      type: sourceType,
+      category: sourceType.startsWith('category') ? String(rules.source?.category ?? '') : undefined,
+    },
+    conditions,
+    elseText: String(rules.elseText ?? ''),
+  };
+}
+
 @Injectable()
 export class PdfTemplateService {
   constructor(
@@ -87,9 +115,22 @@ export class PdfTemplateService {
     key: string,
     label: string | undefined,
     entries: Record<string, string>,
+    kind?: string,
+    rules?: any,
   ) {
     if (!assessmentId) {
       throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
+    }
+    const varKind = kind === 'score' ? 'score' : 'map';
+    let varRules: any = null;
+    if (varKind === 'score') {
+      varRules = normalizeScoreRules(rules);
+      if (!varRules) {
+        throw new HttpException(
+          'Нөхцөлт хувьсагчид эх сурвалж (source) болон нөхцлүүд (conditions) шаардлагатай.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
     if (!key || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(key)) {
       throw new HttpException(
@@ -97,7 +138,14 @@ export class PdfTemplateService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const row = await this.variableDao.upsert(assessmentId, key, label, entries);
+    const row = await this.variableDao.upsert(
+      assessmentId,
+      key,
+      label,
+      varKind === 'score' ? {} : entries || {},
+      varKind,
+      varRules,
+    );
     return { data: row };
   }
 
@@ -193,7 +241,12 @@ export class PdfTemplateService {
       variables: Object.fromEntries(
         (variableRows || []).map((v) => [
           v.key,
-          { label: v.label ?? null, entries: v.entries ?? {} },
+          {
+            label: v.label ?? null,
+            entries: v.entries ?? {},
+            kind: v.kind ?? 'map',
+            rules: v.rules ?? null,
+          },
         ]),
       ),
     };
