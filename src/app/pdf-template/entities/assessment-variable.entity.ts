@@ -44,7 +44,7 @@ export class AssessmentVariableEntity {
   @Column({ length: 20, nullable: true, default: 'map' })
   kind?: string;
 
-  // { source: {type:'total'|'percent'|'category'|'categoryPercent', category?},
+  // { source: {type:'total'|'percent'|'category'|'categoryPercent'|'categoryAvg', category?},
   //   conditions: [{op:'<'|'<='|'>'|'>='|'='|'between', value, value2?, text}],
   //   elseText }
   @Column({ type: 'jsonb', nullable: true })
