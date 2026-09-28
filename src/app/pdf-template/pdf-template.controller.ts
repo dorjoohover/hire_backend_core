@@ -201,13 +201,21 @@ export class PdfTemplateController {
   saveVariable(
     @Param('assessmentId') assessmentId: string,
     @Param('key') key: string,
-    @Body() dto: { label?: string; entries: Record<string, string> },
+    @Body()
+    dto: {
+      label?: string;
+      entries: Record<string, string>;
+      kind?: 'map' | 'score';
+      rules?: any;
+    },
   ) {
     return this.service.saveVariable(
       +assessmentId,
       key,
       dto.label,
       dto.entries,
+      dto.kind,
+      dto.rules,
     );
   }
 
@@ -254,6 +262,14 @@ export class PdfTemplateController {
   @ApiParam({ name: 'id' })
   activate(@Param('id') id: string) {
     return this.service.setActive(+id);
+  }
+
+  // Идэвхгүй болгох — тухайн assessment дахин кодоор бичсэн (хуучин) тайлан
+  // ашиглана.
+  @Patch(':id/deactivate')
+  @ApiParam({ name: 'id' })
+  deactivate(@Param('id') id: string) {
+    return this.service.setInactive(+id);
   }
 
   @Delete(':id')
