@@ -309,7 +309,7 @@ export class AssessmentService {
   }
 
   public async clear() {
-    await this.dao.clear();
-    await this.levelDao.clear();
+    // await this.dao.clear();
+    // await this.levelDao.clear();
   }
 }

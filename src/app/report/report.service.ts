@@ -33,6 +33,12 @@ export class ReportService {
     // BullMQ рvv ХЭЗЭЭ Ч орохгvй тайлан бvрмөсөн алга болдог (нотолгоо: 2026-09-27 load
     // test vед 11 core-failed мөр vvссэн). Иймд оролдлого/хугацааг нэмж, дор хаяж нэг
     // instance суллагдах хvртэл хvлээх боломж vлдээв.
+    // ⏱️ 2026-09-28: pipeline stage-timing — hire_report рvv дамжуулахаас
+    // ӨМНӨх саатлыг (endExam дуудагдсанаас createReport энд орж ирэх хvртэл,
+    // мөн доорх retry loop-ийн backoff-той хамт) хэмжихийн тулд НЭГ л удаа,
+    // retry эхлэхээс ӨМНӨ тэмдэглэнэ. hire_report (app.service.ts) энэ утгыг
+    // хvлээж аваад "handoff" stage-ыг логлодог.
+    const examFinishedAt = Date.now();
     const maxAttempts = 6;
     let lastError: any = null;
 
@@ -47,7 +53,7 @@ export class ReportService {
       try {
         await axios.post(
           this.REPORT,
-          { ...data, role },
+          { ...data, role, examFinishedAt },
           {
             headers: {
               'Content-Type': 'application/json',
