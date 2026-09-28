@@ -83,6 +83,14 @@ export class PdfTemplateDao {
     });
   };
 
+  // Идэвхгүй болгоно — тухайн assessment дээр идэвхтэй загвар үлдэхгүй тул
+  // hire_report кодоор бичсэн (хуучин, assessment.report төрлийн) тайлан руу
+  // буцна.
+  setInactive = async (id: number) => {
+    await this.db.update({ id } as any, { isActive: false } as any);
+    return await this.db.findOne({ where: { id } });
+  };
+
   remove = async (id: number) => {
     return await this.db.delete(id);
   };

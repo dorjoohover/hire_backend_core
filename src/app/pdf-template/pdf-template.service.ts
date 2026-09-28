@@ -373,6 +373,11 @@ export class PdfTemplateService {
     return await this.dao.setActive(id, current.assessmentId);
   }
 
+  async setInactive(id: number) {
+    await this.findOne(id);
+    return await this.dao.setInactive(id);
+  }
+
   async remove(id: number) {
     await this.findOne(id);
     return await this.dao.remove(id);

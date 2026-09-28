@@ -264,6 +264,14 @@ export class PdfTemplateController {
     return this.service.setActive(+id);
   }
 
+  // Идэвхгүй болгох — тухайн assessment дахин кодоор бичсэн (хуучин) тайлан
+  // ашиглана.
+  @Patch(':id/deactivate')
+  @ApiParam({ name: 'id' })
+  deactivate(@Param('id') id: string) {
+    return this.service.setInactive(+id);
+  }
+
   @Delete(':id')
   @ApiParam({ name: 'id' })
   remove(@Param('id') id: string) {
