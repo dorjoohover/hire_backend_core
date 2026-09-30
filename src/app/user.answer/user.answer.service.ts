@@ -70,12 +70,16 @@ export class UserAnswerService extends BaseService {
       const categoryIds = [
         ...new Set(dto.data.map((d) => +d.questionCategory).filter(Boolean)),
       ];
+      // Зөвхөн эерэг бүхэл id — буруу форматтай ("05:00" → NaN г.м.) нэг утга
+      // integer[] query-г бүхэлд нь унагааж (22P02) бүх хариултыг 500 болгодог байсан.
+      // Ийм id lookup-д олдохгүй тул доорх safeAnswerId / safeMatrixId-аар null болно.
+      const validId = (x: any) => Number.isInteger(Number(x)) && Number(x) > 0 && Number(x) <= 2147483647;
       const answerIds = [
         ...new Set(
           dto.data
             .flatMap((d) => d.answers ?? [])
             .map((a) => a.answer)
-            .filter((x) => x != null && Number(x) > 0)
+            .filter((x) => x != null && validId(x))
             .map(Number),
         ),
       ];
@@ -84,7 +88,7 @@ export class UserAnswerService extends BaseService {
           dto.data
             .flatMap((d) => d.answers ?? [])
             .map((a) => a.matrix)
-            .filter((x) => x != null)
+            .filter((x) => x != null && validId(x))
             .map(Number),
         ),
       ];
@@ -114,6 +118,25 @@ export class UserAnswerService extends BaseService {
         categoryRows.map((c) => [Number(c.id), c.is_calculated]),
       );
 
+      // Өөр хэсгийн асуултын хариултыг (payload-ийн questionCategory ≠ асуултын өөрийн
+      // ангилал) алгасна. Хуучин web өмнөх хэсгүүдийн (аль хэдийн хадгалагдсан)
+      // хариултыг дараагийн хэсгийн ангиллаар, төрөлгүйгээр дахин илгээдэг байсан —
+      // тоо/хугацаа нь matrix болж ("05:00" → NaN) эвдэрдэг; бичвэл зөв мөрүүд obsolete
+      // гэж устаж, эвдэрсэн мөр орох эрсдэлтэй.
+      const data = dto.data.filter((d) => {
+        const q = questionMap.get(+d.question);
+        return (
+          !q ||
+          q.categoryId == null ||
+          Number(q.categoryId) === Number(d.questionCategory)
+        );
+      });
+      if (data.length < dto.data.length) {
+        console.warn(
+          `⚠️  userAnswer ${code}: өөр хэсгийн ${dto.data.length - data.length} хариултыг алгаслаа`,
+        );
+      }
+
       // --- Хэрэглэгч буцаж очоод хариултаа сольсон тохиолдолд хуучин мөрүүд DB-д
       // үлдэхгүй байх. Энэ submit-д ирсэн асуулт бүрт зөвхөн "одоогийн сонгосон"
       // (answer/matrix) хослолыг хадгална; өмнө хадгалагдсан ч одоо сонгоогүй
@@ -122,7 +145,7 @@ export class UserAnswerService extends BaseService {
       const submittedKeys = new Set<string>();
       const buildKey = (qid: number, aId: any, mId: any) =>
         `${qid}::${aId == null ? 'null' : Number(aId)}::${mId == null ? 'null' : Number(mId)}`;
-      for (const d of dto.data) {
+      for (const d of data) {
         const qid = +d.question;
         submittedQuestionIds.add(qid);
         if (!d.answers || d.answers.length === 0) {
@@ -196,7 +219,7 @@ export class UserAnswerService extends BaseService {
         }
       };
 
-      for (const d of dto.data) {
+      for (const d of data) {
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 

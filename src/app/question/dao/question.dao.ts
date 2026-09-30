@@ -164,11 +164,13 @@ export class QuestionDao {
       minValue: number;
       maxValue: number;
       settings: Record<string, any> | null;
+      categoryId: number | null;
     }[]
   > => {
     if (!ids.length) return [];
     return await this.db.query(
-      `SELECT id, type, "minValue" AS "minValue", "maxValue" AS "maxValue", settings
+      `SELECT id, type, "minValue" AS "minValue", "maxValue" AS "maxValue", settings,
+              "categoryId" AS "categoryId"
        FROM question WHERE id = ANY($1)`,
       [ids],
     );
