@@ -348,6 +348,7 @@ export class QuestionService {
           minValue: question.minValue,
           maxValue: question.maxValue,
           slider: question.slider,
+          settings: question.settings ?? null,
           point: question.point,
           orderNumber: question.orderNumber,
           file: question.file,

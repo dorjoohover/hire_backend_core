@@ -59,6 +59,7 @@ export class QuestionDao {
         'entity.minValue',
         'entity.maxValue',
         'entity.slider',
+        'entity.settings',
         'entity.orderNumber',
         'entity.file',
         'entity.point',
@@ -156,10 +157,18 @@ export class QuestionDao {
   // Олон асуултын min/max-ийг ганц query-ээр (batch preload).
   findMinMaxByIds = async (
     ids: number[],
-  ): Promise<{ id: number; minValue: number; maxValue: number }[]> => {
+  ): Promise<
+    {
+      id: number;
+      type: number;
+      minValue: number;
+      maxValue: number;
+      settings: Record<string, any> | null;
+    }[]
+  > => {
     if (!ids.length) return [];
     return await this.db.query(
-      `SELECT id, "minValue" AS "minValue", "maxValue" AS "maxValue"
+      `SELECT id, type, "minValue" AS "minValue", "maxValue" AS "maxValue", settings
        FROM question WHERE id = ANY($1)`,
       [ids],
     );

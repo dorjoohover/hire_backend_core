@@ -22,6 +22,7 @@ import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
 import { buildAssessmentScoring } from './assessment-scoring.config';
+import { numericAnswerError } from './numeric-answer';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -281,6 +282,11 @@ export class UserAnswerService extends BaseService {
           if (!Number.isFinite(point)) {
             point = null as any;
           }
+
+          // NUMBER / TIME: point = оруулсан утга — min/max, бүхэл тоо эсэхийг ИРСЭН
+          // утгаар шалгана (browser-ийн шалгалтыг тойрсон / хуучирсан утга DB-д орохгүй).
+          const numericError = numericAnswerError(question, answer.point);
+          if (numericError) throw message(numericError);
 
           // Validate FK references: skip non-existent answer/matrix IDs to
           // avoid FK violation when frontend sends stale IDs after admin edits.

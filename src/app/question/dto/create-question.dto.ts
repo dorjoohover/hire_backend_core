@@ -19,6 +19,8 @@ export class CreateQuestionDto {
   maxValue: number;
   @ApiProperty()
   slider: string;
+  @ApiProperty({ required: false, type: Object })
+  settings?: Record<string, any>;
   @ApiProperty()
   point?: number;
   @ApiProperty()

@@ -330,6 +330,11 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE "userService"
    ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
 
+  // NUMBER (90) / TIME (100) асуултын тохиргоо (min/max-аас бусад: бутархай, харуулах хэсэг,
+  // нэгж). Nullable, default-гүй → агшин зуур. hire_report энэ баганыг уншдаггүй.
+  `ALTER TABLE question
+   ADD COLUMN IF NOT EXISTS settings JSONB`,
+
   // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
   // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар
   // (`CREATE UNIQUE INDEX CONCURRENTLY`): ops/shared/examdetail-unique.sql.
