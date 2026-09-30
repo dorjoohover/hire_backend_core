@@ -41,6 +41,8 @@ export class AssessmentVariableEntity {
   // 'score' — НӨХЦӨЛТ хувьсагч: rules.source (нийт оноо / онооны хувь /
   // ангиллын оноо)-ийн утгыг rules.conditions-ийн дарааллаар шалгаж
   // эхний тохирсон нөхцөлийн текстийг (эсвэл rules.elseText) буцаана.
+  // 'formula' — ТОМЬЁО: rules = { expression, decimals } — {{question[id].point}},
+  // {{custom.<key>}} гэх мэтээс + - * / ( )-оор тоо бодно (GPAQ: өдөр × минут × МЕТ).
   @Column({ length: 20, nullable: true, default: 'map' })
   kind?: string;
 

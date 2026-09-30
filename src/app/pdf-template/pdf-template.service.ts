@@ -76,6 +76,8 @@ const SCORE_RULE_SOURCES = new Set([
   'group',
   'answerCategory',
   'answerCategoryAvg',
+  // Томьёо хувьсагчийн (kind='formula') тооцоолсон утга — source.category = тэр хувьсагчийн key.
+  'variable',
 ]);
 function normalizeScoreRules(rules: any): any | null {
   if (!rules || typeof rules !== 'object') return null;
@@ -97,13 +99,25 @@ function normalizeScoreRules(rules: any): any | null {
       category:
         sourceType.startsWith('category') ||
         sourceType.startsWith('answerCategory') ||
-        sourceType === 'group'
+        sourceType === 'group' ||
+        sourceType === 'variable'
           ? String(rules.source?.category ?? '')
           : undefined,
     },
     conditions,
     elseText: String(rules.elseText ?? ''),
   };
+}
+
+// Томьёо (kind='formula') хувьсагч — { expression, decimals }. expression нь
+// '{{question[12].point}} * {{question[13].point}} * 8 + {{custom.other}}' маягийн
+// + - * / ( ) илэрхийлэл (hire_report report-widgets.ts evalNumberExpression-оор бодогдоно).
+function normalizeFormulaRules(rules: any): { expression: string; decimals: number } | null {
+  if (!rules || typeof rules !== 'object') return null;
+  const expression = String(rules.expression ?? '').trim().slice(0, 5000);
+  if (!expression) return null;
+  const d = Math.round(Number(rules.decimals));
+  return { expression, decimals: Number.isFinite(d) ? Math.min(4, Math.max(0, d)) : 0 };
 }
 
 @Injectable()
@@ -137,8 +151,14 @@ export class PdfTemplateService {
     if (!assessmentId) {
       throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
     }
-    const varKind = kind === 'score' ? 'score' : 'map';
+    const varKind = kind === 'score' ? 'score' : kind === 'formula' ? 'formula' : 'map';
     let varRules: any = null;
+    if (varKind === 'formula') {
+      varRules = normalizeFormulaRules(rules);
+      if (!varRules) {
+        throw new HttpException('Томьёо хувьсагчид томьёо (expression) шаардлагатай.', HttpStatus.BAD_REQUEST);
+      }
+    }
     if (varKind === 'score') {
       varRules = normalizeScoreRules(rules);
       if (!varRules) {
@@ -158,7 +178,7 @@ export class PdfTemplateService {
       assessmentId,
       key,
       label,
-      varKind === 'score' ? {} : entries || {},
+      varKind === 'map' ? entries || {} : {},
       varKind,
       varRules,
     );
