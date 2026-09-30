@@ -65,7 +65,18 @@ function resolveCustomTokensDeep(value: any, entriesByKey: Map<string, Record<st
 // Нөхцөлт (kind='score') хувьсагчийн rules-ийг шалгаж цэвэрлэнэ —
 // hire_report/src/pdf/score-rules.ts evaluateScoreRules()-тэй ижил бүтэц.
 const SCORE_RULE_OPS = new Set(['<', '<=', '>', '>=', '=', 'between']);
-const SCORE_RULE_SOURCES = new Set(['total', 'percent', 'category', 'categoryPercent', 'categoryAvg', 'group']);
+// answerCategory / answerCategoryAvg — дэд бүлэг (хариултын ангилал, жиш матрицын мөр 'Тамхи')-ийн
+// нийт / дундаж оноо (hire_report score-rules.ts, studio lib/scoreRules.ts).
+const SCORE_RULE_SOURCES = new Set([
+  'total',
+  'percent',
+  'category',
+  'categoryPercent',
+  'categoryAvg',
+  'group',
+  'answerCategory',
+  'answerCategoryAvg',
+]);
 function normalizeScoreRules(rules: any): any | null {
   if (!rules || typeof rules !== 'object') return null;
   const sourceType = rules.source?.type;
@@ -84,7 +95,9 @@ function normalizeScoreRules(rules: any): any | null {
     source: {
       type: sourceType,
       category:
-        sourceType.startsWith('category') || sourceType === 'group'
+        sourceType.startsWith('category') ||
+        sourceType.startsWith('answerCategory') ||
+        sourceType === 'group'
           ? String(rules.source?.category ?? '')
           : undefined,
     },
