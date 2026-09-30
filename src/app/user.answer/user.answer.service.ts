@@ -23,6 +23,7 @@ import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
 import { buildAssessmentScoring } from './assessment-scoring.config';
 import { numericAnswerError } from './numeric-answer';
+import { matrixAnswerMeta } from './matrix-category';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -231,7 +232,10 @@ export class UserAnswerService extends BaseService {
           // (existByWriteKey)-аар оновчтой шийднэ — байгаа бол update, байхгүй
           // бол insert.
           const answerCategory = answer.matrix
-            ? matrixMetaMap.get(Number(answer.matrix))
+            ? matrixAnswerMeta(
+                matrixMetaMap.get(Number(answer.matrix)),
+                answerMetaMap.get(Number(answer.answer)),
+              )
             : !answer.answer && !is_calculated
               ? null
               : answerMetaMap.get(Number(answer.answer));
