@@ -4,6 +4,7 @@ import { PdfTemplateService } from './pdf-template.service';
 import { PdfTemplateDao } from './pdf-template.dao';
 import { AssessmentAiDataDao } from './assessment-ai-data.dao';
 import { AssessmentVariableDao } from './assessment-variable.dao';
+import { StudioIconDao } from './studio-icon.dao';
 import { QuestionModule } from '../question/question.module';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { QuestionDao } from '../question/dao/question.dao';
@@ -37,6 +38,7 @@ import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
     FileService,
     AssessmentAiDataDao,
     AssessmentVariableDao,
+    StudioIconDao,
     QuestionDao,
     AssessmentDao,
     AiAgentGuard,

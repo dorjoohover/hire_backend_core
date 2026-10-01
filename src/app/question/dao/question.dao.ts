@@ -92,10 +92,12 @@ export class QuestionDao {
       query.limit(limit);
     }
 
-    // Add ordering and execute the query
-    const res = await query
-      .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-      .getMany();
+    // Add ordering and execute the query. Shuffle-гүй үед admin дээр чирж тогтоосон
+    // дараалал (orderNumber) — өмнө нь id-аар (үүсгэсэн дарааллаар) эрэмбэлдэг байсан
+    // тул admin-д дарааллыг сольсон ч web-д хуучнаараа гардаг байв.
+    if (shuffle) query.orderBy('RANDOM()');
+    else query.orderBy('entity.orderNumber', 'ASC', 'NULLS LAST').addOrderBy('entity.id', 'ASC');
+    const res = await query.getMany();
 
     return res;
   };

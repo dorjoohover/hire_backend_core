@@ -366,7 +366,7 @@ export class PdfTemplateService {
       return { questionCategories: [], answerCategories: [] };
     }
     const [questionCategories, answerCategories] = await Promise.all([
-      this.questionCategoryDao.findByAssessmentId(assessmentId),
+      this.questionCategoryDao.findNumberedByAssessmentId(assessmentId),
       this.answerCategoryService.findByAssessment(assessmentId),
     ]);
     return {

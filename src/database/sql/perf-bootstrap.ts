@@ -173,6 +173,18 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE assessment_variable
    ADD COLUMN IF NOT EXISTS rules JSONB`,
 
+  // Studio-оос admin эрхээр өгөх ТУРШИЛТЫН шалгалт — тайлан хадгалахгүй (createReport
+  // дуудахгүй), Studio-д шууд PDF болгоод устгана. Тоонд оруулахгүйн тулд тэмдэглэгээ.
+  `ALTER TABLE exam ADD COLUMN IF NOT EXISTS "isPreview" BOOLEAN NOT NULL DEFAULT false`,
+
+  // Studio-ийн "Icon" сан — upload хийсэн icon-ууд (файл FileService-д, энд жагсаалт).
+  `CREATE TABLE IF NOT EXISTS studio_icon (
+    id SERIAL PRIMARY KEY,
+    key VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
   // "Тайлан уншаад гацдаг" гомдол: report_logs.status Postgres native enum
   // тул TS enum-д REPORT_STATUS.FAILED нэмсэн ч (src/base/constants.ts,
   // hire_report/src/base/constants.ts) DB-ийн enum type өөрөө шинэ утгыг

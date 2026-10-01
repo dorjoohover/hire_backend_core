@@ -374,11 +374,13 @@ export class UserAnswerService extends BaseService {
         // (сүлжээгээр) тул арын дэвсгэрт үлдээж, алдааг нь заавал барина —
         // өмнө нь catch-гүй байсан тул unhandled rejection үүсгэдэг байв.
         await this.examDao.endExam(dto.data[0].code);
-        this.report
-          .createReport({ code: dto.data[0].code })
-          .catch((error) =>
-            console.error('❌ createReport алдаа:', error?.message),
-          );
+        // Studio-ийн туршилтын шалгалт — тайлан үүсгэхгүй (Studio өөрөө PDF-ээр харуулаад устгана).
+        if (!(exam as any).isPreview)
+          this.report
+            .createReport({ code: dto.data[0].code })
+            .catch((error) =>
+              console.error('❌ createReport алдаа:', error?.message),
+            );
         return {
           visible: exam.visible,
         };
@@ -424,7 +426,7 @@ export class UserAnswerService extends BaseService {
       throw new HttpException('Тест олдсонгүй', HttpStatus.BAD_REQUEST);
 
     const claimed = await this.examDao.claimEnd(code);
-    if (claimed) {
+    if (claimed && !(exam as any).isPreview) {
       // Тайлан үүсгэх хүсэлт удаан (сүлжээ, 3 удаа retry) тул арын дэвсгэрт;
       // алдааг нь заавал барина (unhandled rejection болохгүй) — createReport нь
       // бүх оролдлого унавал өөрөө `FAILED` мөр бичдэг.
