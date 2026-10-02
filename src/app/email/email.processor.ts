@@ -5,15 +5,9 @@ import { EmailLogService } from '../email_log/email_log.service';
 import { EmailLogStatus } from 'src/base/constants';
 import { ResendService } from './resend.service';
 
-// BullMQ-ийн limiter нь Redis-ээр түгширсэн → бүх 3 core instance-ийн дунд хуваагдана.
-// Resend Pro = 10/sec, биднийх 8/sec (буфертэй).
 @Processor('email', {
-  concurrency: 3, // worker тус бүр зэрэг 3 job (3 instance × 3 = 9 зэрэг)
+  concurrency: 1, // email-д хангалттай
   lockDuration: 5 * 60 * 1000,
-  limiter: {
-    max: 8, // 🔥 БҮХ instance-ийн нийлбэр = 8 мэйл/sec
-    duration: 1000,
-  },
 })
 export class EmailProcessor extends WorkerHost {
   constructor(
@@ -21,6 +15,16 @@ export class EmailProcessor extends WorkerHost {
     private readonly maillog: EmailLogService,
   ) {
     super();
+  }
+  get workerOptions() {
+    return {
+      limiter: {
+        max: 1, // 👈
+        duration: 1000, // 👈 1 секундэд 1 job
+      },
+      // extra safety
+      drainDelay: 200,
+    };
   }
   async process(job: Job<EmailJobPayload>) {
     const { logId, to, subject, html, attachments } = job.data;
@@ -42,27 +46,27 @@ export class EmailProcessor extends WorkerHost {
       if (res.error) {
         console.log(res.error);
 
-        const code = res.error?.statusCode ?? 0;
-        // 🔴 429 (rate limit) эсвэл 5xx (Resend сервер унасан) → retry
-        const isTransient = code === 429 || (code >= 500 && code < 600);
-
-        if (isTransient) {
+        // 🔴 429 = retry later
+        if (res.error?.statusCode === 429) {
           await this.maillog.updateStatus({
             id: logId,
             status: EmailLogStatus.RETRYING,
-            error: `${code}: ${res.error.message}`,
+            error: res.error.message,
           });
-          // BullMQ-н exponential backoff-р автомат retry хийнэ
-          throw new Error(`TRANSIENT_${code}`);
+
+          // 👇 BullMQ өөрөө delay/backoff хийж retry хийнэ
+          throw new Error('RATE_LIMIT_429');
         }
 
-        // ❌ 4xx (invalid email гэх мэт permanent алдаа) → retry хийхгүй
-        await this.maillog.updateStatus({
-          id: logId,
-          status: EmailLogStatus.FAILED,
-          error: `${code}: ${res.error.message}`,
-        });
-        return;
+        // ❌ бусад алдаа
+        if (res.error) {
+          await this.maillog.updateStatus({
+            id: logId,
+            status: EmailLogStatus.FAILED,
+            error: res.error.message,
+          });
+          return;
+        }
       } else {
         await this.maillog.updateStatus({
           id: logId,

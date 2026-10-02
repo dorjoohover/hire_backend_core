@@ -20,6 +20,18 @@ const config = new DocumentBuilder()
     },
     'access-token',
   )
+  // AI agent-аас дуудагдах endpoint-уудад (жиш: pdf-template/ai-export/:code)
+  // зориулсан тогтмол API key (core/.env-ийн AI_AGENT_KEY, AiAgentGuard-аар
+  // шалгагдана) — Swagger UI-ийн баруун дээд "Authorize" товч дор энэ
+  // нэрээр (x-ai-agent-key) тусад нь орох талбар гарч ирнэ.
+  .addApiKey(
+    {
+      type: 'apiKey',
+      name: 'x-ai-agent-key',
+      in: 'header',
+    },
+    'ai-agent-key',
+  )
   .build();
 
 const options: SwaggerDocumentOptions = {

@@ -27,6 +27,7 @@ export class TransactionEntity {
 
   @ManyToOne(() => PaymentEntity, (exam) => exam.transactions, {
     nullable: true,
+    onDelete: 'CASCADE',
   })
   payment: PaymentEntity;
   @ManyToOne(() => UserServiceEntity, (service) => service.transactions, {

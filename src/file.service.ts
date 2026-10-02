@@ -18,6 +18,8 @@ import * as mime from 'mime-types';
 import { PassThrough } from 'stream';
 import { Response } from 'express';
 import axios from 'axios';
+import { resolveInside } from './utils/safe-path';
+import { isSafeMode, safeLog } from './utils/safe-mode';
 
 @Injectable()
 export class FileService {
@@ -52,6 +54,10 @@ export class FileService {
   //   });
   // }
   async massRenameWithReportPrefix() {
+    if (isSafeMode()) {
+      safeLog('S3 massRename алгасав');
+      return { success: false, message: 'SAFE_MODE: S3 өөрчлөлт хийгдээгүй' };
+    }
     let continuationToken: string | undefined;
 
     do {
@@ -153,6 +159,10 @@ export class FileService {
   }
 
   async dryRunRenameWithReportPrefix() {
+    if (isSafeMode()) {
+      safeLog('S3 dryRun алгасав');
+      return { success: false, message: 'SAFE_MODE: S3 уншилт хийгдээгүй' };
+    }
     let continuationToken: string | undefined;
     console.log('start');
     do {
@@ -194,6 +204,25 @@ export class FileService {
     };
   }
   async upload(key: string, ct: string, body) {
+    console.log(key);
+
+    // Local disk-рүү ЯМАГТ бичнэ — S3 амжилтгүй болсон ч (сүлжээ/эрх зэрэг
+    // шалтгаанаар) getFile()-ийн local unshtn уншилт ажиллаж чадах ёстой.
+    // Өмнө нь S3 upload-ын try/catch-ийн ДОТОР байрлаж байсан тул S3 throw
+    // хийвэл local бичилт бүр хийгдэхгүй өнгөрдөг байсан — Зураг блокийн
+    // upload хийсэн зураг "олдсонгүй" (404) болж харагдах шалтгаан нь энэ байсан.
+    try {
+      mkdirSync(this.localPath, { recursive: true });
+      const localFilePath = resolveInside(this.localPath, key);
+      writeFileSync(localFilePath, body);
+    } catch (error) {
+      console.log('local write failed', error);
+    }
+
+    if (isSafeMode()) {
+      safeLog('S3 upload алгасав (local uploads/-д л хадгалсан)', key);
+      return `${key}`;
+    }
     try {
       await this.s3
         .upload({
@@ -203,17 +232,13 @@ export class FileService {
           ContentType: ct,
         })
         .promise();
-
-      // Optional: Save locally
-      const localFilePath = join(this.localPath, key);
-      writeFileSync(localFilePath, body);
-
-      // Add public S3 URL
-      const fileUrl = `${key}`;
-      return fileUrl;
     } catch (error) {
-      console.log(error);
+      console.log('s3 upload failed', error);
     }
+
+    // Add public S3 URL
+    const fileUrl = `${key}`;
+    return fileUrl;
   }
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
@@ -243,6 +268,7 @@ export class FileService {
 
         results.push(fileUrl);
       }
+      console.log(results);
       return results;
     } catch (error) {
       console.log(error);
@@ -251,7 +277,7 @@ export class FileService {
   }
   async getFileBuf(filename: string): Promise<{ path: string; size: number }> {
     mkdirSync(this.localPath, { recursive: true });
-    const filePath = join(this.localPath, filename);
+    const filePath = resolveInside(this.localPath, filename);
 
     if (!existsSync(filePath)) {
       throw new NotFoundException('File not found');
@@ -261,18 +287,9 @@ export class FileService {
   }
   async getFile(filename: string): Promise<StreamableFile> {
     try {
-      // 1️⃣ URL decode (%20 → space)
-      const decodedName = decodeURIComponent(filename);
-
-      // 2️⃣ Path traversal хамгаалалт
-
-      const filePath = join(this.localPath, filename);
-
+      const filePath = resolveInside(this.localPath, filename);
       if (!existsSync(filePath)) {
-        console.log('File not found locally, trying S3:', decodedName);
-        const buffer = await this.downloadFromS3(decodedName);
-        if (!buffer) throw new Error('File not found in S3');
-        writeFileSync(filePath, buffer);
+        throw new NotFoundException('not found ');
       }
 
       const stream = createReadStream(filePath);
@@ -283,11 +300,12 @@ export class FileService {
         disposition: `inline; filename="${filename}"`,
       });
     } catch (error) {
-      console.error('GET FILE ERROR:', error);
+      console.log(error);
       throw error;
     }
   }
   private async downloadFromS3(key: string): Promise<Buffer | null> {
+    if (isSafeMode()) return null;
     try {
       // Upload дээрээ "report/<filename>" болгож хадгалсан бол энд тааруулна
       const finalKey = `${key}`;
@@ -342,11 +360,26 @@ export class FileService {
 
       if (e.code === 'ECONNRESET') {
         console.log('Retrying report fetch...');
-        return axios.get(`${process.env.REPORT}file/${filename}`, {
-          responseType: 'stream',
-          timeout: 30000,
-          headers: { Connection: 'close' },
-        });
+        // ⚠ Энэ retry дуудлага өмнө нь try/catch-гүй байсан тул амжилтгүй
+        // бол getReport()-оос catch-гүйгээр дээш шидэгдэж, requestPdf
+        // controller-т барихгүй, эцсийн хэрэглэгчид ил тод 500 болж
+        // харагддаг байсан. Одоо бусад алдаатай адил чимээгүй null буцаана
+        // — дуудагч тал (ExamController.requestPdf) үүнийг "File not
+        // found" 404 болгож зөв боловсруулна.
+        try {
+          return await axios.get(`${process.env.REPORT}file/${filename}`, {
+            responseType: 'stream',
+            timeout: 30000,
+            headers: { Connection: 'close' },
+          });
+        } catch (retryErr: any) {
+          console.error(
+            'REPORT FETCH RETRY ERROR:',
+            retryErr.code,
+            retryErr.message,
+          );
+          return null;
+        }
       }
 
       return null;

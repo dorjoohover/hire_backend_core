@@ -17,6 +17,8 @@ import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { ReportService } from 'src/app/report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { Role } from 'src/auth/guards/role/role.enum';
+import { REPORT_VIEW_GRACE_MINUTES } from 'src/base/constants';
+import { decidePublicReuse, PUBLIC_OPEN_REUSE_DAYS } from '../exam-resume';
 
 @Injectable()
 export class ExamDao {
@@ -96,9 +98,46 @@ export class ExamDao {
     await this.db.save({ ...res, job });
   };
 
+  /**
+   * Тайлангийн үзсэн тоог атомаар нэмэгдүүлнэ (monetization: үнэгүй харалт).
+   * `findOne` + `save` биш SQL UPDATE ашиглаж байгаа нь зэрэгцээ хүсэлт
+   * дээр тоолуур алдагдахаас сэргийлнэ.
+   */
+  incrementReportView = async (
+    code: string,
+    graceMinutes = REPORT_VIEW_GRACE_MINUTES,
+  ) => {
+    // Санамсаргүй refresh нэг "үнэгүй харалт"-ыг хэд хэдэн удаа
+    // зарцуулахгүйн тулд сүүлийн харалтаас хойш graceMinutes өнгөрсөн үед л
+    // тоолно (нэг "харалт" = нэг сеанс).
+    await this.db.query(
+      `UPDATE exam
+         SET "reportViewCount" = COALESCE("reportViewCount", 0) + 1,
+             "reportViewedAt" = NOW()
+       WHERE code = $1
+         AND ("reportViewedAt" IS NULL
+              OR "reportViewedAt" < NOW() - ($2 || ' minutes')::interval)`,
+      [String(code), String(graceMinutes)],
+    );
+  };
+
   endExam = async (code: string) => {
     const res = await this.db.findOne({ where: { code } });
     await this.db.save({ ...res, userEndDate: new Date() });
+  };
+
+  /**
+   * Тестийг ДУУСГАХЫГ атомар "эзэмшинэ": `userEndDate`-ийг зөвхөн хоосон байхад
+   * л тавина. `true` буцаасан ганц дуудлага л тайлан үүсгэнэ → давтан /
+   * зэрэг дуудлага (refresh, double click, retry) давхар `report_logs` үүсгэхгүй.
+   * (endExam нь тусдаа: exam олдохгүй үед хоосон мөр үүсгэж, огноог дарж бичдэг.)
+   */
+  claimEnd = async (code: string): Promise<boolean> => {
+    const result = await this.db.update(
+      { code, userEndDate: IsNull() },
+      { userEndDate: new Date() },
+    );
+    return (result.affected ?? 0) > 0;
   };
 
   findAll = async (assessmendId: number, email: string) => {
@@ -280,42 +319,34 @@ export class ExamDao {
       segment: row.segment ?? null,
     }));
 
-    const assessmentsRaw = await this.db
-      .createQueryBuilder('e')
-      .select('a.id', 'id')
-      .addSelect('a.name', 'name')
-      .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
-      .where('e."assessmentId" IS NOT NULL')
-      .groupBy('a.id')
-      .addGroupBy('a.name')
-      .orderBy('a.name', 'ASC')
-      .getRawMany();
+    // Metadata queries: parallel-аар ажиллуулна (дараалсан await-ийг арилгана)
+    const [assessmentsRaw, buyersRaw, countsRaw] = await Promise.all([
+      this.db
+        .createQueryBuilder('e')
+        .select('a.id', 'id')
+        .addSelect('a.name', 'name')
+        .leftJoin('assessment', 'a', 'a.id = e."assessmentId"')
+        .where('e."assessmentId" IS NOT NULL')
+        .groupBy('a.id')
+        .addGroupBy('a.name')
+        .orderBy('a.name', 'ASC')
+        .getRawMany(),
 
-    const assessments = assessmentsRaw.map((a) => ({
-      id: +a.id,
-      name: a.name,
-    }));
+      this.db
+        .createQueryBuilder('e')
+        .select('b.id', 'userId')
+        .addSelect('b."organizationName"', 'organizationName')
+        .leftJoin('userService', 'us', 'us.id = e."serviceId"')
+        .leftJoin('users', 'b', 'b.id = us."userId"')
+        .where('b.id IS NOT NULL')
+        .andWhere('b."organizationName" IS NOT NULL')
+        .andWhere(`TRIM(b."organizationName") <> ''`)
+        .groupBy('b.id')
+        .addGroupBy('b."organizationName"')
+        .orderBy('b."organizationName"', 'ASC')
+        .getRawMany(),
 
-    const buyersRaw = await this.db
-      .createQueryBuilder('e')
-      .select('b.id', 'userId')
-      .addSelect('b."organizationName"', 'organizationName')
-      .leftJoin('userService', 'us', 'us.id = e."serviceId"')
-      .leftJoin('users', 'b', 'b.id = us."userId"')
-      .where('b.id IS NOT NULL')
-      .andWhere('b."organizationName" IS NOT NULL')
-      .andWhere(`TRIM(b."organizationName") <> ''`)
-      .groupBy('b.id')
-      .addGroupBy('b."organizationName"')
-      .orderBy('b."organizationName"', 'ASC')
-      .getRawMany();
-
-    const buyers = buyersRaw.map((b) => ({
-      userId: +b.userId,
-      organizationName: b.organizationName,
-    }));
-
-    const countsRaw = await this.db
+      this.db
       .createQueryBuilder('e')
       .select([
         `
@@ -373,7 +404,11 @@ export class ExamDao {
     ) AS "lastMonth"
     `,
       ])
-      .getRawOne();
+      .getRawOne(),
+    ]);
+
+    const assessments = assessmentsRaw.map((a) => ({ id: +a.id, name: a.name }));
+    const buyers = buyersRaw.map((b) => ({ userId: +b.userId, organizationName: b.organizationName }));
 
     const counts = {
       today: +(countsRaw?.today || 0),
@@ -477,10 +512,22 @@ export class ExamDao {
     email: string,
     assId: number,
     pg: PaginationDto,
+    examStatus?: string,
   ) => {
     const page = Math.max(+(pg?.page ?? 1), 1);
     const limit = Math.max(+(pg?.limit ?? 20), 1);
     const normalizedSort = this.applyUserExamSort(pg?.sortBy, pg?.sortDir);
+
+    const examStatusList = examStatus ? examStatus.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const applyExamStatus = (qb: any) => {
+      if (!examStatusList.length) return;
+      const conditions = [];
+      if (examStatusList.includes('notStarted'))  conditions.push('(exam.userStartDate IS NULL AND exam.userEndDate IS NULL)');
+      if (examStatusList.includes('started'))     conditions.push('(exam.userStartDate IS NOT NULL AND exam.userEndDate IS NULL)');
+      if (examStatusList.includes('completed'))   conditions.push('(exam.userEndDate IS NOT NULL)');
+      if (conditions.length) qb.andWhere(`(${conditions.join(' OR ')})`);
+    };
+
     const query = this.db
       .createQueryBuilder('exam')
       .leftJoinAndSelect('exam.assessment', 'assessment')
@@ -492,6 +539,8 @@ export class ExamDao {
     if (assId !== 0) {
       query.andWhere('assessment.id = :assId', { assId });
     }
+
+    applyExamStatus(query);
 
     const sortColumn = Object.keys(normalizedSort.order)[0];
     query.orderBy(sortColumn, normalizedSort.sortDir);
@@ -545,6 +594,61 @@ export class ExamDao {
       },
     });
   };
+  // Public/QR урсгалаар давхар бүртгэлээс сэргийлэхэд ашиглана: тухайн
+  // service (QR)-д ижил email/phone-тэй сүүлийн N цагийн дотор үүссэн
+  // exam байгаа эсэхийг шалгана. Байвал шинээр үүсгэхгүй, тэрийг нь
+  // буцааж үргэлжлүүлүүлнэ.
+  //
+  // №3: дүрэм — дуусаагүй exam 7 хоног хүртэл үргэлжилнэ, дууссан нь 24 цаг (давхар квот зарцуулахгүй).
+  // Шийдвэр `decidePublicReuse` (цэвэр функц)-д; энд зөвхөн нэр дэвшигчдийг татна.
+  findByServiceAndContact = async (
+    serviceId: number,
+    email: string | null,
+    phone: string | null,
+    now: Date = new Date(),
+  ): Promise<{ code: string; finished: boolean } | null> => {
+    const rows = await this.findReuseCandidates(serviceId, email, phone);
+    return decidePublicReuse(rows, now);
+  };
+
+  findReuseCandidates = async (
+    serviceId: number,
+    email: string | null,
+    phone: string | null,
+    withinDays = PUBLIC_OPEN_REUSE_DAYS,
+  ) => {
+    if (!email && !phone) return [];
+
+    const qb = this.db
+      .createQueryBuilder('exam')
+      .select(['exam.id', 'exam.code', 'exam.createdAt', 'exam.userEndDate'])
+      .where('exam."serviceId" = :serviceId', { serviceId })
+      .andWhere(`exam."createdAt" >= NOW() - (:days || ' days')::interval`, {
+        days: withinDays,
+      });
+
+    if (email && phone) {
+      qb.andWhere(
+        '(LOWER(exam.email) = LOWER(:email) OR exam.phone = :phone)',
+        { email, phone },
+      );
+    } else if (email) {
+      qb.andWhere('LOWER(exam.email) = LOWER(:email)', { email });
+    } else {
+      qb.andWhere('exam.phone = :phone', { phone });
+    }
+
+    return await qb.orderBy('exam."createdAt"', 'DESC').limit(20).getMany();
+  };
+
+  /** №3: хэсгийн хугацааны серверийн эхлэлийг тэмдэглэнэ (updateByCode-ийн ЭЦСИЙН бичилт). */
+  setCategoryStart = async (id: number, categoryId: number, at: Date) => {
+    await this.db.query(
+      `UPDATE exam SET "categoryStartedAt" = $1, "categoryStartedFor" = $2 WHERE id = $3`,
+      [at, categoryId, id],
+    );
+  };
+
   findByCode = async (code: string | number) => {
     const res = await this.db.findOne({
       where: {
@@ -589,8 +693,16 @@ export class ExamDao {
     };
   };
 
-  query = async (q: string) => {
-    return await this.db.query(q);
+  query = async (q: string, params: any[] = []) => {
+    return await this.db.query(q, params);
+  };
+
+  getVisibleByCode = async (code: string) => {
+    const r = await this.db.query(
+      'SELECT visible FROM exam WHERE code = $1 LIMIT 1',
+      [String(code)],
+    );
+    return r[0];
   };
 
   // findQuartile = async (assessment: number, r: number) => {

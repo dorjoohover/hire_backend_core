@@ -111,6 +111,18 @@ export class QuestionCategoryDao {
     return res;
   };
 
+  // Олон category-ийн is_calculated-ийг ганц query-ээр (batch preload).
+  findIsCalculatedByIds = async (
+    ids: number[],
+  ): Promise<{ id: number; is_calculated: boolean }[]> => {
+    if (!ids.length) return [];
+    return await this.db.query(
+      `SELECT id, is_calculated AS "is_calculated"
+       FROM "questionCategory" WHERE id = ANY($1)`,
+      [ids],
+    );
+  };
+
   findByName = async (name: string) => {
     const res = await this.db.findOne({
       where: {

@@ -1,3 +1,9 @@
+// ⚠️ ЗААВАЛ ХАМГИЙН ЭХНИЙ IMPORT БАЙХ ЁСТОЙ.
+// Доорх бүх import-ууд (эцэстээ auth/constants.ts, base/constants.ts гэх мэт)
+// модулийн түвшинд `process.env`-ээс уншдаг тул `.env` үүнээс өмнө ачаалагдсан
+// байх шаардлагатай. Дэлгэрэнгүйг `src/load-env.ts`-ээс үзнэ үү.
+import './load-env';
+
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
@@ -8,7 +14,11 @@ import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { LoggingInterceptor } from './base/logging.intercepter';
 import { FileErrorLogService } from './base/error-log.service';
 import { json, urlencoded } from 'express';
+import { enforceSafeModeOrExit } from './utils/safe-mode';
 async function bootstrap() {
+  // SAFE_MODE=1 бөгөөд DB / Redis / REPORT local биш бол ЭНД зогсоно (Nest-ийн
+  // модулиуд Redis-д холбогдохоос өмнө).
+  enforceSafeModeOrExit();
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
@@ -62,7 +72,7 @@ async function bootstrap() {
   });
   app.useGlobalInterceptors(new LoggingInterceptor());
   const port = process.env.CORE_PORT || 5000;
-  // const port = 5050
+  // const port = 5051
   console.log(port)
   await app.listen(port, '0.0.0.0');
 

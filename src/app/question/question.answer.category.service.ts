@@ -16,6 +16,12 @@ export class QuestionAnswerCategoryService extends BaseService {
     return await this.dao.findAll();
   }
 
+  // Studio-ийн AI Data tab-д "Хариултын ангилал" (DISC-ийн D/i/S/C гэх мэт)
+  // сонголт харуулахад ашиглана.
+  public async findByAssessment(assessmentId: number) {
+    return await this.dao.findByAssessment(assessmentId);
+  }
+
   public async findOne(id: number) {
     return await this.dao.findOne(id);
   }

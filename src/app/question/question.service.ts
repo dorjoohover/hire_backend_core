@@ -24,6 +24,7 @@ import { QuestionAnswerEntity } from './entities/question.answer.entity';
 import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QuestionCategoryEntity } from './entities/question.category.entity';
+import { FormuleService } from '../formule/formule.service';
 
 @Injectable()
 export class QuestionService {
@@ -34,6 +35,7 @@ export class QuestionService {
     private questionAnswerMatrixDao: QuestionAnswerMatrixDao,
     private questionAnswerCategoryDao: QuestionAnswerCategoryDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private formuleService: FormuleService,
   ) {}
   public async create(dto: CreateQuestionDto) {
     return await this.questionDao.create(dto);
@@ -197,6 +199,30 @@ export class QuestionService {
     if (src.name.endsWith('copy')) throw new HttpException('Duplicated', 500);
     if (!src) throw new Error(`Assessment ${assessmentId} not found`);
 
+    // 1.1) Тайлангийн тооцооллын томьёо (formule) байвал тусад нь хуулж,
+    // шинэ FormulaEntity үүсгэнэ (эх болон шинэ assessment хоорондоо
+    // хамааралгүй, тус тусдаа засварлагдах ёстой тул адилхан id-г заахгүй)
+    let newFormuleId: number | undefined;
+    if (src.formule) {
+      const srcFormula = await this.formuleService.findOne(src.formule);
+      if (srcFormula) {
+        newFormuleId = await this.formuleService.create(
+          {
+            name: srcFormula.name,
+            formula: srcFormula.formula,
+            variables: srcFormula.variables,
+            groupBy: srcFormula.groupBy,
+            aggregations: srcFormula.aggregations,
+            filters: srcFormula.filters,
+            limit: srcFormula.limit,
+            order: srcFormula.order,
+            sort: srcFormula.sort,
+          } as any,
+          userId,
+        );
+      }
+    }
+
     // 2) Шинэ assessment үүсгэнэ
     const newAssessment = await this.assessmentDao.create({
       createdUser: userId,
@@ -218,7 +244,14 @@ export class QuestionService {
       questionCount: src.questionCount,
       questionShuffle: src.questionShuffle,
       type: src.type,
-    });
+      // "Ерөнхий мэдээлэл" таб-ын өмнө дутуу байсан талбарууд
+      blockNavigation: src.blockNavigation,
+      showResultOnComplete: src.showResultOnComplete,
+      // "Тайлан" таб-ын өмнө дутуу байсан талбарууд
+      report: src.report,
+      exampleReport: src.exampleReport,
+      formule: newFormuleId,
+    } as any);
 
     const newAssessmentId = newAssessment;
 
@@ -227,6 +260,14 @@ export class QuestionService {
 
     // 3) Хариултын категорийн map (хуучин id -> шинэ id), parent-тай бол бас зохицуулна
     const catIdMap = new Map<number, number>();
+
+    // 3.0) Асуултын категорийн map (хуучин questionCategory.id -> шинэ id).
+    // Доор qc давталтад бөглөгдөж, төгсгөлд assessment_formulas-ыг (HADS/
+    // DASS-21/Тархины ачаалал/WHOQOL-BREF шиг олон дэд-оноотой сорилуудын
+    // тооцооллын томьёо) шинэ category ID-үүд рүү зөв заалгаж хуулахад
+    // хэрэглэгдэнэ (эс тэгвэл эдгээр сорил duplicate хийсний дараа
+    // "асуулт алгассан" гэж тайланд гардаг байсан).
+    const qCatIdMap = new Map<number, number>();
 
     const ensureAnswerCategory = async (
       oldCat: any | null | undefined,
@@ -254,25 +295,63 @@ export class QuestionService {
     // for (const c of answerCategories) await ensureAnswerCategory(c);
 
     // 4) Асуултын категорийг хуулж, асуулт/хариулт/матрицыг нэг бүрчлэн үүсгэнэ
+    //
+    // ⚠️ АНХААРАХ ЗҮЙЛ (id-г хасахаас ГАДНА): `qc`/`question`/`answer` нь
+    // TypeORM-ээс relations-тайгаар (`answers`, `matrix`, `answers.category`,
+    // `answers.matrix`) ачаалагдсан ЭХ мөрүүд тул `{...qcRest}` /
+    // `{...questionRest}` / `{...answerRest}` гэж spread хийхэд `id`-г
+    // хассан ч дараах OneToMany relation массивууд бүтнээрээ (ЭХ
+    // мөрүүдийн бодит `id`-тай хамт) дотор нь үлдэж DTO-руу орсоор
+    // байсан юм:
+    //   - question.answers, question.matrix
+    //   - answer.matrix
+    // TypeORM `save()`-д ийм массив өгвол, `cascade: true` тохируулаагүй
+    // ч гэсэн OneToMany талын хүүхэд мөрүүдийн foreign key-г шинээр
+    // үүсгэсэн эцэг рүү УДИРДАЖ ШИНЭЧЛЭХ (`UPDATE ... SET "questionId" =
+    // <шинэ id>`) зан гаргадаг нь локал Postgres дээр SQL лог-оор
+    // баталгаажсан. Үүний улмаас хуулбарлах үед ЭХ questionAnswer/
+    // questionAnswerMatrix мөрүүд шинэ асуулт/хариулт руу "хулгайлагдаж",
+    // эх асуулт хариултгүй үлдэж, шинэ асуулт давхар хариулттай болж
+    // байсан нь "duplicate үүсгэхэд хариултууд үүсэхгүй байна" гэсэн
+    // алдааны жинхэнэ шалтгаан байв.
+    //
+    // Тиймээс доор `...spread` ашиглахгүйгээр зөвхөн шаардлагатай
+    // СКАЛЯР талбаруудыг тодорхой жагсаан (whitelist) дамжуулж, ямар ч
+    // relation объект/массив алдагдаж орохгүй байхаар бичив.
     for (const qc of questionCategories) {
       // эхлээд qc-т харьяалагдах асуултуудыг авчир
       const questions = await this.questionDao.findQuestions(qc.id);
 
-      // шинэ question category
+      // шинэ question category (зөвхөн скаляр талбарууд)
       const newQCat = await this.questionCategoryDao.create({
-        // qc-ээс зөвхөн зөвшөөрөгдсөн талбаруудыг шилжүүл
-        ...qc,
         name: qc.name,
+        value: qc.value,
+        duration: qc.duration,
+        orderNumber: qc.orderNumber,
+        status: qc.status,
+        url: qc.url,
+        sliced: qc.sliced,
         createdUser: userId,
         questionCount: questions.length,
         assessment: newAssessmentId,
       });
       const newQCatId = newQCat;
+      qCatIdMap.set(qc.id, newQCatId);
 
       // асуулт бүр
       for (const question of questions ?? []) {
         const newQ = await this.questionDao.create({
-          ...question,
+          name: question.name,
+          type: question.type,
+          level: question.level,
+          status: question.status,
+          minValue: question.minValue,
+          maxValue: question.maxValue,
+          slider: question.slider,
+          point: question.point,
+          orderNumber: question.orderNumber,
+          file: question.file,
+          required: question.required,
           category: newQCatId,
           createdUser: userId,
         });
@@ -284,7 +363,13 @@ export class QuestionService {
           const newCatId = await ensureAnswerCategory(answer.category);
 
           const newA = await this.questionAnswerDao.create({
-            ...answer,
+            value: answer.value,
+            point: answer.point,
+            orderNumber: answer.orderNumber,
+            file: answer.file,
+            correct: answer.correct,
+            reverse: answer.reverse,
+            negative: answer.negative,
             category: newCatId,
             question: newQId,
           });
@@ -293,7 +378,9 @@ export class QuestionService {
           const matrix = answer.matrix ?? [];
           for (const mrtx of matrix) {
             await this.questionAnswerMatrixDao.create({
-              ...mrtx,
+              value: mrtx.value,
+              point: mrtx.point,
+              orderNumber: mrtx.orderNumber,
               answer: newAId,
               category: newCatId,
               question: newQId,
@@ -302,6 +389,22 @@ export class QuestionService {
         }
       }
     }
+
+    // 5) Тайлангийн олон-дэд-ангилалт томьёог (assessment_formulas —
+    // HADS/DASS-21/Тархины хэт ачааллыг үнэлэх/WHOQOL-BREF шиг олон дэд
+    // оноотой сорилуудын тооцоолол яг эдгээр мөрөөр удирддаг) шинэ
+    // assessment рүү, дээрх qCatIdMap-аар шинэ category ID-үүд рүү дахин
+    // холбож хуулна. Үүнийг өмнө нь хийдэггүй байсан тул "Хуулах" товчоор
+    // duplicate хийсэн ийм төрлийн сорилын тайланд эдгээр дэд сорил "Оноо
+    // бүртгэгдээгүй (асуулт алгассан)" гэж гардаг байсан — FormuleDao-ийн
+    // getFormula() шинэ assessment дээр ямар ч assessment_formulas мөр
+    // олдоогүй тул хоосон буцаадаг байсан нь жинхэнэ шалтгаан.
+    await this.formuleService.copyAssessmentFormulas(
+      assessmentId,
+      newAssessmentId,
+      qCatIdMap,
+      userId,
+    );
 
     return newAssessment;
   }
@@ -340,26 +443,28 @@ export class QuestionService {
     category: number,
     answerShuffle: boolean,
     prevQuestions: number[],
+    /** №3: exam code гэх мэт — өгвөл асуулт / хариултын shuffle тогтвортой (reload-д өөрчлөгдөхгүй). */
+    seed?: string,
   ) {
     const questions = await this.questionDao.findByCategory(
       limit,
       shuffle,
       category,
       prevQuestions,
+      seed ? `${seed}:c${category}` : undefined,
     );
-    return Promise.all(
-      questions.map(async (question) => {
-        const answers = await this.questionAnswerDao.findByQuestion(
-          question.id,
-          answerShuffle,
-          false,
-        );
-        return {
-          question: question,
-          answers: answers,
-        };
-      }),
+    // Single batched query (mv_question_answer_full) instead of one
+    // join-heavy query per question.
+    const answersByQuestion = await this.questionAnswerDao.findByQuestionIds(
+      questions.map((q) => q.id),
+      answerShuffle,
+      false,
+      seed ? `${seed}:c${category}` : undefined,
     );
+    return questions.map((question) => ({
+      question: question,
+      answers: answersByQuestion.get(question.id) ?? [],
+    }));
   }
 
   public async findOne(id: number) {
@@ -367,34 +472,36 @@ export class QuestionService {
   }
   public async findOneByAssessment(id: number, isAdmin: boolean) {
     const categories = await this.questionCategoryDao.findByAssessment(id);
-    return await Promise.all(
-      categories.map(async (category) => {
-        let questions = await this.questionDao.findByCategory(
-          null,
-          false,
-          category.id,
-          [],
-        );
 
-        let res = await Promise.all(
-          questions.map(async (question) => {
-            let answers = await this.questionAnswerDao.findByQuestion(
-              question.id,
-              category.assessment.answerShuffle,
-              isAdmin,
-            );
-            return {
-              ...question,
-              answers: answers,
-            };
-          }),
-        );
-        return {
-          category: category,
-          questions: res,
-        };
-      }),
+    // Fetch each category's questions, then batch-load ALL answers
+    // (across every category) in a single mv_question_answer_full query
+    // instead of one join-heavy query per question.
+    const categoryQuestions = await Promise.all(
+      categories.map((category) =>
+        this.questionDao.findByCategory(null, false, category.id, []),
+      ),
     );
+
+    const allQuestionIds = categoryQuestions
+      .flat()
+      .map((q) => q.id)
+      .filter((qid) => qid != null);
+
+    // answerShuffle is the same per assessment, so just read it once.
+    const answerShuffle = categories[0]?.assessment?.answerShuffle ?? false;
+    const answersByQuestion = await this.questionAnswerDao.findByQuestionIds(
+      allQuestionIds,
+      answerShuffle,
+      isAdmin,
+    );
+
+    return categories.map((category, idx) => ({
+      category: category,
+      questions: categoryQuestions[idx].map((question) => ({
+        ...question,
+        answers: answersByQuestion.get(question.id) ?? [],
+      })),
+    }));
   }
 
   public async deleteAll() {

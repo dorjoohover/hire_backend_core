@@ -58,10 +58,14 @@ export class UserDao {
     email: string;
     password?: string;
     code?: string;
+    clearForget?: boolean;
   }) => {
     const res = await this._db.findOne({ where: { email: dto.email } });
+    if (!res) return;
     if (dto.password) await this._db.save({ ...res, password: dto.password });
     if (dto.code) await this._db.save({ ...res, forget: dto.code });
+    // OTP-г нэг удаа ашигласны дараа хүчингүй болгоно (replay-аас сэргийлнэ).
+    if (dto.clearForget) await this._db.save({ ...res, forget: null });
   };
 
   update = async (user: UpdateUserDto) => {
@@ -80,6 +84,24 @@ export class UserDao {
   delete = async (id: number) => {
     const res = await this._db.delete(id);
     return res;
+  };
+
+  /**
+   * №8: wallet-аас АТОМАР хасна (`UPDATE … WHERE wallet >= amount`). Хүрэлцэхгүй бол false, өөрчлөлтгүй.
+   * (Өмнө нь JWT-д хадгалагдсан хуучин wallet-аар шалгаж, read-modify-write-аар хасдаг тул зэрэг
+   * хүсэлтээр давхар зарцуулах боломжтой байсан.)
+   */
+  debitWallet = async (id: number, amount: number): Promise<boolean> => {
+    if (!Number.isFinite(amount) || amount < 0) return false;
+    if (amount === 0) return true;
+    const r = await this._db
+      .createQueryBuilder()
+      .update(UserEntity)
+      .set({ wallet: () => '"wallet" - :amt' })
+      .setParameter('amt', amount)
+      .where('id = :id AND "wallet" >= :amt', { id })
+      .execute();
+    return (r.affected ?? 0) > 0;
   };
 
   updateWallet = async (id: number, point: number) => {
@@ -146,6 +168,12 @@ export class UserDao {
         },
       ],
     });
+  };
+
+  /** Batch: нэг query-аар олон хэрэглэгч авна */
+  findByIds = async (ids: number[]) => {
+    if (!ids.length) return [];
+    return this._db.find({ where: { id: In(ids) } });
   };
 
   getByEmail = async (email: string) => {

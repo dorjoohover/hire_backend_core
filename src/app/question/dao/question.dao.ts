@@ -8,6 +8,7 @@ import {
 import { QuestionStatus } from 'src/base/constants';
 import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { QuestionCategoryDao } from './question.category.dao';
+import { stableShuffle } from '../../exam/exam-resume';
 
 @Injectable()
 export class QuestionDao {
@@ -42,6 +43,11 @@ export class QuestionDao {
     shuffle: boolean,
     category: number,
     prevQuestions: number[],
+    /**
+     * №3: seed өгвөл (shuffle=true үед) `RANDOM()`-ын оронд seed-тэй ТОГТВОРТОЙ эрэмбэ + limit.
+     * Шалгуулагч дундаас гараад буцаж ороход ижил асуулт, ижил дараалал гарна.
+     */
+    seed?: string,
   ) => {
     const query = this.db
       .createQueryBuilder('entity')
@@ -56,6 +62,7 @@ export class QuestionDao {
         'entity.orderNumber',
         'entity.file',
         'entity.point',
+        'entity.required',
       ])
       .where('entity.status = :status AND entity."categoryId" = :category', {
         status: QuestionStatus.ACTIVE,
@@ -68,6 +75,16 @@ export class QuestionDao {
     //     prevQuestions,
     //   });
     // }
+
+    // Тогтвортой shuffle: бүх идэвхтэй асуултыг id-аар авч (нэг хэсэгт ~10–100 мөр), JS-д seed-ээр
+    // эрэмбэлээд limit-ийг хэрэглэнэ.
+    if (shuffle && seed) {
+      const all = await query.orderBy('entity.id').getMany();
+      const ordered = stableShuffle(all, seed, (q) => q.id);
+      return limit !== null && limit !== undefined
+        ? ordered.slice(0, limit)
+        : ordered;
+    }
 
     // Conditionally add limit only if it's not null
     if (limit !== null) {
@@ -136,8 +153,16 @@ export class QuestionDao {
     return await this.db.query(query);
   };
 
-  q = async (q: string, params?: any[]) => {
-    return await this.db.query(q, params);
+  // Олон асуултын min/max-ийг ганц query-ээр (batch preload).
+  findMinMaxByIds = async (
+    ids: number[],
+  ): Promise<{ id: number; minValue: number; maxValue: number }[]> => {
+    if (!ids.length) return [];
+    return await this.db.query(
+      `SELECT id, "minValue" AS "minValue", "maxValue" AS "maxValue"
+       FROM question WHERE id = ANY($1)`,
+      [ids],
+    );
   };
 
   clear = async () => {

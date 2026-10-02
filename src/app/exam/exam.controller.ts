@@ -28,7 +28,7 @@ import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { createReadStream, createWriteStream, existsSync, mkdirSync } from 'fs';
 import type { Response as ExpressRes, Response } from 'express';
 import { UserEntity } from '../user/entities/user.entity';
-import { Roles } from 'src/auth/guards/role/role.decorator';
+import { ADMINS, Roles } from 'src/auth/guards/role/role.decorator';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { UpdateDateDto } from '../user.service/dto/update-user.service.dto';
 import { PassThrough } from 'stream';
@@ -41,6 +41,7 @@ import { Pagination } from 'src/base/decorator/pagination.decorator';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { ReportService } from '../report/report.service';
 import { REPORT_STATUS } from 'src/base/constants';
+import { ReportAccessService } from '../report-access/report-access.service';
 
 @Controller('exam')
 @ApiBearerAuth('access-token')
@@ -51,6 +52,7 @@ export class ExamController {
     private readonly examService: ExamService,
     private readonly report: ReportService,
     private readonly file: FileService,
+    private readonly reportAccess: ReportAccessService,
   ) {
     if (!existsSync(this.cachePath)) {
       mkdirSync(this.cachePath, { recursive: true });
@@ -101,22 +103,34 @@ export class ExamController {
     const role = user?.['role'];
     const filename = `report-${code}.pdf`;
 
+    // 💰 Monetization: "PDF татахад төлбөртэй" / "нэг удаа үнэгүй" дүрэм.
+    const access = await this.reportAccess.resolve(code, user);
+    if (!access.canDownload) {
+      console.log(
+        `💰 [paywall/pdf] code=${code} reason=${access.reason} ` +
+          `pdfPaid=${access.pdfPaid} free=${access.usedViews}/${access.freeViews} ` +
+          `role=${user?.['role'] ?? '-'}`,
+      );
+      throw new HttpException(
+        access.pdfPaid
+          ? 'Тайлангийн PDF татахын тулд төлбөр төлнө үү.'
+          : 'Үнэгүй харах эрх дууссан байна. Тайланг дахин харахын тулд төлбөр төлнө үү.',
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+
     const doc = await this.examService.getPdf(code, role);
+    await this.examService.getExamInfoByCode(code, user);
 
     if (doc) {
-      const response = await this.file.getReport(filename);
-      await this.examService.getExamInfoByCode(
-        code,
-        user,
-        response != null && response?.status === 200,
-      );
       const report = await this.report.getByCode(code);
-      // if(!report) throw new HttpException('Тайлан олдсонгүй...', 404);
       if (
         !report ||
         report.status === REPORT_STATUS.SENT ||
         report.status === REPORT_STATUS.COMPLETED
       ) {
+        const response = await this.file.getReport(filename);
+
         if (!response) {
           throw new HttpException('File not found', 404);
         }
@@ -125,10 +139,22 @@ export class ExamController {
           'Content-Type',
           String(response.headers['content-type'] || 'application/pdf'),
         );
-        res.setHeader(
-          'Content-Disposition',
-          String(`inline; filename="${filename}"`),
-        );
+        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+        // 💰 Тайланг PDF-ээр нээх нь ч бас "нэг харалт".
+        //
+        // ⚠️ Өмнө нь харалтыг ЗӨВХӨН `GET /exam/exam/:code` (дэлгэц дээрх үр
+        // дүн) дээр тоолдог байсан. Гэтэл тест дуусмагц гарах Completion
+        // дэлгэц нь хэрэглэгчийг ШУУД "Тайлан татах" (энэ endpoint) руу
+        // чиглүүлдэг. Иймд ердийн урсгалаар явсан хэрэглэгчийн тоолуур 0
+        // хэвээр үлдэж, үнэгүй эрх нь хэзээ ч зарцуулагдахгүй, 30 минут
+        // өнгөрсөн ч paywall гардаггүй байв.
+        //
+        // `registerView` нь дотроо хамгаалалттай: paywall унтраалттай,
+        // төлбөр төлсөн, эсвэл үнэгүй эрх аль хэдийн дууссан үед юу ч
+        // хийхгүй. Мөн 30 минутын сеансын цонх үйлчилнэ — дэлгэц дээр
+        // хараад дараа нь PDF татах нь НЭГ л харалтад тооцогдоно.
+        await this.reportAccess.registerView(code, access);
 
         response.data.pipe(res);
         return;
@@ -142,53 +168,140 @@ export class ExamController {
         throw new HttpException('Тайлан бодож эхэлсэн...', 202);
       } else if (report.status === REPORT_STATUS.PENDING) {
         throw new HttpException('Тайлан хүлээгдэж байна...', 202);
+      } else if (report.status === REPORT_STATUS.FAILED) {
+        // Worker талд 3 удаагийн retry (app.module.ts) бүгд амжилтгүй болсон
+        // тохиолдол. 202 буцаагаад мөнхөд client-ээр polling хийлгэхийн оронд
+        // тодорхой алдаа өгч, front-ээс "дахин оролдох" харуулах боломж олгоно.
+        throw new HttpException(
+          'Тайлан боловсруулахад алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
+          500,
+        );
       }
-      res.setHeader(
-        'Content-Type',
-        String(response.headers['content-type'] || 'application/pdf'),
-      );
-      res.setHeader('Content-Disposition', String(`inline; filename="${filename}"`));
-
-      response.data.pipe(res);
-      return;
     }
   }
 
-  @Public()
+  // 0.3(b): урьд нь @Public() байсан — хэн ч дурын кодын үр дүнг устгаж дахин
+  // бодуулах/PDF татах боломжтой байв. Одоо зөвхөн админ (Bearer token).
+  @ADMINS()
   @Get('/recalculate/:code')
   async recalculate(@Param('code') code: string) {
+    // №14: DEPRECATED — POST /ops/report/:code/recalculate (аудит + давхар job хамгаалалттай).
+    console.warn(
+      `⚠️ DEPRECATED GET /exam/recalculate/${code} → POST /ops/report/${code}/recalculate ашиглана уу`,
+    );
     await this.examService.deleteResult(code);
     const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
     return result.data;
   }
 
-  @Public()
+  @ADMINS()
   @Get('/regenerate/:code')
   async regenerate(@Param('code') code: string, @Res() res: Response) {
+    // №14: DEPRECATED — POST /ops/report/:code/regenerate.
+    console.warn(
+      `⚠️ DEPRECATED GET /exam/regenerate/${code} → POST /ops/report/${code}/regenerate ашиглана уу`,
+    );
+    res.setHeader('Deprecation', 'true');
     const url = `${process.env.REPORT}test/${code}`;
     const response = await axios.get(url, {
       responseType: 'stream',
     });
 
-    res.setHeader('Content-Type', String(response.headers['content-type']));
-    res.setHeader('Content-Disposition', String(response.headers['content-disposition']));
+    res.setHeader(
+      'Content-Type',
+      String(response.headers['content-type'] || 'application/pdf'),
+    );
+    res.setHeader(
+      'Content-Disposition',
+      String(response.headers['content-disposition'] || ''),
+    );
     res.setHeader('Cache-Control', 'no-store');
 
     response.data.pipe(res);
   }
 
+  /**
+   * Шалгуулагчийн эрхийг сэргээх (session recovery) endpoint.
+   * Тест ДУУССАН эсэхээс үл хамааран token олгоно — ингэснээр хэрэглэгч
+   * тестээ дуусгасны дараа хуудсаа refresh хийхэд, эсвэл тайлангийн линкээ
+   * дахин нээхэд өөрийн эрхээрээ буцаж орж, тайлангаа харах боломжтой.
+   */
+  @Public()
+  @Get('access/:code')
+  @ApiParam({ name: 'code' })
+  async examAccess(@Param('code') code: string) {
+    const access = await this.examService.getExamAccess(code);
+
+    let report: any = null;
+    try {
+      report = await this.report.getStatus(code);
+    } catch (error) {
+      console.error('❌ examAccess report status алдаа:', error?.message);
+    }
+
+    return {
+      ...access,
+      report: report
+        ? { status: report.status, progress: report.progress ?? 0 }
+        : null,
+    };
+  }
+
+  /**
+   * Сошиал сүлжээнд хуваалцах зургийг (OG image) үүсгэхэд шаардлагатай
+   * ХЯЗГААРЛАГДМАЛ дата. Тайлангийн paywall энд хамаарахгүй, мөн үнэгүй
+   * харалтыг ТООЛОХГҮЙ — эс бөгөөс Facebook-ийн crawler хэрэглэгчийн
+   * үнэгүй харалтыг зарцуулчихна.
+   */
+  @Public()
+  @Get('share/:code')
+  @ApiParam({ name: 'code' })
+  async getShareInfo(@Param('code') code: string) {
+    const info: any = await this.examService.getExamInfoByCode(code);
+    if (!info) {
+      throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
+    }
+    return {
+      assessmentName: info.assessmentName,
+      firstname: info.firstname,
+      lastname: info.lastname,
+      icons: info.icons,
+      type: info.type,
+      point: info.point,
+      total: info.total,
+      result: info.result,
+      value: info.value,
+    };
+  }
+
   @Public()
   @Get('exam/:code')
   @ApiParam({ name: 'code' })
-  async getExamInfo(@Param('code') code: string) {
+  async getExamInfo(@Param('code') code: string, @Request() { user }) {
     try {
-      const examInfo = await this.examService.getExamInfoByCode(code);
+      // 💰 Monetization: үнэгүй харах эрх дууссан бол дата буцаахгүй,
+      // харин front-д paywall харуулах мэдээллийг буцаана.
+      const access = await this.reportAccess.resolve(code, user);
+
+      // Paywall-ийн шийдвэрийг ил гаргана — "яагаад төлбөр нэхэж/нэхэхгүй
+      // байна вэ?" гэдгийг таамаглахгүйгээр core.log-оос шууд харна.
+      console.log(
+        `💰 [paywall] code=${code} reason=${access.reason} ` +
+          `paywall=${access.paywall} free=${access.usedViews}/${access.freeViews} ` +
+          `session=${access.withinFreeSession} canView=${access.canView} ` +
+          `canDownload=${access.canDownload} role=${user?.role ?? '-'}`,
+      );
+
+      // №6: үр дүн ХЭЗЭЭ Ч түгжигдэхгүй (`access.canView` үргэлж true). Төлбөр зөвхөн дэлгэрэнгүй тайлан (PDF).
+      const examInfo = await this.examService.getExamInfoByCode(code, user);
 
       if (!examInfo) {
         throw new HttpException('Exam not found', HttpStatus.NOT_FOUND);
       }
 
-      return examInfo;
+      // №6: харалтыг ЗӨВХӨН PDF endpoint тоолно — үнэгүй үр дүн харах нь (хуучин N-удаагийн горимын)
+      // үнэгүй PDF эрхийг зарцуулахгүй.
+      return { ...examInfo, locked: false, access };
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to retrieve exam info';
@@ -198,7 +311,8 @@ export class ExamController {
     }
   }
 
-  /** Байгууллага хэрэглэгчдээ зориулж QR гаргах (code-оор). */
+  // Байгууллага хэрэглэгчдээ зориулж QR гаргах. Клиент QR уншаад
+  // и-мэйлгүйгээр тест өгнө.
   @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
   @Get('qr/:code')
   @ApiParam({ name: 'code' })

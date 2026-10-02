@@ -37,7 +37,11 @@ export class AssessmentDao {
         statusCondition = status;
       }
     } else {
-      statusCondition = Not(AssessmentStatus.ONLY);
+      // Тодорхой status заагаагүй үед (нийтэд харагдах жагсаалт: нүүр
+      // хуудасны "шинээр нэмэгдсэн" гэх мэт) ARCHIVE болон ONLY хоёуланг
+      // нь хасна — эс тэгвэл дөнгөж үүсгээд архивт байгаа (нийтэд
+      // хараахан гараагүй) тест шууд нийтэд харагдаж эхэлнэ.
+      statusCondition = Not(In([AssessmentStatus.ARCHIVE, AssessmentStatus.ONLY]));
     }
 
     const [items, total] = await this.db.findAndCount({
@@ -104,7 +108,7 @@ export class AssessmentDao {
     });
     return data;
   };
-  findAll = async (pg: PaginationDto) => {
+  findAll = async (pg: PaginationDto, showAll = false) => {
     const whereCondition: any = {};
     if (pg.type) {
       whereCondition.type = pg.type;
@@ -122,7 +126,7 @@ export class AssessmentDao {
         whereCondition.status = pg.status;
       }
     } else {
-      if (!pg.owners?.length) {
+      if (!showAll && !pg.owners?.length) {
         whereCondition.status = Not(AssessmentStatus.ONLY);
       }
     }
@@ -259,10 +263,25 @@ export class AssessmentDao {
       });
     }
 
+    // ⚠️ SQL injection: `sortBy` нь @Public `GET /assessment/new` endpoint-ийн
+    // query параметрээс шууд ирж, `a.${sortBy}` гэж ORDER BY-д шигдэж байсан
+    // (TypeORM orderBy нь параметржүүлдэггүй, түүхий SQL болгодог). Одоо
+    // зөвхөн зөвшөөрөгдсөн баганы жагсаалтаас сонгоно.
+    const allowedSorts: Record<string, string> = {
+      createdAt: 'a.createdAt',
+      updatedAt: 'a.updatedAt',
+      price: 'a.price',
+      name: 'a.name',
+      status: 'a.status',
+      type: 'a.type',
+    };
+    const safeDir: 'ASC' | 'DESC' =
+      `${sortDir ?? 'DESC'}`.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const isComputedSort = sortBy === 'completeness' || sortBy === 'count';
 
-    if (!isComputedSort) {
-      query.orderBy(`a.${sortBy}`, sortDir);
+    if (!isComputedSort && allowedSorts[sortBy]) {
+      query.orderBy(allowedSorts[sortBy], safeDir);
     } else {
       query.orderBy('a.createdAt', 'DESC');
     }

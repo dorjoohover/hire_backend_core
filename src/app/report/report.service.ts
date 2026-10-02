@@ -9,11 +9,6 @@ import { ModuleRef } from '@nestjs/core';
 import { REPORT_STATUS } from 'src/base/constants';
 import axios from 'axios';
 import { ReportLogDao } from './report.log.dao';
-import http from 'http';
-const agent = new http.Agent({
-  keepAlive: false, // 👈 маш чухал
-  maxSockets: 50,
-});
 
 @Injectable()
 export class ReportService {
@@ -28,20 +23,74 @@ export class ReportService {
     this.userAnswer = this.moduleRef.get(UserAnswerService, { strict: false });
   }
   async createReport(data: any, role?: number) {
-    try {
-      await axios.post(
-        this.REPORT,
-        { ...data, role },
-        {
-          httpAgent: agent,
-          timeout: 20000, // 20 сек
-          headers: {
-            'Content-Type': 'application/json',
+    const { code } = data || {};
+    // ⚠️ 2026-09-28: 3 оролдлого x 10с timeout (1.5с/3с backoff-той, нийт ~34.5с) хэт
+    // богино болсныг илрvvлэв — hire_report (report-1/report-2) нь concurrency:1 тул
+    // тухайн container PDF бичиж байх vед (одоо 48-64с хvртэл vргэлжилж болдог) ӨӨРИЙН
+    // event loop-оороо шинэ HTTP хvсэлт (яг энэ createReport дуудлага) хvлээж авч чадахгvй
+    // болдог тул, хоёр instance хоёул завгvй vед 34.5с дотор аль нэг нь суллагдахгvй байх
+    // магадлал өндөр — тэгвэл createReport бvрмөсөн FAILED болж (`core-failed-*` мөр),
+    // BullMQ рvv ХЭЗЭЭ Ч орохгvй тайлан бvрмөсөн алга болдог (нотолгоо: 2026-09-27 load
+    // test vед 11 core-failed мөр vvссэн). Иймд оролдлого/хугацааг нэмж, дор хаяж нэг
+    // instance суллагдах хvртэл хvлээх боломж vлдээв.
+    // ⏱️ 2026-09-28: pipeline stage-timing — hire_report рvv дамжуулахаас
+    // ӨМНӨх саатлыг (endExam дуудагдсанаас createReport энд орж ирэх хvртэл,
+    // мөн доорх retry loop-ийн backoff-той хамт) хэмжихийн тулд НЭГ л удаа,
+    // retry эхлэхээс ӨМНӨ тэмдэглэнэ. hire_report (app.service.ts) энэ утгыг
+    // хvлээж аваад "handoff" stage-ыг логлодог.
+    const examFinishedAt = Date.now();
+    const maxAttempts = 6;
+    let lastError: any = null;
+
+    // ⚠️ FIX (2026-09-12): өмнө нь 1 удаа л оролддог, амжилтгүй бол зөвхөн
+    // console.error-т бичээд өнгөрдөг байсан тул hire_report түр
+    // хүрэлцэхгүй байх богино мөчид (жишээ нь healthcheck.sh-ийн
+    // auto-restart цонх) таарвал тэр тайлан ХЭЗЭЭ Ч үүсгэхгүй, ямар ч
+    // ул мөргүй мөнхед алга болдог байсан (нотолгоо: 2 бодит
+    // production кейс, 1 нь 19 хоног ийм байдалтайгаар олдсон).
+    // Одоо timeout-той, богино backoff-той 3 удаа дахин оролдно.
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await axios.post(
+          this.REPORT,
+          { ...data, role, examFinishedAt },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            timeout: 15_000,
           },
-        },
-      );
-    } catch (err) {
-      console.error('Report error:', err.message, data.code);
+        );
+        return;
+      } catch (err) {
+        lastError = err;
+        console.error(
+          `❌ createReport: report руу хүсэлт илгээхэд алдаа гарлаа (оролдлого ${attempt}/${maxAttempts}, REPORT=${this.REPORT}):`,
+          (err as any)?.response?.status,
+          (err as any)?.message,
+        );
+        if (attempt < maxAttempts) {
+          await new Promise((r) => setTimeout(r, attempt * 3000));
+        }
+      }
+    }
+
+    if (code) {
+      try {
+        await this.dao.create({
+          id: `core-failed-${code}-${Date.now()}`,
+          code,
+          role: role ?? Role.admin,
+          status: REPORT_STATUS.FAILED,
+          progress: 0,
+          error: `createReport ${maxAttempts} оролдлого амжилтгүй: ${lastError?.message ?? 'unknown'}`,
+        });
+      } catch (e) {
+        console.error(
+          '❌ createReport: FAILED мөр бичихэд алдаа гарлаа:',
+          (e as any)?.message,
+        );
+      }
     }
   }
 
@@ -70,16 +119,26 @@ export class ReportService {
       report.status == REPORT_STATUS.COMPLETED &&
       report.code
     ) {
-      this.sendMail(report.code);
+      // ⚠️ Энэ нь awaitлагдаагүй "floating promise". Дотор нь алдаа гарвал
+      // Node 15+ дээр unhandled rejection → процесс унах эрсдэлтэй байсан
+      // (public/QR тестийн exam.user = null үед sendEmail дотор
+      // `const { email } = user` TypeError өгдөг байсан). Тайлангийн төлөв
+      // буцаах нь мэйл илгээхээс хамаарах ёсгүй тул энд catch хийнэ.
+      this.sendMail(report.code).catch((error) =>
+        console.error('❌ sendMail алдаа:', error?.message),
+      );
     }
     return report;
   }
 
   async sendMail(code: string) {
-    const prev = await this.dao.getOne(code);
-    if (prev.status != REPORT_STATUS.SENT) {
-      await this.dao.updateByCode(code, { status: REPORT_STATUS.SENT });
-      await this.userAnswer.sendEmail(code);
-    }
+    // ⚠️ Өмнө нь `status != SENT` бол (WRITING, FAILED … ч гэсэн) SENT болгож
+    // мэйл илгээдэг байсан тул `report/mail/:code`-г дуудсан хэн ч бэлэн болоогүй
+    // тайланг "SENT" болгож төлөв эвдэж чаддаг, зэрэг ирсэн 2 дуудлага давхар
+    // мэйл илгээж болдог байв. Одоо зөвхөн COMPLETED → SENT-ийг атомар авсан
+    // ганц дуудлага илгээнэ.
+    const claimed = await this.dao.claimSent(code);
+    if (!claimed) return;
+    await this.userAnswer.sendEmail(code);
   }
 }

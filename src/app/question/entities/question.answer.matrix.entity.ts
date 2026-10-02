@@ -29,6 +29,7 @@ export class QuestionAnswerMatrixEntity {
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,
     (category) => category.questionAnswers,
+    { onDelete: 'CASCADE' },
   )
   category: QuestionAnswerCategoryEntity;
 

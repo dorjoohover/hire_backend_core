@@ -193,7 +193,7 @@ export class QuestionController {
   @Roles(Role.admin, Role.super_admin, Role.tester)
   @Get('copy/:id')
   copy(@Param('id') id: string, @Req() { user }) {
-    return this.questionService.copy(+id, user.role);
+    return this.questionService.copy(+id, user.id);
   }
   // @Public()
   // @Roles(Role.admin)

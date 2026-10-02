@@ -55,7 +55,16 @@ export class UserServiceController {
   @Public()
   // @Roles(Role.organization)
   async sendCodeToEmail(@Body() dto: SendLinkToEmails) {
-    return await this.userServiceService.sendLinkToMail(dto);
+    try {
+      const result = await this.userServiceService.sendLinkToMail(dto);
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message || 'Failed to send invites',
+        status: error?.status,
+      };
+    }
   }
 
   @Post('exam')
@@ -117,6 +126,7 @@ export class UserServiceController {
       code,
       +user['id'],
       user['email'],
+      +user['role'],
     );
   }
 
@@ -132,12 +142,14 @@ export class UserServiceController {
     @Param('id') id: string,
     @Pagination() pg: PaginationDto,
     @Request() { user },
+    @Query('examStatus') examStatus?: string,
   ) {
     return this.userServiceService.findInvitedByUser(
       +id,
       +user['id'],
       user['email'],
       pg,
+      examStatus,
     );
   }
 
@@ -148,12 +160,16 @@ export class UserServiceController {
     @Param('id') id: string,
     @Pagination() pg: PaginationDto,
     @Request() { user },
+    @Query('status') status?: string,
+    @Query('examStatus') examStatus?: string,
   ) {
     return this.userServiceService.findByUser(
       +id,
       +user['id'],
       user['email'],
       pg,
+      status !== undefined ? +status : undefined,
+      examStatus,
     );
   }
 
@@ -162,13 +178,80 @@ export class UserServiceController {
     return this.userServiceService.findOne(+id);
   }
 
+  /**
+   * Байгууллагын үйлчилгээнд зориулсан public QR код үүсгэнэ.
+   * QR-ийг уншсан хэн ч бүртгэл хийгээд тест эхлүүлэх боломжтой.
+   */
   @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
   @Get(':id/public-qr')
   @ApiParam({ name: 'id' })
-  getPublicQr(@Param('id') id: string, @Request() { user }) {
-    return this.userServiceService.generatePublicQr(+id, +user['id']);
+  getPublicQr(
+    @Param('id') id: string,
+    @Request() { user },
+    @Query('expires') expires?: string,
+  ) {
+    return this.userServiceService.generatePublicQr(
+      +id,
+      { id: +user['id'], role: +user['role'] },
+      expires,
+    );
   }
 
+  /**
+   * №6: service бүрийн "дууссаны дараа үр дүн харуулах" тохиргоо (assessment-ийг глобалаар өөрчлөхгүй).
+   * Body: { showResult: boolean | null } — null = assessment-ийн default.
+   */
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Patch(':id/show-result')
+  @ApiParam({ name: 'id' })
+  setShowResult(
+    @Param('id') id: string,
+    @Body() body: { showResult?: boolean | null },
+    @Request() { user },
+  ) {
+    return this.userServiceService.setShowResult(
+      +id,
+      body?.showResult === undefined ? undefined : body.showResult,
+      { id: +user['id'], role: +user['role'] },
+    );
+  }
+
+  /**
+   * №8: "Эрх нэмэх". Байгууллага (эзэмшигч) — wallet-аас атомар хасна; admin / super_admin — үнэгүй (гараар, аудиттай).
+   * Body: { count: number }.
+   */
+  @Roles(Role.organization, Role.admin, Role.super_admin)
+  @Post(':id/topup')
+  @ApiParam({ name: 'id' })
+  topUp(
+    @Param('id') id: string,
+    @Body() body: { count?: number },
+    @Request() { user },
+  ) {
+    return this.userServiceService.topUp(+id, body?.count, {
+      id: +user['id'],
+      role: +user['role'],
+    });
+  }
+
+  /**
+   * Public хуудаснаас шалгалтын нэр, байгууллагын нэрийг авна (нэвтрэлтгүй).
+   */
+  @Public()
+  @Get(':id/public-info')
+  @ApiParam({ name: 'id' })
+  getPublicInfo(
+    @Param('id') id: string,
+    @Query('expires') expires?: string,
+    @Query('sig') sig?: string,
+  ) {
+    return this.userServiceService.getPublicServiceInfo(+id, { expires, sig });
+  }
+
+  /**
+   * Public QR уншиж ирсэн хэрэглэгч мэдээллээ оруулаад шинэ шалгалт эхлүүлнэ.
+   * Нэвтрэлт шаардахгүй (нийтэд нээлттэй).
+   */
   @Public()
   @Post(':id/public-register')
   @ApiParam({ name: 'id' })
@@ -180,8 +263,15 @@ export class UserServiceController {
       lastname: string;
       email?: string;
       phone?: string;
+      // №8: хугацаатай QR-ийн гарын үсэгтэй параметрүүд (URL-аас дамжина)
+      expires?: string | number;
+      sig?: string;
     },
   ) {
-    return this.userServiceService.createPublicExam(+id, dto);
+    const { expires, sig, ...person } = dto ?? ({} as any);
+    return this.userServiceService.createPublicExam(+id, person, {
+      expires,
+      sig,
+    });
   }
 }

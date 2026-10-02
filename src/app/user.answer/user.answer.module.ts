@@ -29,6 +29,7 @@ import { ExamModule } from '../exam/exam.module';
 import { ReportModule } from '../report/report.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { EmailModule } from '../email/email.module';
+import { QuestionAnswerViewService } from '../question/question-answer-view.service';
 @Module({
   imports: [
     JwtModule.register({
@@ -58,7 +59,7 @@ import { EmailModule } from '../email/email.module';
     UserServiceDao,
     ResultDao,
     ExamDetailDao,
-    AuthService,
+    AuthService,QuestionAnswerViewService,
     UserService,
     UserDao,
     QuestionService,

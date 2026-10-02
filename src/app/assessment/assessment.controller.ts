@@ -118,7 +118,7 @@ export class AssessmentController {
   ) {
     return this.assessmentService.update(+id, dto, user['id']);
   }
-
+  @Roles(Role.super_admin, Role.admin)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assessmentService.remove(+id);

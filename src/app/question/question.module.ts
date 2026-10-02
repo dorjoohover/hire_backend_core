@@ -12,12 +12,19 @@ import { QuestionAnswerCategoryService } from './question.answer.category.servic
 import { QuestionAnswerService } from './question.answer.service';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { UserAnswerDao } from '../user.answer/user.answer.dao';
+import { QuestionRuleController } from './question.rule.controller';
+import { QuestionRuleDao } from './dao/question.rule.dao';
+import { QuestionRuleService } from './question.rule.service';
+import { QuestionAnswerViewService } from './question-answer-view.service';
+import { FormuleModule } from '../formule/formule.module';
 
 @Module({
+  imports: [FormuleModule],
   controllers: [
     QuestionController,
     QuestionAnswerController,
     QuestionAnswerCategoryController,
+    QuestionRuleController,
   ],
   providers: [
     QuestionService,
@@ -30,11 +37,15 @@ import { UserAnswerDao } from '../user.answer/user.answer.dao';
     QuestionAnswerMatrixDao,
     QuestionAnswerCategoryDao,
     QuestionAnswerDao,
+    QuestionRuleDao,
+    QuestionRuleService,
+    QuestionAnswerViewService,
   ],
   exports: [
     QuestionService,
     QuestionAnswerService,
     QuestionAnswerCategoryService,
+    QuestionAnswerViewService,
   ],
 })
 export class QuestionModule {}

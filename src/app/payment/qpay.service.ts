@@ -1,127 +1,39 @@
 // src/qpay/qpay.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { isSafeMode, safeLog } from '../../utils/safe-mode';
 
+// SAFE_MODE-ийн mock invoice: id-д дүнг шингээсэн тул process дахин асахад ч
+// `checkPayment` дүнг сэргээж чадна (in-memory state хэрэггүй).
+// Формат: SAFE-<дүн>-<invoiceId>-<цаг>
+const SAFE_INVOICE_RE = /^SAFE-(\d+(?:\.\d+)?)-/;
+// 1x1 PNG — web-ийн `data:image/png;base64,${qr_image}` харагдацыг эвдэхгүй.
+const SAFE_QR_PNG =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 @Injectable()
 export class QpayService {
   private readonly logger = new Logger(QpayService.name);
 
   private baseUrl = 'https://merchant.qpay.mn/v2/';
-  private accessToken: string | null = null;
-
-  // Токены жинхэнэ дуусах хугацаа (epoch ms). QPay-н expires_in нь
-  // тогтворгүй (epoch эсвэл duration) ирдэг тул бид JWT-н дотоод
-  // `exp` claim-ийг шууд уншиж тооцоолно.
-  private accessTokenExp = 0;
-
-  // Дуусахаас 5 минутын өмнө урьдчилан шинэчилнэ.
-  private readonly EXPIRY_BUFFER_MS = 5 * 60 * 1000;
-
-  // 4 instance / олон зэрэгцээ хүсэлт нэг дор authenticate хийхээс сэргийлж,
-  // нэг л auth хүсэлтийг хуваалцана (single-flight).
-  private authPromise: Promise<void> | null = null;
-
+  private accessToken: string;
+  private expiresIn: Date;
+  // Access token-той хамт ирдэг `refresh_token`/`auth/refresh`-ийг ЭНЭ талаас
+  // 2026-09-24-нөөс хойш ашиглахгүй болгов (хэрэглэгчийн хүсэлтээр) — зөвхөн
+  // Basic auth-аар (`authenticate()`) 24 цаг тутам шинэ access token авна.
+  // QPay docs-ын "токен хугацаа дуусахаас өмнө ойр ойрхон олон дахин токен
+  // бүү ав" гэсэн анхааруулгыг зөрчихгүй (24 цаг = ховор, найдвартай давтамж),
+  // мөн refresh_token хугацаа дуусах/хүчингүй болох тохиолдолд гацдаг байсан
+  // fallback-гүй асуудлыг бүрмөсөн арилгана.
   constructor(private readonly httpService: HttpService) {}
 
-  /** JWT-н `exp` (секунд) -> ms. Уншиж чадахгүй бол 0 буцаана. */
-  private getJwtExpMs(token?: string): number {
-    try {
-      if (!token) return 0;
-      const payloadPart = token.split('.')[1];
-      if (!payloadPart) return 0;
-      const json = Buffer.from(payloadPart, 'base64').toString('utf8');
-      const payload = JSON.parse(json);
-      return payload?.exp ? Number(payload.exp) * 1000 : 0;
-    } catch {
-      return 0;
+  private async ensureValidToken() {
+    const now = new Date();
+
+    if (!this.accessToken || now >= this.expiresIn) {
+      console.log('Access token байхгүй/24 цаг өнгөрсөн → Дахин нэвтэрч байна...');
+      await this.authenticate();
     }
-  }
-
-  private setTokens(data: any) {
-    this.accessToken = data?.access_token ?? null;
-    // QPay-н expires_in-д БҮҮ найд — JWT-н өөрийнх нь exp-ийг ашиглана.
-    const jwtExp = this.getJwtExpMs(this.accessToken);
-    // JWT-г уншиж чадаагүй бол найдвартай талд нь 50 минутаар авна.
-    this.accessTokenExp = jwtExp || Date.now() + 50 * 60 * 1000;
-  }
-
-  /** client_id/secret-ээр шинээр authenticate хийнэ. */
-  private async authenticate(): Promise<void> {
-    const { data } = await firstValueFrom(
-      this.httpService.post(
-        `${this.baseUrl}auth/token`,
-        {},
-        {
-          auth: {
-            username: process.env.QPAY_CLIENT_ID,
-            password: process.env.QPAY_CLIENT_SECRET,
-          },
-          timeout: 10000,
-        },
-      ),
-    );
-
-    this.setTokens(data);
-    this.logger.log(
-      `QPay authenticated. Token valid until ${new Date(
-        this.accessTokenExp,
-      ).toISOString()}`,
-    );
-  }
-
-  /**
-   * Токен хүчинтэй эсэхийг шалгаж, шаардлагатай бол дахин авна.
-   * `force = true` үед хүчинтэй эсэхээс үл хамаарч дахин авна (401/403-ийн дараа).
-   */
-  private async ensureValidToken(force = false): Promise<void> {
-    const stillValid =
-      !!this.accessToken &&
-      Date.now() < this.accessTokenExp - this.EXPIRY_BUFFER_MS;
-
-    if (stillValid && !force) return;
-
-    // Зэрэгцээ хүсэлтүүдийг нэг auth дээр нэгтгэнэ.
-    if (!this.authPromise) {
-      this.authPromise = this.authenticate()
-        .catch((e) => {
-          // Алдаа гарвал дараагийн хүсэлт дахин оролдох боломжтой байхын тулд
-          // токеныг цэвэрлэнэ.
-          this.accessToken = null;
-          this.accessTokenExp = 0;
-          this.logger.error(
-            'QPay auth failed: ' +
-              (e.response?.data
-                ? JSON.stringify(e.response.data)
-                : e.message),
-          );
-          throw e;
-        })
-        .finally(() => {
-          this.authPromise = null;
-        });
-    }
-
-    await this.authPromise;
-  }
-
-  private async doRequest<T>(
-    method: 'GET' | 'POST',
-    endpoint: string,
-    data: any,
-  ): Promise<T> {
-    const res = await firstValueFrom(
-      this.httpService.request({
-        method,
-        url: `${this.baseUrl}${endpoint}`,
-        data,
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-        timeout: 15000,
-      }),
-    );
-    return res.data;
   }
 
   private async requestWithToken<T = any>(
@@ -129,61 +41,163 @@ export class QpayService {
     endpoint: string,
     data: any = {},
   ): Promise<T> {
-    await this.ensureValidToken();
+    await this.ensureValidToken(); // check expiry first
 
     try {
-      return await this.doRequest<T>(method, endpoint, data);
-    } catch (error) {
-      const status = error.response?.status;
-      // QPay токен хүчингүй болсон үед зөвхөн 401 биш, 403 ч буцааж болдог.
-      if (status === 401 || status === 403) {
-        this.logger.warn(
-          `QPay ${status} on ${endpoint} → дахин authenticate хийж дахин оролдоно`,
-        );
-        await this.ensureValidToken(true); // force re-auth
-        return await this.doRequest<T>(method, endpoint, data);
-      }
-      this.logger.error(
-        `QPay request failed (${endpoint}): ` +
-          (error.response?.data
-            ? JSON.stringify(error.response.data)
-            : error.message),
+      const response = await firstValueFrom(
+        this.httpService.request({
+          method,
+          url: `${this.baseUrl}${endpoint}`,
+          data,
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+          },
+        }),
       );
+      return response.data;
+    } catch (error) {
+      // ⚠️ `error.response.data.message` гэж шууд уншдаг байсан тул сүлжээний
+      // алдаа (response байхгүй) үед жинхэнэ алдааг далдалж TypeError өгдөг байв.
+      console.error(
+        '❌ QPay хүсэлтийн алдаа:',
+        error?.response?.data?.message ?? error?.message,
+      );
+      if (error.response?.status === 401) {
+        console.log('QPay 401 → Дахин нэвтэрч (authenticate) байна...');
+        await this.authenticate();
+        const retryResponse = await firstValueFrom(
+          this.httpService.request({
+            method,
+            url: `${this.baseUrl}${endpoint}`,
+            data,
+            headers: {
+              Authorization: `Bearer ${this.accessToken}`,
+            },
+          }),
+        );
+        return retryResponse.data;
+      }
+
       throw error;
+    }
+  }
+  private async authenticate() {
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post(
+          `${this.baseUrl}auth/token`,
+          {},
+          {
+            auth: {
+              username: process.env.QPAY_CLIENT_ID,
+              password: process.env.QPAY_CLIENT_SECRET,
+            },
+            timeout: 10000,
+          },
+        ),
+      );
+
+      this.accessToken = response.data.access_token;
+      // Refresh token-ыг бүү ашигла — 24 цагийн дараа дахин Basic auth-аар
+      // (энэ функцээр) шинэ access token авна (QPay-ийн `expires_in`-ээс үл
+      // хамааран; ихэвчлэн энэ утга дан access token-д хэрэглэхэд хэт богино,
+      // refresh-тэй хослуулахад зориулагдсан байдаг).
+      this.expiresIn = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    } catch (e) {
+      console.error('QPAY AUTH ERROR:', e.response?.data || e.message);
+      throw e;
     }
   }
 
   // ✅ Invoice үүсгэх
-  async createInvoice(amount: number, invoiceId: number, userId: number) {
-    return await this.requestWithToken('POST', 'invoice', {
-      invoice_code: 'AXIOM_INC_INVOICE',
-      sender_invoice_no: `${invoiceId}`,
-      sender_branch_code: 'hire',
-      invoice_receiver_code: `${userId}`,
-      amount,
-      invoice_description: 'Тест худалдан авлаа.',
-      invoice_due_date: null,
-      allow_partial: false,
-      minimum_amount: null,
-      allow_exceed: false,
-      maximum_amount: null,
-      note: null,
-      callback_url: `${process.env.QPAY_CALLBACK}/${invoiceId}/${userId}`,
-    });
+  /**
+   * @param callbackUrl QPay-ийн callback хаяг. Өгөөгүй бол тестийн худалдан
+   *   авалтын анхдагч (`userService/callback/...`) хаяг руу заана. Тайлан нээх
+   *   (report-access) зэрэг өөр төрлийн төлбөрт өөрийн хаягаа дамжуулна.
+   */
+  async createInvoice(
+    amount: number,
+    invoiceId: number,
+    userId: number,
+    callbackUrl?: string,
+  ) {
+    if (isSafeMode()) {
+      const id = `SAFE-${amount}-${invoiceId}-${Date.now()}`;
+      safeLog(
+        'QPay invoice үүсгээгүй (mock)',
+        `invoice_id=${id} amount=${amount} user=${userId}`,
+      );
+      return {
+        invoice_id: id,
+        qr_text: 'SAFE_MODE',
+        qr_image: SAFE_QR_PNG,
+        qPay_shortUrl: '',
+        urls: [],
+        safeMode: true,
+      };
+    }
+    try {
+      // ⚠️ Өмнө нь `await` дутуу байсан тул доорх try/catch хэзээ ч
+      // ажилладаггүй байв.
+      const res = await this.requestWithToken('POST', 'invoice', {
+        invoice_code: 'AXIOM_INC_INVOICE',
+        sender_invoice_no: `${invoiceId}`,
+        sender_branch_code: 'hire',
+        invoice_receiver_code: `${userId}`,
+        amount,
+        invoice_description: 'Тест худалдан авлаа.',
+        invoice_due_date: null,
+        allow_partial: false,
+        minimum_amount: null,
+        allow_exceed: false,
+        maximum_amount: null,
+        note: null,
+        callback_url:
+          callbackUrl ??
+          `${process.env.QPAY_CALLBACK}/${invoiceId}/${userId}`,
+      });
+
+      return res;
+    } catch (error) {
+      console.error('❌ QPay createInvoice алдаа:', error?.message);
+      throw error;
+    }
   }
 
-  // ✅ Invoice/Payment харах
+  // ✅ Invoice харах
   async getInvoice(id: string) {
-    const res = await this.requestWithToken('GET', `payment/${id}`, {});
-    return {
-      status: res.payment_status,
-      amount: res.payment_amount,
-    };
+    if (isSafeMode()) {
+      const amount = SAFE_INVOICE_RE.exec(`${id}`)?.[1];
+      return amount ? { status: 'PAID', amount: +amount } : undefined;
+    }
+    try {
+      const res = await this.requestWithToken('GET', `payment/${id}`, {});
+      return {
+        status: res.payment_status,
+        amount: res.payment_amount,
+      };
+    } catch (error) {}
   }
 
   // ✅ Төлбөр шалгах
   async checkPayment(invoiceId: string) {
-    return await this.requestWithToken('POST', 'payment/check', {
+    if (isSafeMode()) {
+      // Mock invoice бол шууд төлөгдсөн гэж үзнэ; өөр (бодит prod) invoice бол төлөөгүй.
+      const amount = SAFE_INVOICE_RE.exec(`${invoiceId}`)?.[1];
+      safeLog(
+        'QPay checkPayment (mock)',
+        `invoice_id=${invoiceId} paid=${amount ?? 0}`,
+      );
+      return amount
+        ? {
+            count: 1,
+            paid_amount: +amount,
+            rows: [{ payment_status: 'PAID', payment_amount: +amount }],
+          }
+        : { count: 0, paid_amount: 0, rows: [] };
+    }
+    // ⚠️ Өмнө нь `await` дутуу байсан.
+    const res = await this.requestWithToken('POST', '/payment/check', {
       object_type: 'INVOICE',
       object_id: invoiceId,
       offset: {
@@ -191,5 +205,6 @@ export class QpayService {
         page_limit: 100,
       },
     });
+    return res;
   }
 }

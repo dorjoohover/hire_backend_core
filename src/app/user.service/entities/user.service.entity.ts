@@ -27,6 +27,20 @@ export class UserServiceEntity {
   @Column({ nullable: true })
   status: number;
 
+  /**
+   * QPay invoice_id — төлбөрийг ЗӨВХӨН энэ нэхэмжлэхээр баталгаажуулна
+   * (callback / polling-д ирсэн бусад id-д итгэхгүй). Өмнөх мөрүүдэд null.
+   */
+  @Column({ nullable: true })
+  qpayInvoiceId: string;
+
+  /**
+   * №6: дууссаны дараа шалгуулагч үр дүнгээ харах эсэх — service бүрд. null = assessment-ийн default
+   * (`showResultOnComplete`). Хэрэглэх: `effectiveShowResult()`.
+   */
+  @Column({ nullable: true, type: 'boolean' })
+  showResult: boolean | null;
+
   @ManyToOne(() => UserEntity, (user) => user.services)
   user: UserEntity;
   @ManyToOne(() => AssessmentEntity, (assessment) => assessment.services, {

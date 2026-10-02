@@ -45,6 +45,18 @@ export class ResultDao {
     });
   };
 
+  // SEMUT-маягийн багц тестэд: child result-ууд parent-тай ижил code-той ч
+  // parent_id-тэй. PDF data авах үед эдгээрийг бас буцаах.
+  findChild = async (code: string) => {
+    return await this.db.find({
+      where: {
+        code,
+        parent: Not(IsNull()),
+      },
+      relations: ['details'],
+    });
+  };
+
   findByCodes = async (codes: string[]) => {
     const uniqueCodes = [...new Set(codes.filter(Boolean))];
 

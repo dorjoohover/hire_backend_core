@@ -44,14 +44,29 @@ export class AuthService {
   ) {
     let user = await this.usersService.getUser(email);
     if (!user) {
-      user = await this.usersService.addUser({
-        email: email,
-        emailVerified: true,
-        firstname: firstname,
-        lastname: lastname,
-        phone: phone,
-        role: Role.client,
-      });
+      try {
+        user = await this.usersService.addUser({
+          email: email,
+          emailVerified: true,
+          firstname: firstname,
+          lastname: lastname,
+          phone: phone,
+          role: Role.client,
+        });
+      } catch (error) {
+        // Race condition: two near-simultaneous requests for the same
+        // brand-new email both passed the getUser() check above (both saw
+        // "not found") and both tried to insert. Postgres' unique
+        // constraint on users.email rejects the loser with a 23505 error.
+        // Re-fetch the row the winner just created instead of crashing --
+        // this was observed repeatedly in production as
+        // "updateByCode алдаа: QueryFailedError: duplicate key value
+        // violates unique constraint" happening in pairs across replicas.
+        if (error?.code === '23505') {
+          user = await this.usersService.getUser(email);
+        }
+        if (!user) throw error;
+      }
     }
     const token = await this.generateToken(user);
     return {

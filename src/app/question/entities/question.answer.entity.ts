@@ -38,7 +38,7 @@ export class QuestionAnswerEntity {
   @ManyToOne(
     () => QuestionAnswerCategoryEntity,
     (category) => category.questionAnswers,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   category: QuestionAnswerCategoryEntity;
   @OneToMany(() => QuestionAnswerMatrixEntity, (matrix) => matrix.answer)

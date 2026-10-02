@@ -1,0 +1,28 @@
+# Интеграцийн тестийн (test:int) түр Postgres + Redis. Prod / local dev-ээс тусдаа,
+# өөр порт (55432 / 56379), volume-гүй (tmpfs) → `down -v` бүгдийг арилгана.
+#   npm run test:int
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hire_test
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hire_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7
+    ports:
+      - "127.0.0.1:56379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

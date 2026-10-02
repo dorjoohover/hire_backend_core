@@ -11,6 +11,8 @@ import { ExamDetailDao } from './dao/exam.detail.dao';
 import { BaseService } from 'src/base/base.service';
 import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
+import { QuestionRuleDao } from '../question/dao/question.rule.dao';
+import { QuestionRuleAction } from '../question/entities/question.rule.entity';
 import { QuestionEntity } from '../question/entities/question.entity';
 import { QuestionCategoryEntity } from '../question/entities/question.category.entity';
 import { QuestionAnswerEntity } from '../question/entities/question.answer.entity';
@@ -33,6 +35,8 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
 import * as QRCode from 'qrcode';
 import { generateQrWithLogo } from 'src/utils/qr.util';
+import { nextCategoryStart, pickResumeIndex } from './exam-resume';
+import { effectiveShowResult } from '../user.service/show-result';
 
 @Injectable()
 export class ExamService extends BaseService {
@@ -48,6 +52,7 @@ export class ExamService extends BaseService {
     @Inject(forwardRef(() => UserServiceDao))
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
+    private questionRuleDao: QuestionRuleDao,
   ) {
     super();
   }
@@ -75,30 +80,109 @@ export class ExamService extends BaseService {
     // return doc;
   }
 
-  public checkExam = async (code: string) => {
-    const res = await this.dao
-      .query(`select visible from exam where code = ${code}`)
-      .then((d) => d[0]);
-    return res.visible;
-  };
-  // public endExam = async (code: string) => {
-  //   await this.dao.endExam(code);
-  //   console.log('start', code);
-  //   await this.report.createReport({ code });
-  // };
+  /**
+   * Public/QR урсгалаар тест өгсөн шалгуулагч тестээ дуусгасны дараа хуудсаа
+   * refresh хийх, эсвэл тайлангийн линкээ дахин нээхэд өөрийн эрхээ (session)
+   * сэргээж, тайлангаа харах боломжтой байх зорилготой READ-ONLY endpoint.
+   *
+   * Асуудал (production): `updateByCode` нь `userEndDate != null` үед
+   * 'Эрх дууссан байна.' гэж throw хийдэг ба энэ шалгуур нь forceLogin
+   * хийхээс ӨМНӨ ажилладаг. Front тал нь `/exam/:code` руу орох бүрдээ
+   * эхлээд signOut() хийчихээд дараа нь token авахаар оролддог тул, тест
+   * дуусгасан хэрэглэгч refresh хийхэд:
+   *   1) session нь устана,
+   *   2) шинэ token хэзээ ч олгогдохгүй,
+   *   3) улмаар /me, /api/report/:code, PDF аль нь ч нээгдэхгүй
+   * болж "буцаж орж чадахгүй" гацаанд ордог байсан.
+   *
+   * Энэ endpoint нь тестийн төлөв ямар ч байсан (дууссан эсэхээс үл
+   * хамааран) forceLogin-оор token олгоно — forceLogin нь idempotent тул
+   * давхар хэрэглэгч үүсгэхгүй.
+   */
+  public async getExamAccess(code: string) {
+    const res = await this.dao.findByCode(code);
+    if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
 
-  /** Тест (code)-ийн QR үүсгэнэ. Голд нь Hire лого байна. */
+    const finished = res.userEndDate != null;
+    const started = res.userStartDate != null;
+
+    // Тестийн хугацаа дууссан эсэх (эрхийн шалгуур биш, зөвхөн мэдээлэл).
+    const expired =
+      res.endDate != null && res.startDate != null && res.endDate < new Date();
+
+    let token: string | null = null;
+    const loginEmail =
+      (
+        res.email || (res.phone ? `${res.phone}@hire.mn` : null)
+      )?.toLowerCase() ?? null;
+
+    if (loginEmail && (res.lastname || res.firstname)) {
+      try {
+        const auth = await this.authService.forceLogin(
+          loginEmail,
+          res.phone,
+          res.lastname ?? '',
+          res.firstname ?? '',
+        );
+        if (!res.user) {
+          await this.dao.update(res.code, { user: auth.user });
+        }
+        token = auth.token;
+      } catch (error) {
+        // Token олгож чадахгүй байсан ч access мэдээллийг буцаана — front
+        // тал нь дор хаяж "тест дууссан" төлвийг зөв харуулна.
+        console.error(
+          '❌ getExamAccess forceLogin алдаа:',
+          (error as any)?.message,
+        );
+      }
+    }
+
+    const result = await this.resultDao.findOne(code);
+
+    return {
+      code: res.code,
+      finished,
+      started,
+      expired,
+      visible: res.visible ?? true,
+      hasResult: result != null,
+      assessment: res.assessment
+        ? {
+            id: res.assessment.id,
+            name: res.assessment.name,
+            // №6: service (QR) бүрийн тохиргоо assessment-ийн default-оос давуу.
+            showResultOnComplete: effectiveShowResult(res.service, res.assessment),
+          }
+        : null,
+      token,
+    };
+  }
+
+  public checkExam = async (code: string) => {
+    // Parameterized query — өмнө нь code-ийг шууд string interpolation хийдэг
+    // байсан нь SQL injection эрсдэлтэй байв.
+    const res = await this.dao.getVisibleByCode(code);
+    return res?.visible;
+  };
+
+  // Байгууллага нэг хэрэглэгчид зориулж тест (code) үүсгээд, тэр code-оор QR
+  // үүсгэнэ. Клиент QR уншаад и-мэйлгүйгээр тест өгөх боломжтой.
   public async generateQr(code: string) {
     const exam = await this.dao.findByCode(code);
     if (!exam) {
       throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
     }
-    const base = (process.env.WEB ?? 'https://hire.mn').replace(/\/$/, '');
-    const url = `${base}/exam/${code}`;
+    const base = process.env.WEB ?? 'https://hire.mn';
+    const url = `${base.replace(/\/$/, '')}/exam/${code}`;
     const qr = await generateQrWithLogo(url);
     return { code, url, qr };
   }
-
+  // public endExam = async (code: string) => {
+  //   await this.dao.endExam(code);
+  //   console.log('start', code);
+  //   await this.report.createReport({ code });
+  // };
   public async create(createExamDto: CreateExamDto, user?: UserEntity) {
     const created = createExamDto.created ?? Math.round(Math.random() * 100);
     const code = Number(
@@ -106,6 +190,7 @@ export class ExamService extends BaseService {
         `${Math.round(Math.random() * created * 100)}${Math.round(Date.now() * Math.random())}`,
       ),
     ).toString();
+    console.log('exam dto', createExamDto);
     await this.dao.create({ ...createExamDto, code: code }, user);
     const service = await this.userServiceDao.findOne(createExamDto.service);
     await this.transactionDao.create(
@@ -144,10 +229,10 @@ export class ExamService extends BaseService {
     return await this.dao.findAllOwners(email);
   }
 
-  async getExamInfoByCode(code: string, user?: UserEntity, ignoreResult = false) {
+  async getExamInfoByCode(code: string, user?: UserEntity) {
     const result = await this.resultDao.findOne(code);
 
-    if (!result && !ignoreResult) {
+    if (!result) {
       throw new HttpException(
         'Шалгалтын хариу олдсонгүй.',
         HttpStatus.BAD_REQUEST,
@@ -166,17 +251,34 @@ export class ExamService extends BaseService {
       throw new HttpException('Үр дүн олдсонгүй.', HttpStatus.BAD_REQUEST);
     }
 
-    if (!exam.visible && user.role == CLIENT) {
+    if (!exam.visible && user?.role == CLIENT) {
       throw new HttpException(
         'Байгууллагын зүгээс үр дүнг нууцалсан байна.',
         HttpStatus.FORBIDDEN,
       );
     }
-    if (user && user.role == CLIENT && user?.id != exam.user.id) {
-      throw new HttpException(
-        'Тайлан харах эрхгүй байна.',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (user && user.role == CLIENT && exam.user?.id && user?.id != exam.user?.id) {
+      // Public QR-аар тест өгсөн хэрэглэгч email/phone-оор тааралдах эсэхийг шалгана
+      const matchesByEmail =
+        exam.email && user.email && exam.email.toLowerCase() === user.email.toLowerCase();
+      const matchesByPhone =
+        exam.phone && user.phone && exam.phone === user.phone;
+      console.warn('[PDF ACCESS] mismatch', {
+        examCode: exam.code,
+        examUserId: exam.user?.id,
+        requestUserId: user?.id,
+        requestUserEmail: user?.email,
+        examEmail: exam.email,
+        examPhone: exam.phone,
+        matchesByEmail,
+        matchesByPhone,
+      });
+      if (!matchesByEmail && !matchesByPhone) {
+        throw new HttpException(
+          'Тайлан харах эрхгүй байна.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
     if (
       user &&
@@ -201,12 +303,12 @@ export class ExamService extends BaseService {
       assessment: exam.assessment,
       firstname: exam.firstname,
       lastname: exam.lastname,
-      createdAt: result?.createdAt,
-      type: result?.type,
-      result: result?.result,
-      total: result?.total,
-      point: result?.point,
-      value: result?.value,
+      createdAt: result.createdAt,
+      type: result.type,
+      result: result.result,
+      total: result.total,
+      point: result.point,
+      value: result.value,
       isInvited,
       orgName,
       icons,
@@ -217,7 +319,9 @@ export class ExamService extends BaseService {
   public async updateByCode(code: string, con: boolean, category?: number) {
     const startAll = performance.now();
     try {
+      console.time('⏱ dao.findByCode');
       const res = await this.dao.findByCode(code);
+      console.timeEnd('⏱ dao.findByCode');
 
       if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
       if (res.endDate && res.startDate && res.endDate < new Date())
@@ -233,10 +337,12 @@ export class ExamService extends BaseService {
 
       // -1 => тестийг хаах
       if (category == -1) {
+        console.time('⏱ dao.update (userEndDate)');
         await this.dao.update(res.id, {
           ...res,
           userEndDate: new Date(),
         });
+        console.timeEnd('⏱ dao.update (userEndDate)');
 
         console.log(
           `🎯 updateByCode нийт хугацаа: ${(
@@ -252,8 +358,10 @@ export class ExamService extends BaseService {
       let prevQuestions: number[] = [];
       let allCategories: number[] = [];
 
+      console.time('⏱ questionCategoryDao.findByAssessment');
       const categoriesByAssessment =
         await this.questionCategoryDao.findByAssessment(res.assessment.id);
+      console.timeEnd('⏱ questionCategoryDao.findByAssessment');
 
       const categories = categoriesByAssessment.map((c) => {
         const { questions, ...body } = c;
@@ -263,51 +371,78 @@ export class ExamService extends BaseService {
       allCategories = categories.map((cate) => cate.id);
       console.log('📌 allCategories:', allCategories);
 
-      let currentCategory = category ?? allCategories[0];
+      // Бөглөгдсөн хэсгүүд (нэг query) — resume-д ч, хариултын allCategories-д ч хэрэглэнэ.
+      console.time('⏱ check userAnswer by categories');
+      const answeredSet = new Set(
+        await this.userAnswer.findAnsweredCategoryIds(res.code),
+      );
+      console.timeEnd('⏱ check userAnswer by categories');
+
+      // №3: category заагаагүй (нээх / reload / дундаас орох) үед ХАРИУЛААГҮЙ ЭХНИЙ хэсгээс үргэлжилнэ.
+      // Өмнө нь `con` салбар индексийг тооцоод ашигладаггүй (dead code) → үргэлж 1-р хэсгээс эхэлдэг байв.
+      // (`con` нь URL param-аас "true"/"false" string ирдэг тул үнэн хэрэгтээ үргэлж truthy байсан;
+      // одоо `category === undefined`-ээр тодорхойлно, `con` нь зөвхөн хуучин клиентэд зориулсан.)
+      let currentCategory: number | undefined;
+      if (category !== undefined) {
+        currentCategory = category;
+      } else {
+        currentCategory = allCategories[pickResumeIndex(allCategories, answeredSet)];
+      }
       categoryIndex = allCategories.indexOf(currentCategory);
       allCategories =
         categoryIndex !== -1
           ? allCategories.slice(categoryIndex)
           : allCategories;
 
-      if (con) {
-        for (let i = 0; i < categoriesByAssessment.length; i++) {
-          const t0 = performance.now();
-          const userAnswer = await this.userAnswer.findByQuestionCategory(
-            categoriesByAssessment[i].id,
-            res.code,
-          );
-          console.log(
-            `   ↪ findByQuestionCategory(cat=${categoriesByAssessment[i].id}) = ${(performance.now() - t0).toFixed(2)} ms`,
-          );
-          if (userAnswer == null) {
-            categoryIndex = i;
-            break;
-          }
-        }
-      }
+      const now = new Date();
+      let userStart: Date = res.userStartDate;
 
       if (res.userStartDate == null && category === undefined) {
-        currentCategory = categories[0].id;
-        const date = new Date();
+        const date = now;
+        userStart = date;
 
+        console.time('⏱ dao.update (userStartDate)');
         await this.dao.update(res.id, {
           ...res,
           userStartDate: date,
         });
+        console.timeEnd('⏱ dao.update (userStartDate)');
+      }
 
-        if (res.email && (res.lastname || res.firstname)) {
+      // Public/QR шалгалтын хувьд нэвтрэх token-ийг зөвхөн ЭХНИЙ start дуудлагад
+      // биш, category === undefined (start/resume) дуудлага бүрд дахин олгоно.
+      // Учир нь эхний оролдлого session бэхжихээс өмнө тасалдвал (сүлжээ тасрах,
+      // reload гэх мэт) userStartDate аль хэдийн бичигдчихсэн байдаг тул хуучин
+      // логикоор token хэзээ ч дахин олгогдохгүй, хэрэглэгч мөнхөд нэвтэрч
+      // чадахгүй үлддэг байсан. forceLogin idempotent (байгаа хэрэглэгчийг зүгээр
+      // дахин авна) тул давхар дуудахад аюулгүй.
+      if (category === undefined) {
+        // Lowercase хийж өгснөөр QR-ээр бичсэн и-мэйлийн casing өөр ч
+        // (жишээ нь "John@Gmail.com" vs "john@gmail.com") forceLogin дотоod
+        // getUser (мөн lowercase хайдаг) зөв тааруулж, ӨМНӨ БҮРТГЭЛТЭЙ
+        // хэрэглэгчийн дээр л token үүсгэнэ — шинэ давхар хэрэглэгч
+        // үүсгэхгүй.
+        const loginEmail = (
+          res.email || (res.phone ? `${res.phone}@hire.mn` : null)
+        )?.toLowerCase() ?? null;
+        if (loginEmail && (res.lastname || res.firstname)) {
+          console.time('⏱ authService.forceLogin');
           const user = await this.authService.forceLogin(
-            res.email,
+            loginEmail,
             res.phone,
             res.lastname ?? '',
             res.firstname ?? '',
           );
-          await this.dao.update(res.id, {
-            ...res,
-            userStartDate: date,
-            user: user.user,
-          });
+          console.timeEnd('⏱ authService.forceLogin');
+
+          if (!res.user) {
+            console.time('⏱ dao.update (attach user)');
+            await this.dao.update(res.id, {
+              ...res,
+              user: user.user,
+            });
+            console.timeEnd('⏱ dao.update (attach user)');
+          }
 
           token = user.token;
         }
@@ -315,26 +450,50 @@ export class ExamService extends BaseService {
 
       if (currentCategory) {
         if (allCategories.length == 0) {
+          console.time('⏱ questionCategoryDao.findByAssessment (fallback)');
           allCategories = (
             await this.questionCategoryDao.findByAssessment(
               res.assessment.id,
               currentCategory,
             )
           ).map((a) => a.id);
+          console.timeEnd('⏱ questionCategoryDao.findByAssessment (fallback)');
         }
 
+        console.time('⏱ getQuestions');
         const result = await this.getQuestions(
           shuffle,
           currentCategory,
           answerShuffle,
           prevQuestions,
+          res.code,
         );
+        console.timeEnd('⏱ getQuestions');
+
+        console.time('⏱ createDetail');
         await this.createDetail(
           result.questions,
           res.id,
           result.category,
-          res.service.id,
+          res.service?.id ?? null,
         );
+        console.timeEnd('⏱ createDetail');
+
+        // №3: хэсгийн хугацааны серверийн эхлэл. Хэрэглэгч хэсэг рүү ШИЛЖСЭН (category заасан) бол шинэ;
+        // reload / дундаас орсон (category === undefined) бол ижил хэсэгт хуучин цаг хэвээр.
+        const catStart = nextCategoryStart(
+          res,
+          result.category.id,
+          category !== undefined,
+          now,
+        );
+        if (catStart.changed) {
+          await this.dao.setCategoryStart(
+            res.id,
+            result.category.id,
+            catStart.startedAt,
+          );
+        }
 
         console.log(
           `🎯 updateByCode нийт хугацаа: ${(
@@ -342,13 +501,33 @@ export class ExamService extends BaseService {
           ).toFixed(2)} ms`,
         );
 
+        // Бүх хэсгийн жагсаалт болон бөглөгдсөн төлөв (D#4 буцаж очих UI-д
+        // хэрэгтэй). categories: дараа үлдсэн id-уудыг хадгална (хуучин үйлдэл).
+        const allCategoriesDetailed = categoriesByAssessment.map((c) => ({
+          id: c.id,
+          name: c.name,
+          orderNumber: c.orderNumber,
+          answered: answeredSet.has(c.id),
+        }));
+
         return {
           questions: result.questions,
           category: result.category,
           categories: allCategories.slice(1),
-          assessment: res.assessment,
+          allCategories: allCategoriesDetailed,
+          rules: (result as any).rules ?? [],
+          // №6: `showResultOnComplete`-ыг service-ийн тохиргоогоор (эсвэл assessment default) тодорхойлно.
+          assessment: {
+            ...res.assessment,
+            showResultOnComplete: effectiveShowResult(res.service, res.assessment),
+          },
           visible: res.visible,
           token,
+          // №3: цагийг СЕРВЕРЭЭС — клиент өөрийн цагийн зөрүүг (serverNow − Date.now()) тооцож үлдсэн
+          // хугацааг бодно. `examStartedAt` = нийт (assessment) timer-ийн эхлэл, `categoryStartedAt` = хэсгийн.
+          serverNow: now.toISOString(),
+          examStartedAt: (userStart ?? now).toISOString(),
+          categoryStartedAt: catStart.startedAt.toISOString(),
         };
       }
     } catch (error) {
@@ -365,37 +544,100 @@ export class ExamService extends BaseService {
     category: QuestionCategoryEntity,
     service: number,
   ) => {
-    for (const question of questions) {
-      await this.detailDao.create({
-        exam,
-        pageNumber: 0,
+    // №3: нэг INSERT, байгааг алгасна (нээлт бүрд давхардахгүй).
+    return this.detailDao.createManyIfAbsent(
+      questions.map((question) => ({
+        exam: exam,
         question: question.question.id,
         questionCategory: category.id,
         questionCategoryName: category.name,
-        service,
-      });
-    }
+        service: service,
+      })),
+    );
   };
   public async getQuestions(
     shuffle: boolean,
     id: number,
     answerShuffle: boolean,
     questions: number[] = [],
+    code?: string,
   ) {
     const category = await this.questionCategoryDao.findOne(id);
-    const q = await this.questionService.findForExam(
+    let q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,
       id,
       answerShuffle,
       questions,
+      // №3: exam code-оор тогтвортой shuffle — reload-д асуулт / хариултын дараалал өөрчлөгдөхгүй.
+      code ? String(code) : undefined,
     );
-    const res = {
+
+    // Нөхцөлт алгасах (branching) дүрмийг хэрэглэнэ.
+    // Server тал: өмнө илгээсэн хариултад тулгуурлан хэсэг хооронд асуулт шүүх.
+    // Client тал: тухайн хуудсан дотор (live skip) ашиглах rules-ийг буцаана.
+    let rules: any[] = [];
+    if (code) {
+      const allIds = q
+        .map((x) => Number(x.question?.id))
+        .filter(Boolean) as number[];
+      if (allIds.length) {
+        const fetchedRules =
+          await this.questionRuleDao.findByTargetQuestionIds(allIds);
+        if (fetchedRules.length) {
+          const prior = await this.userAnswer.findExistingByCode(code);
+          const answeredPairs = new Set(
+            prior
+              .filter((p) => p.answerId != null)
+              .map((p) => `${Number(p.questionId)}:${Number(p.answerId)}`),
+          );
+          const answeredQuestions = new Set(
+            prior.map((p) => Number(p.questionId)),
+          );
+          const skip = new Set<number>();
+          for (const rule of fetchedRules) {
+            if (rule.action !== QuestionRuleAction.SKIP) continue;
+            const dq = Number(rule.dependsOnQuestionId);
+            const matched =
+              rule.dependsOnAnswerId != null
+                ? answeredPairs.has(`${dq}:${Number(rule.dependsOnAnswerId)}`)
+                : answeredQuestions.has(dq);
+            if (matched) skip.add(Number(rule.targetQuestionId));
+          }
+          if (skip.size) {
+            q = q.filter((x) => !skip.has(Number(x.question?.id)));
+          }
+          // Зөвхөн энэ хуудсанд live skip хэрэглэгдэх дүрмүүдийг л буцаана
+          // (target ба depends хоёулаа одоо харагдах асуултуудын дотор).
+          const remainingIds = new Set(
+            q.map((x) => Number(x.question?.id)),
+          );
+          rules = fetchedRules
+            .filter(
+              (r) =>
+                r.action === QuestionRuleAction.SKIP &&
+                remainingIds.has(Number(r.targetQuestionId)) &&
+                remainingIds.has(Number(r.dependsOnQuestionId)),
+            )
+            .map((r) => ({
+              id: r.id,
+              targetQuestionId: Number(r.targetQuestionId),
+              dependsOnQuestionId: Number(r.dependsOnQuestionId),
+              dependsOnAnswerId:
+                r.dependsOnAnswerId != null
+                  ? Number(r.dependsOnAnswerId)
+                  : null,
+              action: r.action,
+            }));
+        }
+      }
+    }
+
+    return {
       questions: q,
       category: category,
+      rules,
     };
-    // console.log('getQuestion Res:', res);
-    return res;
   }
 
   public async findExamByService(service: number) {

@@ -14,6 +14,7 @@ import {
 import { UserService } from './user.service';
 import {
   CreateOtp,
+  ConfirmEmailDto,
   CreateUserDto,
   EmailSend,
   PasswordDto,
@@ -67,19 +68,34 @@ export class UserController {
     await this.userService.updatePassword(user.email, dto.password);
   }
 
+  // И-мэйл баталгаажуулалт: мэйлээр `${WEB}/auth/confirm?token=…` холбоос очно →
+  // web-ийн сервер тал энэ endpoint-ийг дуудна. Token нь гарын үсэгтэй, 24 цагийн
+  // хугацаатай (utils/email-token.ts). Хүчингүй бол 400.
+  @Public()
+  @Post('email/confirm')
+  confirmEmail(@Body() dto: ConfirmEmailDto) {
+    return this.userService.confirmEmail(dto.token);
+  }
+
+  // ⚠️ ХУУЧИН холбоос (`/user/email/confirm/<email>`): и-мэйл хаягийг мэддэг хэн ч
+  // тухайн хаягийг баталгаажуулж чаддаг байсан тул баталгаажуулахаа больсон —
+  // өмнө илгээсэн мэйлийн холбоос дарсан хүнийг зөвхөн нэвтрэх хуудас руу чиглүүлнэ.
+  // (Нэвтрэх оролдлого хийвэл `AuthService.login` шинэ token-той мэйлийг автоматаар
+  // дахин илгээнэ.)
   @Public()
   @Get('email/confirm/:email')
   @ApiParam({ name: 'email' })
-  verifyEmail(@Param('email') email: string, @Res() res) {
-    try {
-      this.userService.verifyMail(email);
-      return res.redirect(`${process.env.WEB || "https://hire.mn"}/auth/signin?email=${email}`);
-    } catch (error) {
-      return res.redirect(`${process.env.WEB || "https://hire.mn"}/auth/signin`);
-    }
+  legacyConfirmLink(@Res() res) {
+    return res.redirect(
+      `${process.env.WEB || 'https://hire.mn'}/auth/signin?confirm=invalid`,
+    );
   }
 
-  @Public()
+  // ⚠️ Өмнө нь @Public байсан — нэвтрэлтгүйгээр БҮХ хэрэглэгчийн и-мэйл,
+  // байгууллагын регистр зэрэг хувийн мэдээллийг хуудаслан татах боломжтой
+  // байв. Зөвхөн админ/тестерийн эрхээр хязгаарлав.
+  @Roles(Role.admin, Role.tester, Role.super_admin)
+  @ApiBearerAuth('access-token')
   @Get()
   @PQ(['role', 'email', 'orgName', 'firstname', 'orgRegister'])
   findAll(@Pagination() pg: PaginationDto) {
@@ -103,10 +119,17 @@ export class UserController {
     }
     return false;
   }
+  // 🔐 Нууц үг сэргээх. Серверийн талд OTP-г ЗААВАЛ шалгана —
+  // өмнө нь код шалгалтгүй байсан тул дурын бүртгэл дээр нууц үг солих
+  // (бүрэн account takeover) боломжтой байв.
   @Public()
   @Post('forget/password')
   updatePassword(@Body() dto: PasswordDto) {
-    return this.userService.updatePassword(dto.email, dto.password);
+    return this.userService.resetPasswordWithOtp(
+      dto.email,
+      dto.password,
+      dto.code,
+    );
   }
 
   @ApiBearerAuth('access-token')
@@ -120,14 +143,43 @@ export class UserController {
     return this.userService.getUser(id);
   }
 
-  @Public()
+  /**
+   * ⚠️ Өмнө нь @Public байсан: нэвтрэлтгүйгээр дурын хэрэглэгчийн мөрийг
+   * (role, wallet, password зэргийг оруулаад) шинэчлэх боломжтой байсан —
+   * өөрөөр хэлбэл `PATCH /user/1 {"role":40}` гэж super_admin болох
+   * боломжтой байв. Одоо: нэвтэрсэн байх ёстой, зөвхөн ӨӨРИЙН бүртгэлээ
+   * (эсвэл админ бол хэнийхийг ч) засна, мөн эмзэг талбаруудыг үл хүлээнэ.
+   */
+  @ApiBearerAuth('access-token')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: CreateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: CreateUserDto,
+    @Request() { user },
+  ) {
+    const isAdmin = [Role.admin, Role.tester, Role.super_admin].includes(
+      +user?.role,
+    );
+    if (!isAdmin && +user?.id !== +id) {
+      throw new HttpException(
+        'Зөвхөн өөрийн бүртгэлээ засах боломжтой.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const { role, wallet, password, emailVerified, forget, ...safe } =
+      (updateUserDto ?? {}) as any;
+
+    // role-ыг зөвхөн super_admin өөрчилнө.
+    const body = +user?.role === Role.super_admin ? updateUserDto : safe;
+
+    return this.userService.update(+id, body as CreateUserDto);
   }
 
+  // ⚠️ Өмнө нь @Public байсан — хэн ч дурын хэрэглэгчийг устгах боломжтой байв.
+  @ApiBearerAuth('access-token')
+  @Roles(Role.super_admin)
   @Delete(':id')
-  @Public()
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
   }

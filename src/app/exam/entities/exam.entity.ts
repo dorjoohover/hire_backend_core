@@ -36,6 +36,14 @@ export class ExamEntity {
   @Column({ default: true, nullable: true })
   visible: boolean;
 
+  /** Тайланг хэдэн удаа үзсэн (үнэгүй харалтын тоолуур — paywall-д хэрэглэнэ). */
+  @Column({ default: 0 })
+  reportViewCount: number;
+
+  /** Сүүлд тайлан үзсэн хугацаа (30 минутын дотор дахин үзвэл дахин тоолохгүй). */
+  @Column({ nullable: true, type: 'timestamp' })
+  reportViewedAt: Date;
+
   @Column({ nullable: true })
   startDate: Date;
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -47,6 +55,16 @@ export class ExamEntity {
   userEndDate: Date;
   @Column({ nullable: true })
   userStartDate: Date;
+
+  /**
+   * №3: тухайн хэсгийн (category) хугацаа серверт хэзээ эхэлсэн. Reload / дундаас орох үед хэсгийн
+   * timer дахин бүтнээрээ эхлэхгүй. `categoryStartedFor` = аль хэсгийн цаг вэ.
+   */
+  @Column({ nullable: true, type: 'timestamptz' })
+  categoryStartedAt: Date;
+
+  @Column({ nullable: true, type: 'int' })
+  categoryStartedFor: number;
 
   @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
     onDelete: 'CASCADE',
