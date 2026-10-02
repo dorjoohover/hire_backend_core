@@ -409,4 +409,66 @@ export class ExamController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateExamDto: UpdateExamDto) {}
+
+  // ── Studio: admin эрхээр туршилтын шалгалт ─────────────────────────────────
+  // Шалгалтыг web-ийн жинхэнэ хуудсаар өгнө (url), дуусмагц Studio тайланг PDF-ээр
+  // (хадгалахгүй) гаргаад устгана. Тоонд орохгүй, тайлан/и-мэйл үүсгэхгүй.
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Post('studio-preview')
+  createStudioPreview(@Body() dto: { assessment: number }, @Request() { user }: { user: UserEntity }) {
+    return this.examService.createStudioPreview(Number(dto?.assessment), user);
+  }
+
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Get('studio-preview/:code')
+  @ApiParam({ name: 'code' })
+  studioPreviewStatus(@Param('code') code: string) {
+    return this.examService.studioPreviewStatus(code);
+  }
+
+  // Studio-ийн (хадгалаагүй байж болох) template-ээр тухайн туршилтын бодит хариултаар PDF.
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Post('studio-preview/:code/report')
+  @ApiParam({ name: 'code' })
+  async studioPreviewReport(
+    @Param('code') code: string,
+    @Body() dto: { template: any },
+    @Res() res: Response,
+  ) {
+    try {
+      const st = await this.examService.studioPreviewStatus(code);
+      if (!st.finished) {
+        return res.status(400).json({ error: 'Шалгалт дуусаагүй байна — эхлээд шалгалтаа дуусгана уу.' });
+      }
+      const REPORT = process.env.REPORT || 'http://localhost:4000/api/v1/';
+      const response = await axios.post(
+        `${REPORT}template/preview`,
+        { template: dto?.template, examCode: code, compute: true },
+        { responseType: 'arraybuffer', timeout: 120000 },
+      );
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="preview.pdf"');
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(Buffer.from(response.data));
+    } catch (error: any) {
+      const status = error?.status || error?.response?.status || 500;
+      let message = error?.message || 'PDF үүсгэхэд алдаа гарлаа';
+      try {
+        const raw = error?.response?.data;
+        const parsed = Buffer.isBuffer(raw) ? JSON.parse(raw.toString('utf-8')) : raw;
+        message = parsed?.message || message;
+      } catch {
+        /* ignore */
+      }
+      return res.status(status).json({ error: message });
+    }
+  }
+
+  @Roles(Role.admin, Role.super_admin, Role.tester)
+  @Delete('studio-preview/:code')
+  @ApiParam({ name: 'code' })
+  deleteStudioPreview(@Param('code') code: string) {
+    return this.examService.deleteStudioPreview(code);
+  }
+
 }

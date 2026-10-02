@@ -206,6 +206,41 @@ export class ExamService extends BaseService {
     return code;
   }
 
+  // ── Studio: admin эрхээр туршилтын шалгалт ──────────────────────────────────
+  // Тоонд орохгүй (service-гүй, isPreview), тайлан хадгалахгүй (createReport дуудагдахгүй —
+  // user.answer.service), Studio-д studioPreviewReport-оор шууд PDF гаргаад устгана.
+  public async createStudioPreview(assessmentId: number, user: UserEntity) {
+    if (!assessmentId) throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
+    const rows = await this.dao.query(`SELECT id, name FROM assessment WHERE id = $1`, [assessmentId]);
+    const assessment = rows[0];
+    if (!assessment) throw new HttpException('Тест олдсонгүй.', HttpStatus.NOT_FOUND);
+    // Хаагдаагүй үлдсэн хуучин туршилтуудыг цэвэрлэнэ.
+    for (const c of await this.dao.stalePreviewCodes().catch(() => [] as string[])) {
+      await this.dao.deletePreviewByCode(c).catch(() => undefined);
+    }
+    const code = Number(
+      BigInt(`${Math.round(Math.random() * 10000)}${Math.round(Date.now() * Math.random())}`),
+    ).toString();
+    await this.dao.createPreview({ id: Number(assessment.id), name: assessment.name }, user, code);
+    const base = process.env.WEB ?? 'https://hire.mn';
+    return { code, url: `${base.replace(/\/$/, '')}/exam/${code}` };
+  }
+
+  public async studioPreviewStatus(code: string) {
+    const rows = await this.dao.query(
+      `SELECT "userEndDate", "isPreview" FROM exam WHERE code = $1 LIMIT 1`,
+      [String(code)],
+    );
+    const r = rows[0];
+    if (!r || !r.isPreview) throw new HttpException('Туршилтын шалгалт олдсонгүй.', HttpStatus.NOT_FOUND);
+    return { code, finished: r.userEndDate != null };
+  }
+
+  public async deleteStudioPreview(code: string) {
+    const deleted = await this.dao.deletePreviewByCode(code);
+    return { deleted };
+  }
+
   // onoo bujaats ywuulah
 
   public async count() {

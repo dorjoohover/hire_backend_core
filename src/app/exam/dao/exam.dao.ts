@@ -663,7 +663,7 @@ export class ExamDao {
     const exam = await this.db
       .query(
         `
-    SELECT id, visible, "assessmentId" AS assessment
+    SELECT id, visible, "assessmentId" AS assessment, COALESCE("isPreview", false) AS "isPreview"
     FROM exam
     WHERE code = $1
     LIMIT 1
@@ -695,6 +695,59 @@ export class ExamDao {
 
   query = async (q: string, params: any[] = []) => {
     return await this.db.query(q, params);
+  };
+
+  // ── Studio туршилтын шалгалт ────────────────────────────────────────────────
+  createPreview = async (assessment: { id: number; name: string }, user: UserEntity, code: string) => {
+    const now = new Date();
+    const res = this.db.create({
+      code,
+      assessmentName: assessment.name,
+      assessment: { id: assessment.id },
+      startDate: now,
+      endDate: new Date(now.getTime() + 24 * 3600 * 1000),
+      firstname: user?.firstname ?? 'Admin',
+      lastname: user?.lastname ?? '',
+      // ⚠ Admin-ий И-МЭЙЛИЙГ ХЭРЭГЛЭХГҮЙ: exam/access/:code (public) нь кодоор тухайн и-мэйлийн
+      // token олгодог тул код алдагдвал admin-ий эрх алдагдана. Тусгай client хэрэглэгч.
+      email: 'studio-preview@hire.mn',
+      phone: null,
+      user: null,
+      visible: false,
+      isPreview: true,
+    } as any);
+    await this.db.save(res);
+    return res;
+  };
+
+  // Туршилтын шалгалтын БҮХ өгөгдлийг устгана (хариулт, үр дүн, тайлангийн мөр, exam).
+  deletePreviewByCode = async (code: string): Promise<boolean> => {
+    return await this.dataSource.transaction(async (m) => {
+      const rows = await m.query(`SELECT id FROM exam WHERE code = $1 AND "isPreview" = true`, [String(code)]);
+      const id = rows[0]?.id;
+      if (!id) return false;
+      await m.query(`DELETE FROM "userAnswer" WHERE "examId" = $1 OR code = $2`, [id, String(code)]);
+      await m.query(
+        `DELETE FROM "resultDetail" WHERE "resultId" IN (SELECT id FROM result WHERE code = $1)`,
+        [String(code)],
+      );
+      await m.query(`DELETE FROM result WHERE code = $1 AND "parentId" IS NOT NULL`, [String(code)]);
+      await m.query(`DELETE FROM result WHERE code = $1`, [String(code)]);
+      await m.query(`DELETE FROM report_logs WHERE code = $1`, [String(code)]);
+      const ra = await m.query(`SELECT to_regclass('public.report_access') AS t`);
+      if (ra[0]?.t) await m.query(`DELETE FROM report_access WHERE code = $1`, [String(code)]);
+      await m.query(`DELETE FROM "examDetail" WHERE "examId" = $1`, [id]);
+      await m.query(`DELETE FROM exam WHERE id = $1 AND "isPreview" = true`, [id]);
+      return true;
+    });
+  };
+
+  // 1 өдрөөс өмнө үүссэн (хаагдаагүй үлдсэн) туршилтын шалгалтууд.
+  stalePreviewCodes = async (): Promise<string[]> => {
+    const rows = await this.db.query(
+      `SELECT code FROM exam WHERE "isPreview" = true AND "createdAt" < NOW() - INTERVAL '1 day' LIMIT 50`,
+    );
+    return rows.map((r: any) => String(r.code));
   };
 
   getVisibleByCode = async (code: string) => {

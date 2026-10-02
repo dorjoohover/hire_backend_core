@@ -70,6 +70,21 @@ export class QuestionCategoryDao {
     });
   };
 
+  // Studio-д: асуулттай (идэвхтэй асуулт ≥ 1) бүлгүүд admin-ий блокийн дарааллаар —
+  // тайлангийн {{category[i]}} / {{i-р бүлгийн …}} дугаартай ижил (hire_report categoryStats).
+  findNumberedByAssessmentId = async (
+    assessment: number,
+  ): Promise<{ id: number; name: string }[]> => {
+    return await this.db.query(
+      `SELECT c.id, c.name
+         FROM "questionCategory" c
+        WHERE c."assessmentId" = $1
+          AND EXISTS (SELECT 1 FROM question q WHERE q."categoryId" = c.id AND q.status = $2)
+        ORDER BY c."orderNumber" ASC NULLS LAST, c.id ASC`,
+      [assessment, QuestionStatus.ACTIVE],
+    );
+  };
+
   findByAssessmentId = async (assessment: number) => {
     return await this.db.find({
       where: {

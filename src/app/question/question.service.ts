@@ -137,18 +137,22 @@ export class QuestionService {
   ) {
     let point = 0;
     const type = question.type;
+    // Хоосон жагсаалт (TEXT-ийн answers = [], хоосон matrix)-д Math.max() = -Infinity
+    // болж асуулт / бүлэг / assessment-ийн оноо -Infinity болдог байсан → 0.
+    const maxOf = (values: unknown[] | undefined) => {
+      const nums = (values ?? []).map(Number).filter((n) => Number.isFinite(n));
+      return nums.length ? Math.max(...nums) : 0;
+    };
     if (type == QuestionType.CONSTANTSUM) return question.point ?? 0;
     if (type == QuestionType.MATRIX)
-      for (const answer of answers) {
-        point += Math.max(
-          ...(answer?.matrix?.map((matrix) => matrix.point) ?? [0]),
-        );
+      for (const answer of answers ?? []) {
+        point += maxOf(answer?.matrix?.map((matrix) => matrix.point));
       }
     else {
-      point += Math.max(
-        ...(answers.map((answer) =>
-          answer.answer.correct ? 1 : answer.answer.point,
-        ) ?? [0]),
+      point += maxOf(
+        (answers ?? []).map((answer) =>
+          answer.answer?.correct ? 1 : answer.answer?.point,
+        ),
       );
     }
     return point;
@@ -161,9 +165,13 @@ export class QuestionService {
   ) {
     try {
       const questionCategory = await this.updateChecker(dto.category, dto.type);
+      // ⚠️ getPoint нь question.type-аар MATRIX / CONSTANTSUM-ийг ялгадаг ч admin
+      // `type`-ийг dto.question-д биш dto-д илгээдэг — өмнө нь дамжуулаагүйгээс MATRIX
+      // асуултын дээд оноо мөрийн (questionAnswer) оноогоор = 0 болж, assessment-ийн
+      // totalPoint 0 болж байв (hire_report-ийн квартил график 0 нийт оноотой үед гацдаг).
       const point =
         dto.question.point == null
-          ? await this.getPoint(dto.question, dto.answers)
+          ? await this.getPoint({ ...dto.question, type: dto.type }, dto.answers)
           : dto.question.point == 0
             ? 1
             : dto.question.point;
@@ -348,6 +356,7 @@ export class QuestionService {
           minValue: question.minValue,
           maxValue: question.maxValue,
           slider: question.slider,
+          settings: question.settings ?? null,
           point: question.point,
           orderNumber: question.orderNumber,
           file: question.file,

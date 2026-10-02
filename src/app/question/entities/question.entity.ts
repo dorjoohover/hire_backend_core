@@ -38,6 +38,10 @@ export class QuestionEntity {
   orderNumber: number;
   @Column({ nullable: true })
   slider: string;
+  // Төрөлд хамаарах нэмэлт тохиргоо (NUMBER: { decimal, decimalPlaces, unit },
+  // TIME: { hours, minutes, seconds, pointUnit }). Багана perf-bootstrap-аар нэмэгдэнэ.
+  @Column({ nullable: true, type: 'jsonb' })
+  settings: Record<string, any>;
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

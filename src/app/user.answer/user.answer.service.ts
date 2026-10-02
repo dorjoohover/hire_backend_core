@@ -22,6 +22,8 @@ import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
 import { buildAssessmentScoring } from './assessment-scoring.config';
+import { numericAnswerError } from './numeric-answer';
+import { matrixAnswerMeta } from './matrix-category';
 
 @Injectable()
 export class UserAnswerService extends BaseService {
@@ -68,12 +70,16 @@ export class UserAnswerService extends BaseService {
       const categoryIds = [
         ...new Set(dto.data.map((d) => +d.questionCategory).filter(Boolean)),
       ];
+      // Зөвхөн эерэг бүхэл id — буруу форматтай ("05:00" → NaN г.м.) нэг утга
+      // integer[] query-г бүхэлд нь унагааж (22P02) бүх хариултыг 500 болгодог байсан.
+      // Ийм id lookup-д олдохгүй тул доорх safeAnswerId / safeMatrixId-аар null болно.
+      const validId = (x: any) => Number.isInteger(Number(x)) && Number(x) > 0 && Number(x) <= 2147483647;
       const answerIds = [
         ...new Set(
           dto.data
             .flatMap((d) => d.answers ?? [])
             .map((a) => a.answer)
-            .filter((x) => x != null && Number(x) > 0)
+            .filter((x) => x != null && validId(x))
             .map(Number),
         ),
       ];
@@ -82,7 +88,7 @@ export class UserAnswerService extends BaseService {
           dto.data
             .flatMap((d) => d.answers ?? [])
             .map((a) => a.matrix)
-            .filter((x) => x != null)
+            .filter((x) => x != null && validId(x))
             .map(Number),
         ),
       ];
@@ -112,6 +118,25 @@ export class UserAnswerService extends BaseService {
         categoryRows.map((c) => [Number(c.id), c.is_calculated]),
       );
 
+      // Өөр хэсгийн асуултын хариултыг (payload-ийн questionCategory ≠ асуултын өөрийн
+      // ангилал) алгасна. Хуучин web өмнөх хэсгүүдийн (аль хэдийн хадгалагдсан)
+      // хариултыг дараагийн хэсгийн ангиллаар, төрөлгүйгээр дахин илгээдэг байсан —
+      // тоо/хугацаа нь matrix болж ("05:00" → NaN) эвдэрдэг; бичвэл зөв мөрүүд obsolete
+      // гэж устаж, эвдэрсэн мөр орох эрсдэлтэй.
+      const data = dto.data.filter((d) => {
+        const q = questionMap.get(+d.question);
+        return (
+          !q ||
+          q.categoryId == null ||
+          Number(q.categoryId) === Number(d.questionCategory)
+        );
+      });
+      if (data.length < dto.data.length) {
+        console.warn(
+          `⚠️  userAnswer ${code}: өөр хэсгийн ${dto.data.length - data.length} хариултыг алгаслаа`,
+        );
+      }
+
       // --- Хэрэглэгч буцаж очоод хариултаа сольсон тохиолдолд хуучин мөрүүд DB-д
       // үлдэхгүй байх. Энэ submit-д ирсэн асуулт бүрт зөвхөн "одоогийн сонгосон"
       // (answer/matrix) хослолыг хадгална; өмнө хадгалагдсан ч одоо сонгоогүй
@@ -120,7 +145,7 @@ export class UserAnswerService extends BaseService {
       const submittedKeys = new Set<string>();
       const buildKey = (qid: number, aId: any, mId: any) =>
         `${qid}::${aId == null ? 'null' : Number(aId)}::${mId == null ? 'null' : Number(mId)}`;
-      for (const d of dto.data) {
+      for (const d of data) {
         const qid = +d.question;
         submittedQuestionIds.add(qid);
         if (!d.answers || d.answers.length === 0) {
@@ -194,7 +219,7 @@ export class UserAnswerService extends BaseService {
         }
       };
 
-      for (const d of dto.data) {
+      for (const d of data) {
         if (!d.question) throw message('Асуулт байхгүй');
         if (!d.questionCategory) throw message('Асуултын ангилал байхгүй');
 
@@ -230,7 +255,10 @@ export class UserAnswerService extends BaseService {
           // (existByWriteKey)-аар оновчтой шийднэ — байгаа бол update, байхгүй
           // бол insert.
           const answerCategory = answer.matrix
-            ? matrixMetaMap.get(Number(answer.matrix))
+            ? matrixAnswerMeta(
+                matrixMetaMap.get(Number(answer.matrix)),
+                answerMetaMap.get(Number(answer.answer)),
+              )
             : !answer.answer && !is_calculated
               ? null
               : answerMetaMap.get(Number(answer.answer));
@@ -281,6 +309,11 @@ export class UserAnswerService extends BaseService {
           if (!Number.isFinite(point)) {
             point = null as any;
           }
+
+          // NUMBER / TIME: point = оруулсан утга — min/max, бүхэл тоо эсэхийг ИРСЭН
+          // утгаар шалгана (browser-ийн шалгалтыг тойрсон / хуучирсан утга DB-д орохгүй).
+          const numericError = numericAnswerError(question, answer.point);
+          if (numericError) throw message(numericError);
 
           // Validate FK references: skip non-existent answer/matrix IDs to
           // avoid FK violation when frontend sends stale IDs after admin edits.
@@ -341,11 +374,13 @@ export class UserAnswerService extends BaseService {
         // (сүлжээгээр) тул арын дэвсгэрт үлдээж, алдааг нь заавал барина —
         // өмнө нь catch-гүй байсан тул unhandled rejection үүсгэдэг байв.
         await this.examDao.endExam(dto.data[0].code);
-        this.report
-          .createReport({ code: dto.data[0].code })
-          .catch((error) =>
-            console.error('❌ createReport алдаа:', error?.message),
-          );
+        // Studio-ийн туршилтын шалгалт — тайлан үүсгэхгүй (Studio өөрөө PDF-ээр харуулаад устгана).
+        if (!(exam as any).isPreview)
+          this.report
+            .createReport({ code: dto.data[0].code })
+            .catch((error) =>
+              console.error('❌ createReport алдаа:', error?.message),
+            );
         return {
           visible: exam.visible,
         };
@@ -391,7 +426,7 @@ export class UserAnswerService extends BaseService {
       throw new HttpException('Тест олдсонгүй', HttpStatus.BAD_REQUEST);
 
     const claimed = await this.examDao.claimEnd(code);
-    if (claimed) {
+    if (claimed && !(exam as any).isPreview) {
       // Тайлан үүсгэх хүсэлт удаан (сүлжээ, 3 удаа retry) тул арын дэвсгэрт;
       // алдааг нь заавал барина (unhandled rejection болохгүй) — createReport нь
       // бүх оролдлого унавал өөрөө `FAILED` мөр бичдэг.

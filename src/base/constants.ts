@@ -59,6 +59,10 @@ export const QuestionType = {
   MATRIX: 40,
   CONSTANTSUM: 50,
   SLIDER: 60,
+  // Нээлттэй тоон хариулт: min/max, бутархай эсэх — `question.settings`. point = оруулсан тоо.
+  NUMBER: 90,
+  // Цаг/хугацаа (ЦЦ:ММ[:СС]): point = хугацаа `settings.pointUnit` нэгжээр (анхдагч минут).
+  TIME: 100,
 };
 
 export const AssessmentType = {

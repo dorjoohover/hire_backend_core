@@ -173,6 +173,18 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE assessment_variable
    ADD COLUMN IF NOT EXISTS rules JSONB`,
 
+  // Studio-оос admin эрхээр өгөх ТУРШИЛТЫН шалгалт — тайлан хадгалахгүй (createReport
+  // дуудахгүй), Studio-д шууд PDF болгоод устгана. Тоонд оруулахгүйн тулд тэмдэглэгээ.
+  `ALTER TABLE exam ADD COLUMN IF NOT EXISTS "isPreview" BOOLEAN NOT NULL DEFAULT false`,
+
+  // Studio-ийн "Icon" сан — upload хийсэн icon-ууд (файл FileService-д, энд жагсаалт).
+  `CREATE TABLE IF NOT EXISTS studio_icon (
+    id SERIAL PRIMARY KEY,
+    key VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+
   // "Тайлан уншаад гацдаг" гомдол: report_logs.status Postgres native enum
   // тул TS enum-д REPORT_STATUS.FAILED нэмсэн ч (src/base/constants.ts,
   // hire_report/src/base/constants.ts) DB-ийн enum type өөрөө шинэ утгыг
@@ -329,6 +341,11 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   // №6: "дууссаны дараа үр дүн харуулах"-ыг service (QR) бүрд хадгална (null = assessment-ийн default).
   `ALTER TABLE "userService"
    ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
+
+  // NUMBER (90) / TIME (100) асуултын тохиргоо (min/max-аас бусад: бутархай, харуулах хэсэг,
+  // нэгж). Nullable, default-гүй → агшин зуур. hire_report энэ баганыг уншдаггүй.
+  `ALTER TABLE question
+   ADD COLUMN IF NOT EXISTS settings JSONB`,
 
   // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
   // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар

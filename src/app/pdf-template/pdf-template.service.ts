@@ -65,7 +65,20 @@ function resolveCustomTokensDeep(value: any, entriesByKey: Map<string, Record<st
 // Нөхцөлт (kind='score') хувьсагчийн rules-ийг шалгаж цэвэрлэнэ —
 // hire_report/src/pdf/score-rules.ts evaluateScoreRules()-тэй ижил бүтэц.
 const SCORE_RULE_OPS = new Set(['<', '<=', '>', '>=', '=', 'between']);
-const SCORE_RULE_SOURCES = new Set(['total', 'percent', 'category', 'categoryPercent']);
+// answerCategory / answerCategoryAvg — дэд бүлэг (хариултын ангилал, жиш матрицын мөр 'Тамхи')-ийн
+// нийт / дундаж оноо (hire_report score-rules.ts, studio lib/scoreRules.ts).
+const SCORE_RULE_SOURCES = new Set([
+  'total',
+  'percent',
+  'category',
+  'categoryPercent',
+  'categoryAvg',
+  'group',
+  'answerCategory',
+  'answerCategoryAvg',
+  // Томьёо хувьсагчийн (kind='formula') тооцоолсон утга — source.category = тэр хувьсагчийн key.
+  'variable',
+]);
 function normalizeScoreRules(rules: any): any | null {
   if (!rules || typeof rules !== 'object') return null;
   const sourceType = rules.source?.type;
@@ -83,11 +96,28 @@ function normalizeScoreRules(rules: any): any | null {
   return {
     source: {
       type: sourceType,
-      category: sourceType.startsWith('category') ? String(rules.source?.category ?? '') : undefined,
+      category:
+        sourceType.startsWith('category') ||
+        sourceType.startsWith('answerCategory') ||
+        sourceType === 'group' ||
+        sourceType === 'variable'
+          ? String(rules.source?.category ?? '')
+          : undefined,
     },
     conditions,
     elseText: String(rules.elseText ?? ''),
   };
+}
+
+// Томьёо (kind='formula') хувьсагч — { expression, decimals }. expression нь
+// '{{question[12].point}} * {{question[13].point}} * 8 + {{custom.other}}' маягийн
+// + - * / ( ) илэрхийлэл (hire_report report-widgets.ts evalNumberExpression-оор бодогдоно).
+function normalizeFormulaRules(rules: any): { expression: string; decimals: number } | null {
+  if (!rules || typeof rules !== 'object') return null;
+  const expression = String(rules.expression ?? '').trim().slice(0, 5000);
+  if (!expression) return null;
+  const d = Math.round(Number(rules.decimals));
+  return { expression, decimals: Number.isFinite(d) ? Math.min(4, Math.max(0, d)) : 0 };
 }
 
 @Injectable()
@@ -121,8 +151,14 @@ export class PdfTemplateService {
     if (!assessmentId) {
       throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
     }
-    const varKind = kind === 'score' ? 'score' : 'map';
+    const varKind = kind === 'score' ? 'score' : kind === 'formula' ? 'formula' : 'map';
     let varRules: any = null;
+    if (varKind === 'formula') {
+      varRules = normalizeFormulaRules(rules);
+      if (!varRules) {
+        throw new HttpException('Томьёо хувьсагчид томьёо (expression) шаардлагатай.', HttpStatus.BAD_REQUEST);
+      }
+    }
     if (varKind === 'score') {
       varRules = normalizeScoreRules(rules);
       if (!varRules) {
@@ -142,7 +178,7 @@ export class PdfTemplateService {
       assessmentId,
       key,
       label,
-      varKind === 'score' ? {} : entries || {},
+      varKind === 'map' ? entries || {} : {},
       varKind,
       varRules,
     );
@@ -330,7 +366,7 @@ export class PdfTemplateService {
       return { questionCategories: [], answerCategories: [] };
     }
     const [questionCategories, answerCategories] = await Promise.all([
-      this.questionCategoryDao.findByAssessmentId(assessmentId),
+      this.questionCategoryDao.findNumberedByAssessmentId(assessmentId),
       this.answerCategoryService.findByAssessment(assessmentId),
     ]);
     return {

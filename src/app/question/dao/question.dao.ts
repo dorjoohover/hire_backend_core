@@ -59,6 +59,7 @@ export class QuestionDao {
         'entity.minValue',
         'entity.maxValue',
         'entity.slider',
+        'entity.settings',
         'entity.orderNumber',
         'entity.file',
         'entity.point',
@@ -91,10 +92,12 @@ export class QuestionDao {
       query.limit(limit);
     }
 
-    // Add ordering and execute the query
-    const res = await query
-      .orderBy(shuffle ? 'RANDOM()' : 'entity.id')
-      .getMany();
+    // Add ordering and execute the query. Shuffle-гүй үед admin дээр чирж тогтоосон
+    // дараалал (orderNumber) — өмнө нь id-аар (үүсгэсэн дарааллаар) эрэмбэлдэг байсан
+    // тул admin-д дарааллыг сольсон ч web-д хуучнаараа гардаг байв.
+    if (shuffle) query.orderBy('RANDOM()');
+    else query.orderBy('entity.orderNumber', 'ASC', 'NULLS LAST').addOrderBy('entity.id', 'ASC');
+    const res = await query.getMany();
 
     return res;
   };
@@ -156,10 +159,20 @@ export class QuestionDao {
   // Олон асуултын min/max-ийг ганц query-ээр (batch preload).
   findMinMaxByIds = async (
     ids: number[],
-  ): Promise<{ id: number; minValue: number; maxValue: number }[]> => {
+  ): Promise<
+    {
+      id: number;
+      type: number;
+      minValue: number;
+      maxValue: number;
+      settings: Record<string, any> | null;
+      categoryId: number | null;
+    }[]
+  > => {
     if (!ids.length) return [];
     return await this.db.query(
-      `SELECT id, "minValue" AS "minValue", "maxValue" AS "maxValue"
+      `SELECT id, type, "minValue" AS "minValue", "maxValue" AS "maxValue", settings,
+              "categoryId" AS "categoryId"
        FROM question WHERE id = ANY($1)`,
       [ids],
     );

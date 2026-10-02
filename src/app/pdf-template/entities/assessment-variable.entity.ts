@@ -41,10 +41,12 @@ export class AssessmentVariableEntity {
   // 'score' — НӨХЦӨЛТ хувьсагч: rules.source (нийт оноо / онооны хувь /
   // ангиллын оноо)-ийн утгыг rules.conditions-ийн дарааллаар шалгаж
   // эхний тохирсон нөхцөлийн текстийг (эсвэл rules.elseText) буцаана.
+  // 'formula' — ТОМЬЁО: rules = { expression, decimals } — {{question[id].point}},
+  // {{custom.<key>}} гэх мэтээс + - * / ( )-оор тоо бодно (GPAQ: өдөр × минут × МЕТ).
   @Column({ length: 20, nullable: true, default: 'map' })
   kind?: string;
 
-  // { source: {type:'total'|'percent'|'category'|'categoryPercent', category?},
+  // { source: {type:'total'|'percent'|'category'|'categoryPercent'|'categoryAvg', category?},
   //   conditions: [{op:'<'|'<='|'>'|'>='|'='|'between', value, value2?, text}],
   //   elseText }
   @Column({ type: 'jsonb', nullable: true })

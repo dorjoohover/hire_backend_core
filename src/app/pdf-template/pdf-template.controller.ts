@@ -30,6 +30,7 @@ import { PdfTemplateService } from './pdf-template.service';
 import { CreatePdfTemplateDto } from './dto/create-pdf-template.dto';
 import { UpdatePdfTemplateDto } from './dto/update-pdf-template.dto';
 import { FileService } from 'src/file.service';
+import { StudioIconDao } from './studio-icon.dao';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
 
@@ -41,7 +42,50 @@ export class PdfTemplateController {
   constructor(
     private readonly service: PdfTemplateService,
     private readonly fileService: FileService,
+    private readonly iconDao: StudioIconDao,
   ) {}
+
+  // ── Studio "Icon" сан ───────────────────────────────────────────────────────
+  // Upload хийсэн icon-ууд бүх тест / загварт дахин ашиглагдана. Зураг өөрөө
+  // GET image/:key-ээр (Studio <img>, hire_report PDF) уншигдана.
+  @Get('icons')
+  listIcons() {
+    return this.iconDao.list();
+  }
+
+  @Post('icons')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  async uploadIcon(@UploadedFile() file: Express.Multer.File, @Body('name') name?: string) {
+    if (!file) throw new BadRequestException('Файл ирээгүй байна.');
+    if (!/^image\/(png|jpe?g|webp|svg\+xml|gif)$/.test(file.mimetype || '')) {
+      throw new BadRequestException('Зөвхөн зураг (png, jpg, webp, svg) оруулна уу.');
+    }
+    if (file.size > 2 * 1024 * 1024) throw new BadRequestException('2MB-аас ихгүй зураг оруулна уу.');
+    const safe = (file.originalname || 'icon').replace(/[^\w.\-]+/g, '_').slice(-80);
+    const key = `ic_${Date.now()}_${safe}`;
+    await this.fileService.upload(key, file.mimetype, file.buffer);
+    // multer нь UTF-8 файлын нэрийг latin1 гэж уншдаг ("Ð¥Ð°ÑÐ°Ð»" г.м.) — буцааж засна.
+    const orig = /[\u00C0-\u00FF]/.test(file.originalname || '')
+      ? Buffer.from(file.originalname, 'latin1').toString('utf8')
+      : file.originalname || '';
+    const label = String(name || orig).replace(/\.[a-z0-9]+$/i, '').slice(0, 255) || null;
+    return this.iconDao.create(key, label);
+  }
+
+  @Put('icons/:id')
+  @ApiParam({ name: 'id' })
+  async renameIcon(@Param('id') id: string, @Body('name') name: string) {
+    const n = String(name ?? '').trim().slice(0, 255);
+    if (!n) throw new BadRequestException('Нэр хоосон байна.');
+    return this.iconDao.rename(+id, n);
+  }
+
+  @Delete('icons/:id')
+  @ApiParam({ name: 'id' })
+  removeIcon(@Param('id') id: string) {
+    return this.iconDao.remove(+id);
+  }
 
   // Studio-ийн "Зураг блок"-д хэрэглэгчийн өөрийн зураг upload хийхэд
   // ашиглана (одоо байгаа /upload endpoint-тэй адилхан S3+local хадгалдаг
@@ -205,7 +249,7 @@ export class PdfTemplateController {
     dto: {
       label?: string;
       entries: Record<string, string>;
-      kind?: 'map' | 'score';
+      kind?: 'map' | 'score' | 'formula';
       rules?: any;
     },
   ) {

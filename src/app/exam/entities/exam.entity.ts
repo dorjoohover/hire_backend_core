@@ -35,6 +35,9 @@ export class ExamEntity {
   phone: string;
   @Column({ default: true, nullable: true })
   visible: boolean;
+  // Studio-оос admin эрхээр өгсөн туршилтын шалгалт (perf-bootstrap) — тайлан үүсгэхгүй, дараа нь устгана.
+  @Column({ default: false })
+  isPreview?: boolean;
 
   /** Тайланг хэдэн удаа үзсэн (үнэгүй харалтын тоолуур — paywall-д хэрэглэнэ). */
   @Column({ default: 0 })
