@@ -72,6 +72,14 @@ check('F1 HTML/JSON/талбараас түлхүүр (decode), traversal ба �
   '1714_icon.png',
   'pt_1_logo.png',
 ]);
+const pk = new Set<string>();
+fileKeysInText('{"imageUrl":"http://hire-core-1:5000/api/v1/pdf-template/image/pt_1790607712501_unnamed%20(2).png"}', pk);
+fileKeysInText('<div style="background:url(/api/file/1715_bg.png)"></div> <img src="/api/file/1716_x%20(1).jpg">', pk);
+check('F1b нэрэнд "(2)" байгаа зураг бүтнээрээ; CSS url(…)-ийн ")" хасагдана', [...pk].sort(), [
+  '1715_bg.png',
+  '1716_x (1).jpg',
+  'pt_1790607712501_unnamed (2).png',
+]);
 check('F2 isSafeFileKey', ['a.png', '../a', 'a/b.png', '.env', ''].map(isSafeFileKey), [true, false, false, false, false]);
 
 // ---------- N: нэр

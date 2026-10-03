@@ -142,8 +142,13 @@ export const BLOCKED_FILE_EXT = /\.(html?|xhtml|xml|js|mjs|cjs|php|sh|exe|bat)$/
 
 // `https://api.hire.mn/api/v1/file/<key>`, `/api/file/<key>` (admin/web proxy),
 // `…/pdf-template/image/<key>` (Studio зураг / icon).
+// ")"-ийг зөвшөөрнө — Studio-д "unnamed (2).png" гэх мэт нэртэй зураг байдаг (өмнө нь
+// "(2" дээр тасарч, тийм зураг prod руу хуулагдаагүй байв). CSS `url(…)`-ийн төгсгөлийн
+// ")"-ийг fileKeysInText хаалт тэнцвэржүүлж хасна.
 const FILE_URL_RE =
-  /(?:\/api\/v1\/file\/|\/api\/file\/|pdf-template\/image\/)([^"'\s<>?#)\\]+)/g;
+  /(?:\/api\/v1\/file\/|\/api\/file\/|pdf-template\/image\/)([^"'\s<>?#\\]+)/g;
+
+const count = (s: string, ch: string) => s.split(ch).length - 1;
 
 /** Текст (HTML, JSON) доторх файлын холбоосуудын түлхүүрийг цуглуулна. */
 export function fileKeysInText(text: unknown, out: Set<string>) {
@@ -155,6 +160,7 @@ export function fileKeysInText(text: unknown, out: Set<string>) {
     } catch {
       /* буруу encode — байгаагаар нь */
     }
+    while (key.endsWith(')') && count(key, '(') < count(key, ')')) key = key.slice(0, -1);
     if (isSafeFileKey(key)) out.add(key);
   }
 }
