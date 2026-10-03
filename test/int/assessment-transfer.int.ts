@@ -97,6 +97,14 @@ async function fingerprint(ds: DataSource, id: number) {
   };
 }
 
+// Admin / web хариултыг mv_question_answer_full-аас уншдаг — хуулбарын хариулт ТЭНД харагдах ёстой.
+async function viewVsTable(ds: DataSource, id: number) {
+  const ids = `SELECT q.id FROM question q JOIN "questionCategory" qc ON qc.id=q."categoryId" WHERE qc."assessmentId"=$1`;
+  const mv = Number((await ds.query(`SELECT count(DISTINCT id) AS n FROM mv_question_answer_full WHERE "questionId" IN (${ids})`, [id]))[0].n);
+  const tbl = Number((await ds.query(`SELECT count(*) AS n FROM "questionAnswer" WHERE "questionId" IN (${ids})`, [id]))[0].n);
+  return [mv, tbl];
+}
+
 (async () => {
   let ds = await makeDs();
   const src = await seed(ds);
@@ -115,6 +123,7 @@ async function fingerprint(ds: DataSource, id: number) {
     const f = await ds.getRepository(FormulaEntity).findOne({ where: { id: copy.formule } });
     return [copy.formule !== src.f0, f?.formula, f?.variables, f?.aggregations];
   })(), [true, 'a+b', ['1', '2'], [{ field: 'point', operation: 'SUM' }]]);
+  check('C0 хуулбарын хариулт admin-ийн уншдаг харагдацад (mv_question_answer_full) шууд харагдана', await viewVsTable(ds, copyId), [4, 4]);
   const after = await fingerprint(ds, copyId);
   check('C4 бүлэг/асуулт/хариулт/матриц/томьёо/skip-дүрэм эхтэйгээ ижил (ID-гүй харьцуулалт)', after, before);
   check('C5 эх тест өөрчлөгдөөгүй (хариулт "хулгайлагдаагүй")', await fingerprint(ds, src.a), before);
@@ -155,6 +164,7 @@ async function fingerprint(ds: DataSource, id: number) {
   check('I1 нэр, Архив, prod хэрэглэгч, ангилал нэрээр олдсон, түвшин алга',
     [imp.name, imp.status, imp.createdUser, imp.category, imp.level], ['СЭМҮТ', 20, 7, prodCat, null]);
   check('I2 агуулга эх тесттэй ижил', await fingerprint(ds, res.id), before);
+  check('I2b оруулсан тестийн хариулт харагдацад шууд харагдана', await viewVsTable(ds, res.id), [4, 4]);
   check('I3 файл: 3 бичигдсэн, 1 аль хэдийн байсан (дарж бичээгүй)', [res.files.written, res.files.existing, prodFiles.store.get('1700_icon.png')?.toString(), prodFiles.store.get('pt_1_logo.png')?.toString()], [3, 1, 'already', 'L']);
   check('I4 анхааруулга: түвшин алга + олдоогүй файл', [res.warnings.some((w) => /Түвшин "Дунд"/.test(w)), res.warnings.some((w) => /1702_q2\.jpg/.test(w))], [true, true]);
   const res2 = await svc.importBundle(JSON.parse(JSON.stringify(bundle)), 7);

@@ -513,8 +513,11 @@ export class AssessmentTransferService {
     if (dropped.size) {
       warnings.push(`Энэ серверт байхгүй ${dropped.size} талбарыг алгаслаа (хувилбар зөрүү): ${[...dropped].slice(0, 15).join(', ')}`);
     }
-    // Хариултын харагдац (mv_question_answer_full)-ыг шинэчилнэ — debounce-тэй, fire-and-forget
-    this.view.refresh();
+    // Admin / web хариултыг mv_question_answer_full-аас уншдаг. Хуулбар руу шилжмэгц
+    // хариулт харагдахын тулд хариу буцаахаас ӨМНӨ харагдацыг шинэчилнэ (өмнө нь
+    // debounce-тэй fire-and-forget байсан тул admin шинэ тест рүү шууд ороход хариултгүй
+    // харагддаг байсан).
+    await this.refreshAnswerView(warnings);
     this.logger.log(
       `assessment ${mode}: "${b.source?.name}" (src id=${b.source?.assessmentId}) → id=${created.id} "${created.name}" by user ${userId}`,
     );
@@ -538,6 +541,22 @@ export class AssessmentTransferService {
   // =========================================================================
   // туслах
   // =========================================================================
+
+  private async refreshAnswerView(warnings: string[]) {
+    try {
+      await this.ds.query('REFRESH MATERIALIZED VIEW CONCURRENTLY mv_question_answer_full');
+      return;
+    } catch {
+      /* CONCURRENTLY нь харагдац хоосон / unique index-гүй үед унадаг — энгийнээр давтана */
+    }
+    try {
+      await this.ds.query('REFRESH MATERIALIZED VIEW mv_question_answer_full');
+    } catch (e: any) {
+      this.logger.error(`mv_question_answer_full refresh failed: ${e?.message}`);
+      this.view.refresh();
+      warnings.push('Хариултын жагсаалт шинэчлэгдэхгүй байна — хэдэн секундийн дараа хуудсаа дахин ачаална уу.');
+    }
+  }
 
   private async runTx<T>(fn: (m: EntityManager) => Promise<T>): Promise<T> {
     try {
