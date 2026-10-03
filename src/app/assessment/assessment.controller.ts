@@ -1,4 +1,6 @@
 import {
+  Req,
+  ForbiddenException,
   Controller,
   Get,
   Post,
@@ -118,9 +120,14 @@ export class AssessmentController {
   ) {
     return this.assessmentService.update(+id, dto, user['id']);
   }
-  @Roles(Role.super_admin, Role.admin)
+  // Тест устгах — ЗӨВХӨН super admin. RolesGuard нь admin app-ийн admin / tester-ийг
+  // @Roles-оос үл хамааран нэвтрүүлдэг тул энд шууд шалгана.
+  @Roles(Role.super_admin)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @Req() req: any) {
+    if (Number(req?.user?.role) !== Role.super_admin) {
+      throw new ForbiddenException('Тестийг зөвхөн super admin устгах эрхтэй.');
+    }
     return this.assessmentService.remove(+id);
   }
 
