@@ -242,7 +242,15 @@ export class AssessmentTransferService {
         targetQuestionRef: r.targetQuestionId,
         dependsOnQuestionRef: r.dependsOnQuestionId,
         dependsOnAnswerRef: r.dependsOnAnswerId ?? null,
-        fields: omit(QuestionRuleEntity, r, ['targetQuestionId', 'dependsOnQuestionId', 'dependsOnAnswerId']),
+        dependsOnMatrixRef: r.dependsOnMatrixId ?? null,
+        targetAnswerRef: r.targetAnswerId ?? null,
+        fields: omit(QuestionRuleEntity, r, [
+          'targetQuestionId',
+          'dependsOnQuestionId',
+          'dependsOnAnswerId',
+          'dependsOnMatrixId',
+          'targetAnswerId',
+        ]),
       })),
       pdfTemplates: templates.map((t) => ({ fields: omit(PdfTemplateEntity, t, ['assessmentId']) })),
       variables: variables.map((v) => ({ fields: omit(AssessmentVariableEntity, v, ['assessmentId']) })),
@@ -436,7 +444,7 @@ export class AssessmentTransferService {
       const aMap = new Map(b.answers.map((r, i) => [r.ref, aIds[i]]));
 
       // --- матриц
-      await insertMany(
+      const mIds = await insertMany(
         QuestionAnswerMatrixEntity,
         b.matrix.map((r) => ({
           ...pick(QuestionAnswerMatrixEntity, r.fields, 'questionAnswerMatrix'),
@@ -445,6 +453,7 @@ export class AssessmentTransferService {
           category: ac(r.categoryRef),
         })),
       );
+      const mMap = new Map(b.matrix.map((r, i) => [r.ref, mIds[i]]));
 
       // --- assessment_formulas (эцэг нь түрүүлж) + тус бүрийн formule-ийн шинэ хуулбар
       const afMap = new Map<number, number>();
@@ -467,7 +476,15 @@ export class AssessmentTransferService {
         const target = qMap.get(r.targetQuestionRef);
         const dependsOn = qMap.get(r.dependsOnQuestionRef);
         const dependsOnAnswer = r.dependsOnAnswerRef != null ? aMap.get(r.dependsOnAnswerRef) : null;
-        if (!target || !dependsOn || (r.dependsOnAnswerRef != null && !dependsOnAnswer)) {
+        const dependsOnMatrix = r.dependsOnMatrixRef != null ? mMap.get(r.dependsOnMatrixRef) : null;
+        const targetAnswer = r.targetAnswerRef != null ? aMap.get(r.targetAnswerRef) : null;
+        if (
+          !target ||
+          !dependsOn ||
+          (r.dependsOnAnswerRef != null && !dependsOnAnswer) ||
+          (r.dependsOnMatrixRef != null && !dependsOnMatrix) ||
+          (r.targetAnswerRef != null && !targetAnswer)
+        ) {
           rulesSkipped++;
           continue;
         }
@@ -476,6 +493,8 @@ export class AssessmentTransferService {
           targetQuestionId: target,
           dependsOnQuestionId: dependsOn,
           dependsOnAnswerId: dependsOnAnswer,
+          dependsOnMatrixId: dependsOnMatrix,
+          targetAnswerId: targetAnswer,
         });
       }
       await insertMany(QuestionRuleEntity, ruleRows);

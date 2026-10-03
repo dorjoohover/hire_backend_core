@@ -277,6 +277,10 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
     active BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP NOT NULL DEFAULT now()
   )`,
+  // MATRIX нөхцөл (мөр + багана): dependsOnAnswerId = мөр, dependsOnMatrixId = нүд.
+  `ALTER TABLE "questionRule" ADD COLUMN IF NOT EXISTS "dependsOnMatrixId" INTEGER`,
+  // MATRIX алгасах асуултын зөвхөн нэг мөрийг (questionAnswer) хасах дүрэм.
+  `ALTER TABLE "questionRule" ADD COLUMN IF NOT EXISTS "targetAnswerId" INTEGER`,
 
   // ===========================================================================
   // №14 ops үйлдлийн аудит (recalculate / regenerate / retry / PDF солих):

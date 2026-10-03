@@ -16,6 +16,7 @@ import { QuestionRuleService } from '../src/app/question/question.rule.service';
 import { QuestionRuleController } from '../src/app/question/question.rule.controller';
 import { QuestionRuleDao } from '../src/app/question/dao/question.rule.dao';
 import { QuestionRuleAction } from '../src/app/question/entities/question.rule.entity';
+import { applyMatchedSkipRules, indexPriorAnswers, isSkipRuleMatched } from '../src/app/question/skip-rule-match';
 import { UserAnswerService } from '../src/app/user.answer/user.answer.service';
 import { UserAnswerController } from '../src/app/user.answer/user.answer.controller';
 import { IS_PUBLIC_KEY } from '../src/auth/guards/jwt/jwt-auth-guard';
@@ -48,14 +49,22 @@ const QUESTIONS: Record<number, [number, number, number, number]> = {
   1: [SINGLE, 100, 1, 1], // 1-р блок
   2: [MULTIPLE, 100, 1, 1], // 1-р блок
   3: [SINGLE, 200, 2, 1], // 2-р блок
-  4: [MATRIX, 100, 1, 1], // 1-р блок, MATRIX (нөхцөл болохгүй)
+  4: [MATRIX, 100, 1, 1], // 1-р блок, MATRIX (мөр 41 / 42, нүд 401 / 402 / 411)
   5: [SINGLE, 300, 1, 2], // ӨӨР тест
   6: [SINGLE, 300, 3, 1], // 3-р блок
   7: [SINGLE, 100, 1, 1],
   8: [SINGLE, 100, 1, 1],
   9: [SINGLE, 100, 1, 1],
+  10: [60, 100, 1, 1], // TEXT — нөхцөл болохгүй
+  11: [MATRIX, 200, 2, 1], // 2-р блок, MATRIX алгасах асуулт (мөр 111 "Тамхи" / 112 "Архи")
 };
-const ANSWER_OWNER: Record<number, number> = { 11: 1, 12: 1, 21: 2, 31: 3 };
+const ANSWER_OWNER: Record<number, number> = { 11: 1, 12: 1, 21: 2, 31: 3, 41: 4, 42: 4, 111: 11, 112: 11 };
+// MATRIX нүд → { асуулт, мөр }: 401 = "Тамхи / Үгүй", 411 = "Тамхи / Тийм", 402 = "Архи / Үгүй"
+const MATRIX_OWNER: Record<number, { questionId: number; answerId: number }> = {
+  401: { questionId: 4, answerId: 41 },
+  411: { questionId: 4, answerId: 41 },
+  402: { questionId: 4, answerId: 42 },
+};
 
 const makeDao = (rules: any[] = []) => {
   const store = rules.map((r, i) => ({
@@ -78,6 +87,7 @@ const makeDao = (rules: any[] = []) => {
           assessmentId: QUESTIONS[id][3],
         })),
     findAnswerQuestionId: async (a: number) => ANSWER_OWNER[a] ?? null,
+    findMatrixOwner: async (m: number) => MATRIX_OWNER[m] ?? null,
     findAll: async () => store,
     findOne: async (id: number) => store.find((r) => r.id === id) ?? null,
     updateOne: async (id: number, patch: any) => void updates.push([id, patch]),
@@ -105,6 +115,8 @@ const makeDao = (rules: any[] = []) => {
         targetQuestionId: 3,
         dependsOnQuestionId: 1,
         dependsOnAnswerId: 11,
+        dependsOnMatrixId: null,
+        targetAnswerId: null,
         action: 'skip',
         active: true,
       },
@@ -138,8 +150,8 @@ const makeDao = (rules: any[] = []) => {
       [404, 404],
     );
     check(
-      'V4 нөхцөл нь MATRIX → 400',
-      await st({ targetQuestionId: 3, dependsOnQuestionId: 4 }),
+      'V4 нөхцөл нь TEXT (answer id-гүй төрөл) → 400',
+      await st({ targetQuestionId: 3, dependsOnQuestionId: 10 }),
       400,
     );
     check(
@@ -246,11 +258,143 @@ const makeDao = (rules: any[] = []) => {
     );
   }
 
+  console.log('\n— MATRIX нөхцөл (мөр + багана)');
+  {
+    const h = makeDao();
+    const st = (r: any) => errStatus(() => h.svc.validate(r));
+    check(
+      'M1 MATRIX: "Тамхи" мөрөнд "Үгүй" (нүд 401) → цэвэрлэгдсэн дүрэм',
+      await h.svc.validate({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 }),
+      { targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401, targetAnswerId: null, action: 'skip', active: true },
+    );
+    check(
+      'M2 мөр л (багана сонгоогүй = мөрөнд ямар нэг хариулт) / ямар ч хариулт → OK',
+      [
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41 }),
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 4 }),
+      ],
+      ['OK', 'OK'],
+    );
+    check(
+      'M3 багана өөр мөрийнх / мөргүй багана / MATRIX биш асуултад багана / байхгүй нүд → 400',
+      [
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 402 }),
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnMatrixId: 401 }),
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 1, dependsOnAnswerId: 11, dependsOnMatrixId: 401 }),
+        await st({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 999 }),
+      ],
+      [400, 400, 400, 400],
+    );
+    const h2 = makeDao([{ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 }]);
+    check(
+      'M4 давхардал: ижил мөр + нүд → 400; ижил мөр, өөр нүд ("Тийм") → OK',
+      [
+        await errStatus(() => h2.svc.validate({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 })),
+        await errStatus(() => h2.svc.validate({ targetQuestionId: 3, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 411 })),
+      ],
+      [400, 'OK'],
+    );
+    h2.updates.length = 0;
+    await h2.svc.update(1, { dependsOnAnswerId: 42 });
+    check('M5 PATCH мөр солиход хуучин нүд хүчингүй (null)', h2.updates.map((u) => [u[1].dependsOnAnswerId, u[1].dependsOnMatrixId]), [[42, null]]);
+  }
+
+  console.log('\n— MATRIX мөр хасах (targetAnswerId)');
+  {
+    const h = makeDao();
+    const st = (r: any) => errStatus(() => h.svc.validate(r));
+    const tamhiNo = { dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 };
+    check(
+      'MR1 "Тамхи = Үгүй" → дараагийн матрицын "Тамхи" мөрийг (111) хасна → цэвэрлэгдсэн дүрэм',
+      await h.svc.validate({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 111 }),
+      { targetQuestionId: 11, dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401, targetAnswerId: 111, action: 'skip', active: true },
+    );
+    check(
+      'MR2 мөр нь өөр асуултынх / MATRIX биш асуултад мөр / байхгүй мөр / буруу id → 400',
+      [
+        await st({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 41 }),
+        await st({ targetQuestionId: 3, ...tamhiNo, targetAnswerId: 31 }),
+        await st({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 999 }),
+        await st({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 'x' }),
+      ],
+      [400, 400, 400, 400],
+    );
+    const h2 = makeDao([{ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 111 }]);
+    check(
+      'MR3 давхардал: ижил мөр → 400; өөр мөр (112) / бүтэн асуулт (мөргүй) → OK',
+      [
+        await errStatus(() => h2.svc.validate({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 111 })),
+        await errStatus(() => h2.svc.validate({ targetQuestionId: 11, ...tamhiNo, targetAnswerId: 112 })),
+        await errStatus(() => h2.svc.validate({ targetQuestionId: 11, ...tamhiNo })),
+      ],
+      [400, 'OK', 'OK'],
+    );
+    h2.updates.length = 0;
+    await h2.svc.update(1, { dependsOnMatrixId: 411 });
+    await h2.svc.update(1, { targetQuestionId: 3 });
+    check(
+      'MR4 PATCH: нөхцөл солиход мөр хэвээр; алгасах асуулт солиход мөр хүчингүй (null)',
+      h2.updates.map((u) => [u[1].targetQuestionId, u[1].targetAnswerId]),
+      [[11, 111], [3, null]],
+    );
+  }
+
+  console.log('\n— Сервер: өмнөх хариултаар дүрэм биелэх эсэх (exam getQuestions)');
+  {
+    // userAnswer мөрүүд: SINGLE 1 → 11; MATRIX 4: "Тамхи"(41) → "Үгүй"(401), "Архи"(42) → "Тийм"(412)
+    const idx = indexPriorAnswers([
+      { questionId: 1, answerId: 11, matrixId: null },
+      { questionId: 4, answerId: 41, matrixId: 401 },
+      { questionId: 4, answerId: '42', matrixId: '412' },
+      { questionId: 9, answerId: null, matrixId: null },
+    ]);
+    const m = (r: any) => isSkipRuleMatched(r, idx);
+    check('S1 SINGLE хариулт таарсан / таараагүй', [m({ dependsOnQuestionId: 1, dependsOnAnswerId: 11 }), m({ dependsOnQuestionId: 1, dependsOnAnswerId: 12 })], [true, false]);
+    check('S2 MATRIX "Тамхи = Үгүй" → алгасна; "Архи = Үгүй" (Тийм гэсэн) → алгасахгүй', [
+      m({ dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 }),
+      m({ dependsOnQuestionId: 4, dependsOnAnswerId: 42, dependsOnMatrixId: 402 }),
+    ], [true, false]);
+    check('S3 MATRIX мөр л (ямар нэг багана) / хариулаагүй мөр', [m({ dependsOnQuestionId: 4, dependsOnAnswerId: 42 }), m({ dependsOnQuestionId: 4, dependsOnAnswerId: 43 })], [true, false]);
+    check('S4 "ямар нэг хариулт" (хугацаа дууссан null мөр ч орно) / хариулаагүй асуулт', [m({ dependsOnQuestionId: 9 }), m({ dependsOnQuestionId: 3 })], [true, false]);
+
+    // applyMatchedSkipRules — асуулт / MATRIX мөр хасах
+    const QS = [
+      { question: { id: 3 }, answers: [{ id: 31 }] },
+      { question: { id: 11 }, answers: [{ id: 111 }, { id: 112 }] },
+      { question: { id: 6 }, answers: [{ id: 61 }] },
+    ];
+    const shape = (qs: any[]) => qs.map((x) => [x.question.id, x.answers.map((a: any) => a.id)]);
+    const tamhiNo = { dependsOnQuestionId: 4, dependsOnAnswerId: 41, dependsOnMatrixId: 401 };
+    const archiNo = { dependsOnQuestionId: 4, dependsOnAnswerId: 42, dependsOnMatrixId: 402 };
+    check(
+      'S5 "Тамхи = Үгүй" → 11-ийн "Тамхи" мөр (111) хасагдана; "Архи = Үгүй" биелээгүй → 112 үлдэнэ',
+      shape(applyMatchedSkipRules(QS, [
+        { targetQuestionId: 11, ...tamhiNo, targetAnswerId: 111 },
+        { targetQuestionId: 11, ...archiNo, targetAnswerId: 112 },
+      ], idx)),
+      [[3, [31]], [11, [112]], [6, [61]]],
+    );
+    check(
+      'S6 бүх мөр хасагдвал асуулт бүхэлдээ алга; бүтэн асуултын дүрэм хэвээр ажиллана',
+      shape(applyMatchedSkipRules(QS, [
+        { targetQuestionId: 11, ...tamhiNo, targetAnswerId: 111 },
+        { targetQuestionId: 11, dependsOnQuestionId: 4, dependsOnAnswerId: 42, targetAnswerId: 112 },
+        { targetQuestionId: 6, dependsOnQuestionId: 1, dependsOnAnswerId: 11 },
+      ], idx)),
+      [[3, [31]]],
+    );
+    check(
+      'S7 оролтыг өөрчлөхгүй (мөр хасагдсан асуулт шинэ объект); дүрэм биелээгүй бол ижил массив',
+      [QS[1].answers.length, applyMatchedSkipRules(QS, [{ targetQuestionId: 11, ...archiNo, targetAnswerId: 112 }], idx) === QS],
+      [2, true],
+    );
+  }
+
   console.log('\n— QuestionRuleService.update (PATCH / active)');
   {
-    // Хуучин, буруу дүрэм (MATRIX нөхцөл) — legacy.
+    // Хуучин, буруу дүрэм (TEXT нөхцөл) — legacy.
     const h = makeDao([
-      { targetQuestionId: 3, dependsOnQuestionId: 4 },
+      { targetQuestionId: 3, dependsOnQuestionId: 10 },
       { targetQuestionId: 3, dependsOnQuestionId: 1, dependsOnAnswerId: 11 },
     ]);
     check(

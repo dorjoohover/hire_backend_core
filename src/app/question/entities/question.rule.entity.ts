@@ -34,6 +34,18 @@ export class QuestionRuleEntity {
   @Column({ nullable: true })
   dependsOnAnswerId: number;
 
+  // MATRIX нөхцөл асуултад: сонгосон НҮД (questionAnswerMatrix.id) — dependsOnAnswerId
+  // нь мөр (жиш: "Тамхи"), энэ нь тэр мөрийн багана ("Үгүй"). Хоёулаа таарвал нөхцөл биелнэ.
+  // null бол (MATRIX биш, эсвэл мөрөнд ямар ч хариулт өгсөн л бол).
+  @Column({ nullable: true })
+  dependsOnMatrixId: number;
+
+  // MATRIX алгасах асуултад: бүтэн асуултыг биш, зөвхөн энэ МӨРИЙГ (questionAnswer.id,
+  // жиш: "Тамхи") хасна. null бол асуултыг бүхэлд нь алгасна. Бүх мөр нь хасагдвал
+  // асуулт өөрөө харагдахгүй.
+  @Column({ nullable: true })
+  targetAnswerId: number;
+
   // 'skip' (default): нөхцөл биелвэл targetQuestion-г харуулахгүй алгасна.
   @Column({ default: QuestionRuleAction.SKIP })
   action: string;

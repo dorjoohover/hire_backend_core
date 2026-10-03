@@ -19,6 +19,8 @@ export class QuestionRuleDao {
               "targetQuestionId"   AS "targetQuestionId",
               "dependsOnQuestionId" AS "dependsOnQuestionId",
               "dependsOnAnswerId"  AS "dependsOnAnswerId",
+              "dependsOnMatrixId"  AS "dependsOnMatrixId",
+              "targetAnswerId"     AS "targetAnswerId",
               action,
               active
        FROM "questionRule"
@@ -74,6 +76,19 @@ export class QuestionRuleDao {
       [answerId],
     );
     return rows.length ? Number(rows[0].questionId) : null;
+  };
+
+  // MATRIX нүд аль асуулт / мөрийнх вэ (dependsOnMatrixId-г шалгахад).
+  findMatrixOwner = async (
+    matrixId: number,
+  ): Promise<{ questionId: number | null; answerId: number | null } | null> => {
+    const rows = await this.db.query(
+      `SELECT "questionId", "answerId" FROM "questionAnswerMatrix" WHERE id = $1`,
+      [matrixId],
+    );
+    if (!rows.length) return null;
+    const n = (v: any) => (v == null ? null : Number(v));
+    return { questionId: n(rows[0].questionId), answerId: n(rows[0].answerId) };
   };
 
   deleteOne = async (id: number) => {

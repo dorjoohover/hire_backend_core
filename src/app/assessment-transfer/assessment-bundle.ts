@@ -71,6 +71,10 @@ export interface AssessmentBundle {
     targetQuestionRef: number;
     dependsOnQuestionRef: number;
     dependsOnAnswerRef: number | null;
+    /** MATRIX нөхцөл: тухайн мөрийн нүд (bundle.matrix[].ref) */
+    dependsOnMatrixRef?: number | null;
+    /** MATRIX алгасах асуултын зөвхөн энэ мөр (bundle.answers[].ref); null = бүтэн асуулт */
+    targetAnswerRef?: number | null;
     fields: Fields;
   }[];
   pdfTemplates: { fields: Fields }[];
@@ -251,7 +255,7 @@ export function assertBundle(b: any): asserts b is AssessmentBundle {
   const qc = refSet(b.questionCategories, 'Асуултын бүлэг');
   const q = refSet(b.questions, 'Асуулт');
   const a = refSet(b.answers, 'Хариулт');
-  refSet(b.matrix, 'Матриц');
+  const mx = refSet(b.matrix, 'Матриц');
   const af = refSet(b.assessmentFormulas, 'Томьёо');
 
   const need = (ok: boolean, m: string) => ok || fail(m);
@@ -270,6 +274,10 @@ export function assertBundle(b: any): asserts b is AssessmentBundle {
   for (const r of b.assessmentFormulas) {
     need(opt(af, r.parentRef), `Томьёо ${r.ref}: parent олдсонгүй.`);
     need(opt(qc, r.questionCategoryRef), `Томьёо ${r.ref}: асуултын бүлэг олдсонгүй.`);
+  }
+  for (const r of b.rules) {
+    need(opt(mx, r?.dependsOnMatrixRef), `Skip-дүрэм: матрицын нүд (${r?.dependsOnMatrixRef}) олдсонгүй.`);
+    need(opt(a, r?.targetAnswerRef), `Skip-дүрэм: хасах мөр (${r?.targetAnswerRef}) олдсонгүй.`);
   }
   for (const f of b.files) {
     need(

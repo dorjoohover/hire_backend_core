@@ -33,6 +33,18 @@ class CreateQuestionRuleDto {
   @Min(1)
   dependsOnAnswerId?: number | null;
 
+  // MATRIX нөхцөлд: мөрийн (dependsOnAnswerId) аль нүд (багана) сонгогдсон бол.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  dependsOnMatrixId?: number | null;
+
+  // MATRIX алгасах асуултад: зөвхөн энэ мөрийг хасна (null = бүтэн асуулт).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  targetAnswerId?: number | null;
+
   @IsOptional()
   @IsIn([QuestionRuleAction.SKIP])
   action?: string;
@@ -57,6 +69,18 @@ class UpdateQuestionRuleDto {
   @IsInt()
   @Min(1)
   dependsOnAnswerId?: number | null;
+
+  // MATRIX нөхцөлд: мөрийн (dependsOnAnswerId) аль нүд (багана) сонгогдсон бол.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  dependsOnMatrixId?: number | null;
+
+  // MATRIX алгасах асуултад: зөвхөн энэ мөрийг хасна (null = бүтэн асуулт).
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  targetAnswerId?: number | null;
 
   @IsOptional()
   @IsIn([QuestionRuleAction.SKIP])

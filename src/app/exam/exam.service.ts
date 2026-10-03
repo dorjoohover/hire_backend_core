@@ -12,6 +12,10 @@ import { BaseService } from 'src/base/base.service';
 import { QuestionService } from '../question/question.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { QuestionRuleDao } from '../question/dao/question.rule.dao';
+import {
+  applyMatchedSkipRules,
+  indexPriorAnswers,
+} from '../question/skip-rule-match';
 import { QuestionRuleAction } from '../question/entities/question.rule.entity';
 import { QuestionEntity } from '../question/entities/question.entity';
 import { QuestionCategoryEntity } from '../question/entities/question.category.entity';
@@ -620,37 +624,30 @@ export class ExamService extends BaseService {
         const fetchedRules =
           await this.questionRuleDao.findByTargetQuestionIds(allIds);
         if (fetchedRules.length) {
-          const prior = await this.userAnswer.findExistingByCode(code);
-          const answeredPairs = new Set(
-            prior
-              .filter((p) => p.answerId != null)
-              .map((p) => `${Number(p.questionId)}:${Number(p.answerId)}`),
+          const pageIds = new Set(allIds);
+          const skipRules = fetchedRules.filter(
+            (r) => r.action === QuestionRuleAction.SKIP,
           );
-          const answeredQuestions = new Set(
-            prior.map((p) => Number(p.questionId)),
+          // Нөхцөл асуулт нь ӨМНӨХ хэсэгт (энэ хуудсанд биш) байгаа дүрмүүдийг серверт
+          // хэрэглэнэ: асуултыг бүхэлд нь, эсвэл MATRIX-ийн мөрийг (targetAnswerId) хасна.
+          // Энэ хуудсан дахь нөхцөлийг client live-аар (rules) шийднэ — хэсэг рүү буцаж
+          // орж хариултаа өөрчилбөл нуугдсан асуулт / мөр эргэж гарч ирэх ёстой.
+          const priorRules = skipRules.filter(
+            (r) => !pageIds.has(Number(r.dependsOnQuestionId)),
           );
-          const skip = new Set<number>();
-          for (const rule of fetchedRules) {
-            if (rule.action !== QuestionRuleAction.SKIP) continue;
-            const dq = Number(rule.dependsOnQuestionId);
-            const matched =
-              rule.dependsOnAnswerId != null
-                ? answeredPairs.has(`${dq}:${Number(rule.dependsOnAnswerId)}`)
-                : answeredQuestions.has(dq);
-            if (matched) skip.add(Number(rule.targetQuestionId));
-          }
-          if (skip.size) {
-            q = q.filter((x) => !skip.has(Number(x.question?.id)));
+          if (priorRules.length) {
+            const prior = await this.userAnswer.findExistingByCode(code);
+            // SINGLE / MULTIPLE (answerId), MATRIX (мөр + нүд) — skip-rule-match.ts
+            q = applyMatchedSkipRules(q, priorRules, indexPriorAnswers(prior));
           }
           // Зөвхөн энэ хуудсанд live skip хэрэглэгдэх дүрмүүдийг л буцаана
           // (target ба depends хоёулаа одоо харагдах асуултуудын дотор).
           const remainingIds = new Set(
             q.map((x) => Number(x.question?.id)),
           );
-          rules = fetchedRules
+          rules = skipRules
             .filter(
               (r) =>
-                r.action === QuestionRuleAction.SKIP &&
                 remainingIds.has(Number(r.targetQuestionId)) &&
                 remainingIds.has(Number(r.dependsOnQuestionId)),
             )
@@ -662,6 +659,13 @@ export class ExamService extends BaseService {
                 r.dependsOnAnswerId != null
                   ? Number(r.dependsOnAnswerId)
                   : null,
+              dependsOnMatrixId:
+                r.dependsOnMatrixId != null
+                  ? Number(r.dependsOnMatrixId)
+                  : null,
+              // MATRIX мөр хасах дүрэм (null = бүтэн асуулт)
+              targetAnswerId:
+                r.targetAnswerId != null ? Number(r.targetAnswerId) : null,
               action: r.action,
             }));
         }

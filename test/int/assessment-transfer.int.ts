@@ -66,12 +66,16 @@ async function seed(ds: DataSource) {
   const a12 = await ins(ds, QuestionAnswerEntity, { value: 'Үгүй', point: 0, orderNumber: 2, question: { id: q1 }, category: { id: acC }, reverse: true });
   const a21 = await ins(ds, QuestionAnswerEntity, { value: 'Мөр', point: 0, orderNumber: 1, question: { id: q2 }, category: { id: acP } });
   await ins(ds, QuestionAnswerEntity, { value: 'x', point: 2, orderNumber: 1, question: { id: q3 } });
-  await ins(ds, QuestionAnswerMatrixEntity, { value: 'Багана 1', point: 3, orderNumber: 1, question: { id: q2 }, answer: { id: a21 }, category: { id: acM } });
+  const m1 = await ins(ds, QuestionAnswerMatrixEntity, { value: 'Багана 1', point: 3, orderNumber: 1, question: { id: q2 }, answer: { id: a21 }, category: { id: acM } });
   const fR = await ins(ds, FormulaEntity, { name: 'дэд', formula: 'x', sort: true, aggregations: [] as any });
   const fK = await ins(ds, FormulaEntity, { name: 'дэд-хүүхэд', formula: 'y', sort: true, aggregations: [] as any });
   const afRoot = await ins(ds, AssessmentFormulaEntity, { type: 1, assessment: { id: a }, formule: { id: fR }, question_category: { id: qc1 } });
   await ins(ds, AssessmentFormulaEntity, { type: 2, assessment: { id: a }, formule: { id: fK }, parent: { id: afRoot }, question_category: { id: qc2 } });
   await ins(ds, QuestionRuleEntity, { targetQuestionId: q3, dependsOnQuestionId: q1, dependsOnAnswerId: a12, action: 'skip', active: true });
+  // MATRIX нөхцөл: q2-ийн "Мөр" (a21)-д "Багана 1" (m1) → q3-ыг алгасна
+  await ins(ds, QuestionRuleEntity, { targetQuestionId: q3, dependsOnQuestionId: q2, dependsOnAnswerId: a21, dependsOnMatrixId: m1, action: 'skip', active: true });
+  // MATRIX мөр хасах: q1 = "Үгүй" (a12) бол q2-ийн "Мөр" (a21)-ийг л хасна
+  await ins(ds, QuestionRuleEntity, { targetQuestionId: q2, dependsOnQuestionId: q1, dependsOnAnswerId: a12, targetAnswerId: a21, action: 'skip', active: true });
   await ins(ds, PdfTemplateEntity, {
     name: 'СЭМҮТ загвар', assessmentId: a, isActive: true,
     pages: [{ id: 'p1', name: 'Нүүр', blocks: [
@@ -93,7 +97,7 @@ async function fingerprint(ds: DataSource, id: number) {
     a: (await q(`SELECT qa.value, qa.point::float AS p, qa.reverse, c.name AS cat, pc.name AS parent FROM "questionAnswer" qa JOIN question q ON q.id=qa."questionId" JOIN "questionCategory" qc ON qc.id=q."categoryId" LEFT JOIN "questionAnswerCategory" c ON c.id=qa."categoryId" LEFT JOIN "questionAnswerCategory" pc ON pc.id=c."parentId" WHERE qc."assessmentId"=$1 ORDER BY qc."orderNumber", q."orderNumber", qa."orderNumber"`)),
     m: (await q(`SELECT m.value, m.point::float AS p, c.name AS cat, qa.value AS row FROM "questionAnswerMatrix" m JOIN question q ON q.id=m."questionId" JOIN "questionCategory" qc ON qc.id=q."categoryId" LEFT JOIN "questionAnswerCategory" c ON c.id=m."categoryId" LEFT JOIN "questionAnswer" qa ON qa.id=m."answerId" WHERE qc."assessmentId"=$1`)),
     af: (await q(`SELECT af.type, f.name AS f, f.formula, qc.name AS qc, pf.name AS parent FROM assessment_formulas af LEFT JOIN formule f ON f.id=af."formuleId" LEFT JOIN "questionCategory" qc ON qc.id=af."questionCategoryId" LEFT JOIN assessment_formulas p ON p.id=af."parentId" LEFT JOIN formule pf ON pf.id=p."formuleId" WHERE af."assessmentId"=$1 ORDER BY af.type`)),
-    rules: (await q(`SELECT t.name AS target, d.name AS dep, qa.value AS ans FROM "questionRule" r JOIN question t ON t.id=r."targetQuestionId" JOIN question d ON d.id=r."dependsOnQuestionId" LEFT JOIN "questionAnswer" qa ON qa.id=r."dependsOnAnswerId" JOIN "questionCategory" qc ON qc.id=t."categoryId" WHERE qc."assessmentId"=$1`)),
+    rules: (await q(`SELECT t.name AS target, d.name AS dep, qa.value AS ans, mm.value AS cell, (mm."answerId" = r."dependsOnAnswerId") AS "cellOfRow", tr.value AS "row", (tr."questionId" = r."targetQuestionId") AS "rowOfTarget" FROM "questionRule" r JOIN question t ON t.id=r."targetQuestionId" JOIN question d ON d.id=r."dependsOnQuestionId" LEFT JOIN "questionAnswer" qa ON qa.id=r."dependsOnAnswerId" LEFT JOIN "questionAnswerMatrix" mm ON mm.id=r."dependsOnMatrixId" LEFT JOIN "questionAnswer" tr ON tr.id=r."targetAnswerId" JOIN "questionCategory" qc ON qc.id=t."categoryId" WHERE qc."assessmentId"=$1 ORDER BY d.name, t.name`)),
   };
 }
 
@@ -147,7 +151,7 @@ async function viewVsTable(ds: DataSource, id: number) {
     [bundle.files.map((f: any) => f.key), bundle.missingFiles],
     [['1700_cover.png', '1700_icon.png', '1701_q.png', 'pt_1_logo.png'], ['1702_q2.jpg']]);
   check('E2 тоо', [bundle.questionCategories.length, bundle.questions.length, bundle.answers.length, bundle.matrix.length, bundle.answerCategories.length, bundle.assessmentFormulas.length, bundle.rules.length, bundle.pdfTemplates.length, bundle.variables.length, !!bundle.aiData],
-    [2, 3, 4, 1, 3, 2, 1, 1, 1, true]);
+    [2, 3, 4, 1, 3, 2, 3, 1, 1, true]);
   check('E3 эх орчны хэрэглэгч / огноо bundle-д ороогүй', ['createdUser', 'updatedUser', 'createdAt', 'updatedAt', 'id'].filter((k) => k in bundle.assessment.fields), []);
 
   // ---------------- I: Өөр орчин (prod) руу import — шинэ хоосон DB, ангиллын ID өөр

@@ -15,20 +15,29 @@ import { QuestionRuleAction } from './entities/question.rule.entity';
  * давхардсан дүрэм бүгд орж, client / server хоёр өөрөөр тайлбарлаж болзошгүй
  * байв (0.х №2 (2)–(3)).
  *
- * Нөхцөл болгох асуулт нь зөвхөн SINGLE (10) / MULTIPLE (20): client-д
- * `answers[questionId]` нь SINGLE-д answer id (number), MULTIPLE-д answer id-уудын
- * массив; MATRIX / SLIDER / TEXT / TRUE_FALSE-д answer id байхгүй тул `dependsOnAnswerId`-тэй
- * жиших боломжгүй (server `userAnswer.answerId`-аар жишдэг).
+ * Нөхцөл болгох асуулт нь SINGLE (10) / MULTIPLE (20) / MATRIX (40):
+ *   - SINGLE / MULTIPLE: `dependsOnAnswerId` = сонгосон хариулт (client-д
+ *     `answers[questionId]` нь answer id эсвэл тэдгээрийн массив; server `userAnswer.answerId`).
+ *   - MATRIX: `dependsOnAnswerId` = мөр (жиш: "Тамхи"), `dependsOnMatrixId` = тэр мөрийн
+ *     нүд / багана (жиш: "Үгүй"). Client-д `answers[questionId] = { [мөр]: нүд }`, server
+ *     `userAnswer.answerId` + `matrixId`. Нүдгүй бол мөрөнд ямар нэг хариулт өгсөн л бол.
+ * SLIDER / TEXT / TRUE_FALSE-д answer id-аар жиших боломжгүй тул нөхцөл болохгүй.
+ *
+ * Алгасах нэгж: `targetAnswerId` null бол бүтэн асуулт; өгвөл MATRIX алгасах асуултын
+ * зөвхөн тэр МӨР (questionAnswer, жиш: дараагийн матрицын "Тамхи" мөр) хасагдана.
  */
 export const RULE_CONDITION_TYPES: number[] = [
   QuestionType.SINGLE,
   QuestionType.MULTIPLE,
+  QuestionType.MATRIX,
 ];
 
 export interface RuleInput {
   targetQuestionId?: any;
   dependsOnQuestionId?: any;
   dependsOnAnswerId?: any;
+  dependsOnMatrixId?: any;
+  targetAnswerId?: any;
   action?: any;
   active?: any;
 }
@@ -65,6 +74,10 @@ export class QuestionRuleService {
     if (dep === null || Number.isNaN(dep))
       throw bad('Нөхцөл асуултын id буруу байна.');
     if (Number.isNaN(ans)) throw bad('Хариултын id буруу байна.');
+    const mat = toId(input.dependsOnMatrixId);
+    if (Number.isNaN(mat)) throw bad('Матрицын баганын (нүдний) id буруу байна.');
+    const row = toId(input.targetAnswerId);
+    if (Number.isNaN(row)) throw bad('Хасах мөрийн id буруу байна.');
 
     const action = input.action ?? QuestionRuleAction.SKIP;
     if (action !== QuestionRuleAction.SKIP)
@@ -99,13 +112,34 @@ export class QuestionRuleService {
 
     if (!RULE_CONDITION_TYPES.includes(d.type))
       throw bad(
-        'Нөхцөл болгох асуулт нь нэг / олон сонголттой (SINGLE / MULTIPLE) байх ёстой.',
+        'Нөхцөл болгох асуулт нь нэг / олон сонголттой (SINGLE / MULTIPLE) эсвэл матриц (MATRIX) байх ёстой.',
       );
+    if (mat !== null && d.type !== QuestionType.MATRIX)
+      throw bad('Багана (нүд) зөвхөн матриц асуултын нөхцөлд сонгогдоно.');
+    if (mat !== null && ans === null)
+      throw bad('Матрицын баганыг сонгохын өмнө мөрийг сонгоно уу.');
 
     if (ans !== null) {
       const owner = await this.dao.findAnswerQuestionId(ans);
       if (owner === null || Number(owner) !== dep)
         throw bad('Сонгосон хариулт нь нөхцөл асуултынх биш байна.');
+    }
+    if (mat !== null) {
+      const cell = await this.dao.findMatrixOwner(mat);
+      if (
+        !cell ||
+        cell.answerId !== ans ||
+        (cell.questionId !== null && cell.questionId !== dep)
+      )
+        throw bad('Сонгосон багана нь энэ мөрийнх биш байна.');
+    }
+
+    if (row !== null) {
+      if (t.type !== QuestionType.MATRIX)
+        throw bad('Мөр хасах нь зөвхөн матриц (MATRIX) асуултад боломжтой.');
+      const owner = await this.dao.findAnswerQuestionId(row);
+      if (owner === null || Number(owner) !== target)
+        throw bad('Хасах мөр нь алгасах асуултынх биш байна.');
     }
 
     // Хэсгүүд дараалалтай нээгддэг: нөхцөл асуулт нь алгасах асуултаас ӨМНӨХ
@@ -129,7 +163,13 @@ export class QuestionRuleService {
           Number(r.targetQuestionId) === target &&
           Number(r.dependsOnQuestionId) === dep &&
           (r.dependsOnAnswerId == null ? null : Number(r.dependsOnAnswerId)) ===
-            ans,
+            ans &&
+          ((r as any).dependsOnMatrixId == null
+            ? null
+            : Number((r as any).dependsOnMatrixId)) === mat &&
+          ((r as any).targetAnswerId == null
+            ? null
+            : Number((r as any).targetAnswerId)) === row,
       )
     )
       throw bad('Ийм дүрэм аль хэдийн бүртгэлтэй байна.');
@@ -160,6 +200,8 @@ export class QuestionRuleService {
       targetQuestionId: target,
       dependsOnQuestionId: dep,
       dependsOnAnswerId: ans,
+      dependsOnMatrixId: mat,
+      targetAnswerId: row,
       action: QuestionRuleAction.SKIP,
       active: input.active === undefined ? true : !!input.active,
     };
@@ -192,6 +234,21 @@ export class QuestionRuleService {
         patch.dependsOnAnswerId !== undefined
           ? patch.dependsOnAnswerId
           : cur.dependsOnAnswerId,
+      // Нөхцөл асуулт / мөр өөрчлөгдсөн бол хуучин нүд хүчингүй.
+      dependsOnMatrixId:
+        patch.dependsOnMatrixId !== undefined
+          ? patch.dependsOnMatrixId
+          : patch.dependsOnAnswerId !== undefined ||
+              patch.dependsOnQuestionId !== undefined
+            ? null
+            : cur.dependsOnMatrixId,
+      // Алгасах асуулт солигдсон бол хуучин мөр хүчингүй.
+      targetAnswerId:
+        patch.targetAnswerId !== undefined
+          ? patch.targetAnswerId
+          : patch.targetQuestionId !== undefined
+            ? null
+            : (cur as any).targetAnswerId,
       action: patch.action ?? cur.action,
       active: patch.active !== undefined ? patch.active : cur.active,
     };
