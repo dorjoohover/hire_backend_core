@@ -1,9 +1,13 @@
+# ⚠ Энэ файл main ба ажлын branch (feature/**) дээр ЯГ ИЖИЛ байна — merge хийхэд
+# өөрчлөгдөхгүй. Image tag нь push хийсэн branch-аас автоматаар гарна ("/" → "-"):
+# main → :main, feature/v1.2.0 → :feature-v1.2.0, dev → :dev.
 name: Build & Push Image
 
 on:
   push:
     branches:
       - main
+      - "feature/**"
   pull_request:
 
 permissions:
@@ -64,8 +68,12 @@ jobs:
           username: dorjoohover
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Image tag (branch → tag)
+        id: tag
+        run: echo "tag=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/dorjoohover/hire_backend_core:main
+          tags: ghcr.io/dorjoohover/hire_backend_core:${{ steps.tag.outputs.tag }}
