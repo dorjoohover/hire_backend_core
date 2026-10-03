@@ -36,6 +36,7 @@ import {
   UpdateQuestionAnswersDto,
 } from './dto/create-question.answer.dto';
 import { CreateQuestionAnswerCategoryDto } from './dto/create-question.answer.category.dto';
+import { AssessmentTransferService } from '../assessment-transfer/assessment-transfer.service';
 
 @Controller('question')
 @ApiBearerAuth('access-token')
@@ -43,6 +44,7 @@ export class QuestionController {
   constructor(
     private readonly questionService: QuestionService,
     private readonly quesitonCategoryDao: QuestionCategoryDao,
+    private readonly assessmentTransfer: AssessmentTransferService,
   ) {}
 
   @Post()
@@ -193,7 +195,9 @@ export class QuestionController {
   @Roles(Role.admin, Role.super_admin, Role.tester)
   @Get('copy/:id')
   copy(@Param('id') id: string, @Req() { user }) {
-    return this.questionService.copy(+id, user.id);
+    // Бүх агуулга (skip-дүрэм, Studio загвар, хувьсагч, AI дата ч мөн) нэг transaction-д
+    // хуулагдана; шинэ тест "Архив" төлөвтэй. Хариу: шинэ assessment-ийн ID (тоо).
+    return this.assessmentTransfer.copy(+id, user.id);
   }
   // @Public()
   // @Roles(Role.admin)

@@ -9,6 +9,7 @@ import {
   createReadStream,
   existsSync,
   mkdirSync,
+  readFileSync,
   statSync,
   writeFileSync,
 } from 'fs';
@@ -240,6 +241,43 @@ export class FileService {
     const fileUrl = `${key}`;
     return fileUrl;
   }
+  /**
+   * Assessment bundle-ийн экспорт: файлын агуулгыг local `uploads/`-оос, байхгүй
+   * бол S3-аас уншина. Олдохгүй (эсвэл түлхүүр буруу) бол null.
+   */
+  async readBytes(key: string): Promise<Buffer | null> {
+    try {
+      const p = resolveInside(this.localPath, key);
+      if (existsSync(p)) return readFileSync(p);
+    } catch {
+      return null;
+    }
+    if (!this.s3Configured()) return null;
+    return await this.downloadFromS3(key);
+  }
+
+  /** Assessment bundle-ийн импорт: ижил түлхүүртэй файл аль хэдийн байгаа эсэх (local → S3). */
+  async exists(key: string): Promise<boolean> {
+    try {
+      if (existsSync(resolveInside(this.localPath, key))) return true;
+    } catch {
+      return false;
+    }
+    if (!this.s3Configured()) return false;
+    try {
+      await this.s3.headObject({ Bucket: this.bucketName, Key: key }).promise();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // S3 тохируулаагүй (local dev, SAFE_MODE) үед SDK EC2-metadata руу оролдож
+  // удахаас сэргийлнэ.
+  private s3Configured(): boolean {
+    return !isSafeMode() && !!this.bucketName && !!process.env.AWS_ACCESS_KEY;
+  }
+
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
     const chunks: any[] = [];
     return new Promise((resolve, reject) => {

@@ -34,6 +34,7 @@ import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
 import { ReportAccessModule } from './app/report-access/report-access.module';
 import { OpsModule } from './app/ops/ops.module';
 import { MonitorModule } from './app/monitor/monitor.module';
+import { AssessmentTransferModule } from './app/assessment-transfer/assessment-transfer.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { MonitorModule } from './app/monitor/monitor.module';
     ReportAccessModule,
     OpsModule,
     MonitorModule,
+    AssessmentTransferModule,
   ],
   controllers: [AppController],
   providers: [

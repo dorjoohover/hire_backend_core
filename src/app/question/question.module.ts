@@ -17,9 +17,10 @@ import { QuestionRuleDao } from './dao/question.rule.dao';
 import { QuestionRuleService } from './question.rule.service';
 import { QuestionAnswerViewService } from './question-answer-view.service';
 import { FormuleModule } from '../formule/formule.module';
+import { AssessmentTransferModule } from '../assessment-transfer/assessment-transfer.module';
 
 @Module({
-  imports: [FormuleModule],
+  imports: [FormuleModule, AssessmentTransferModule],
   controllers: [
     QuestionController,
     QuestionAnswerController,
