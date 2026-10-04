@@ -4,7 +4,9 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Optional,
 } from '@nestjs/common';
+import { DefinitionCacheService } from 'src/base/definition-cache/definition-cache.service';
 import { AdminExamDto, CreateExamDto } from './dto/create-exam.dto';
 import { ExamDao } from './dao/exam.dao';
 import { ExamDetailDao } from './dao/exam.detail.dao';
@@ -57,6 +59,8 @@ export class ExamService extends BaseService {
     private userServiceDao: UserServiceDao,
     private questionCategoryDao: QuestionCategoryDao,
     private questionRuleDao: QuestionRuleDao,
+    // v1.3.0: тодорхойлолтын кэш (global); тестэд байхгүй байж болно.
+    @Optional() private defCache?: DefinitionCacheService,
   ) {
     super();
   }
@@ -601,7 +605,9 @@ export class ExamService extends BaseService {
     questions: number[] = [],
     code?: string,
   ) {
-    const category = await this.questionCategoryDao.findOne(id);
+    const category: any = this.defCache
+      ? await this.defCache.getOrLoad('qcatone', id, () => this.questionCategoryDao.findOne(id))
+      : await this.questionCategoryDao.findOne(id);
     let q = await this.questionService.findForExam(
       category.questionCount,
       shuffle,

@@ -1,3 +1,5 @@
+import { Optional } from '@nestjs/common';
+import { DefinitionCacheService } from 'src/base/definition-cache/definition-cache.service';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { CreateQuestionAnswerDto } from '../dto/create-question.answer.dto';
@@ -6,12 +8,18 @@ import { QuestionType } from 'src/base/constants';
 import { QuestionAnswerViewService } from '../question-answer-view.service';
 import { stableShuffle } from '../../exam/exam-resume';
 
+const MV_ROWS_SQL = `SELECT * FROM mv_question_answer_full
+       WHERE "questionId" = ANY($1)
+       ORDER BY "questionId", "orderNumber" ASC, id, "matrixOrderNumber" ASC NULLS LAST`;
+
 @Injectable()
 export class QuestionAnswerDao {
   private db: Repository<QuestionAnswerEntity>;
   constructor(
     private dataSource: DataSource,
     private viewService: QuestionAnswerViewService,
+    // v1.3.0: тодорхойлолтын кэш (global); тестэд байхгүй → шууд DB.
+    @Optional() private defCache?: DefinitionCacheService,
   ) {
     this.db = this.dataSource.getRepository(QuestionAnswerEntity);
   }
@@ -140,6 +148,32 @@ export class QuestionAnswerDao {
   // categories) for many questions in ONE query via mv_question_answer_full,
   // instead of one join-heavy query per question. Returns a Map keyed by
   // questionId, value shaped exactly like findByQuestion's return value.
+  /**
+   * v1.3.0: mv_question_answer_full-ийн мөрүүдийг асуулт тус бүрээр кэшлэнэ (admin засвар /
+   * MV refresh хүртэл). Буцаах дараалал нь SQL-ийнхтэй ижил (questionId өсөх, асуулт доторх
+   * мөрүүд ORDER BY-ийн дагуу).
+   */
+  private mvRowsCached = async (questionIds: number[]): Promise<any[]> => {
+    const byQuestion = await this.defCache!.getMany<any[]>(
+      'mvq',
+      questionIds.map(Number),
+      async (missing) => {
+        const rows: any[] = await this.db.query(MV_ROWS_SQL, [missing]);
+        const m = new Map<number, any[]>();
+        for (const r of rows) {
+          const q = Number(r.questionId);
+          if (!m.has(q)) m.set(q, []);
+          m.get(q)!.push(r);
+        }
+        return m;
+      },
+      [],
+    );
+    return [...byQuestion.keys()]
+      .sort((a, b) => a - b)
+      .flatMap((id) => byQuestion.get(id) ?? []);
+  };
+
   findByQuestionIds = async (
     questionIds: number[],
     shuffle: boolean,
@@ -150,12 +184,9 @@ export class QuestionAnswerDao {
     const result = new Map<number, any[]>();
     if (!questionIds?.length) return result;
 
-    const rows: any[] = await this.db.query(
-      `SELECT * FROM mv_question_answer_full
-       WHERE "questionId" = ANY($1)
-       ORDER BY "questionId", "orderNumber" ASC, id, "matrixOrderNumber" ASC NULLS LAST`,
-      [questionIds],
-    );
+    const rows: any[] = this.defCache
+      ? await this.mvRowsCached(questionIds)
+      : await this.db.query(MV_ROWS_SQL, [questionIds]);
 
     const answers = new Map<number, any>();
     const order = new Map<number, number[]>();

@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
+import { DefinitionCacheService } from 'src/base/definition-cache/definition-cache.service';
 import { DataSource } from 'typeorm';
 
 // Refreshes mv_question_answer_full after questionAnswer /
@@ -14,7 +15,12 @@ export class QuestionAnswerViewService {
   private pending = false;
   private scheduled: NodeJS.Timeout | null = null;
 
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    private dataSource: DataSource,
+    // v1.3.0: MV шинэчлэгдсэний ДАРАА кэшийн epoch++ (admin бичилтийн дараах bump-аас
+    // ~2с хойш MV refresh дуусдаг — хооронд нь кэшлэгдсэн хуучин мөрийг хүчингүй болгоно).
+    @Optional() private defCache?: DefinitionCacheService,
+  ) {}
 
   // Fire-and-forget, debounced refresh. Safe to call after every
   // create/update/delete in the question-answer DAOs.
@@ -37,6 +43,7 @@ export class QuestionAnswerViewService {
       await this.dataSource.query(
         'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_question_answer_full',
       );
+      await this.defCache?.bump('mv_question_answer_full refresh');
     } catch (err) {
       // CONCURRENTLY can fail if the view was never populated yet
       // (e.g. brand new empty table) - fall back to a normal refresh.
@@ -44,6 +51,7 @@ export class QuestionAnswerViewService {
         await this.dataSource.query(
           'REFRESH MATERIALIZED VIEW mv_question_answer_full',
         );
+        await this.defCache?.bump('mv_question_answer_full refresh');
       } catch (err2) {
         this.logger.error('mv_question_answer_full refresh failed', err2);
       }

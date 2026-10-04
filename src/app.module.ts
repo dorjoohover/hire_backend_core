@@ -27,6 +27,7 @@ import { BarimtModule } from './app/barimt/barimt.module';
 import { FileService } from './file.service';
 import { FileErrorLogService } from './base/error-log.service';
 import { ReportModule } from './app/report/report.module';
+import { DefinitionCacheModule } from './base/definition-cache/definition-cache.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailLogModule } from './app/email_log/email_log.module';
 import { EmailModule } from './app/email/email.module';
@@ -71,6 +72,7 @@ import { AssessmentTransferModule } from './app/assessment-transfer/assessment-t
     UserModule,
     UserServiceModule,
     ReportModule,
+    DefinitionCacheModule, // v1.3.0
     PdfTemplateModule,
     ReportAccessModule,
     OpsModule,
