@@ -90,6 +90,7 @@ const mkQueue = () => {
     const r = await svc.sweep();
     const sel = ds.calls[0];
     check('P9 sweep: v2 + sweeps<3 + гацсан/FAILED сонгоно', [/pipeline = 'v2'/.test(sel.sql), sel.params[0], sel.params[2]], [true, 3, 15]);
+    check('P9b sweep: [permanent] алдааг алгасна', [/strpos\(error, \$4\) = 0/.test(sel.sql), sel.params[3]], [true, '[permanent]']);
     check('P10 sweep: sweeps++ → enqueue (priority 10, sweeps хадгална)', [
       r, /sweeps = sweeps \+ 1/.test(ds.calls[1].sql), q.added[0].opts.priority, ds.calls[2].params[3],
     ], [{ requeued: 1 }, true, 10, false]);

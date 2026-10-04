@@ -27,6 +27,8 @@ import { Role } from 'src/auth/guards/role/role.enum';
 export const CALC_QUEUE = 'report-calc';
 export const SWEEP_QUEUE = 'report-sweep';
 export const OPS_PRIORITY = 10;
+/** hire_report calc-ийн дахин оролдох утгагүй алдааны тэмдэг (snapshot.ts PERMANENT_ERROR_MARK) — sweep алгасна. */
+export const PERMANENT_ERROR_MARK = '[permanent]';
 
 const INFLIGHT = ['PENDING', 'STARTED', 'CALCULATING', 'WRITING', 'UPLOADING'];
 const STATUS_VALUES = new Set<string>(Object.values(REPORT_STATUS));
@@ -189,11 +191,12 @@ export class ReportPipelineService implements OnModuleInit {
     const rows: { id: string; code: string; role: number; status: string; sweeps: number }[] =
       await this.ds.query(
         `SELECT id, code, role, status, sweeps FROM report_logs
-          WHERE pipeline = 'v2' AND sweeps < $1 AND (
+          WHERE pipeline = 'v2' AND sweeps < $1
+            AND (error IS NULL OR strpos(error, $4) = 0) AND (
             (status::text = ANY($2) AND "updatedAt" < now() - make_interval(mins => $3))
             OR (status::text = 'FAILED' AND "updatedAt" < now() - interval '5 minutes'))
           ORDER BY "updatedAt" ASC LIMIT 20`,
-        [SWEEP_MAX, INFLIGHT, SWEEP_STUCK_MIN],
+        [SWEEP_MAX, INFLIGHT, SWEEP_STUCK_MIN, PERMANENT_ERROR_MARK],
       );
     let requeued = 0;
     for (const r of rows) {
