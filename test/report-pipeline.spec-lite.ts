@@ -94,9 +94,21 @@ const mkQueue = () => {
     check('P10 sweep: sweeps++ → enqueue (priority 10, sweeps хадгална)', [
       r, /sweeps = sweeps \+ 1/.test(ds.calls[1].sql), q.added[0].opts.priority, ds.calls[2].params[3],
     ], [{ requeued: 1 }, true, 10, false]);
+    check('P10b sweep: report_snapshot цэвэрлэгээ (30 өдөр, 5000 багц)', [
+      /DELETE FROM report_snapshot/.test(ds.calls[3].sql), ds.calls[3].params,
+    ], [true, [30, 5000]]);
     process.env.REPORT_PIPELINE = '';
     check('P11 pipeline унтраалттай → sweep юу ч хийхгүй', await svc.sweep(), { requeued: 0 });
     process.env.REPORT_PIPELINE = 'v2';
+  }
+  // ---- snapshot retention: TypeORM DELETE … RETURNING → [rows, rowCount]; хүснэгтгүй бол 0
+  {
+    const del = { query: async () => [[{ code: 'a' }, { code: 'b' }], 2] };
+    const svc = new ReportPipelineService(del as any, mkQueue() as any, mkQueue() as any);
+    check('P10c pruneSnapshots тоо', await svc.pruneSnapshots(), 2);
+    const missing = { query: async () => { const e: any = new Error('relation "report_snapshot" does not exist'); e.code = '42P01'; throw e; } };
+    const svc2 = new ReportPipelineService(missing as any, mkQueue() as any, mkQueue() as any);
+    check('P10d хүснэгтгүй → 0 (алдаа шидэхгүй)', await svc2.pruneSnapshots(), 0);
   }
   // ---- readiness / sanitizeTimings
   check('P12 readiness', [

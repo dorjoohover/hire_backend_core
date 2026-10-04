@@ -35,6 +35,9 @@ const STATUS_VALUES = new Set<string>(Object.values(REPORT_STATUS));
 const SWEEP_EVERY_MS = Number(process.env.REPORT_SWEEP_EVERY_MS ?? 5 * 60 * 1000);
 const SWEEP_STUCK_MIN = Number(process.env.REPORT_SWEEP_STUCK_MIN ?? 15);
 const SWEEP_MAX = Number(process.env.REPORT_SWEEP_MAX ?? 3);
+/** report_snapshot хадгалах хугацаа (өдөр). 0 → цэвэрлэхгүй. Sweep бүрд хамгийн ихдээ 5000 мөр. */
+const SNAPSHOT_KEEP_DAYS = Number(process.env.REPORT_SNAPSHOT_KEEP_DAYS ?? 30);
+const SNAPSHOT_PRUNE_BATCH = 5000;
 
 export interface EnqueueCalcInput {
   code: string;
@@ -214,7 +217,32 @@ export class ReportPipelineService implements OnModuleInit {
         this.log.error(`sweep ${r.code}: ${e?.message ?? e}`);
       }
     }
-    return { requeued };
+    const pruned = await this.pruneSnapshots();
+    return { requeued, ...(pruned ? { pruned } : {}) };
+  }
+
+  /**
+   * report_snapshot нь тайлан бүрд нэг мөр (gzip JSON) — аудит / алдаа шинжлэхэд. Хуучныг
+   * багцаар устгана (DB / өдөр тутмын pg_dump өсөхөөс сэргийлнэ). Хүснэгт байхгүй бол чимээгүй.
+   */
+  async pruneSnapshots(): Promise<number> {
+    if (!(SNAPSHOT_KEEP_DAYS > 0)) return 0;
+    try {
+      const rows: any[] = await this.ds.query(
+        `WITH old AS (
+           SELECT code FROM report_snapshot
+            WHERE "updatedAt" < now() - make_interval(days => $1)
+            LIMIT $2)
+         DELETE FROM report_snapshot s USING old WHERE s.code = old.code RETURNING s.code`,
+        [SNAPSHOT_KEEP_DAYS, SNAPSHOT_PRUNE_BATCH],
+      );
+      const n = Array.isArray(rows?.[0]) ? rows[0].length : Array.isArray(rows) ? rows.length : 0;
+      if (n) this.log.log(`report_snapshot: ${n} хуучин мөр устгав (> ${SNAPSHOT_KEEP_DAYS} өдөр)`);
+      return n;
+    } catch (e: any) {
+      if (e?.code !== '42P01') this.log.warn(`report_snapshot цэвэрлэгээ: ${e?.message ?? e}`);
+      return 0;
+    }
   }
 }
 
