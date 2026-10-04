@@ -21,26 +21,26 @@ import { Response } from 'express';
 import axios from 'axios';
 import { resolveInside } from './utils/safe-path';
 import { isSafeMode, safeLog } from './utils/safe-mode';
+import {
+  createS3Client,
+  describeObjectStorage,
+  isObjectStorageConfigured,
+  objectStorageConfig,
+} from './utils/object-storage';
 
 @Injectable()
 export class FileService {
   private readonly s3: AWS.S3;
-  private readonly bucketName = process.env.AWS_BUCKET_NAME;
+  // v1.3.0: AWS S3 эсвэл Cloudflare R2 (S3_ENDPOINT / R2_ACCOUNT_ID) — utils/object-storage.ts
+  private readonly storage = objectStorageConfig();
+  private readonly bucketName = this.storage.bucket;
   private readonly localPath = './uploads';
   private readonly reportPath = process.env.REPORT_PATH;
   constructor() {
-    console.log('AWS_ACCESS_KEY =', process.env.AWS_ACCESS_KEY);
-    console.log('AWS_SECRET_KEY length =', process.env.AWS_SECRET_KEY?.length);
-    console.log('AWS_REGION =', process.env.AWS_REGION);
-    console.log('BUCKET =', process.env.AWS_BUCKET_NAME);
-
-    this.s3 = new AWS.S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY,
-      secretAccessKey: process.env.AWS_SECRET_KEY,
-      region: process.env.AWS_REGION,
-      s3ForcePathStyle: true,
-      signatureVersion: 'v4',
-    });
+    // ⚠️ Өмнө нь AWS_ACCESS_KEY-г бүтнээр нь stdout руу хэвлэдэг байсан (аудит) —
+    // одоо зөвхөн set/MISSING гэсэн халхалсан мөр.
+    console.log(`🗄️ object storage: ${describeObjectStorage(this.storage)}`);
+    this.s3 = createS3Client(this.storage);
   }
   // constructor() {
   //   this.s3 = new AWS.S3({
@@ -224,6 +224,10 @@ export class FileService {
       safeLog('S3 upload алгасав (local uploads/-д л хадгалсан)', key);
       return `${key}`;
     }
+    if (!this.s3Configured()) {
+      // Storage тохируулаагүй (local dev / туршилт) — local uploads/ хангалттай.
+      return `${key}`;
+    }
     try {
       await this.s3
         .upload({
@@ -275,7 +279,7 @@ export class FileService {
   // S3 тохируулаагүй (local dev, SAFE_MODE) үед SDK EC2-metadata руу оролдож
   // удахаас сэргийлнэ.
   private s3Configured(): boolean {
-    return !isSafeMode() && !!this.bucketName && !!process.env.AWS_ACCESS_KEY;
+    return !isSafeMode() && isObjectStorageConfigured(this.storage);
   }
 
   private async streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
