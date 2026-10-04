@@ -1,3 +1,4 @@
+import { reportDbBase } from 'src/utils/report-urls';
 import {
   Controller,
   Get,
@@ -130,7 +131,8 @@ export class PdfTemplateController {
     @Body() dto: { template: any; examCode?: string },
     @Res() res: Response,
   ) {
-    const REPORT = process.env.REPORT || 'http://localhost:4000/api/v1/';
+    // v1.3.0: preview нь DB уншдаг → calc service (REPORT_CALC_URL) байвал түүн рүү.
+    const REPORT = reportDbBase();
     try {
       const response = await axios.post(`${REPORT}template/preview`, dto, {
         responseType: 'arraybuffer',

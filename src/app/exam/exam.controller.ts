@@ -1,3 +1,4 @@
+import { reportDbBase } from 'src/utils/report-urls';
 import {
   Controller,
   Get,
@@ -190,7 +191,7 @@ export class ExamController {
       `⚠️ DEPRECATED GET /exam/recalculate/${code} → POST /ops/report/${code}/recalculate ашиглана уу`,
     );
     await this.examService.deleteResult(code);
-    const result = await axios.get(`${process.env.REPORT}calculate/${code}`);
+    const result = await axios.get(`${reportDbBase()}calculate/${code}`);
     return result.data;
   }
 
@@ -202,7 +203,7 @@ export class ExamController {
       `⚠️ DEPRECATED GET /exam/regenerate/${code} → POST /ops/report/${code}/regenerate ашиглана уу`,
     );
     res.setHeader('Deprecation', 'true');
-    const url = `${process.env.REPORT}test/${code}`;
+    const url = `${reportDbBase()}test/${code}`;
     const response = await axios.get(url, {
       responseType: 'stream',
     });
@@ -440,7 +441,8 @@ export class ExamController {
       if (!st.finished) {
         return res.status(400).json({ error: 'Шалгалт дуусаагүй байна — эхлээд шалгалтаа дуусгана уу.' });
       }
-      const REPORT = process.env.REPORT || 'http://localhost:4000/api/v1/';
+      // v1.3.0: preview нь DB уншдаг → calc service (REPORT_CALC_URL) байвал түүн рүү.
+      const REPORT = reportDbBase();
       const response = await axios.post(
         `${REPORT}template/preview`,
         { template: dto?.template, examCode: code, compute: true },
