@@ -81,6 +81,8 @@ async function seed(ds: DataSource) {
     pages: [{ id: 'p1', name: 'Нүүр', blocks: [
       { id: 'b1', type: 'text', content: 'Оноо: {{question[' + q1 + '].point}}' },
       { id: 'b2', type: 'image', imageUrl: 'https://api.hire-test.cloud/api/v1/pdf-template/image/pt_1_logo.png' },
+      // wheel-radar: тэнхлэг хариултын ангиллыг ID-аар (acP), 2 дахь нь өөр орчны (байхгүй) ID
+      { id: 'b3', type: 'wheel-radar', wheel: { axes: [{ id: acP, name: 'Сэтгэл түгшил', color: '#B3508A' }, { id: 987654, name: 'Алга', color: '#2F52A6' }] } },
     ] }],
   });
   await ins(ds, AssessmentVariableEntity, { assessmentId: a, key: 'total', kind: 'formula', rules: { expression: '{{question[' + q1 + '].point}} * 2', decimals: 0 } });
@@ -137,6 +139,10 @@ async function viewVsTable(ds: DataSource, id: number) {
   const newQ1 = (await ds.query(`SELECT q.id FROM question q JOIN "questionCategory" qc ON qc.id=q."categoryId" WHERE qc."assessmentId"=$1 AND q.name LIKE 'Асуулт 1%'`, [copyId]))[0].id;
   const newQ2 = (await ds.query(`SELECT q.id FROM question q JOIN "questionCategory" qc ON qc.id=q."categoryId" WHERE qc."assessmentId"=$1 AND q.name='Асуулт 2'`, [copyId]))[0].id;
   const tpl = await ds.getRepository(PdfTemplateEntity).findOne({ where: { assessmentId: copyId } });
+  const newAcP = (await ds.query(`SELECT id FROM "questionAnswerCategory" WHERE "assessmentId"=$1 AND name='Сэтгэл түгшил'`, [copyId]))[0].id;
+  check('C7b wheel-radar тэнхлэг: хариултын ангиллын шинэ ID (олдоогүй ID хэвээр)',
+    (tpl?.pages?.[0]?.blocks?.[2]?.wheel?.axes || []).map((x: any) => [Number(x.id) === Number(newAcP), x.id === 987654, x.name]),
+    [[true, false, 'Сэтгэл түгшил'], [false, true, 'Алга']]);
   check('C7 Studio загвар: question[id] шинэ ID, зураг, isActive', [tpl?.pages?.[0]?.blocks?.[0]?.content, tpl?.pages?.[0]?.blocks?.[1]?.imageUrl, tpl?.isActive],
     [`Оноо: {{question[${newQ1}].point}}`, 'https://api.hire-test.cloud/api/v1/pdf-template/image/pt_1_logo.png', true]);
   const v = await ds.getRepository(AssessmentVariableEntity).findOne({ where: { assessmentId: copyId } });

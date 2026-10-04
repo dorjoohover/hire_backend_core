@@ -270,7 +270,12 @@ export class AssessmentService {
 
     if (!res) throw new HttpException('Олдсонгүй.', HttpStatus.NOT_FOUND);
     const { answerCategories, category, questionCategories, ...question } = res;
-    const cate = await this.categoryDao.findOne(res.category.id);
+    // JSON-оос оруулсан тестийн ангилал энэ орчинд олдоогүй бол category = null
+    // (assessment-transfer). Өмнө нь энд унаж (500) admin тестийг нээж чаддаггүй байв.
+    const cate =
+      res.category?.id != null
+        ? await this.categoryDao.findOne(res.category.id)
+        : null;
     const user = await this.getUser(res);
     const count = await this.dao.countQuestionAssessment(
       questionCategories.map((q) => q.id),
@@ -289,11 +294,15 @@ export class AssessmentService {
   }
 
   public async getUser(dto: AssessmentEntity) {
-    const createdUser = await this.userDao.get(dto.createdUser);
+    const createdUser =
+      dto.createdUser != null ? await this.userDao.get(dto.createdUser) : null;
+    // updatedUser нь хоосон байж болно (хувилсан / оруулсан тест).
     const updatedUser =
-      createdUser.id == dto.updatedUser
-        ? createdUser
-        : await this.userDao.get(dto.updatedUser);
+      dto.updatedUser == null
+        ? null
+        : createdUser?.id == dto.updatedUser
+          ? createdUser
+          : await this.userDao.get(dto.updatedUser);
     return {
       createdUser: createdUser,
       updatedUser: updatedUser,

@@ -37,6 +37,7 @@ import {
   nameCandidates,
   orderByParent,
   remapQuestionTokens,
+  remapWheelAxisIds,
 } from './assessment-bundle';
 
 export interface ImportResult {
@@ -505,7 +506,8 @@ export class AssessmentTransferService {
       const remap = (fields: Fields) => remapQuestionTokens(fields, qMap, unknownQ);
       for (const t of b.pdfTemplates) {
         await insertOne(PdfTemplateEntity, {
-          ...pick(PdfTemplateEntity, remap(t.fields), 'pdf_template'),
+          // + "wheel-radar" тэнхлэгийн хариултын ангиллын ID → шинэ ID
+          ...pick(PdfTemplateEntity, remapWheelAxisIds(remap(t.fields), acMap), 'pdf_template'),
           assessmentId,
         });
       }

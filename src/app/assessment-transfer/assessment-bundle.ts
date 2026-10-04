@@ -123,6 +123,30 @@ export function remapQuestionTokens<T>(
   return value;
 }
 
+/**
+ * Studio "wheel-radar" блокийн тэнхлэг (`wheel.axes[].id`) хариултын ангиллыг
+ * (questionAnswerCategory) ID-аар заадаг — хуулах / оруулахад шинэ ангиллын ID руу
+ * солино. Олдоогүй ID хэвээр (hire_report тэр үед тэнхлэгийг нэрээр нь хайна).
+ */
+export function remapWheelAxisIds<T>(value: T, acMap: Map<number, number>): T {
+  if (Array.isArray(value)) return value.map((v) => remapWheelAxisIds(v, acMap)) as any;
+  if (value && typeof value === 'object' && !(value instanceof Date)) {
+    const out: any = {};
+    for (const [k, v] of Object.entries(value as any)) out[k] = remapWheelAxisIds(v, acMap);
+    if (out.type === 'wheel-radar' && out.wheel && Array.isArray(out.wheel.axes)) {
+      out.wheel = {
+        ...out.wheel,
+        axes: out.wheel.axes.map((a: any) => {
+          const id = a?.id != null && a.id !== '' ? Number(a.id) : NaN;
+          return Number.isFinite(id) && acMap.has(id) ? { ...a, id: acMap.get(id) } : a;
+        }),
+      };
+    }
+    return out;
+  }
+  return value;
+}
+
 // ---------------------------------------------------------------------------
 // Файлууд (зураг, жишээ тайлан PDF, Studio-гийн upload хийсэн зураг)
 // ---------------------------------------------------------------------------
