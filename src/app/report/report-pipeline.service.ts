@@ -96,7 +96,11 @@ export class ReportPipelineService implements OnModuleInit {
        VALUES ($1, $2, $3, 'PENDING', 0, NULL, 'v2', 0, now(), now())
        ON CONFLICT (id) DO UPDATE SET
          status = 'PENDING', progress = 0, error = NULL, timings = NULL, role = EXCLUDED.role,
-         sweeps = CASE WHEN $4 THEN 0 ELSE report_logs.sweeps END, "updatedAt" = now()`,
+         sweeps = CASE WHEN $4 THEN 0 ELSE report_logs.sweeps END,
+         -- шинэ ажил (хэрэглэгч / ops) → createdAt-ийг шинэчилнэ (monitor-ын хугацаа зөв);
+         -- sweep-ийн дахин оролдлого → анхны цаг хэвээр.
+         "createdAt" = CASE WHEN $4 THEN now() ELSE report_logs."createdAt" END,
+         "updatedAt" = now()`,
       [logId, code, role, input.resetSweeps !== false],
     );
 

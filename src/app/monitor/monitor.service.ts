@@ -24,7 +24,7 @@ const LATEST = `latest AS (
          "createdAt", "updatedAt"
   FROM report_logs
   WHERE "createdAt" >= now() - $1::interval
-  ORDER BY code, "createdAt" DESC
+  ORDER BY code, "updatedAt" DESC
 )`;
 
 /**
@@ -106,7 +106,7 @@ export class MonitorService {
   FROM exam e
   LEFT JOIN LATERAL (
     SELECT r.status::text AS status FROM report_logs r
-    WHERE r.code = e.code ORDER BY r."createdAt" DESC LIMIT 1
+    WHERE r.code = e.code ORDER BY r."updatedAt" DESC LIMIT 1
   ) rl ON true
   LEFT JOIN LATERAL (
     SELECT true AS paid FROM report_access a WHERE a.code = e.code AND a.status = 20 LIMIT 1
@@ -207,6 +207,63 @@ export class MonitorService {
         durationSec: { ...dur[0], approx: true },
         lastCompletedAt: last[0]?.lastCompletedAt ?? null,
       };
+    });
+  }
+
+  // ---- 3b. v1.3.0 тайлангийн үе шатын хугацаа (report_logs.timings, pipeline v2) ----
+  static TIMING_KEYS = [
+    'finish_to_calc_ms',
+    'calc_queue_ms',
+    'calc_ms',
+    'snapshot_ms',
+    'render_handoff_ms',
+    'render_queue_ms',
+    'render_ms',
+    'write_ms',
+    'render_total_ms',
+    'snapshot_misses',
+  ] as const;
+
+  reportTimings(range: MonitorRange) {
+    return this.cached(`timings:${range}`, async () => {
+      const iv = MONITOR_RANGES[range];
+      const cols = MonitorService.TIMING_KEYS.map(
+        (k, i) => `
+          count(*) FILTER (WHERE timings ? '${k}')::int AS n${i},
+          percentile_cont(0.5) WITHIN GROUP (ORDER BY (timings->>'${k}')::float8) FILTER (WHERE timings ? '${k}') AS p50_${i},
+          percentile_cont(0.95) WITHIN GROUP (ORDER BY (timings->>'${k}')::float8) FILTER (WHERE timings ? '${k}') AS p95_${i},
+          max((timings->>'${k}')::float8) AS max_${i}`,
+      ).join(',');
+      try {
+        const [row] = await this.q(
+          `SELECT count(*)::int AS n,
+                  percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM ("updatedAt" - "createdAt"))) AS e2e_p50,
+                  percentile_cont(0.95) WITHIN GROUP (ORDER BY extract(epoch FROM ("updatedAt" - "createdAt"))) AS e2e_p95,
+                  ${cols}
+             FROM report_logs
+            WHERE pipeline = 'v2' AND status IN ('COMPLETED','SENT')
+              AND "updatedAt" >= now() - $1::interval`,
+          [iv],
+        );
+        const num = (v: any) => (v == null ? null : Math.round(Number(v)));
+        return {
+          ...this.meta(range),
+          available: true,
+          n: row?.n ?? 0,
+          endToEndSec: { p50: num(row?.e2e_p50), p95: num(row?.e2e_p95) },
+          stages: MonitorService.TIMING_KEYS.map((key, i) => ({
+            key,
+            n: row?.[`n${i}`] ?? 0,
+            p50: num(row?.[`p50_${i}`]),
+            p95: num(row?.[`p95_${i}`]),
+            max: num(row?.[`max_${i}`]),
+          })),
+        };
+      } catch (e: any) {
+        // v1.3.0 DDL (timings / pipeline багана) хараахан ажиллаагүй.
+        if (e?.code === '42703') return { ...this.meta(range), available: false, n: 0, stages: [] };
+        throw e;
+      }
     });
   }
 

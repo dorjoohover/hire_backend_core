@@ -29,6 +29,12 @@ export class MonitorController {
     );
   }
 
+  // v1.3.0: тайлангийн үе шат бүрийн p50/p95 (report_logs.timings).
+  @Get('report-timings')
+  reportTimings(@Query('range') range?: string) {
+    return this.monitor.reportTimings(this.monitor.parseRange(range));
+  }
+
   @Get('payments')
   payments(@Query('range') range?: string) {
     return this.monitor.payments(this.monitor.parseRange(range));
