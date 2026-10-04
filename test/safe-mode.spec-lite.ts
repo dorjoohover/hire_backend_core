@@ -45,6 +45,7 @@ const throws = (fn: () => any): string | null => {
 };
 
 const ENV_KEYS = [
+  'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'S3_ENDPOINT', 'R2_ACCOUNT_ID', 'CF_ENDPOINT', 'CF_ACCESS_KEY_ID', 'CF_SECRET_ACCESS_KEY', 'CF_BUCKET',
   'SAFE_MODE',
   'SAFE_MODE_ALLOWED_HOSTS',
   'DATABASE_URL',
@@ -318,12 +319,25 @@ const quiet = async <T>(fn: () => Promise<T> | T): Promise<T> => {
       [key, true, 0, false, false, null],
     );
   }
-  resetEnv({});
+  // v1.3.0: storage (bucket + түлхүүр) тохируулсан үед л S3/R2 руу бичнэ.
+  resetEnv({ S3_BUCKET: 'b', S3_ACCESS_KEY_ID: 'k', S3_SECRET_ACCESS_KEY: 's' });
   {
     const f: any = await quiet(() => new FileService());
     f.s3 = s3Stub;
     await quiet(() => f.upload('m.png', 'image/png', Buffer.from('x')));
     check('S8b SAFE_MODE биш → S3 upload дуудагдана (mutation-check)', s3Calls.includes('upload'), true);
+  }
+  resetEnv({});
+  {
+    const before = s3Calls.length;
+    const f: any = await quiet(() => new FileService());
+    f.s3 = s3Stub;
+    const url = await quiet(() => f.upload('n.png', 'image/png', Buffer.from('x')));
+    check(
+      'S8c storage тохируулаагүй → local-д л, S3 0 дуудлага (EC2 metadata руу удахгүй)',
+      [url, existsSync(join(tmp, 'uploads', 'n.png')), s3Calls.length - before],
+      ['n.png', true, 0],
+    );
   }
   process.chdir(cwd0);
 

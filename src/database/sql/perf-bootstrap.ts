@@ -351,6 +351,28 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE question
    ADD COLUMN IF NOT EXISTS settings JSONB`,
 
+  // ── v1.3.0 тайлангийн pipeline (REPORT_PIPELINE=v2) ─────────────────────────────
+  // core-ийн REPORT_STATUS-д PENDING бий; DB enum-д байхгүй бол v2 мөр бичихэд алдаа.
+  `ALTER TYPE report_logs_status_enum ADD VALUE IF NOT EXISTS 'PENDING'`,
+  // Үе шат бүрийн хугацаа (calc_ms, render_ms …) — monitor/report-timings. Nullable → агшин зуур.
+  `ALTER TABLE report_logs ADD COLUMN IF NOT EXISTS timings JSONB`,
+  // Sweep-ийн дахин оролдлогын тоо (PG11+: тогтмол default → хүснэгт дахин бичихгүй).
+  `ALTER TABLE report_logs ADD COLUMN IF NOT EXISTS sweeps INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE report_logs ADD COLUMN IF NOT EXISTS pipeline VARCHAR(16)`,
+  // Sweep / monitor: зөвхөн v2 мөрүүд (partial → жижиг).
+  `CREATE INDEX IF NOT EXISTS idx_report_logs_v2_status_updated
+  ON report_logs (status, "updatedAt") WHERE pipeline = 'v2'`,
+  // Тайлан зурахад ашигласан өгөгдлийн сүүлийн snapshot (gzip JSON) — код бүрд нэг мөр.
+  // hire_report calc service бичнэ (report-snapshot.service.ts).
+  `CREATE TABLE IF NOT EXISTS report_snapshot (
+     code VARCHAR(64) PRIMARY KEY,
+     version INTEGER NOT NULL DEFAULT 1,
+     data BYTEA NOT NULL,
+     bytes INTEGER NOT NULL DEFAULT 0,
+     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+
   // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
   // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар
   // (`CREATE UNIQUE INDEX CONCURRENTLY`): ops/shared/examdetail-unique.sql.

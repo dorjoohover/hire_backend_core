@@ -26,6 +26,7 @@ import { UserAnswerModule } from '../user.answer/user.answer.module';
 import { UserServiceModule } from '../user.service/user.service.module';
 import { UserModule } from '../user/user.module';
 import { ReportLogDao } from './report.log.dao';
+import { ReportPipelineModule } from './report-pipeline.module';
 import { QuestionRuleDao } from '../question/dao/question.rule.dao';
 import { QuestionAnswerViewService } from '../question/question-answer-view.service';
 
@@ -43,6 +44,7 @@ import { QuestionAnswerViewService } from '../question/question-answer-view.serv
     forwardRef(() => UserAnswerModule),
     forwardRef(() => UserServiceModule),
     forwardRef(() => UserModule),
+    ReportPipelineModule,
   ],
   controllers: [ReportController],
   providers: [

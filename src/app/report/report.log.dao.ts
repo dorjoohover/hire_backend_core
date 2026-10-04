@@ -29,6 +29,8 @@ export class ReportLogDao {
   }
 
   public async getOne(id: string) {
+    // v1.3.0: нэг кодод олон мөр байж болно (core-failed-*, хуучин job, v2-<code>) —
+    // хамгийн сүүлд шинэчлэгдсэнийг авна (өмнө нь эрэмбэгүй → хуучин FAILED мөр гарч болдог байв).
     return await this.db.findOne({
       where: [
         {
@@ -36,6 +38,7 @@ export class ReportLogDao {
         },
         { code: id },
       ],
+      order: { updatedAt: 'DESC' },
     });
   }
   async updateById(id: string, dto: Partial<ReportLogDto>) {

@@ -13,6 +13,7 @@ import { createHash } from 'crypto';
 import { DataSource } from 'typeorm';
 import { REPORT_STATUS } from 'src/base/constants';
 import { ReportLogDao } from '../report/report.log.dao';
+import { OPS_PRIORITY, ReportPipelineService } from '../report/report-pipeline.service';
 
 export type OpsActor = { id?: number; email?: string; ip?: string };
 export type OpsMode = 'recalculate' | 'regenerate' | 'retry';
@@ -40,6 +41,7 @@ export class OpsService {
   constructor(
     private readonly ds: DataSource,
     private readonly reportLog: ReportLogDao,
+    private readonly pipeline: ReportPipelineService,
   ) {}
 
   private reportBase(): string {
@@ -65,7 +67,7 @@ export class OpsService {
   async latestLog(code: string) {
     const rows = await this.ds.query(
       `SELECT id, code, status, progress, role, error, "createdAt", "updatedAt"
-       FROM report_logs WHERE code = $1 ORDER BY "createdAt" DESC LIMIT 1`,
+       FROM report_logs WHERE code = $1 ORDER BY "updatedAt" DESC LIMIT 1`,
       [code],
     );
     return rows[0] ?? null;
@@ -186,6 +188,26 @@ export class OpsService {
       throw new ConflictException(
         `Тайлан одоо боловсруулагдаж байна (${log.status}); дууссаны дараа дахин оролдоно уу`,
       );
+    }
+
+    // v1.3.0: REPORT_PIPELINE=v2 → core-ийн report-calc queue (бага эрэмбэтэй).
+    if (this.pipeline.enabled()) {
+      const res = await this.pipeline.enqueueCalc({
+        code,
+        role: log?.role,
+        priority: OPS_PRIORITY,
+        recalculate: mode === 'recalculate',
+        notify: !!opts.notify,
+      });
+      await this.audit(actor, `report.${mode}`, code, 'ok', {
+        prev: log?.status ?? null,
+        pipeline: 'v2',
+        ...res,
+      });
+      if (!res.queued) {
+        throw new ConflictException(`Тайлан одоо queue-д байна (${res.state}); дууссаны дараа дахин оролдоно уу`);
+      }
+      return { code, mode, ...res };
     }
 
     try {

@@ -33,6 +33,17 @@ export class ReportLogEntity {
   @Column({ nullable: true })
   error?: string;
 
+  // v1.3.0 (perf-bootstrap ADD COLUMN IF NOT EXISTS). select:false — DDL ажиллаагүй ч
+  // энгийн уншилт эвдрэхгүй; бичилт/уншилт нь raw SQL-ээр (report-pipeline.service.ts).
+  @Column({ type: 'jsonb', nullable: true, select: false })
+  timings?: Record<string, number> | null;
+
+  @Column({ type: 'int', default: 0, select: false })
+  sweeps?: number;
+
+  @Column({ type: 'varchar', length: 16, nullable: true, select: false })
+  pipeline?: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

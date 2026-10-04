@@ -1,5 +1,6 @@
 import {
   Controller,
+  Patch,
   Post,
   Body,
   Param,
@@ -31,6 +32,22 @@ export class ReportController {
   @Post()
   async create(@Body() dto: any, @Request() { user }) {
     return this.reportsService.createReport(dto, user?.role);
+  }
+
+  // v1.3.0: hire_report render worker (DB-гүй) → report_logs төлөв/timings.
+  @Public()
+  @UseGuards(InternalKeyGuard)
+  @Patch('internal/status')
+  async internalStatus(@Body() body: any) {
+    return this.reportsService.internalStatus(body);
+  }
+
+  // v1.3.0: render worker-ийн snapshot miss → calc service (REPORT_CALC_URL, дотоод сүлжээ).
+  @Public()
+  @UseGuards(InternalKeyGuard)
+  @Post('internal/data')
+  async internalData(@Body() body: any) {
+    return this.reportsService.internalData(body);
   }
 
   // web хүлээж авах тул нээлттэй хэвээр.

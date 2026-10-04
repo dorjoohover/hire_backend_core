@@ -124,7 +124,8 @@ const pdf = (n = 1000, tail = '\n%%EOF\n') => Buffer.concat([Buffer.from('%PDF-1
   }
 
   // ===== жинхэнэ Nest app =====
-  const svc = new OpsService(fakeDs, fakeDao);
+  // v1.3.0: pipeline унтраалттай (REPORT_PIPELINE тавиагүй) → хуучин HTTP урсгал шалгагдана.
+  const svc = new OpsService(fakeDs, fakeDao, { enabled: () => false } as any);
   @Module({ controllers: [OpsController], providers: [{ provide: OpsService, useValue: svc }, OpsGuard] })
   class T {}
   const app = await NestFactory.create(T, { logger: false });

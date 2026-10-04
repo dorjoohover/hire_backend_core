@@ -9,6 +9,20 @@ import { ModuleRef } from '@nestjs/core';
 import { REPORT_STATUS } from 'src/base/constants';
 import axios from 'axios';
 import { ReportLogDao } from './report.log.dao';
+import { ReportPipelineService } from './report-pipeline.service';
+
+/**
+ * v1.3.0: web-д зориулсан бэлэн байдал. result нь PDF-ээс ӨМНӨ бичигддэг
+ * (legacy: progress 30 WRITING, v2: 40) — тиймээс үр дүнгийн хуудсыг PDF хүлээлгүй
+ * харуулж болно; PDF товч нь pdfReady болтол хүлээнэ.
+ */
+export function readiness(r: { status?: string; progress?: number }) {
+  const done = r.status === REPORT_STATUS.COMPLETED || r.status === REPORT_STATUS.SENT;
+  return {
+    resultReady: done || (r.status !== REPORT_STATUS.FAILED && Number(r.progress ?? 0) >= 30),
+    pdfReady: done,
+  };
+}
 
 @Injectable()
 export class ReportService {
@@ -16,6 +30,7 @@ export class ReportService {
   constructor(
     private moduleRef: ModuleRef,
     private dao: ReportLogDao,
+    private pipeline: ReportPipelineService,
   ) {}
   private REPORT = process.env.REPORT;
   onModuleInit() {
@@ -24,6 +39,22 @@ export class ReportService {
   }
   async createReport(data: any, role?: number) {
     const { code } = data || {};
+    // v1.3.0: REPORT_PIPELINE=v2 → core-ийн `report-calc` queue (HTTP handoff, retry, core-failed-* алга).
+    if (this.pipeline.enabled() && code) {
+      try {
+        return await this.pipeline.enqueueCalc({
+          code: String(code),
+          role: role ?? data?.role,
+          examFinishedAt: Date.now(),
+          priority: data?.priority,
+          recalculate: !!data?.recalculate,
+          notify: !!data?.notify,
+        });
+      } catch (e: any) {
+        console.error('❌ createReport (v2) queue-д оруулж чадсангүй:', code, e?.message ?? e);
+        throw e;
+      }
+    }
     // ⚠️ 2026-09-28: 3 оролдлого x 10с timeout (1.5с/3с backoff-той, нийт ~34.5с) хэт
     // богино болсныг илрvvлэв — hire_report (report-1/report-2) нь concurrency:1 тул
     // тухайн container PDF бичиж байх vед (одоо 48-64с хvртэл vргэлжилж болдог) ӨӨРИЙН
@@ -112,6 +143,8 @@ export class ReportService {
         progress: 0,
         result: null,
         code: jobId,
+        resultReady: false,
+        pdfReady: false,
       };
     }
     if (
@@ -128,7 +161,16 @@ export class ReportService {
         console.error('❌ sendMail алдаа:', error?.message),
       );
     }
-    return report;
+    return { ...report, ...readiness(report) };
+  }
+
+  // v1.3.0 дотоод (InternalKeyGuard) — hire_report render worker / calc service.
+  async internalStatus(body: any) {
+    return this.pipeline.patchStatus(body ?? {});
+  }
+
+  async internalData(body: any) {
+    return this.pipeline.proxyData(body ?? {});
   }
 
   async sendMail(code: string) {

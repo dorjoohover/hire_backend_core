@@ -1,3 +1,4 @@
+import { ReportPipelineModule } from '../report/report-pipeline.module';
 import { forwardRef, Module } from '@nestjs/common';
 import { ExamService } from './exam.service';
 import { ExamController } from './exam.controller';
@@ -29,6 +30,7 @@ import { QuestionAnswerViewService } from '../question/question-answer-view.serv
 import { ReportAccessModule } from '../report-access/report-access.module';
 @Module({
   imports: [
+    ReportPipelineModule, // v1.3.0 (ReportService / OpsService-д хэрэгтэй)
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '30d' },
