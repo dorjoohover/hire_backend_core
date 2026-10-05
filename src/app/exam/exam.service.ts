@@ -449,15 +449,24 @@ export class ExamService extends BaseService {
       if (completedChanged) {
         await this.dao.setCompletedCategories(res.id, [...completedSet]);
       }
-      // Алгасаж шилжих хориотой: өмнөх бүлгүүдийн заавал асуулт бөглөгдөөгүй бол татгалзана
-      // (1→3 болохгүй; 3→1 буцах болно; 1-3 бөглөгдсөн бол 1→4 болно).
+      // Алгасаж шилжих хориотой: очих бүлгийн өмнөх бүлгүүдийн заавал асуулт бөглөгдөөгүй бол
+      // татгалзана (1→3 ✗; 3→1 ✓ (1, 2 бөглөгдсөн); 1-3 бөглөгдсөн бол 1→4 ✓).
       if (
         category !== undefined &&
         nav.from != null &&
         !canNavigateTo(orderedCategoryIds, completedSet, category, nav.from)
       ) {
+        // Одоогийн бүлгийг бөглөвөл болох байсан уу → "Энэ хэсгийн", үгүй бол өмнөх бүлгүүд дутуу.
+        const onlyCurrentMissing = canNavigateTo(
+          orderedCategoryIds,
+          new Set([...completedSet, Number(nav.from)]),
+          category,
+          nav.from,
+        );
         throw new HttpException(
-          'Өмнөх хэсгийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.',
+          onlyCurrentMissing
+            ? 'Энэ хэсгийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.'
+            : 'Өмнөх хэсгүүдийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.',
           HttpStatus.BAD_REQUEST,
         );
       }

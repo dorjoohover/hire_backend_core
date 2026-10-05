@@ -42,9 +42,11 @@ const B = [11, 12, 13, 14];
 check('N1 1→3 болохгүй (2 бөглөгдөөгүй)', canNavigateTo(B, new Set([11]), 13, 11), false);
 check('N2 1→2 болно (1 бөглөгдсөн)', canNavigateTo(B, new Set([11]), 12, 11), true);
 check('N3 1 дутуу бол 1→2 болохгүй', canNavigateTo(B, new Set(), 12, 11), false);
-check('N4 3→1 буцах болно (3 дутуу байсан ч)', canNavigateTo(B, new Set([11, 12]), 11, 13), true);
+check('N4 3→1, 3→2 болно (1, 2 бөглөгдсөн; 3 дутуу байсан ч)', [canNavigateTo(B, new Set([11, 12]), 11, 13), canNavigateTo(B, new Set([11, 12]), 12, 13)], [true, true]);
+check('N4b ижил бүлэг (target === from) үргэлж болно', canNavigateTo(B, new Set(), 12, 12), true);
 check('N5 3 бөглөгдсөн бол 1→3, 1→4 болно', [canNavigateTo(B, new Set([11, 12, 13]), 13, 11), canNavigateTo(B, new Set([11, 12, 13]), 14, 11)], [true, true]);
-check('N6 3 дутуу бол 1→3 болно, 1→4 болохгүй', [canNavigateTo(B, new Set([11, 12]), 13, 11), canNavigateTo(B, new Set([11, 12]), 14, 11)], [true, false]);
+check('N6 3 дутуу бол 1→3 болно (frontier), 1→4 болохгүй', [canNavigateTo(B, new Set([11, 12]), 13, 11), canNavigateTo(B, new Set([11, 12]), 14, 11)], [true, false]);
+check('N6b 2 дутуу бол 2→3 болохгүй (3-ын өмнөх бүлэг дутуу)', canNavigateTo(B, new Set([11]), 13, 12), false);
 check('N7 мэдэгдэхгүй бүлэг → болохгүй', canNavigateTo(B, new Set(B), 99, 11), false);
 check('N8 хуучин цоорхой (2 бөглөгдөөгүй, 3 бөглөгдсөн) — 3→4 "Дараах" гацахгүй, 1→4 болохгүй', [canNavigateTo(B, new Set([11, 13]), 14, 13), canNavigateTo(B, new Set([11, 13]), 14, 11)], [true, false]);
 check('N9 3 дутуу бол 3→4 болохгүй', canNavigateTo(B, new Set([11, 12]), 14, 13), false);
@@ -172,7 +174,11 @@ const baseExam = () => ({
   check('S2 1 бөглөөд "Дараах" → 2, completed [11] хадгалагдана, allCategories.completed', [r.res.category.id, r.calls.completed, r.res.allCategories.map((c: any) => c.completed)], [12, [[11]], [true, false, false]]);
   check('S3 1 дутуу бол 1→2 → 400', (await navErr({ answered: [], exam: { ...started(), completedCategories: [] } }, 12, { from: 11, complete: false }))?.[0], 400);
   r = await run({ answered: [11, 12, 13], exam: { ...started(), completedCategories: [11, 12] } }, 11, true, { from: 13, complete: false });
-  check('S4 3 (дутуу) → 1 буцах болно, 3 completed-д нэмэгдэхгүй', [r.res.category.id, r.calls.completed, r.res.categories], [11, [], [12, 13]]);
+  check('S4 3 (дутуу) → 1 буцах болно (1, 2 бөглөгдсөн), 3 completed-д нэмэгдэхгүй', [r.res.category.id, r.calls.completed, r.res.categories], [11, [], [12, 13]]);
+  check('S4c 2 дутуу → 3 → 400 "Энэ хэсгийн…"', await navErr({ answered: [11], exam: { ...started(), completedCategories: [11] } }, 13, { from: 12, complete: false }), [400, 'Энэ хэсгийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.']);
+  check('S4d 1-ээс 3 руу (2 дутуу) → 400 "Өмнөх хэсгүүдийн…"', await navErr({ answered: [11], exam: { ...started(), completedCategories: [11] } }, 13, { from: 11, complete: true }), [400, 'Өмнөх хэсгүүдийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.']);
+  r = await run({ answered: [11, 12, 13], exam: { ...started(), completedCategories: [11, 12] } }, 11, true, { from: 13, complete: true });
+  check('S4b 3 бөглөсөн → 1 буцах болно, 3 completed-д нэмэгдэнэ', [r.res.category.id, r.calls.completed, r.res.categories], [11, [[11, 12, 13]], [12, 13]]);
   check('S5 3 дутуу бол 1→4 → 400', (await navErr({ answered: [11, 12, 13], cats: [11, 12, 13, 14], exam: { ...started(), completedCategories: [11, 12] } }, 14, { from: 11, complete: true }))?.[0], 400);
   r = await run({ answered: [11, 12, 13], cats: [11, 12, 13, 14], exam: { ...started(), completedCategories: [11, 12, 13] } }, 14, true, { from: 11, complete: true });
   check('S5b 3 бөглөгдсөн бол 1→4 болно', r.res.category.id, 14);
@@ -182,8 +188,11 @@ const baseExam = () => ({
   check('S7 reload: 3 хариулттай ч бөглөж дуусаагүй → 3-аас үргэлжилнэ (4 руу алгасахгүй)', r.res.category.id, 13);
   r = await run({ answered: [11], exam: started() }, 13);
   check('S8 хуучин client (from-гүй) → шалгахгүй, хуучин үйлдэл', [r.res.category.id, r.calls.completed.length], [13, 0]);
+  r = await run({ answered: [11], exam: started() }, 11, true, { from: 12, complete: true });
+  check('S9 хуучин шалгалт (completedCategories null) → хариулттайгаас seed + 12 нэмж анх удаа бичнэ', [r.res.category.id, r.calls.completed], [11, [[11, 12]]]);
   r = await run({ answered: [11, 12], exam: started() }, 11, true, { from: 12, complete: false });
-  check('S9 хуучин шалгалт (completedCategories null) → хариулттайгаас seed, дутуу 12-г хасаад бичнэ', [r.res.category.id, r.calls.completed], [11, [[11]]]);
+  check('S10 хуучин шалгалт, 12 дутуу (хариулттай ч) → 1 руу буцах болно, 12-ыг хасаж бичнэ', [r.res.category.id, r.calls.completed], [11, [[11]]]);
+  check('S11 тэр үед 1→3 болохгүй (12 дутуу)', (await navErr({ answered: [11, 12], exam: { ...started(), completedCategories: [11] } }, 13, { from: 11, complete: true }))?.[0], 400);
 
   // ---------------- createPublicExam (public QR бүртгэл) ----------------
   const pub = (over: any = {}) => {
