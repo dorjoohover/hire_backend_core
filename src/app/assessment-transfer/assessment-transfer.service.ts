@@ -135,6 +135,7 @@ export class AssessmentTransferService {
     for (const r of await acRepo.find({
       where: { assessment: { id: assessmentId } },
       loadRelationIds: ids(['parent']),
+      order: { id: 'ASC' },
     })) {
       acRows.set(r.id, r);
     }
@@ -154,7 +155,9 @@ export class AssessmentTransferService {
       for (const id of missing) if (!acRows.has(id)) acRows.set(id, null);
       for (const r of rows) if (r.parent) pending.add(r.parent);
     }
-    const acList = [...acRows.values()].filter(Boolean);
+    // id дарааллаар — {{answerCategory[i]}} / {{i-р дэд бүлгийн …}} дугаар нь хариултын ангиллын
+    // id дараалал тул шинэ тестэд ч ижил дараалал (1 = Гүйцэтгэл, 2 = Ач холбогдол) хадгалагдана.
+    const acList = [...acRows.values()].filter(Boolean).sort((a, b) => Number(a.id) - Number(b.id));
     const acIdSet = new Set(acList.map((r) => r.id));
     const acRef = (id: any) => (id != null && acIdSet.has(id) ? id : null);
 
