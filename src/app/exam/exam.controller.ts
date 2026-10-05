@@ -130,10 +130,16 @@ export class ExamController {
         report.status === REPORT_STATUS.SENT ||
         report.status === REPORT_STATUS.COMPLETED
       ) {
-        const response = await this.file.getReport(filename);
+        const { response, missing } = await this.file.getReport(filename);
 
         if (!response) {
-          throw new HttpException('File not found', 404);
+          // Файл үнэхээр байхгүй үед л 404. Тайлангийн сервер түр хариу өгөөгүй
+          // (timeout, restart, ачаалал) бол 503 — web хэдэн секундийн дараа дахин оролдоно.
+          if (missing) throw new HttpException('File not found', 404);
+          throw new HttpException(
+            'Тайлангийн сервер түр ачаалалтай байна.',
+            HttpStatus.SERVICE_UNAVAILABLE,
+          );
         }
 
         res.setHeader(
