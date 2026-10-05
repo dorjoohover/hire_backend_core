@@ -17,6 +17,7 @@ import { memoryStorage } from 'multer';
 import { SUPER } from 'src/auth/guards/role/role.decorator';
 import { OpsGuard } from './ops.guard';
 import { OPS_MAX_PDF_BYTES, OpsActor, OpsService } from './ops.service';
+import { CleanupSelector, OpsCleanupService } from './ops-cleanup.service';
 
 const actorOf = (req: any): OpsActor => ({
   id: req?.user?.id,
@@ -35,7 +36,23 @@ const actorOf = (req: any): OpsActor => ({
 @UseGuards(OpsGuard)
 @Controller('ops')
 export class OpsController {
-  constructor(private readonly ops: OpsService) {}
+  constructor(
+    private readonly ops: OpsService,
+    private readonly cleanup: OpsCleanupService,
+  ) {}
+
+  // Тестийн / сонгосон шалгалтыг бүх ул мөртэй нь устгах (PDF: локал + R2, DB).
+  // 1) preview → тоо + token (10 мин), 2) apply { ...ижил сонголт, token }.
+  // Сонголт: { codes: [...] } | { email, since, until? } | { loadtest: true } | { preview: true, since }
+  @Post('cleanup/preview')
+  cleanupPreview(@Req() req: any, @Body() body: CleanupSelector) {
+    return this.cleanup.preview(actorOf(req), body);
+  }
+
+  @Post('cleanup/apply')
+  cleanupApply(@Req() req: any, @Body() body: CleanupSelector & { token?: string }) {
+    return this.cleanup.apply(actorOf(req), body);
+  }
 
   @Get('report/:code')
   status(@Param('code') code: string) {

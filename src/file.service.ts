@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Optional,
   StreamableFile,
   NotFoundException,
   BadRequestException,
@@ -27,6 +28,8 @@ import {
   isObjectStorageConfigured,
   objectStorageConfig,
 } from './utils/object-storage';
+import { MediaService } from './app/media/media.service';
+import { MediaPurpose, isMediaPurpose, newMediaId, purposeFromLegacyKey } from './app/media/media-policy';
 
 @Injectable()
 export class FileService {
@@ -36,7 +39,8 @@ export class FileService {
   private readonly bucketName = this.storage.bucket;
   private readonly localPath = './uploads';
   private readonly reportPath = process.env.REPORT_PATH;
-  constructor() {
+  // MediaModule (@Global) — `new FileService()` (тест, скрипт) үед undefined → хуучин зам.
+  constructor(@Optional() private readonly media?: MediaService) {
     // ⚠️ Өмнө нь AWS_ACCESS_KEY-г бүтнээр нь stdout руу хэвлэдэг байсан (аудит) —
     // одоо зөвхөн set/MISSING гэсэн халхалсан мөр.
     console.log(`🗄️ object storage: ${describeObjectStorage(this.storage)}`);
@@ -204,8 +208,40 @@ export class FileService {
       message: 'Dry-run completed. No files were changed.',
     };
   }
-  async upload(key: string, ct: string, body) {
+  async upload(
+    key: string,
+    ct: string,
+    body,
+    opts: { purpose?: MediaPurpose | string; ownerId?: number | null; originalName?: string } = {},
+  ) {
     console.log(key);
+
+    // 2026-10-06: MEDIA_STORAGE=r2 → R2 (зориулалт + төрлөөр ангилсан түлхүүр) + media_object.
+    // DB-д буцаах утга (`key`) өөрчлөгдөхгүй — `/file/<key>` нь CDN руу 302 болно.
+    if (this.media?.enabled()) {
+      const purpose = isMediaPurpose(opts.purpose)
+        ? opts.purpose
+        : (purposeFromLegacyKey(key) ?? 'misc');
+      const buf = Buffer.isBuffer(body) ? body : Buffer.from(body);
+      const row = await this.media.putInline({
+        buffer: buf,
+        declaredMime: ct,
+        originalName: opts.originalName,
+        purpose,
+        id: key,
+        ownerId: opts.ownerId ?? null,
+      });
+      // Rollback-д бэлэн (MEDIA_STORAGE унтраавал локалаас уншина) — MEDIA_LOCAL_COPY=0 бол алгасна.
+      if (process.env.MEDIA_LOCAL_COPY !== '0') {
+        try {
+          mkdirSync(this.localPath, { recursive: true });
+          writeFileSync(resolveInside(this.localPath, row.id), buf);
+        } catch (error) {
+          console.log('local copy failed', (error as any)?.message);
+        }
+      }
+      return row.id;
+    }
 
     // Local disk-рүү ЯМАГТ бичнэ — S3 амжилтгүй болсон ч (сүлжээ/эрх зэрэг
     // шалтгаанаар) getFile()-ийн local unshtn уншилт ажиллаж чадах ёстой.
@@ -250,6 +286,8 @@ export class FileService {
    * бол S3-аас уншина. Олдохгүй (эсвэл түлхүүр буруу) бол null.
    */
   async readBytes(key: string): Promise<Buffer | null> {
+    const fromMedia = await this.media?.readBytes(key).catch(() => null);
+    if (fromMedia) return fromMedia;
     try {
       const p = resolveInside(this.localPath, key);
       if (existsSync(p)) return readFileSync(p);
@@ -262,6 +300,7 @@ export class FileService {
 
   /** Assessment bundle-ийн импорт: ижил түлхүүртэй файл аль хэдийн байгаа эсэх (local → S3). */
   async exists(key: string): Promise<boolean> {
+    if (this.media?.enabled() && (await this.media.find(key).catch(() => null))) return true;
     try {
       if (existsSync(resolveInside(this.localPath, key))) return true;
     } catch {
@@ -295,6 +334,7 @@ export class FileService {
     pt?: PassThrough,
     key?: string,
     ct?: string,
+    opts: { purpose?: MediaPurpose | string; ownerId?: number | null } = {},
   ): Promise<string[]> {
     try {
       console.log('uploading', files);
@@ -305,8 +345,13 @@ export class FileService {
         results.push(res);
       }
       for (const file of files) {
-        const key = `${Date.now()}_${file.originalname}`;
-        const fileUrl = await this.upload(key, file.mimetype, file.buffer);
+        const key = this.media?.enabled()
+          ? newMediaId(file.originalname, file.mimetype)
+          : `${Date.now()}_${file.originalname}`;
+        const fileUrl = await this.upload(key, file.mimetype, file.buffer, {
+          ...opts,
+          originalName: file.originalname,
+        });
 
         results.push(fileUrl);
       }
@@ -327,6 +372,25 @@ export class FileService {
     const size = statSync(filePath).size;
     return { path: filePath, size };
   }
+  /**
+   * `GET /file/:id`, `GET pdf-template/image/:key`: media_object-д бүртгэлтэй (R2) бол CDN руу
+   * redirect эсвэл R2-аас урсгал; хувийн / pending → 404; бүртгэлгүй бол хуучин локал файл.
+   */
+  async resolveForResponse(
+    id: string,
+  ): Promise<
+    | { redirect: string; cache: string }
+    | { stream: NodeJS.ReadableStream; type: string; length?: number | null; cache?: string; disposition?: string }
+  > {
+    const r = await this.media?.resolve(id);
+    if (r?.type === 'redirect') return { redirect: r.url, cache: r.cache };
+    if (r?.type === 'stream') return { stream: r.stream, type: r.mime, length: r.bytes, cache: r.cache };
+    if (r?.type === 'missing') throw new NotFoundException('not found');
+    const f = await this.getFile(id);
+    const h = f.getHeaders();
+    return { stream: f.getStream(), type: String(h.type), length: h.length ?? null, disposition: h.disposition };
+  }
+
   async getFile(filename: string): Promise<StreamableFile> {
     try {
       const filePath = resolveInside(this.localPath, filename);

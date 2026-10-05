@@ -5,9 +5,11 @@
  */
 import 'reflect-metadata';
 import {
+  canNavigateTo,
   decidePublicReuse,
   nextCategoryStart,
   pickResumeIndex,
+  resolveCompletedCategories,
   stableShuffle,
 } from '../src/app/exam/exam-resume';
 import { ExamService } from '../src/app/exam/exam.service';
@@ -35,6 +37,30 @@ check('P7 pickResumeIndex: 1-р хэсэг дундаас гарсан (хари
 check('P8 pickResumeIndex: бүгд хариулагдсан → сүүлийнх', pickResumeIndex([11, 12, 13], new Set([11, 12, 13])), 2);
 check('P9 pickResumeIndex: хэсэггүй → -1', pickResumeIndex([], new Set()), -1);
 
+// Бүлэг хооронд шилжих: [11,12,13,14] = 1..4-р бүлэг
+const B = [11, 12, 13, 14];
+check('N1 1→3 болохгүй (2 бөглөгдөөгүй)', canNavigateTo(B, new Set([11]), 13, 11), false);
+check('N2 1→2 болно (1 бөглөгдсөн)', canNavigateTo(B, new Set([11]), 12, 11), true);
+check('N3 1 дутуу бол 1→2 болохгүй', canNavigateTo(B, new Set(), 12, 11), false);
+check('N4 3→1 буцах болно (3 дутуу байсан ч)', canNavigateTo(B, new Set([11, 12]), 11, 13), true);
+check('N5 3 бөглөгдсөн бол 1→3, 1→4 болно', [canNavigateTo(B, new Set([11, 12, 13]), 13, 11), canNavigateTo(B, new Set([11, 12, 13]), 14, 11)], [true, true]);
+check('N6 3 дутуу бол 1→3 болно, 1→4 болохгүй', [canNavigateTo(B, new Set([11, 12]), 13, 11), canNavigateTo(B, new Set([11, 12]), 14, 11)], [true, false]);
+check('N7 мэдэгдэхгүй бүлэг → болохгүй', canNavigateTo(B, new Set(B), 99, 11), false);
+check('N8 хуучин цоорхой (2 бөглөгдөөгүй, 3 бөглөгдсөн) — 3→4 "Дараах" гацахгүй, 1→4 болохгүй', [canNavigateTo(B, new Set([11, 13]), 14, 13), canNavigateTo(B, new Set([11, 13]), 14, 11)], [true, false]);
+check('N9 3 дутуу бол 3→4 болохгүй', canNavigateTo(B, new Set([11, 12]), 14, 13), false);
+
+check('R1 stored null (хуучин шалгалт) → хариулттай бүлгүүдээс seed, from-гүй бол бичихгүй', resolveCompletedCategories(null, [11, 12], B), { completed: new Set([11, 12]), changed: false });
+check('R1b Set JSON харьцуулалт — утгаар', [...resolveCompletedCategories(null, [11, 12], B).completed], [11, 12]);
+const r2 = resolveCompletedCategories([11], [11, 12], B, 12, true);
+check('R2 complete=true → нэмнэ, changed', [[...r2.completed], r2.changed], [[11, 12], true]);
+const r3 = resolveCompletedCategories([11, 12, 13], [11, 12, 13], B, 12, false);
+check('R3 буцаж ороод заавал асуултыг хоосолсон (complete=false) → хасна', [[...r3.completed], r3.changed], [[11, 13], true]);
+const r4 = resolveCompletedCategories([11], [11], B, 11, true);
+check('R4 өөрчлөлтгүй → changed=false', r4.changed, false);
+const r5 = resolveCompletedCategories(null, [11, 12], B, 12, false);
+check('R5 stored null + дутуу авто-хадгалалт (12 хариулттай ч дутуу) → хасаад анх удаа бичнэ', [[...r5.completed], r5.changed], [[11], true]);
+check('R6 өөр тестийн бүлэг (from ∉ ordered) → үл тооно', resolveCompletedCategories([11], [11], B, 77, true).changed, false);
+
 const T0 = new Date('2026-09-20T10:00:00Z');
 const T1 = new Date('2026-09-20T10:20:00Z');
 check('P10 nextCategoryStart: reload, ижил хэсэг → хуучин цаг', nextCategoryStart({ categoryStartedFor: 12, categoryStartedAt: T0 }, 12, false, T1), { startedAt: T0, changed: false });
@@ -50,16 +76,17 @@ check('P16 decidePublicReuse: нэг дор дуусаагүй + дууссан 
 check('P17 decidePublicReuse: жагсаалт хоосон → null', decidePublicReuse([], NOW), null);
 
 // ---------------- updateByCode урсгал (mock) ----------------
-type World = { answered: number[]; exam: any };
+type World = { answered: number[]; exam: any; cats?: number[] };
 const build = (w: World) => {
-  const calls = { updates: [] as any[], setStart: [] as any[], getQuestions: [] as any[], details: [] as any[], findForExam: [] as any[] };
+  const calls = { updates: [] as any[], setStart: [] as any[], getQuestions: [] as any[], details: [] as any[], findForExam: [] as any[], completed: [] as any[] };
   const dao = {
     findByCode: async () => w.exam,
     update: async (id: number, dto: any) => { calls.updates.push({ id, keys: Object.keys(dto).filter((k) => ['userStartDate', 'userEndDate'].includes(k) && dto[k]) }); },
     setCategoryStart: async (id: number, cat: number, at: Date) => { calls.setStart.push({ id, cat, at }); },
+    setCompletedCategories: async (id: number, ids: number[]) => { calls.completed.push(ids); },
   };
   const questionCategoryDao = {
-    findByAssessment: async () => [11, 12, 13].map((id, i) => ({ id, name: `C${id}`, orderNumber: i + 1, questions: [] })),
+    findByAssessment: async () => (w.cats ?? [11, 12, 13]).map((id, i) => ({ id, name: `C${id}`, orderNumber: i + 1, questions: [] })),
     findOne: async (id: number) => ({ id, name: `C${id}`, questionCount: 5 }),
   };
   const userAnswer = { findAnsweredCategoryIds: async () => w.answered };
@@ -87,11 +114,11 @@ const baseExam = () => ({
 
 (async () => {
   const q = console.log; const silent = () => {}; // updateByCode нь олон console.log / time хэвлэдэг
-  const run = async (w: World, category?: number, con: any = true) => {
+  const run = async (w: World, category?: number, con: any = true, nav: any = undefined) => {
     const { svc, calls } = build(w);
     console.log = silent; console.time = silent as any; console.timeEnd = silent as any;
     try {
-      const res = await svc.updateByCode(w.exam.code, con, category);
+      const res = await svc.updateByCode(w.exam.code, con, category, nav);
       return { res, calls };
     } finally { console.log = q; delete (console as any).time; delete (console as any).timeEnd; }
   };
@@ -134,6 +161,29 @@ const baseExam = () => ({
 
   r = await run({ answered: [], exam: baseExam() }, -1);
   check('U16 category=-1 → тестийг хаана (userEndDate), асуулт татахгүй', [r.res, r.calls.updates.some((u) => u.keys.includes('userEndDate')), r.calls.getQuestions.length], [undefined, true, 0]);
+
+  // ---------------- Бүлэг хооронд алгасахгүй шилжих ----------------
+  const started = () => ({ ...baseExam(), userStartDate: new Date('2026-09-20T10:00:00Z') });
+  const navErr = async (w: World, category: number, nav: any) => {
+    try { await run(w, category, true, nav); return null; } catch (e: any) { return [e.getStatus?.(), e.message]; }
+  };
+  check('S1 1→3 алгасах (1 бөглөсөн, 2 бөглөөгүй) → 400', (await navErr({ answered: [11], exam: { ...started(), completedCategories: [11] } }, 13, { from: 11, complete: true }))?.[0], 400);
+  r = await run({ answered: [11], exam: { ...started(), completedCategories: [] } }, 12, true, { from: 11, complete: true });
+  check('S2 1 бөглөөд "Дараах" → 2, completed [11] хадгалагдана, allCategories.completed', [r.res.category.id, r.calls.completed, r.res.allCategories.map((c: any) => c.completed)], [12, [[11]], [true, false, false]]);
+  check('S3 1 дутуу бол 1→2 → 400', (await navErr({ answered: [], exam: { ...started(), completedCategories: [] } }, 12, { from: 11, complete: false }))?.[0], 400);
+  r = await run({ answered: [11, 12, 13], exam: { ...started(), completedCategories: [11, 12] } }, 11, true, { from: 13, complete: false });
+  check('S4 3 (дутуу) → 1 буцах болно, 3 completed-д нэмэгдэхгүй', [r.res.category.id, r.calls.completed, r.res.categories], [11, [], [12, 13]]);
+  check('S5 3 дутуу бол 1→4 → 400', (await navErr({ answered: [11, 12, 13], cats: [11, 12, 13, 14], exam: { ...started(), completedCategories: [11, 12] } }, 14, { from: 11, complete: true }))?.[0], 400);
+  r = await run({ answered: [11, 12, 13], cats: [11, 12, 13, 14], exam: { ...started(), completedCategories: [11, 12, 13] } }, 14, true, { from: 11, complete: true });
+  check('S5b 3 бөглөгдсөн бол 1→4 болно', r.res.category.id, 14);
+  r = await run({ answered: [11, 12], exam: { ...started(), completedCategories: [11, 12] } }, 13, true, { from: 11, complete: true });
+  check('S6 1,2 бөглөсөн бол 1→3 болно', r.res.category.id, 13);
+  r = await run({ answered: [11, 12, 13], exam: { ...started(), completedCategories: [11, 12] } });
+  check('S7 reload: 3 хариулттай ч бөглөж дуусаагүй → 3-аас үргэлжилнэ (4 руу алгасахгүй)', r.res.category.id, 13);
+  r = await run({ answered: [11], exam: started() }, 13);
+  check('S8 хуучин client (from-гүй) → шалгахгүй, хуучин үйлдэл', [r.res.category.id, r.calls.completed.length], [13, 0]);
+  r = await run({ answered: [11, 12], exam: started() }, 11, true, { from: 12, complete: false });
+  check('S9 хуучин шалгалт (completedCategories null) → хариулттайгаас seed, дутуу 12-г хасаад бичнэ', [r.res.category.id, r.calls.completed], [11, [[11]]]);
 
   // ---------------- createPublicExam (public QR бүртгэл) ----------------
   const pub = (over: any = {}) => {

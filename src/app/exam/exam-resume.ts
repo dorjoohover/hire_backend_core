@@ -37,6 +37,62 @@ export function pickResumeIndex(
 }
 
 /**
+ * Бүлэг хооронд шилжих дүрэм — заавал бөглөх асуултуудаа бөглөсөн (completed) бүлгүүдээр л урагш
+ * явна, алгасахгүй:
+ *   - "frontier" = бөглөгдөөгүй ЭХНИЙ бүлэг (бүгд бөглөгдсөн бол сүүлийнх).
+ *   - frontier хүртэлх (түүнийг оруулаад) аль ч бүлэг рүү шилжиж болно: 1→3 болохгүй (2 бөглөгдөөгүй),
+ *     3→1 болно (буцах), 1,2,3 бөглөгдсөн бол 1→3, 1→4 болно.
+ *   - Одоогийн бүлгээс буцах (target < from) үргэлж боломжтой — одоогийн бүлэг дутуу байсан ч.
+ * Client тал: web/app/utils/examNavigation.js (ижил дүрэм).
+ */
+export function canNavigateTo(
+  orderedCategoryIds: readonly number[],
+  completed: { has(id: number): boolean },
+  target: number,
+  from?: number | null,
+): boolean {
+  const t = orderedCategoryIds.indexOf(Number(target));
+  if (t === -1) return false;
+  const f = from == null ? -1 : orderedCategoryIds.indexOf(Number(from));
+  if (f !== -1 && t <= f) return true;
+  // Бөглөсөн бүлгээс ДАРААГИЙН бүлэг рүү ("Дараах") үргэлж болно — хуучин өгөгдөлд (дүрмээс
+  // өмнө алгассан / бүх асуулт нь нуугдсан бүлэг) өмнө нь цоорхой байсан ч гацахгүй.
+  if (f !== -1 && t === f + 1 && completed.has(Number(from))) return true;
+  return t <= pickResumeIndex(orderedCategoryIds, completed);
+}
+
+/**
+ * Бөглөгдсөн бүлгүүдийн олонлог. `stored` (exam.completedCategories) null бол хуучин (энэ дүрмээс
+ * өмнө эхэлсэн) шалгалт → хариулттай бүлгүүдийг бөглөгдсөн гэж үзнэ. `from`/`complete` (client-ийн
+ * live шалгалт) өгөгдвөл тэр бүлгийг нэмнэ / хасна (буцаж ороод заавал асуултыг хоосолсон бол хасагдана).
+ */
+export function resolveCompletedCategories(
+  stored: readonly (number | string)[] | null | undefined,
+  answered: Iterable<number>,
+  orderedCategoryIds: readonly number[],
+  from?: number | null,
+  complete?: boolean | null,
+): { completed: Set<number>; changed: boolean } {
+  const completed = new Set<number>(
+    stored == null ? [...answered].map(Number) : stored.map(Number),
+  );
+  let changed = false;
+  const f = from == null ? NaN : Number(from);
+  if (typeof complete === 'boolean' && orderedCategoryIds.includes(f)) {
+    if (complete && !completed.has(f)) {
+      completed.add(f);
+      changed = true;
+    } else if (!complete && completed.has(f)) {
+      completed.delete(f);
+      changed = true;
+    }
+    // Анх удаа хадгалж байгаа (stored == null) бол seed-ийг ч бичнэ.
+    if (stored == null) changed = true;
+  }
+  return { completed, changed };
+}
+
+/**
  * Хэсгийн (category) хугацаа хэзээ эхэлснийг тодорхойлно.
  *  - `explicit` (хэрэглэгч хэсэг рүү шилжсэн): үргэлж ШИНЭ эхлэл (өмнөх зан төлөвтэй ижил).
  *  - үгүй (нээх / reload / resume): аль хэдийн ЭНЭ хэсэгт эхэлсэн бол хуучин цагийг хэвээр.

@@ -4,6 +4,9 @@ import {
   Get,
   Param,
   Post,
+  Query,
+  Request,
+  Res,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -36,6 +39,8 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { FileService } from './file.service';
+import { sendResolvedFile } from './utils/send-resolved-file';
+import type { Response } from 'express';
 import { ADMIN } from './base/constants';
 import { ADMINS } from './auth/guards/role/role.decorator';
 @ApiTags('Main')
@@ -128,10 +133,26 @@ export class AppController extends BaseService {
       },
     },
   })
+  // 2026-10-06: `purpose` (form талбар эсвэл ?purpose=) — R2 дээр зориулалтаар ангилна
+  // (question, answer-option, assessment, blog, avatar, ...; байхгүй бол misc). Хариу хэвээр
+  // `{ files: [id] }`. MEDIA_INLINE_MAX_MB-аас том (видео) → POST /media/presign.
   @Post('upload')
-  @UseInterceptors(FilesInterceptor('files', 8, { storage: memoryStorage() }))
-  async multiFileUploadS3(@UploadedFiles() files: Express.Multer.File[]) {
-    const urls = await this.fileService.processMultipleImages(files);
+  @UseInterceptors(
+    FilesInterceptor('files', 8, {
+      storage: memoryStorage(),
+      limits: { fileSize: Number(process.env.MEDIA_INLINE_MAX_MB || 25) * 1024 * 1024 },
+    }),
+  )
+  async multiFileUploadS3(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body('purpose') bodyPurpose?: string,
+    @Query('purpose') queryPurpose?: string,
+    @Request() req?: any,
+  ) {
+    const urls = await this.fileService.processMultipleImages(files, undefined, undefined, undefined, {
+      purpose: bodyPurpose || queryPurpose,
+      ownerId: req?.user?.id ?? null,
+    });
     return { files: urls };
   }
   @Get('/pdown') getPdown() {
@@ -140,8 +161,9 @@ export class AppController extends BaseService {
   @Public()
   @Get('/file/:file')
   @ApiParam({ name: 'file' })
-  async getFile(@Param('file') filename: string) {
-    return await this.fileService.getFile(filename);
+  async getFile(@Param('file') filename: string, @Res() res: Response) {
+    // R2-д бүртгэлтэй (media_object) бол CDN руу 302, үгүй бол локал файл.
+    return sendResolvedFile(this.fileService, filename, res);
   }
 
   // @Public()

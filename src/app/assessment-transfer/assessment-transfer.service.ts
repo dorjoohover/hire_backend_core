@@ -341,7 +341,10 @@ export class AssessmentTransferService {
           continue;
         }
         const buf = Buffer.from(f.base64, 'base64');
-        await this.files.upload(f.key, f.contentType || 'application/octet-stream', buf);
+        await this.files.upload(f.key, f.contentType || 'application/octet-stream', buf, {
+          // R2-д: асуулт/хариултын зураг, бичлэг → question, бусад (PDF г.м.) → misc
+          purpose: /^(image|audio|video)\//.test(f.contentType || '') ? 'question' : 'misc',
+        });
         fileRes.written++;
       }
       if (fileRes.skipped.length) {

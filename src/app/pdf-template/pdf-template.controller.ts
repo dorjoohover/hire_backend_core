@@ -31,6 +31,7 @@ import { PdfTemplateService } from './pdf-template.service';
 import { CreatePdfTemplateDto } from './dto/create-pdf-template.dto';
 import { UpdatePdfTemplateDto } from './dto/update-pdf-template.dto';
 import { FileService } from 'src/file.service';
+import { sendResolvedFile } from 'src/utils/send-resolved-file';
 import { StudioIconDao } from './studio-icon.dao';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
@@ -65,7 +66,7 @@ export class PdfTemplateController {
     if (file.size > 2 * 1024 * 1024) throw new BadRequestException('2MB-аас ихгүй зураг оруулна уу.');
     const safe = (file.originalname || 'icon').replace(/[^\w.\-]+/g, '_').slice(-80);
     const key = `ic_${Date.now()}_${safe}`;
-    await this.fileService.upload(key, file.mimetype, file.buffer);
+    await this.fileService.upload(key, file.mimetype, file.buffer, { purpose: 'studio-icon' });
     // multer нь UTF-8 файлын нэрийг latin1 гэж уншдаг ("Ð¥Ð°ÑÐ°Ð»" г.м.) — буцааж засна.
     const orig = /[\u00C0-\u00FF]/.test(file.originalname || '')
       ? Buffer.from(file.originalname, 'latin1').toString('utf8')
@@ -98,8 +99,9 @@ export class PdfTemplateController {
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('Файл ирээгүй байна.');
-    const key = `pt_${Date.now()}_${file.originalname}`;
-    await this.fileService.upload(key, file.mimetype, file.buffer);
+    // `/` агуулсан нэр нь `/image/:key`-ийг эвддэг тул цэвэрлэнэ (R2 түлхүүрт ч аюулгүй).
+    const key = `pt_${Date.now()}_${String(file.originalname || 'image').replace(/[\/\\\0]+/g, '_').slice(-120)}`;
+    await this.fileService.upload(key, file.mimetype, file.buffer, { purpose: 'studio-image' });
     return { key };
   }
 
@@ -112,8 +114,9 @@ export class PdfTemplateController {
   @Public()
   @Get('image/:key')
   @ApiParam({ name: 'key' })
-  async getImage(@Param('key') key: string) {
-    return await this.fileService.getFile(key);
+  async getImage(@Param('key') key: string, @Res() res: Response) {
+    // R2-д бүртгэлтэй бол CDN руу 302 (hire_report-ийн axios redirect дагана), үгүй бол локал.
+    return sendResolvedFile(this.fileService, key, res);
   }
 
   @Post()

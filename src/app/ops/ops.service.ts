@@ -105,7 +105,7 @@ export class OpsService {
   }
 
   /** Нэг actor минутад хэдэн ops үйлдэл хийж болох (default 20). */
-  private async throttle(actor: OpsActor) {
+  async throttle(actor: OpsActor) {
     if (!actor?.id) return;
     const limit = Number(process.env.OPS_RATE_PER_MIN ?? 20);
     const rows = await this.ds.query(

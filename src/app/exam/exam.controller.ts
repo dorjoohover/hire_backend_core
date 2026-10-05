@@ -80,6 +80,13 @@ export class ExamController {
         dto.code,
         con,
         dto.category,
+        {
+          from: dto.from == null ? undefined : Number(dto.from),
+          complete:
+            dto.complete == null
+              ? undefined
+              : dto.complete === true || (dto.complete as any) === 'true',
+        },
       );
       return res;
     } catch (error) {

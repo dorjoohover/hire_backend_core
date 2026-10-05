@@ -41,7 +41,12 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import { performance } from 'perf_hooks';
 import * as QRCode from 'qrcode';
 import { generateQrWithLogo } from 'src/utils/qr.util';
-import { nextCategoryStart, pickResumeIndex } from './exam-resume';
+import {
+  canNavigateTo,
+  nextCategoryStart,
+  pickResumeIndex,
+  resolveCompletedCategories,
+} from './exam-resume';
 import { effectiveShowResult } from '../user.service/show-result';
 
 @Injectable()
@@ -359,7 +364,17 @@ export class ExamService extends BaseService {
   }
 
   // category questioncount der asuudaltai bga
-  public async updateByCode(code: string, con: boolean, category?: number) {
+  public async updateByCode(
+    code: string,
+    con: boolean,
+    category?: number,
+    /**
+     * Бүлэг хооронд шилжих үед client одоогийн бүлгээ (`from`) ба түүний заавал бөглөх асуултууд
+     * бүгд бөглөгдсөн эсэхийг (`complete`) илгээнэ. `from` өгөгдөөгүй (хуучин client) бол
+     * шилжилтийг шалгахгүй — хуучин үйлдэл.
+     */
+    nav: { from?: number; complete?: boolean } = {},
+  ) {
     const startAll = performance.now();
     try {
       console.time('⏱ dao.findByCode');
@@ -421,6 +436,32 @@ export class ExamService extends BaseService {
       );
       console.timeEnd('⏱ check userAnswer by categories');
 
+      // Заавал асуултаа бөглөсөн бүлгүүд + энэ хүсэлтээр ирсэн одоогийн бүлгийн төлөв.
+      const orderedCategoryIds = [...allCategories];
+      const { completed: completedSet, changed: completedChanged } =
+        resolveCompletedCategories(
+          res.completedCategories,
+          answeredSet,
+          orderedCategoryIds,
+          nav.from,
+          nav.complete,
+        );
+      if (completedChanged) {
+        await this.dao.setCompletedCategories(res.id, [...completedSet]);
+      }
+      // Алгасаж шилжих хориотой: өмнөх бүлгүүдийн заавал асуулт бөглөгдөөгүй бол татгалзана
+      // (1→3 болохгүй; 3→1 буцах болно; 1-3 бөглөгдсөн бол 1→4 болно).
+      if (
+        category !== undefined &&
+        nav.from != null &&
+        !canNavigateTo(orderedCategoryIds, completedSet, category, nav.from)
+      ) {
+        throw new HttpException(
+          'Өмнөх хэсгийн заавал бөглөх асуултуудад хариулсны дараа шилжинэ үү.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       // №3: category заагаагүй (нээх / reload / дундаас орох) үед ХАРИУЛААГҮЙ ЭХНИЙ хэсгээс үргэлжилнэ.
       // Өмнө нь `con` салбар индексийг тооцоод ашигладаггүй (dead code) → үргэлж 1-р хэсгээс эхэлдэг байв.
       // (`con` нь URL param-аас "true"/"false" string ирдэг тул үнэн хэрэгтээ үргэлж truthy байсан;
@@ -429,7 +470,8 @@ export class ExamService extends BaseService {
       if (category !== undefined) {
         currentCategory = category;
       } else {
-        currentCategory = allCategories[pickResumeIndex(allCategories, answeredSet)];
+        // Бөглөж дуусаагүй эхний бүлэг (хариулттай ч заавал асуулт дутуу бүлгийг алгасахгүй).
+        currentCategory = allCategories[pickResumeIndex(allCategories, completedSet)];
       }
       categoryIndex = allCategories.indexOf(currentCategory);
       allCategories =
@@ -551,6 +593,7 @@ export class ExamService extends BaseService {
           name: c.name,
           orderNumber: c.orderNumber,
           answered: answeredSet.has(c.id),
+          completed: completedSet.has(c.id),
         }));
 
         return {

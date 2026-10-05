@@ -314,12 +314,17 @@ export class QuestionService {
 
   public async deleteQuestion(id: number) {
     const res = await this.questionDao.findOne(id);
-    const category = res.category.id;
-    const assessment = (await this.questionCategoryDao.findOne(category))
-      .assessment;
-    await this.questionCategoryDao.updatePoint(category);
-    await this.assessmentDao.updatePoint(assessment.id);
+    if (!res) throw new HttpException('Асуулт олдсонгүй', HttpStatus.NOT_FOUND);
+    const category = res.category?.id;
+    const assessment = category
+      ? (await this.questionCategoryDao.findOne(category))?.assessment
+      : null;
+    // Эхлээд устгаад ДАРАА нь оноог дахин бодно — өмнө нь эсрэг дарааллаар хийдэг байсан тул
+    // устгасан асуулт бүлэг/assessment-ийн оноонд үлдэж, updatePoint унавал устгал огт
+    // хийгддэггүй байв ("-Infinity" алдаа).
     await this.questionDao.deleteOne(id);
+    if (category) await this.questionCategoryDao.updatePoint(category);
+    if (assessment?.id) await this.assessmentDao.updatePoint(assessment.id);
   }
 
   remove(id: number) {

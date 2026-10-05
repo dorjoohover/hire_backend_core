@@ -20,6 +20,12 @@ export class FindExamByCodeDto {
   code: string;
   @ApiProperty()
   category?: number;
+  /** Шилжиж буй (одоогийн) бүлэг — client-ийн live шалгалттай хамт. */
+  @ApiProperty({ required: false })
+  from?: number;
+  /** `from` бүлгийн заавал бөглөх асуултууд бүгд бөглөгдсөн эсэх. */
+  @ApiProperty({ required: false })
+  complete?: boolean;
 }
 
 export class ExamUser {

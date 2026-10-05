@@ -69,6 +69,14 @@ export class ExamEntity {
   @Column({ nullable: true, type: 'int' })
   categoryStartedFor: number;
 
+  /**
+   * Заавал бөглөх асуултуудаа бөглөж дууссан бүлгүүд (questionCategory id). Бүлэг хооронд алгасаж
+   * шилжихээс сэргийлнэ (exam-resume.ts → canNavigateTo). null = энэ дүрмээс өмнө эхэлсэн шалгалт
+   * (хариулттай бүлгүүдийг бөглөгдсөн гэж үзнэ).
+   */
+  @Column({ nullable: true, type: 'int', array: true })
+  completedCategories: number[];
+
   @ManyToOne(() => UserServiceEntity, (service) => service.exams, {
     onDelete: 'CASCADE',
   })

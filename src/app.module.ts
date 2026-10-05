@@ -34,6 +34,7 @@ import { EmailModule } from './app/email/email.module';
 import { PdfTemplateModule } from './app/pdf-template/pdf-template.module';
 import { ReportAccessModule } from './app/report-access/report-access.module';
 import { OpsModule } from './app/ops/ops.module';
+import { MediaModule } from './app/media/media.module';
 import { MonitorModule } from './app/monitor/monitor.module';
 import { AssessmentTransferModule } from './app/assessment-transfer/assessment-transfer.module';
 
@@ -76,6 +77,7 @@ import { AssessmentTransferModule } from './app/assessment-transfer/assessment-t
     PdfTemplateModule,
     ReportAccessModule,
     OpsModule,
+    MediaModule, // 2026-10-06: зураг / бичлэг R2 (зориулалт + төрөл)
     MonitorModule,
     AssessmentTransferModule,
   ],

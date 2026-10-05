@@ -649,6 +649,13 @@ export class ExamDao {
     );
   };
 
+  setCompletedCategories = async (id: number, ids: number[]) => {
+    await this.db.query(
+      `UPDATE exam SET "completedCategories" = $1::int[] WHERE id = $2`,
+      [ids, id],
+    );
+  };
+
   findByCode = async (code: string | number) => {
     const res = await this.db.findOne({
       where: {

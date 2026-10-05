@@ -12,6 +12,7 @@ import {
 import { AssessmentEntity } from '../entities/assessment.entity';
 import { CreateAssessmentDto } from '../dto/create-assessment.dto';
 import { QuestionDao } from 'src/app/question/dao/question.dao';
+import { assessmentTotals } from 'src/app/question/point-total';
 import { Meta } from 'src/base/base.interface';
 import { AssessmentStatus } from 'src/base/constants';
 import { PaginationDto } from 'src/base/decorator/pagination';
@@ -325,13 +326,11 @@ export class AssessmentDao {
       where: { id: id },
       relations: ['questionCategories'],
     });
-    const point = res?.questionCategories?.reduce(
-      (prev, r) => +prev + +r.totalPoint,
-      0,
-    );
-    const questionCount = res?.questionCategories?.reduce(
-      (prev, r) => +prev + +r.questionCount,
-      0,
+    if (!res) return;
+    // totalPoint нь integer багана — бүлгийн numeric totalPoint "-Infinity" / бутархай байвал
+    // `invalid input syntax for type integer` болдог байсан (харах: point-total.ts).
+    const { totalPoint: point, questionCount } = assessmentTotals(
+      res.questionCategories,
     );
 
     await this.db.save({

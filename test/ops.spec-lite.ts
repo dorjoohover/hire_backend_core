@@ -14,6 +14,7 @@ import { NestFactory } from '@nestjs/core';
 import { OpsController } from '../src/app/ops/ops.controller';
 import { OpsGuard, parseOpsRoles } from '../src/app/ops/ops.guard';
 import { OpsService } from '../src/app/ops/ops.service';
+import { OpsCleanupService } from '../src/app/ops/ops-cleanup.service';
 import { IS_PUBLIC_KEY } from '../src/auth/guards/jwt/jwt-auth-guard';
 import { ROLES_KEY } from '../src/auth/guards/role/role.decorator';
 import { SUPER_ADMIN } from '../src/base/constants';
@@ -118,7 +119,7 @@ const pdf = (n = 1000, tail = '\n%%EOF\n') => Buffer.concat([Buffer.from('%PDF-1
     const roles = Reflect.getMetadata(ROLES_KEY, OpsController);
     const guards = (Reflect.getMetadata('__guards__', OpsController) ?? []).map((g: any) => g.name);
     const pub = Reflect.getMetadata(IS_PUBLIC_KEY, OpsController) ?? null;
-    const handlerPub = ['status', 'log', 'recalculate', 'regenerate', 'retry', 'uploadPdf'].map((h) => Reflect.getMetadata(IS_PUBLIC_KEY, (OpsController.prototype as any)[h]) ?? null);
+    const handlerPub = ['status', 'log', 'recalculate', 'regenerate', 'retry', 'uploadPdf', 'cleanupPreview', 'cleanupApply'].map((h) => Reflect.getMetadata(IS_PUBLIC_KEY, (OpsController.prototype as any)[h]) ?? null);
     check('O1 class: @SUPER() (10) + OpsGuard, @Public БАЙХГҮЙ', [roles, guards, pub, handlerPub.every((x) => x === null)], [[SUPER_ADMIN], ['OpsGuard'], null, true]);
     check('O2 parseOpsRoles: default / 10,40 / зөвхөн client,org → default / хольсон', [parseOpsRoles(undefined), parseOpsRoles('10, 40'), parseOpsRoles('20,30'), parseOpsRoles('40,abc,99')], [[10], [10, 40], [10], [40]]);
   }
@@ -126,7 +127,13 @@ const pdf = (n = 1000, tail = '\n%%EOF\n') => Buffer.concat([Buffer.from('%PDF-1
   // ===== жинхэнэ Nest app =====
   // v1.3.0: pipeline унтраалттай (REPORT_PIPELINE тавиагүй) → хуучин HTTP урсгал шалгагдана.
   const svc = new OpsService(fakeDs, fakeDao, { enabled: () => false } as any);
-  @Module({ controllers: [OpsController], providers: [{ provide: OpsService, useValue: svc }, OpsGuard] })
+  // Цэвэрлэгээний логик нь test/int/ops-cleanup.int.ts-д (жинхэнэ Postgres); энд зөвхөн route + guard.
+  const cleanupCalls: any[] = [];
+  const cleanupMock = {
+    preview: async (actor: any, body: any) => (cleanupCalls.push(['preview', actor, body]), { token: 't', counts: {} }),
+    apply: async (actor: any, body: any) => (cleanupCalls.push(['apply', actor, body]), { codes: 0 }),
+  };
+  @Module({ controllers: [OpsController], providers: [{ provide: OpsService, useValue: svc }, { provide: OpsCleanupService, useValue: cleanupMock }, OpsGuard] })
   class T {}
   const app = await NestFactory.create(T, { logger: false });
   app.use((req: any, _res: any, next: any) => {
@@ -165,6 +172,13 @@ const pdf = (n = 1000, tail = '\n%%EOF\n') => Buffer.concat([Buffer.from('%PDF-1
     const tester = await call('GET', '/ops/report/100001', { role: 50 });
     delete process.env.OPS_ROLES;
     check('O3c OPS_ROLES=10,40 → admin 200, tester 403', [admin2.status, tester.status], [200, 403]);
+    const cNo = await call('POST', '/ops/cleanup/preview', { role: 40, json: { codes: ['100001'] } });
+    const cClient = await call('POST', '/ops/cleanup/apply', { role: 20, json: { codes: ['100001'], token: 'x' } });
+    const cSu = await call('POST', '/ops/cleanup/preview', { ...root, json: { email: 'k6@t.mn', since: '2026-10-06' } });
+    const cSuA = await call('POST', '/ops/cleanup/apply', { ...root, json: { codes: ['100001'], token: 'x' } });
+    check('O3d cleanup: admin / client → 403 (service дуудагдаагүй); super → preview/apply хүрнэ (body, actor дамжсан)', [
+      cNo.status, cClient.status, cSu.status, cSuA.status, cleanupCalls.map((c) => [c[0], c[1]?.email, c[2]?.email ?? c[2]?.codes?.[0]]),
+    ], [403, 403, 201, 201, [['preview', 'root@hire.mn', 'k6@t.mn'], ['apply', 'root@hire.mn', '100001']]]);
   }
 
   // ===== status =====

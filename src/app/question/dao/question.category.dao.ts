@@ -4,6 +4,7 @@ import { QuestionCategoryEntity } from '../entities/question.category.entity';
 
 import { QuestionStatus } from 'src/base/constants';
 import { CreateQuestionCategoryDto } from '../dto/create-question.category.dto';
+import { categoryTotalPoint } from '../point-total';
 
 @Injectable()
 export class QuestionCategoryDao {
@@ -52,7 +53,9 @@ export class QuestionCategoryDao {
       },
       relations: ['questions'],
     });
-    const point = res.questions?.[0].point * res.questionCount;
+    if (!res) return;
+    // -Infinity / NaN оноотой хуучин асуулт, асуултгүй бүлэг → 0 (харах: point-total.ts)
+    const point = categoryTotalPoint(res.questions, res.questionCount);
     await this.db.save({ ...res, totalPoint: point });
   };
   findOne = async (id: number) => {

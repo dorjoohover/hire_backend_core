@@ -342,6 +342,10 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE exam
    ADD COLUMN IF NOT EXISTS "categoryStartedFor" INTEGER`,
 
+  // Бүлэг хооронд алгасахгүй шилжих: заавал асуултаа бөглөсөн бүлгүүд. Nullable → агшин зуур.
+  `ALTER TABLE exam
+   ADD COLUMN IF NOT EXISTS "completedCategories" INTEGER[]`,
+
   // №6: "дууссаны дараа үр дүн харуулах"-ыг service (QR) бүрд хадгална (null = assessment-ийн default).
   `ALTER TABLE "userService"
    ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
@@ -398,4 +402,28 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
   // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар
   // (`CREATE UNIQUE INDEX CONCURRENTLY`): ops/shared/examdetail-unique.sql.
+
+  // ===========================================================================
+  // 2026-10-06 Медиа (зураг, бичлэг) — R2 дээр зориулалт + төрлөөр (src/app/media).
+  //   id = DB-д хадгалагддаг файлын утга (хуучин `${Date.now()}_нэр` хэвээр) → key = R2 түлхүүр.
+  //   GET /file/:id нь эндээс түлхүүрийг олж CDN руу 302 (нийтийн) эсвэл 404 (хувийн).
+  // ===========================================================================
+  `CREATE TABLE IF NOT EXISTS media_object (
+     id VARCHAR(255) PRIMARY KEY,
+     key VARCHAR(600) NOT NULL,
+     purpose VARCHAR(32) NOT NULL,
+     kind VARCHAR(16) NOT NULL,
+     visibility VARCHAR(8) NOT NULL DEFAULT 'public',
+     mime VARCHAR(128),
+     bytes BIGINT,
+     status VARCHAR(16) NOT NULL DEFAULT 'ready',
+     "examCode" VARCHAR(64),
+     "ownerId" INTEGER,
+     "migratedFrom" VARCHAR(16),
+     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_media_object_purpose ON media_object (purpose, kind)`,
+  `CREATE INDEX IF NOT EXISTS idx_media_object_exam ON media_object ("examCode") WHERE "examCode" IS NOT NULL`,
+  `CREATE INDEX IF NOT EXISTS idx_media_object_pending ON media_object ("createdAt") WHERE status = 'pending'`,
 ];
