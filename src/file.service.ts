@@ -379,48 +379,58 @@ export class FileService {
       return null;
     }
   }
-  async getReport(filename: string) {
-    try {
-      const response = await axios.get(
-        `${process.env.REPORT}file/${filename}`,
-        {
-          responseType: 'stream',
-          timeout: 30000,
-          headers: {
-            Connection: 'close', // keep-alive issue-с сэргийлнэ
-          },
+  /**
+   * hire_report-оос тайлангийн PDF-ийг stream-ээр татна.
+   *
+   * ⚠️ Өмнө нь ЯМАР Ч алдааг (30с timeout, ECONNREFUSED/RESET, Traefik 502/503 —
+   * deploy/restart, hire_report нэг процесстоо render хийж завгүй үед) `null`
+   * буцаадаг байсан тул requestPdf үүнийг "File not found" 404 болгож, web дээр
+   * "404 Тайлан олдсонгүй" харагддаг байв — файл байгаа ч. Одоо:
+   *   - `missing: true`  — hire_report 404 (файл үнэхээр байхгүй)
+   *   - `missing: false` — түр алдаа (сүлжээ, timeout, 5xx) → дуудагч 503 буцаана
+   * Хурдан бүтэлгүйтдэг сүлжээ / 5xx алдааг 1 удаа дахин оролдоно (timeout-ийг
+   * биш — аль хэдийн 30с хүлээсэн).
+   */
+  async getReport(
+    filename: string,
+  ): Promise<{ response: any | null; missing: boolean }> {
+    const url = `${process.env.REPORT}file/${filename}`;
+    const fetchOnce = () =>
+      axios.get(url, {
+        responseType: 'stream',
+        timeout: 30000,
+        headers: {
+          Connection: 'close', // keep-alive issue-с сэргийлнэ
         },
-      );
+      });
+    const classify = (e: any) => {
+      const status = e?.response?.status;
+      return {
+        missing: status === 404,
+        retryable:
+          status == null
+            ? ['ECONNRESET', 'ECONNREFUSED', 'EPIPE', 'EAI_AGAIN'].includes(e?.code)
+            : status >= 500,
+        status,
+      };
+    };
 
-      return response;
-    } catch (e: any) {
-      console.error('REPORT FETCH ERROR:', e.code, e.message);
-
-      if (e.code === 'ECONNRESET') {
-        console.log('Retrying report fetch...');
-        // ⚠ Энэ retry дуудлага өмнө нь try/catch-гүй байсан тул амжилтгүй
-        // бол getReport()-оос catch-гүйгээр дээш шидэгдэж, requestPdf
-        // controller-т барихгүй, эцсийн хэрэглэгчид ил тод 500 болж
-        // харагддаг байсан. Одоо бусад алдаатай адил чимээгүй null буцаана
-        // — дуудагч тал (ExamController.requestPdf) үүнийг "File not
-        // found" 404 болгож зөв боловсруулна.
-        try {
-          return await axios.get(`${process.env.REPORT}file/${filename}`, {
-            responseType: 'stream',
-            timeout: 30000,
-            headers: { Connection: 'close' },
-          });
-        } catch (retryErr: any) {
-          console.error(
-            'REPORT FETCH RETRY ERROR:',
-            retryErr.code,
-            retryErr.message,
-          );
-          return null;
-        }
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        return { response: await fetchOnce(), missing: false };
+      } catch (e: any) {
+        const c = classify(e);
+        console.error(
+          `REPORT FETCH ERROR (${attempt}/2): ${filename}`,
+          e?.code,
+          c.status ?? '-',
+          e?.message,
+        );
+        if (c.missing) return { response: null, missing: true };
+        if (!c.retryable || attempt === 2) return { response: null, missing: false };
+        await new Promise((r) => setTimeout(r, 1000));
       }
-
-      return null;
     }
+    return { response: null, missing: false };
   }
 }
