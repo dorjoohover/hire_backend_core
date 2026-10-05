@@ -373,6 +373,28 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
 
+  // examDetail("examId") — `createManyIfAbsent`-ийн "аль хэдийн байгаа асуулт" шалгалт
+  // (`SELECT "questionId" FROM "examDetail" WHERE "examId" = $1`) шалгалтын хуудас / хэсэг нээх
+  // БҮРД ажилладаг. Индексгүй үед 1.2 сая мөрт хүснэгтийг бүтнээр нь уншдаг байв (prod-ийн хуулбар
+  // дээр 59–66ms, bootstrap/bootstrap-next-ийн DB хугацааны ~90%; 2026-10-05 k6 + profile). Мөн
+  // exam устгахад FK CASCADE-ийн хайлт. UNIQUE (examId, questionId) индекс (доорх ops SQL) аль хэдийн
+  // байвал түүний эхний багана хангалттай тул ҮҮСГЭХГҮЙ. Том хүснэгтэд boot-д бүтээх нь examDetail-д
+  // бичилтийг хэдэн секунд хүлээлгэнэ — deploy-оос ӨМНӨ гараар
+  //   CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_examdetail_examid ON "examDetail" ("examId");
+  // хийвэл энэ statement no-op болно.
+  `DO $$
+   BEGIN
+     IF NOT EXISTS (
+       SELECT 1
+       FROM pg_index i
+       JOIN pg_class t ON t.oid = i.indrelid
+       JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = i.indkey[0]
+       WHERE t.relname = 'examDetail' AND a.attname = 'examId' AND i.indisvalid
+     ) THEN
+       CREATE INDEX IF NOT EXISTS idx_examdetail_examid ON "examDetail" ("examId");
+     END IF;
+   END $$`,
+
   // ⚠️ examDetail-ийн UNIQUE (examId, questionId) энд БАЙХГҮЙ: prod-д давхардал аль хэдийн бий, том
   // хүснэгтэд ачаалах үед dedupe + index бүтээх нь бүх instance-ийн boot-ыг түгжинэ. Тусдаа, гараар
   // (`CREATE UNIQUE INDEX CONCURRENTLY`): ops/shared/examdetail-unique.sql.
