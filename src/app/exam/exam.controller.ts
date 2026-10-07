@@ -179,6 +179,9 @@ export class ExamController {
     }
   }
 
+  // 0.3(b): урьд нь @Public() байсан — хэн ч дурын кодын үр дүнг устгаж дахин
+  // бодуулах/PDF татах боломжтой байв. Одоо зөвхөн админ (Bearer token).
+  @ADMINS()
   @Get('/recalculate/:code')
   async recalculate(@Param('code') code: string) {
     // №14: DEPRECATED — POST /ops/report/:code/recalculate (аудит + давхар job хамгаалалттай).
