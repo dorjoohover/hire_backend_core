@@ -132,6 +132,7 @@ export class ExamController {
 
     if (doc) {
       const report = await this.report.getByCode(code);
+      let fileMissing = false;
       if (
         !report ||
         report.status === REPORT_STATUS.SENT ||
@@ -140,63 +141,44 @@ export class ExamController {
         const { response, missing } = await this.file.getReport(filename);
 
         if (!response) {
-          // Файл үнэхээр байхгүй үед л 404. Тайлангийн сервер түр хариу өгөөгүй
-          // (timeout, restart, ачаалал) бол 503 — web хэдэн секундийн дараа дахин оролдоно.
-          if (missing) throw new HttpException('File not found', 404);
-          throw new HttpException(
-            'Тайлангийн сервер түр ачаалалтай байна.',
-            HttpStatus.SERVICE_UNAVAILABLE,
+          // Тайлангийн сервер түр хариу өгөөгүй (timeout, restart, ачаалал) бол 503 —
+          // web хэдэн секундийн дараа дахин оролдоно. Файл үнэхээр байхгүй бол доор
+          // ensureReport шинээр гаргана.
+          if (!missing) {
+            throw new HttpException(
+              'Тайлангийн сервер түр ачаалалтай байна.',
+              HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }
+          fileMissing = true;
+        } else {
+          res.setHeader(
+            'Content-Type',
+            String(response.headers['content-type'] || 'application/pdf'),
           );
+          res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+          // 💰 Тайланг PDF-ээр нээх нь ч бас "нэг харалт" (registerView дотроо хамгаалалттай:
+          // paywall унтраалттай / төлсөн / эрх дууссан бол юу ч хийхгүй, 30 мин сеанс).
+          await this.reportAccess.registerView(code, access);
+
+          response.data.pipe(res);
+          return;
         }
-
-        res.setHeader(
-          'Content-Type',
-          String(response.headers['content-type'] || 'application/pdf'),
-        );
-        res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-
-        // 💰 Тайланг PDF-ээр нээх нь ч бас "нэг харалт".
-        //
-        // ⚠️ Өмнө нь харалтыг ЗӨВХӨН `GET /exam/exam/:code` (дэлгэц дээрх үр
-        // дүн) дээр тоолдог байсан. Гэтэл тест дуусмагц гарах Completion
-        // дэлгэц нь хэрэглэгчийг ШУУД "Тайлан татах" (энэ endpoint) руу
-        // чиглүүлдэг. Иймд ердийн урсгалаар явсан хэрэглэгчийн тоолуур 0
-        // хэвээр үлдэж, үнэгүй эрх нь хэзээ ч зарцуулагдахгүй, 30 минут
-        // өнгөрсөн ч paywall гардаггүй байв.
-        //
-        // `registerView` нь дотроо хамгаалалттай: paywall унтраалттай,
-        // төлбөр төлсөн, эсвэл үнэгүй эрх аль хэдийн дууссан үед юу ч
-        // хийхгүй. Мөн 30 минутын сеансын цонх үйлчилнэ — дэлгэц дээр
-        // хараад дараа нь PDF татах нь НЭГ л харалтад тооцогдоно.
-        await this.reportAccess.registerView(code, access);
-
-        response.data.pipe(res);
-        return;
-      } else if (report.status === REPORT_STATUS.UPLOADING) {
-        throw new HttpException('Тайлан сервер рүү хуулж байна...', 202);
-      } else if (report.status === REPORT_STATUS.CALCULATING) {
-        throw new HttpException('Тайлан бодогдож байна...', 202);
-      } else if (report.status === REPORT_STATUS.WRITING) {
-        throw new HttpException('Тайлан PDF бичиж байна...', 202);
-      } else if (report.status === REPORT_STATUS.STARTED) {
-        throw new HttpException('Тайлан бодож эхэлсэн...', 202);
-      } else if (report.status === REPORT_STATUS.PENDING) {
-        throw new HttpException('Тайлан хүлээгдэж байна...', 202);
-      } else if (report.status === REPORT_STATUS.FAILED) {
-        // Worker талд 3 удаагийн retry (app.module.ts) бүгд амжилтгүй болсон
-        // тохиолдол. 202 буцаагаад мөнхөд client-ээр polling хийлгэхийн оронд
-        // тодорхой алдаа өгч, front-ээс "дахин оролдох" харуулах боломж олгоно.
-        throw new HttpException(
-          'Тайлан боловсруулахад алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
-          500,
-        );
       }
+
+      // Бэлэн биш / алга болсон: гаргах боломжтой бол заавал гаргана (FAILED, мөргүй,
+      // гацсан, файл нь алга — дараалал хамаагүй) → 202 "уншиж байна" (web 5с тутам дахин
+      // асууна). Гаргах боломжгүй (тест дуусаагүй, [permanent] алдаа, 24 цагт 3 автомат
+      // оролдлого дууссан) бол тодорхой алдаа. Өмнө нь FAILED → 500, мөргүй → 404 байсан.
+      const decision = await this.report.ensureReport(code, report, fileMissing);
+      if (decision.action === 'error') {
+        throw new HttpException(decision.message, decision.status);
+      }
+      throw new HttpException(decision.message, 202);
     }
   }
 
-  // 0.3(b): урьд нь @Public() байсан — хэн ч дурын кодын үр дүнг устгаж дахин
-  // бодуулах/PDF татах боломжтой байв. Одоо зөвхөн админ (Bearer token).
-  @ADMINS()
   @Get('/recalculate/:code')
   async recalculate(@Param('code') code: string) {
     // №14: DEPRECATED — POST /ops/report/:code/recalculate (аудит + давхар job хамгаалалттай).

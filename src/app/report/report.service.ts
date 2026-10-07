@@ -10,6 +10,8 @@ import { REPORT_STATUS } from 'src/base/constants';
 import axios from 'axios';
 import { ReportLogDao } from './report.log.dao';
 import { ReportPipelineService } from './report-pipeline.service';
+import { DataSource } from 'typeorm';
+import { decideEnsure, EnsureDecision } from './report-ensure';
 
 /**
  * v1.3.0: web-д зориулсан бэлэн байдал. result нь PDF-ээс ӨМНӨ бичигддэг
@@ -31,6 +33,7 @@ export class ReportService {
     private moduleRef: ModuleRef,
     private dao: ReportLogDao,
     private pipeline: ReportPipelineService,
+    private ds: DataSource,
   ) {}
   private REPORT = process.env.REPORT;
   onModuleInit() {
@@ -123,6 +126,55 @@ export class ReportService {
         );
       }
     }
+  }
+
+  /**
+   * PDF хүссэн боловч тайлан бэлэн биш / алга (FAILED, мөргүй, гацсан, файл нь алга) үед:
+   * гаргах боломжтой бол ЗААВАЛ шинээр оруулна (дараалал хамаагүй), боломжгүй бол алдаа.
+   * Автомат оролдлого бүр ops_action_log-д `report.auto` гэж бичигдэнэ — 3 мин-ийн дотор
+   * давтахгүй (web 5с тутам дахин асуудаг), 24 цагт ≤ REPORT_AUTO_MAX (3).
+   */
+  async ensureReport(
+    code: string,
+    log: { status?: any; error?: any; updatedAt?: any; role?: number } | null,
+    fileMissing: boolean,
+  ): Promise<EnsureDecision> {
+    const [exam] = await this.ds.query(
+      `SELECT "userEndDate" FROM exam WHERE code = $1 LIMIT 1`,
+      [String(code)],
+    );
+    const [auto] = await this.ds.query(
+      `SELECT count(*)::int AS n, max("createdAt") AS last
+         FROM ops_action_log
+        WHERE code = $1 AND action = 'report.auto' AND "createdAt" > now() - interval '24 hours'`,
+      [String(code)],
+    );
+    const decision = decideEnsure({
+      log,
+      fileMissing,
+      examExists: !!exam,
+      examFinished: exam?.userEndDate != null,
+      autoAttempts: Number(auto?.n ?? 0),
+      lastAutoAt: auto?.last ?? null,
+    });
+    if (decision.action !== 'generate') return decision;
+
+    await this.ds
+      .query(
+        `INSERT INTO ops_action_log (action, code, status, detail) VALUES ('report.auto', $1, 'ok', $2)`,
+        [
+          String(code),
+          JSON.stringify({ reason: decision.reason, prev: log?.status ?? null }),
+        ],
+      )
+      .catch((e) => console.error('report.auto audit:', e?.message));
+    console.log(`🔁 [report.auto] code=${code} reason=${decision.reason} prev=${log?.status ?? '-'}`);
+
+    // Хүлээлгэхгүй: legacy createReport нь hire_report-ийг ~1 мин хүртэл дахин оролддог.
+    this.createReport({ code: String(code) }, log?.role).catch((e) =>
+      console.error(`❌ [report.auto] code=${code}:`, e?.message ?? e),
+    );
+    return decision;
   }
 
   // async updateStatus(body: any) {
