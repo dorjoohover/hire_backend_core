@@ -12,6 +12,7 @@ import { FileService } from 'src/file.service';
 import { ExamModule } from '../exam/exam.module';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
+import { TemplateTransferService } from './template-transfer.service';
 
 @Module({
   // AI Data tab-ийн "Хариултын ангилал" сонголтод QuestionAnswerCategoryService
@@ -42,6 +43,8 @@ import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
     QuestionDao,
     AssessmentDao,
     AiAgentGuard,
+    // Загварыг дангаар нь орчин хооронд зөөх (JSON татах / оруулах).
+    TemplateTransferService,
   ],
   exports: [PdfTemplateService],
 })

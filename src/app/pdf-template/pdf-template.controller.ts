@@ -35,6 +35,7 @@ import { sendResolvedFile } from 'src/utils/send-resolved-file';
 import { StudioIconDao } from './studio-icon.dao';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { AiAgentGuard } from 'src/auth/guards/ai-agent/ai-agent.guard';
+import { TemplateTransferService } from './template-transfer.service';
 
 // Studio (PDF builder) загваруудыг хадгалах/ачаалах endpoint-ууд.
 // Frontend: studio/app/api/templates/route.ts, studio/app/api/templates/[id]/route.ts
@@ -45,6 +46,7 @@ export class PdfTemplateController {
     private readonly service: PdfTemplateService,
     private readonly fileService: FileService,
     private readonly iconDao: StudioIconDao,
+    private readonly transfer: TemplateTransferService,
   ) {}
 
   // ── Studio "Icon" сан ───────────────────────────────────────────────────────
@@ -291,6 +293,22 @@ export class PdfTemplateController {
     @Body() dto: { data: Record<string, any> },
   ) {
     return this.service.saveAiData(+assessmentId, dto.data);
+  }
+
+  // ── Загварыг ДАНГААР нь орчин хооронд зөөх (test ↔ prod) ─────────────────────
+  // test Studio → "JSON татах" → prod Studio → "JSON-оос оруулах" (тест сонгоно).
+  // Асуултын ID-г гарын үсгээр (бүлэг + текст → текст → байрлал) хөрвүүлнэ,
+  // хувьсагч (assessment_variable) ба Studio зургууд хамт зөөгдөнө.
+  @Get(':id/export')
+  @ApiParam({ name: 'id' })
+  @ApiQuery({ name: 'files', required: false })
+  exportTemplate(@Param('id') id: string, @Query('files') files?: string) {
+    return this.transfer.exportTemplate(+id, { includeFiles: files !== '0' });
+  }
+
+  @Post('import')
+  importTemplate(@Body() body: { bundle: any; assessmentId: number; activate?: boolean; variables?: 'upsert' | 'missing' | 'none' }) {
+    return this.transfer.importTemplate(body);
   }
 
   @Get(':id')
