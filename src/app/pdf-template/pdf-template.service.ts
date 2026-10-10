@@ -8,6 +8,7 @@ import { AssessmentAiDataDao } from './assessment-ai-data.dao';
 import { AssessmentVariableDao } from './assessment-variable.dao';
 import { ExamDao } from '../exam/dao/exam.dao';
 import { AssessmentDao } from '../assessment/dao/assessment.dao';
+import { normalizeSkipVariableRules } from './skip-variable';
 
 // "AI Data" tab-ийн "Хувьсагчаас" талбарууд aiJsonData дотор {{custom.<key>}}
 // (эсвэл текст доторх {{custom.<key>}} орсон урт текст) хэлбэрээр хадгалагддаг —
@@ -151,12 +152,23 @@ export class PdfTemplateService {
     if (!assessmentId) {
       throw new HttpException('assessmentId шаардлагатай.', HttpStatus.BAD_REQUEST);
     }
-    const varKind = kind === 'score' ? 'score' : kind === 'formula' ? 'formula' : 'map';
+    const varKind =
+      kind === 'score' ? 'score' : kind === 'formula' ? 'formula' : kind === 'skip' ? 'skip' : 'map';
     let varRules: any = null;
     if (varKind === 'formula') {
       varRules = normalizeFormulaRules(rules);
       if (!varRules) {
         throw new HttpException('Томьёо хувьсагчид томьёо (expression) шаардлагатай.', HttpStatus.BAD_REQUEST);
+      }
+    }
+    if (varKind === 'skip') {
+      // Алгасалт хувьсагч — асуултууд эсвэл бүлэг заасан байх ёстой (skip-variable.ts).
+      varRules = normalizeSkipVariableRules(rules);
+      if (!varRules) {
+        throw new HttpException(
+          'Алгасалт хувьсагчид асуултын ID эсвэл бүлэг шаардлагатай.',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
     if (varKind === 'score') {

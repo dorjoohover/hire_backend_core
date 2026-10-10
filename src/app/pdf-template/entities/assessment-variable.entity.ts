@@ -43,6 +43,8 @@ export class AssessmentVariableEntity {
   // эхний тохирсон нөхцөлийн текстийг (эсвэл rules.elseText) буцаана.
   // 'formula' — ТОМЬЁО: rules = { expression, decimals } — {{question[id].point}},
   // {{custom.<key>}} гэх мэтээс + - * / ( )-оор тоо бодно (GPAQ: өдөр × минут × МЕТ).
+  // 'skip' — АЛГАСАЛТ: rules = { scope, questions | category, mode, output, … } (skip-variable.ts) —
+  // асуултууд / бүлгийг алгассан эсэх (1/0 эсвэл текст), Studio блокийн "Харагдах нөхцөл"-д.
   @Column({ length: 20, nullable: true, default: 'map' })
   kind?: string;
 

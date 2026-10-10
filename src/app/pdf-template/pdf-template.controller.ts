@@ -256,7 +256,7 @@ export class PdfTemplateController {
     dto: {
       label?: string;
       entries: Record<string, string>;
-      kind?: 'map' | 'score' | 'formula';
+      kind?: 'map' | 'score' | 'formula' | 'skip';
       rules?: any;
     },
   ) {
