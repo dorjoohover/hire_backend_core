@@ -166,7 +166,7 @@ export class PdfTemplateService {
       varRules = normalizeSkipVariableRules(rules);
       if (!varRules) {
         throw new HttpException(
-          'Алгасалт хувьсагчид асуултын ID эсвэл бүлэг шаардлагатай.',
+          'Алгасалт хувьсагчид асуултын ID эсвэл бүлэг (хариултаар бол асуултын ID + хариулт) шаардлагатай.',
           HttpStatus.BAD_REQUEST,
         );
       }
