@@ -24,6 +24,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@faker-js/faker": "^9.3.0",
     "@nestjs/axios": "^4.0.0",
     "@nestjs/bullmq": "^11.0.2",

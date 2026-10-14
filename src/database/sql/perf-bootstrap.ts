@@ -426,4 +426,32 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `CREATE INDEX IF NOT EXISTS idx_media_object_purpose ON media_object (purpose, kind)`,
   `CREATE INDEX IF NOT EXISTS idx_media_object_exam ON media_object ("examCode") WHERE "examCode" IS NOT NULL`,
   `CREATE INDEX IF NOT EXISTS idx_media_object_pending ON media_object ("createdAt") WHERE status = 'pending'`,
+
+  // ===========================================================================
+  // 2026-10-15 AI туслахын бэлэн асуулт (src/app/ai). question = AI-ийн цэвэрлэсэн нийтлэг асуулт
+  //   (хувийн асуулт хадгалагдахгүй); answer = хувийн өгөгдөлгүйгээр нэг удаа үүсгэсэн хариу,
+  //   catalog өөрчлөгдвөл ("answerHash") дахин үүснэ. askers = өөр өөр асуусан хүн (ai_faq_asker).
+  //   Зохисгүй асуултыг нуух: UPDATE ai_faq SET hidden = true WHERE id = …
+  // ===========================================================================
+  `CREATE TABLE IF NOT EXISTS ai_faq (
+     id SERIAL PRIMARY KEY,
+     scope SMALLINT NOT NULL,
+     "assessmentId" INTEGER NOT NULL DEFAULT 0,
+     question VARCHAR(160) NOT NULL,
+     norm VARCHAR(160) NOT NULL,
+     askers INTEGER NOT NULL DEFAULT 0,
+     hidden BOOLEAN NOT NULL DEFAULT false,
+     answer TEXT,
+     tests JSONB,
+     "answerHash" VARCHAR(40),
+     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
+     UNIQUE (scope, "assessmentId", norm)
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_ai_faq_top ON ai_faq (scope, "assessmentId", askers DESC) WHERE NOT hidden`,
+  `CREATE TABLE IF NOT EXISTS ai_faq_asker (
+     "faqId" INTEGER NOT NULL REFERENCES ai_faq(id) ON DELETE CASCADE,
+     "userId" INTEGER NOT NULL,
+     PRIMARY KEY ("faqId", "userId")
+   )`,
 ];

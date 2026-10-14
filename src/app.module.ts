@@ -36,6 +36,7 @@ import { ReportAccessModule } from './app/report-access/report-access.module';
 import { OpsModule } from './app/ops/ops.module';
 import { MediaModule } from './app/media/media.module';
 import { MonitorModule } from './app/monitor/monitor.module';
+import { AiModule } from './app/ai/ai.module';
 import { AssessmentTransferModule } from './app/assessment-transfer/assessment-transfer.module';
 
 @Module({
@@ -80,6 +81,7 @@ import { AssessmentTransferModule } from './app/assessment-transfer/assessment-t
     MediaModule, // 2026-10-06: зураг / бичлэг R2 (зориулалт + төрөл)
     MonitorModule,
     AssessmentTransferModule,
+    AiModule, // v1.4.0: тест санал болгох + байгууллагын AI дүгнэлт
   ],
   controllers: [AppController],
   providers: [
