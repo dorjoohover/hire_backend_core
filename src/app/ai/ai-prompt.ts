@@ -25,6 +25,11 @@ export const AI_DATA_MAX_CHARS = 400;
 
 const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n) + '…' : s);
 
+// Catalog-д AI Data-гийн эхний хэсэг л ордог тул тест санал болгоход хамгийн хэрэгтэй түлхүүрийг эхэнд нь.
+const JOBS_KEY = 'Тохирох ажлын байр';
+const jobsFirst = (d: any) =>
+  d && typeof d === 'object' && !Array.isArray(d) && JOBS_KEY in d ? { [JOBS_KEY]: d[JOBS_KEY], ...d } : d;
+
 // Catalog-ийг тогтвортой (id-аар эрэмбэлсэн) текст болгоно — prompt cache prefix өөрчлөгдөхгүй байх ёстой.
 export function buildCatalogText(items: CatalogItem[]): string {
   return [...items]
@@ -39,7 +44,7 @@ export function buildCatalogText(items: CatalogItem[]): string {
         .map(([k, v]) => v?.label || k)
         .join(', ');
       if (vars) lines.push(`Хувьсагчид: ${vars}`);
-      if (a.aiData) lines.push(`AI өгөгдөл: ${clip(JSON.stringify(a.aiData), AI_DATA_MAX_CHARS)}`);
+      if (a.aiData) lines.push(`AI өгөгдөл: ${clip(JSON.stringify(jobsFirst(a.aiData)), AI_DATA_MAX_CHARS)}`);
       lines.push('</test>');
       return lines.join('\n');
     })

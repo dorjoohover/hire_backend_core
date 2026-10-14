@@ -129,4 +129,7 @@ eq('анхны бэлэн асуулт: тестийн хуудас / байгу
 const gen = buildUserContext({ role: 20, generic: true, pageTest: 'DISC', results: [{ code: 'x', name: 'DISC', point: 1 }] });
 eq('ерөнхий хариуны контекст: хувийн үр дүн орохгүй', [gen.includes('Ерөнхий асуулт'), gen.includes('оноо'), gen.includes('алга')], [true, false, false]);
 
+const jobsText = buildCatalogText([{ id: 9, name: 'X', aiData: { 'Тайлангийн тайлбар': ['ш'.repeat(900)], 'Тохирох ажлын байр': ['Нягтлан'] } }]);
+eq('catalog: "Тохирох ажлын байр" Studio-д сүүлд нэмсэн ч эхэнд, таслагдахгүй', jobsText.includes('{"Тохирох ажлын байр":["Нягтлан"]'), true);
+
 process.exit(fail ? 1 : 0);
