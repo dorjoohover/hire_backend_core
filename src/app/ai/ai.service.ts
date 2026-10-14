@@ -375,6 +375,7 @@ export class AiService {
         .join('\n');
     }
     // Өөрийн, өөрт нь харагдах (visible) үр дүн л — exam.service-ийн client эрхийн шалгалттай адил (userId эсвэл email).
+    // NULLS LAST: code нь NULL exam-д (e.code = $3) NULL болж, Postgres DESC-д эхэнд гаргадаг — хуучин тест "сүүлийнх" болж байсан.
     const results: any[] = await this.dataSource.query(
       `SELECT e.code, COALESCE(r."assessmentName", e."assessmentName") AS name, e."userEndDate" AS "endDate",
               COALESCE(e."assessmentId", r.assessment) AS "assessmentId",
@@ -382,7 +383,7 @@ export class AiService {
          FROM exam e LEFT JOIN result r ON r.code = e.code AND r."parentId" IS NULL
         WHERE e."userEndDate" IS NOT NULL AND e.visible IS TRUE
           AND (e."userId" = $1 OR lower(e.email) = lower($2))
-        ORDER BY (e.code = $3) DESC, e."userEndDate" DESC LIMIT 10`,
+        ORDER BY (e.code = $3) DESC NULLS LAST, e."userEndDate" DESC LIMIT 10`,
       [user.id, user.email ?? '', page.code ?? ''],
     );
     // Дэлгэрэнгүй (ангилал бүрийн утга) — нээж буй тайлан + сүүлийн хэдэн тайланд л.
