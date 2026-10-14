@@ -28,7 +28,7 @@ export class AiController {
   @Roles(Role.client, Role.organization, Role.admin, Role.super_admin, Role.tester)
   @Post('chat')
   chat(@Body() dto: { messages?: unknown; path?: string }, @Request() { user }) {
-    return this.ai.chat(dto?.messages, dto?.path, { id: +user['id'], role: +user['role'], email: user['email'] });
+    return this.ai.chat(dto?.messages, dto?.path, { id: +user['id'], role: +user['role'], email: user['email'], phone: user['phone'] });
   }
 
   // Чат widget-ийн бэлэн асуултууд (тухайн хуудсанд), хариу нь хадгалагдсан бол 0 token.

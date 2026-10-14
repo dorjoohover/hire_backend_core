@@ -92,6 +92,8 @@ eq('хувь хүний контекст: хуудас, нээж буй тайл
   ctx.includes('"DISC" тестийн хуудас'), ctx.includes('[одоо нээж буй тайлан]'), ctx.includes('оноо 30/40'),
   ctx.includes('· Dominance: 12 — '), ctx.includes('ш'.repeat(301)),
 ], [true, true, true, true, false]);
+eq('нээж буй тайлан жагсаалтад алга → өөр тайланг "энэ" гэж тайлбарлахгүй', buildUserContext({ role: 20, pageCode: 'zz', results: [{ code: 'x', name: 'Math', point: 1 }] }).includes('жагсаалтад алга'), true);
+eq('нээж буй тайлан байгаа үед анхааруулгагүй', ctx.includes('жагсаалтад алга'), false);
 const orgCtx = buildUserContext({ role: 30, services: [{ name: 'IQ', count: 5, used: 2, done: 1 }] });
 eq('байгууллагын контекст: авсан тестүүд, өөрийн цэс, үр дүнгүй мөр гарахгүй', [
   orgCtx.includes('- IQ: 5 эрх, 2 ашигласан, 1 дууссан'), orgCtx.includes('"Хяналтын самбар"'), orgCtx.includes('алга'),

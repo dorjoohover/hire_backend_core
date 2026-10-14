@@ -238,7 +238,7 @@ export class AiService {
   }
 
   // Баруун доод булангийн чат widget — байгууллага болон хувь хүн. Түүхийг browser хадгалж, хүсэлт бүрд илгээнэ.
-  async chat(messages: unknown, path: unknown, user: { id: number; role: number; email?: string }) {
+  async chat(messages: unknown, path: unknown, user: { id: number; role: number; email?: string; phone?: string }) {
     const history = sanitizeHistory(messages);
     if (!history.length) throw new HttpException('Мессеж хоосон байна.', HttpStatus.BAD_REQUEST);
     if (!this.allowChat(user.id)) {
@@ -356,7 +356,7 @@ export class AiService {
   }
 
   private async chatContext(
-    user: { id: number; role: number; email?: string },
+    user: { id: number; role: number; email?: string; phone?: string },
     page: { assessmentId?: number; code?: string },
     items: CatalogItem[],
   ) {
@@ -374,7 +374,8 @@ export class AiService {
         .filter(Boolean)
         .join('\n');
     }
-    // Өөрийн, өөрт нь харагдах (visible) үр дүн л — exam.service-ийн client эрхийн шалгалттай адил (userId эсвэл email).
+    // Өөрийн, өөрт нь харагдах (visible) үр дүн л — exam.service getExamInfoByCode-ийн client эрхийн шалгалттай адил:
+    // userId эсвэл email; нээж буй тайлан (code) бол мөн эзэнгүй (QR) эсвэл утсаар таарсан exam — үр дүнгийн хуудас үүнийг харуулдаг.
     // NULLS LAST: code нь NULL exam-д (e.code = $3) NULL болж, Postgres DESC-д эхэнд гаргадаг — хуучин тест "сүүлийнх" болж байсан.
     const results: any[] = await this.dataSource.query(
       `SELECT e.code, COALESCE(r."assessmentName", e."assessmentName") AS name, e."userEndDate" AS "endDate",
@@ -382,9 +383,10 @@ export class AiService {
               r.id AS rid, r.point, r.total, r.result, r.segment, r.value
          FROM exam e LEFT JOIN result r ON r.code = e.code AND r."parentId" IS NULL
         WHERE e."userEndDate" IS NOT NULL AND e.visible IS TRUE
-          AND (e."userId" = $1 OR lower(e.email) = lower($2))
+          AND (e."userId" = $1 OR lower(e.email) = lower($2)
+               OR (e.code = $3 AND (e."userId" IS NULL OR e.phone = $4)))
         ORDER BY (e.code = $3) DESC NULLS LAST, e."userEndDate" DESC LIMIT 10`,
-      [user.id, user.email ?? '', page.code ?? ''],
+      [user.id, user.email ?? '', page.code ?? '', user.phone ?? null],
     );
     // Дэлгэрэнгүй (ангилал бүрийн утга) — нээж буй тайлан + сүүлийн хэдэн тайланд л.
     const ids = results.slice(0, 3).map((r) => r.rid).filter(Boolean);
