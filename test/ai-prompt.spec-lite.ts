@@ -94,6 +94,14 @@ eq('хувь хүний контекст: хуудас, нээж буй тайл
 ], [true, true, true, true, false]);
 eq('нээж буй тайлан жагсаалтад алга → өөр тайланг "энэ" гэж тайлбарлахгүй', buildUserContext({ role: 20, pageCode: 'zz', results: [{ code: 'x', name: 'Math', point: 1 }] }).includes('жагсаалтад алга'), true);
 eq('нээж буй тайлан байгаа үед анхааруулгагүй', ctx.includes('жагсаалтад алга'), false);
+const catCtx = buildUserContext({ role: 20, results: [{ code: 'a', name: 'ASSIST', point: 12, total: 0,
+  categories: [{ name: 'Архи', point: 7, total: 0, count: 6 }, { name: 'Тамхи', point: 5, count: 6 }],
+  children: [{ category: 'AUDIT', result: 'Эрсдэл бага', value: '4', point: 4, total: 40 }] }] });
+eq('бүлэг/дэд тест: "12/0" биш, бүлэг тус бүр, дэд тест, тайлбарлах заавар', [
+  catCtx.includes('оноо 12/0'), catCtx.includes('оноо 12'), catCtx.includes('· Бүлэг "Архи": оноо 7 (6 асуулт)'),
+  catCtx.includes('· Дэд тест "AUDIT": Эрсдэл бага / 4 (оноо 4/40)'), catCtx.includes('бүлэг тус бүрээр'),
+], [false, true, true, true, true]);
+eq('бүлэггүй тайланд заавар нэмэхгүй', ctx.includes('бүлэг тус бүрээр'), false);
 const orgCtx = buildUserContext({ role: 30, services: [{ name: 'IQ', count: 5, used: 2, done: 1 }] });
 eq('байгууллагын контекст: авсан тестүүд, өөрийн цэс, үр дүнгүй мөр гарахгүй', [
   orgCtx.includes('- IQ: 5 эрх, 2 ашигласан, 1 дууссан'), orgCtx.includes('"Хяналтын самбар"'), orgCtx.includes('алга'),

@@ -70,13 +70,16 @@ export function pickRecommendations(raw: any, items: CatalogItem[], limit: numbe
 
 export type ResultRow = { firstname?: string; lastname?: string; point?: any; total?: any; result?: string; segment?: string; value?: string };
 
+// Studio template-тэй тестэд total = assessment.totalPoint ихэвчлэн 0/null — "12/0" гэж LLM-ийг төөрөгдүүлэхгүй.
+export const scoreText = (point: any, total: any) => `оноо ${point}${Number(total) > 0 ? '/' + total : ''}`;
+
 // Оролцогчийн нэрийг LLM рүү илгээхгүй — "#1, #2…" дугаараар солино; хариуд нь дугаараар нэрийг буцааж холбоно.
 export function anonymizeResults(rows: ResultRow[]): { text: string; names: string[] } {
   const names = rows.map((r) => [r.lastname, r.firstname].filter(Boolean).join(' '));
   const text = rows
     .map((r, i) => {
       const parts = [`#${i + 1}`];
-      if (r.point != null) parts.push(`оноо ${r.point}${r.total != null ? '/' + r.total : ''}`);
+      if (r.point != null) parts.push(scoreText(r.point, r.total));
       if (r.result) parts.push(`үр дүн: ${r.result}`);
       if (r.segment) parts.push(`түвшин: ${r.segment}`);
       if (r.value) parts.push(`утга: ${r.value}`);
@@ -130,6 +133,10 @@ export type ChatResult = ResultRow & {
   name: string;
   endDate?: any;
   details?: { category?: string; value?: string; cause?: string }[];
+  // SEMUT маягийн багц тестийн дэд тест (parentId-тэй result)
+  children?: { category?: string; result?: string; value?: string; point?: any; total?: any }[];
+  // Бүлэг / хариултын ангилал тус бүрийн оноо — PDF-ийн categoryStats-тэй ижил тооцоо
+  categories?: { name: string; point: number; total?: number | null; count?: number }[];
 };
 export type ChatContext = {
   role: number;
@@ -167,16 +174,28 @@ export function buildUserContext(c: ChatContext): string {
     for (const s of c.services) lines.push(`- ${s.name}: ${s.count} эрх, ${s.used} ашигласан, ${s.done} дууссан`);
   }
   if (c.results?.length) {
+    if (c.results.some((r) => r.children?.length || r.categories?.length)) {
+      lines.push(
+        'Бүлэг/дэд тесттэй тайланг нийт оноогоор биш, бүлэг тус бүрээр нь (тестийн AI Data дахь түвшин, тайлбартай харьцуулж) тайлбарла.',
+      );
+    }
     lines.push('Хэрэглэгчийн өөрийн дууссан тестүүд (шинэ нь эхэнд):');
     for (const r of c.results) {
       const parts = [`- ${r.name}`];
       if (r.endDate) parts.push(`(${new Date(r.endDate).toISOString().slice(0, 10)})`);
       if (c.pageCode && r.code === c.pageCode) parts.push('[одоо нээж буй тайлан]');
-      if (r.point != null) parts.push(`оноо ${r.point}${r.total != null ? '/' + r.total : ''}`);
+      if (r.point != null) parts.push(scoreText(r.point, r.total));
       if (r.result) parts.push(`үр дүн: ${r.result}`);
       if (r.segment) parts.push(`түвшин: ${r.segment}`);
       if (r.value) parts.push(`утга: ${r.value}`);
       lines.push(parts.join(' '));
+      for (const s of (r.children ?? []).slice(0, 12)) {
+        const res = [s.result, s.value !== s.result ? s.value : null].filter(Boolean).join(' / ');
+        lines.push(`  · Дэд тест${s.category ? ` "${s.category}"` : ''}: ${res || '-'}${s.point != null ? ` (${scoreText(s.point, s.total)})` : ''}`);
+      }
+      for (const g of (r.categories ?? []).slice(0, 20)) {
+        lines.push(`  · Бүлэг "${g.name}": ${scoreText(g.point, g.total)}${g.count ? ` (${g.count} асуулт)` : ''}`);
+      }
       // Ихэнх тестэд category хоосон, дэд хэмжүүрийн нэр value-д, оноо cause-д байдаг.
       for (const d of (r.details ?? []).slice(0, 12)) {
         const label = [d.category, d.value].filter(Boolean).join(': ');

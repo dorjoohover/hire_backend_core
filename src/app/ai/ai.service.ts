@@ -355,6 +355,53 @@ export class AiService {
     return true;
   }
 
+  // Ангиллаар задарсан үр дүн: Studio template-тэй тест result-д details хадгалдаггүй (зөвхөн нийт оноо),
+  // SEMUT багц дэд тестээ child result болгодог — эдгээргүйгээр AI зөвхөн "12/0" мэт нийт оноог тайлбарлаж байсан.
+  // Бүлгийн оноо = hire_report userAnswer.categoryStats / answerCategoryStats-тэй ижил (PDF-тэй таарна).
+  private async attachBreakdown(results: any[]) {
+    const codes = results.map((r) => r.code).filter(Boolean);
+    if (!codes.length) return;
+    const [groups, answerCats, children] = await Promise.all([
+      this.dataSource.query(
+        `SELECT ua.code, qc.name, COALESCE(SUM(ua.point), 0)::float AS point,
+                COUNT(*) FILTER (WHERE ua.correct = true)::int AS correct,
+                qc."totalPoint" AS total, COUNT(DISTINCT ua."questionId")::int AS count
+           FROM "userAnswer" ua JOIN "questionCategory" qc ON qc.id = ua."questionCategoryId"
+          WHERE ua.code = ANY($1)
+          GROUP BY ua.code, qc.id, qc.name, qc."totalPoint", qc."orderNumber"
+          ORDER BY qc."orderNumber" NULLS LAST, qc.id`,
+        [codes],
+      ),
+      this.dataSource.query(
+        `SELECT ua.code, ac.name, COALESCE(SUM(ua.point), 0)::float AS point, COUNT(DISTINCT ua."questionId")::int AS count
+           FROM "userAnswer" ua JOIN "questionAnswerCategory" ac ON ac.id = ua."answerCategoryId"
+          WHERE ua.code = ANY($1)
+          GROUP BY ua.code, ac.id, ac.name ORDER BY ac.id`,
+        [codes],
+      ),
+      this.dataSource.query(
+        `SELECT r.code, qc.name AS category, r.result, r.value, r.point, r.total
+           FROM result r LEFT JOIN "questionCategory" qc ON qc.id = r.question_category
+          WHERE r.code = ANY($1) AND r."parentId" IS NOT NULL ORDER BY r.id`,
+        [codes],
+      ),
+    ]);
+    for (const r of results) {
+      r.children = children.filter((c: any) => c.code === r.code);
+      const own = groups.filter((g: any) => g.code === r.code);
+      r.categories = [
+        // Ганц бүлэг = нийт оноотой адил тул нэмэлт мэдээлэлгүй.
+        ...(own.length > 1 ? own : []).map((g: any) => ({
+          name: g.name,
+          point: Number(r.type) === 11 ? g.correct : g.point,
+          total: g.total,
+          count: g.count,
+        })),
+        ...answerCats.filter((a: any) => a.code === r.code).map((a: any) => ({ name: a.name, point: a.point, count: a.count })),
+      ];
+    }
+  }
+
   private async chatContext(
     user: { id: number; role: number; email?: string; phone?: string },
     page: { assessmentId?: number; code?: string },
@@ -380,7 +427,7 @@ export class AiService {
     const results: any[] = await this.dataSource.query(
       `SELECT e.code, COALESCE(r."assessmentName", e."assessmentName") AS name, e."userEndDate" AS "endDate",
               COALESCE(e."assessmentId", r.assessment) AS "assessmentId",
-              r.id AS rid, r.point, r.total, r.result, r.segment, r.value
+              r.id AS rid, r.type, r.point, r.total, r.result, r.segment, r.value
          FROM exam e LEFT JOIN result r ON r.code = e.code AND r."parentId" IS NULL
         WHERE e."userEndDate" IS NOT NULL AND e.visible IS TRUE
           AND (e."userId" = $1 OR lower(e.email) = lower($2)
@@ -397,6 +444,7 @@ export class AiService {
       );
       for (const r of results) r.details = details.filter((d) => d.rid === r.rid);
     }
+    await this.attachBreakdown(results.slice(0, 3));
     // Нээлттэй хуудасны тест + сүүлийн (эсвэл нээж буй — эрэмбээр эхэнд) тайлангийн тест.
     const focus = [page.assessmentId, results[0]?.assessmentId];
     return [buildUserContext({ role: user.role, pageTest, pageCode: page.code, results }), buildFocusAiData(items, focus)]
