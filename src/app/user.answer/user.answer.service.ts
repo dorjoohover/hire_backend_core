@@ -22,7 +22,7 @@ import { EmailService } from '../email/email.service';
 import { QuestionCategoryDao } from '../question/dao/question.category.dao';
 import { ResultDao } from '../exam/dao/result.dao';
 import { buildAssessmentScoring } from './assessment-scoring.config';
-import { numericAnswerError } from './numeric-answer';
+import { numberAnswerCorrect, numericAnswerError } from './numeric-answer';
 import { matrixAnswerMeta } from './matrix-category';
 
 @Injectable()
@@ -314,6 +314,9 @@ export class UserAnswerService extends BaseService {
           // утгаар шалгана (browser-ийн шалгалтыг тойрсон / хуучирсан утга DB-д орохгүй).
           const numericError = numericAnswerError(question, answer.point);
           if (numericError) throw message(numericError);
+          // NUMBER + зөв утга тохируулсан: point = 1 / 0 (оруулсан утга `value`-д үлдэнэ).
+          const numberCorrect = numberAnswerCorrect(question, answer.point);
+          if (numberCorrect !== null) point = numberCorrect ? 1 : 0;
 
           // Validate FK references: skip non-existent answer/matrix IDs to
           // avoid FK violation when frontend sends stale IDs after admin edits.
@@ -346,7 +349,9 @@ export class UserAnswerService extends BaseService {
             answer: safeAnswerId,
             correct: answer.matrix
               ? false
-              : ((answerCategory as any)?.correct ?? false),
+              : (numberCorrect ??
+                (answerCategory as any)?.correct ??
+                false),
             matrix: safeMatrixId,
             value: answer.value,
             ip,

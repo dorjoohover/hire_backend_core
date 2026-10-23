@@ -26,6 +26,13 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QuestionCategoryEntity } from './entities/question.category.entity';
 import { FormuleService } from '../formule/formule.service';
 
+// NUMBER-ийн зөв утгыг (settings.correct) шалгуулагчид илгээхгүй. Кэштэй объект тул хуулна.
+const hideCorrect = <T extends { settings?: Record<string, any> | null }>(q: T): T => {
+  if (q?.settings?.correct === undefined) return q;
+  const { correct, ...settings } = q.settings;
+  return { ...q, settings };
+};
+
 @Injectable()
 export class QuestionService {
   constructor(
@@ -144,6 +151,8 @@ export class QuestionService {
       return nums.length ? Math.max(...nums) : 0;
     };
     if (type == QuestionType.CONSTANTSUM) return question.point ?? 0;
+    // NUMBER + зөв утга: зөв хариулбал 1 оноо (user.answer numberAnswerCorrect).
+    if (type == QuestionType.NUMBER && question.settings?.correct != null) return 1;
     if (type == QuestionType.MATRIX)
       for (const answer of answers ?? []) {
         point += maxOf(answer?.matrix?.map((matrix) => matrix.point));
@@ -258,7 +267,7 @@ export class QuestionService {
       seed ? `${seed}:c${category}` : undefined,
     );
     return questions.map((question) => ({
-      question: question,
+      question: hideCorrect(question),
       answers: answersByQuestion.get(question.id) ?? [],
     }));
   }
@@ -294,7 +303,7 @@ export class QuestionService {
     return categories.map((category, idx) => ({
       category: category,
       questions: categoryQuestions[idx].map((question) => ({
-        ...question,
+        ...(isAdmin ? question : hideCorrect(question)),
         answers: answersByQuestion.get(question.id) ?? [],
       })),
     }));

@@ -5,6 +5,7 @@
  */
 import {
   isNumericQuestionType,
+  numberAnswerCorrect,
   numericAnswerError,
 } from '../src/app/user.answer/numeric-answer';
 
@@ -46,6 +47,11 @@ check('M2 TIME: секундтэй (бутархай минут) → зөв', nu
 check('M3 TIME: сөрөг → алдаа', numericAnswerError(time(null, null), -5), 'Хугацаа сөрөг байж болохгүй');
 check('M4 TIME: тоймлолтын зөрүү (≤1e-6) тэвчинэ', numericAnswerError(time(0, 90.3333), 90.3333004), null);
 check('O1 бусад төрөл (80) — шалгахгүй', numericAnswerError({ type: 80, minValue: 1, maxValue: 5 } as any, 99), null);
+check('C1 зөв утга тохируулаагүй → null (point = утга)', numberAnswerCorrect(num(), 3), null);
+check('C2 зөв утга = оруулсан → true, өөр → false', [numberAnswerCorrect(num({ correct: 10 }), 10), numberAnswerCorrect(num({ correct: 10 }), 9)], [true, false]);
+check('C3 зөв утга 0 / бутархай / string', [numberAnswerCorrect(num({ correct: 0 }), 0), numberAnswerCorrect(num({ decimal: true, correct: 2.5 }), '2.5')], [true, true]);
+check('C4 хариулаагүй → false', [null, undefined, ''].map((p) => numberAnswerCorrect(num({ correct: 5 }), p)), [false, false, false]);
+check('C5 TIME / бусад төрөлд хамаарахгүй', [numberAnswerCorrect({ ...time(), settings: { correct: 5 } }, 5), numberAnswerCorrect({ type: 80, settings: { correct: 5 } } as any, 5)], [null, null]);
 
 if (failed) {
   console.log(`\n❌ ${failed} шалгалт унасан`);

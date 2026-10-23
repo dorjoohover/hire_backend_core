@@ -51,3 +51,18 @@ export function numericAnswerError(
   if (max !== null && v > max + EPS) return `Утга ${max}-аас их байж болохгүй`;
   return null;
 }
+
+/**
+ * NUMBER-д admin "Зөв хариулт" (`settings.correct`) тохируулсан бол оруулсан утга түүнтэй
+ * тэнцүү эсэх (зөв → 1 оноо, буруу / хариулаагүй → 0). Тохируулаагүй бол null — point = утга хэвээр.
+ */
+export function numberAnswerCorrect(
+  question: NumericQuestion,
+  point: unknown,
+): boolean | null {
+  if (Number(question?.type) !== QuestionType.NUMBER) return null;
+  const correct = bound(question.settings?.correct);
+  if (correct === null) return null;
+  const v = bound(point);
+  return v !== null && Math.abs(v - correct) < EPS;
+}
