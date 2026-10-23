@@ -23,8 +23,10 @@ import {
   sanitizeHistory,
 } from './ai-prompt';
 
-// Хямд, хурдан загвар — AI_MODEL env-ээр солиж болно.
+// Хямд, хурдан загвар — AI_MODEL env-ээр солиж болно. ollama үед заавал (жиш: gemma3:12b).
 const MODEL = process.env.AI_MODEL || 'claude-haiku-5-5';
+// 'ollama' → өөрийн сервер дээрх загвар (Ollama native API). Хоосон бол Claude (rollback = env хасах).
+const PROVIDER = process.env.AI_PROVIDER || 'anthropic';
 // Catalog (тест + Studio AI Data + variable) 10 минут санах ойд — хүсэлт бүрд DB уншихгүй.
 const CATALOG_TTL_MS = 10 * 60 * 1000;
 
@@ -111,6 +113,7 @@ export class AiService {
   }
 
   private async ask(system: Anthropic.TextBlockParam[], user: string | ChatTurn[], schema: Record<string, unknown>) {
+    if (PROVIDER === 'ollama') return this.askOllama(system, user, schema);
     const chat = typeof user !== 'string';
     const res = await this.llm().messages.create({
       model: MODEL,
@@ -133,6 +136,38 @@ export class AiService {
     }
     const text = res.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? '{}';
     return JSON.parse(text);
+  }
+
+  // Ollama: JSON schema-г `format`-аар. cache_control / effort байхгүй — catalog эхэнд байгаа тул
+  // Ollama ижил prefix-ийн KV cache-ийг өөрөө дахин ашиглана (slot бүрт, загвар санах ойд байх үед).
+  private async askOllama(system: Anthropic.TextBlockParam[], user: string | ChatTurn[], schema: Record<string, unknown>) {
+    const res = await fetch(`${process.env.OLLAMA_URL || 'http://localhost:11434'}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        stream: false,
+        format: schema,
+        keep_alive: '1h',
+        // Default 4k (VRAM < 24GB) — catalog ~23K token тул дутуу бол чимээгүй тасарна.
+        options: { num_ctx: +(process.env.AI_NUM_CTX || 32768), temperature: 0.2 },
+        messages: [
+          { role: 'system', content: system.map((b) => b.text).join('\n\n') },
+          ...(typeof user === 'string' ? [{ role: 'user', content: user }] : user),
+        ],
+      }),
+      signal: AbortSignal.timeout(+(process.env.AI_TIMEOUT_MS || 120000)),
+    }).catch((e) => {
+      throw new HttpException(`AI (ollama) холбогдсонгүй: ${e.message}`, HttpStatus.BAD_GATEWAY);
+    });
+    if (!res.ok) throw new HttpException(`AI (ollama) ${res.status}: ${await res.text()}`, HttpStatus.BAD_GATEWAY);
+    const data = await res.json();
+    console.log(
+      `🤖 [ai:ollama] in=${data.prompt_eval_count ?? 0} out=${data.eval_count ?? 0} ` +
+        `prefill_ms=${Math.round((data.prompt_eval_duration ?? 0) / 1e6)} total_ms=${Math.round((data.total_duration ?? 0) / 1e6)} stop=${data.done_reason}`,
+    );
+    if (data.done_reason === 'length') throw new HttpException('AI хариу дутуу (length).', HttpStatus.BAD_GATEWAY);
+    return JSON.parse(data.message?.content || '{}');
   }
 
   // Catalog-ийн cache блок. Чат, тест санал болголт хоёрын JSON schema өөр (prompt-ийн өмнө ордог) тул cache нь тусдаа —
