@@ -140,6 +140,7 @@ export class AiService {
 
   // Ollama: JSON schema-г `format`-аар. cache_control / effort байхгүй — catalog эхэнд байгаа тул
   // Ollama ижил prefix-ийн KV cache-ийг өөрөө дахин ашиглана (slot бүрт, загвар санах ойд байх үед).
+  // keep_alive илгээхгүй — серверийн OLLAMA_KEEP_ALIVE шийднэ (test CPU дээр -1: хүйтэн catalog ~8 мин).
   private async askOllama(system: Anthropic.TextBlockParam[], user: string | ChatTurn[], schema: Record<string, unknown>) {
     const res = await fetch(`${process.env.OLLAMA_URL || 'http://localhost:11434'}/api/chat`, {
       method: 'POST',
@@ -148,7 +149,6 @@ export class AiService {
         model: MODEL,
         stream: false,
         format: schema,
-        keep_alive: '1h',
         // Default 4k (VRAM < 24GB) — catalog ~23K token тул дутуу бол чимээгүй тасарна.
         options: { num_ctx: +(process.env.AI_NUM_CTX || 32768), temperature: 0.2 },
         messages: [
