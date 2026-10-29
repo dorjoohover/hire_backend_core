@@ -555,6 +555,25 @@ export class UserServiceService extends BaseService {
     return active[key]?.body?.trim() ? active[key].body : DEFAULT_TEMPLATES[key];
   }
 
+  /** Admin-ий идэвхтэй драфтууд; илгээгч өөр загвар сонгосон бол түүгээр солино. */
+  private async chooseDrafts(
+    kind: 'invite' | 'remind',
+    pick: { emailDraft?: number; smsDraft?: number },
+  ) {
+    const drafts = await this.drafts.getActive();
+    for (const [ch, id] of [
+      ['Email', pick?.emailDraft],
+      ['Sms', pick?.smsDraft],
+    ] as const) {
+      if (!id) continue;
+      const d = Number.isInteger(+id) && (await this.drafts.findOne(+id));
+      if (!d || d.type !== `${kind}${ch}`)
+        throw new HttpException('Сонгосон загвар олдсонгүй.', HttpStatus.BAD_REQUEST);
+      drafts[d.type] = d;
+    }
+    return drafts;
+  }
+
   /** Урилга / сануулгыг мэйл ба/эсвэл SMS-ээр (байгууллагын драфтаар) илгээнэ. */
   private async notifyExam(
     exam: ExamEntity,
@@ -565,10 +584,11 @@ export class UserServiceService extends BaseService {
       isNewUser?: boolean;
       password?: string;
       id?: number;
+      drafts: Record<string, MessageDraftEntity>;
     },
   ) {
     const org = exam.service?.user;
-    const active = await this.drafts.getActive();
+    const active = opts.drafts;
     // Контейнер UTC байж болно → Улаанбаатарын цагаар ("2026-10-30 18:00:00").
     const [year, month, day, hour, minute] = exam.endDate
       ? new Date(exam.endDate)
@@ -633,6 +653,23 @@ export class UserServiceService extends BaseService {
       defaults: DEFAULT_TEMPLATES,
       defaultSubjects: DEFAULT_SUBJECTS,
     };
+  }
+
+  /** Илгээх үед сонгох жагсаалт (бүх нэвтэрсэн хэрэглэгчид). */
+  public async draftOptions() {
+    return (await this.drafts.findAll()).map(({ id, name, type, active }) => ({
+      id,
+      name,
+      type,
+      active,
+    }));
+  }
+
+  /** Хадгалсан загварыг (id-гүй бол үндсэн текстийг) жишээ утгаар харна. */
+  public async previewSaved(type: string, id?: number) {
+    const d = id ? await this.drafts.findOne(id) : null;
+    if (id && !d) throw new HttpException('Загвар олдсонгүй.', HttpStatus.NOT_FOUND);
+    return this.previewDraft(d ?? { type });
   }
 
   /** Урьдчилан харах / шалгахад хэрэглэх жишээ утгууд. */
@@ -729,10 +766,17 @@ export class UserServiceService extends BaseService {
 
   /** Тест бөглөж дуусгаагүй, хугацаа нь дуусаагүй шалгуулагчдад сануулга. */
   public async remind(
-    dto: { codes: string[]; email?: boolean; sms?: boolean },
+    dto: {
+      codes: string[];
+      email?: boolean;
+      sms?: boolean;
+      emailDraft?: number;
+      smsDraft?: number;
+    },
     owner?: number,
   ) {
     const codes = [...new Set((dto.codes ?? []).map(String))].slice(0, 200);
+    const drafts = await this.chooseDrafts('remind', dto);
     let processed = 0;
     let skipped = 0;
     const failures: { code: string; error: string }[] = [];
@@ -749,6 +793,7 @@ export class UserServiceService extends BaseService {
         await this.notifyExam(exam, 'remind', {
           email: !!dto.email,
           sms: !!dto.sms,
+          drafts,
         });
         processed++;
       } catch (err: any) {
@@ -777,6 +822,7 @@ export class UserServiceService extends BaseService {
     // Bounded concurrency to avoid bursting DB / Resend when many invites
     // are submitted in quick succession (e.g. 50 x 3 batches).
     const CONCURRENCY = 3;
+    const drafts = await this.chooseDrafts('invite', dto);
 
     const processOne = async (email: SendLinkToEmail) => {
       const exam = await this.ownedExam(email.code, owner);
@@ -829,6 +875,7 @@ export class UserServiceService extends BaseService {
           isNewUser,
           password: generatedPassword,
           id,
+          drafts,
         },
       );
     };

@@ -89,6 +89,17 @@ export class UserServiceController {
     return this.userServiceService.listDrafts();
   }
 
+  // Байгууллага урилга / сануулга илгээхдээ загвар сонгож, харна (нэвтэрсэн бүх хэрэглэгч).
+  @Get('templates/options')
+  draftOptions() {
+    return this.userServiceService.draftOptions();
+  }
+
+  @Get('templates/preview')
+  previewSaved(@Query('type') type: string, @Query('id') id?: string) {
+    return this.userServiceService.previewSaved(type, Number.isInteger(+id) ? +id : undefined);
+  }
+
   @Roles(...Admins)
   @Post('templates/preview')
   previewDraft(@Body() dto: MessageDraftDto) {

@@ -46,6 +46,12 @@ export class SendLinkToEmails {
   /** Утас руу Skytel WebSMS-ээр давхар илгээх. */
   @ApiProperty({ required: false })
   sms?: boolean;
+
+  /** Байгууллага илгээхдээ сонгосон загвар (message_draft.id); байхгүй бол admin-ий идэвхтэй. */
+  @ApiProperty({ required: false })
+  emailDraft?: number;
+  @ApiProperty({ required: false })
+  smsDraft?: number;
 }
 
 export class MessageDraftDto {
@@ -69,4 +75,9 @@ export class RemindDto {
   email?: boolean;
   @ApiProperty({ required: false })
   sms?: boolean;
+  /** Байгууллага илгээхдээ сонгосон загвар (message_draft.id); байхгүй бол admin-ий идэвхтэй. */
+  @ApiProperty({ required: false })
+  emailDraft?: number;
+  @ApiProperty({ required: false })
+  smsDraft?: number;
 }

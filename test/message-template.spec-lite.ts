@@ -37,6 +37,7 @@ const exams: Record<string, any> = {
 let drafts: any[] = [];
 let seq = 0;
 const draftDao: any = {
+  findAll: async () => drafts,
   getActive: async () => Object.fromEntries(drafts.filter((d) => d.active).map((d) => [d.type, d])),
   findOne: async (id: number) => drafts.find((d) => d.id === id) ?? null,
   save: async (d: any) => {
@@ -94,6 +95,24 @@ const svc = new UserServiceService(
   check('S7 preview мэйл: жишээ утгаар бөглөнө', [pv.subject, pv.html], ['Урилга: DISC зан төлөвийн тест', '<html><p>Болд</p></html>']);
   const ps: any = await svc.previewDraft({ type: 'inviteSms' });
   check('S8 preview SMS: default + урт', [ps.text.startsWith('Hire HHK:'), ps.length <= 160], [true, true]);
+  // Байгууллага илгээх үедээ загвар сонгоно (d1 идэвхгүй болсон, d2 идэвхтэй).
+  await svc.remind({ codes: ['D'], email: true, emailDraft: d1.id });
+  check('P1 сонгосон загвар идэвхтэйг давна', mail[mail.length - 1].body.startsWith('<p>Сайн уу'), true);
+  await svc.remind({ codes: ['D'], email: true });
+  check('P2 сонгоогүй бол admin-ий идэвхтэй', mail[mail.length - 1].body, '<p>Хоёр дахь</p>');
+  const n = mail.length;
+  check('P3 өөр төрлийн / байхгүй загвар → алдаа, юу ч илгээхгүй', [
+    await err(() => svc.remind({ codes: ['D'], email: true, smsDraft: d1.id })),
+    await err(() => svc.remind({ codes: ['D'], email: true, emailDraft: 999 })),
+    mail.length,
+  ], ['Сонгосон загвар олдсонгүй.', 'Сонгосон загвар олдсонгүй.', n]);
+  const opts: any[] = await svc.draftOptions();
+  check('P4 сонголтын жагсаалтад текст орохгүй', [opts.length, 'body' in opts[0], opts.find((o) => o.active)?.id], [2, false, d2.id]);
+  check('P5 хадгалсан загварыг харах / байхгүй id', [
+    ((await svc.previewSaved('remindEmail', d1.id)) as any).subject,
+    await err(() => svc.previewSaved('remindEmail', 999)),
+  ], ['DISC зан төлөвийн тест — сануулга', 'Загвар олдсонгүй.']);
+
   const sample = { lastname: 'Bat', firstname: 'Dorj', org: 'Хайр', test: 'x'.repeat(40), deadline: '2026.01.01 18:00', link: 'https://hire.mn/exam/' + '1'.repeat(17) };
   check('S3 default SMS драфтууд 160-д багтана', ['inviteSms', 'remindSms'].map((k) => toSmsText(fillTemplate(DEFAULT_TEMPLATES[k], sample)).length <= 160), [true, true]);
 
