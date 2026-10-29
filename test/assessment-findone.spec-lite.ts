@@ -29,6 +29,20 @@ const base = { id: 135, name: 'Сорил', answerCategories: [], questionCatego
   check('F2 энгийн тест хэвээр', [r2.category, r2.user.createdUser.id, r2.user.updatedUser.id, r2.count], [{ id: 30, name: 'Ангилал 30' }, 7, 8, 3]);
   const r3 = await make({ ...base, category: { id: 30 }, createdUser: 7, updatedUser: 7 }).findOne(135);
   check('F3 ижил хэрэглэгч → нэг объект', r3.user.updatedUser === r3.user.createdUser, true);
+
+  // findAll: зөвхөн жинхэнэ admin бүх тестийг (ONLY=40 орно) харна; байгууллага өөрийнхөө ONLY-г л.
+  const seen: any[] = [];
+  const listDao: any = {
+    findAll: async (_pg: any, showAll: boolean) => (seen.push(showAll), { data: [], count: 0, total: 0 }),
+    findOrg: async (owners: number[]) => owners.map((id) => ({ id: 100 + id, owner: { id } })),
+  };
+  const cache: any = { getOrSet: async () => [] };
+  const usDao: any = { countByAssessmentBatch: async () => new Map() };
+  const list = new AssessmentService(listDao, usDao, null as any, null as any, null as any, { findByIds: async () => [] } as any, null as any, cache);
+  const asOrg = await list.findAll({} as any, { id: 9, role: 30 } as any);
+  await list.findAll({} as any, { id: 5, role: 20 } as any);
+  await list.findAll({} as any, { id: 1, role: 40 } as any);
+  check('F4 findAll: client/байгууллага showAll=false, admin true; байгууллага өөрийн ONLY тестээ авна', [seen, asOrg.data.map((d: any) => d.data.id)], [[false, false, true], [109]]);
   console.log(failed ? `\n❌ ${failed} унасан` : '\n✅ БҮГД АМЖИЛТТАЙ');
   process.exit(failed ? 1 : 0);
 })().catch((e) => { console.error('FAIL', e); process.exit(1); });

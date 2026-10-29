@@ -7,6 +7,7 @@ import { CreateAssessmentLevelDto } from './dto/create.assessment.level.dto';
 import { QuestionAnswerCategoryDao } from '../question/dao/question.answer.category.dao';
 import { AssessmentCategoryService } from '../assessment.category/assessment.category.service';
 import { UserDao } from '../user/user.dao';
+import { Admins } from 'src/auth/guards/role/role.enum';
 import { AssessmentEntity } from './entities/assessment.entity';
 import { UserServiceDao } from '../user.service/user.service.dao';
 import { Meta } from 'src/base/base.interface';
@@ -104,7 +105,8 @@ export class AssessmentService {
     if (user?.id) {
       orgAss = await this.dao.findOrg([user.id]);
     }
-    const isAdmin = user?.role <= 40; // SUPER_ADMIN=10, ADMIN=40
+    // Өмнө нь `role <= 40` → client (20), байгууллага (30) ч admin болж БҮХ байгууллагын тестийг хардаг байв.
+    const isAdmin = Admins.includes(+user?.role);
     const { data, count, total } = await this.dao.findAll(pg, isAdmin);
     const assessments = [...data, ...orgAss];
 
