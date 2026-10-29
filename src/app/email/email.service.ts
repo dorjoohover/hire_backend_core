@@ -9,9 +9,6 @@ import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { signEmailToken } from 'src/utils/email-token';
 
-const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
 @Injectable()
 export class EmailService {
   constructor(
@@ -119,7 +116,7 @@ export class EmailService {
     id?: number;
     assessmentName?: number;
     assessment: AssessmentEntity;
-    /** Байгууллагын драфтаас бөглөгдсөн текст (байхгүй бол анхны урилгын текст). */
+    /** Admin-ийн драфтаас бөглөгдсөн HTML (байхгүй бол анхны урилгын текст). */
     body?: string;
     subject?: string;
     action?: string;
@@ -427,6 +424,11 @@ export class EmailService {
   `;
   }
 
+  /** Admin "Мэйлийн загвар"-ын урьдчилан харах (илгээхгүй). */
+  previewInvitation(input: Parameters<EmailService['sendInvitationTemplate']>[0]) {
+    return this.sendInvitationTemplate(input).html;
+  }
+
   private sendInvitationTemplate(input: {
     isNewUser: boolean;
     email: string;
@@ -578,7 +580,7 @@ export class EmailService {
                         <td
                           style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
                         >
-                          <br />${escapeHtml(body).replace(/\n/g, '<br />')}
+                          ${body}
                         </td>
                       </tr>`
                         : `<tr>

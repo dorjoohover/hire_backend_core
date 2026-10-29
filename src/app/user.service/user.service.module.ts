@@ -1,5 +1,5 @@
 import { ReportPipelineModule } from '../report/report-pipeline.module';
-import { MessageTemplateDao } from './message-template.dao';
+import { MessageDraftDao } from './message-draft.dao';
 import { forwardRef, Module } from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
 import { UserServiceController } from './user.service.controller';
@@ -54,7 +54,7 @@ import { QuestionAnswerViewService } from '../question/question-answer-view.serv
   controllers: [UserServiceController],
   providers: [
     UserServiceService,
-    MessageTemplateDao,
+    MessageDraftDao,
     ReportService,
     UserServiceDao,
     FileService,

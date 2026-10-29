@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 /**
- * Хэрэглэгч рүү явах урилга / сануулгын ерөнхий драфт (message_template хүснэгт, admin засна).
- * Хоосон талбар → DEFAULT_TEMPLATES. Хувьсагч: {lastname} {firstname} {org} {test} {deadline} {link}.
+ * Хэрэглэгч рүү явах урилга / сануулгын драфтын төрлүүд (message_draft.type, admin засна).
+ * Идэвхтэй драфтгүй бол DEFAULT_TEMPLATES. Хувьсагч: {lastname} {firstname} {org} {test} {deadline} {link}.
+ * И-мэйлийн body нь HTML, SMS нь энгийн текст.
  */
 export type MessageTemplates = {
   inviteEmail?: string;
@@ -20,18 +21,39 @@ export const TEMPLATE_KEYS: (keyof MessageTemplates)[] = [
 
 export const DEFAULT_TEMPLATES: Required<MessageTemplates> = {
   inviteEmail:
-    'Эрхэм {lastname} овогтой {firstname} танд {org} байгууллагаас {test} онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна.\n\n' +
-    'Та "Тест өгөх" товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцана уу.\n\n' +
-    'Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.',
+    '<p>Эрхэм <strong>{lastname}</strong> овогтой <strong>{firstname}</strong> танд <strong>{org}</strong> байгууллагаас <strong>{test}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна.</p>' +
+    '<p>Та <strong>"Тест өгөх"</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцана уу.</p>' +
+    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>',
   inviteSms: '{org}: {test} testiin urilga. {deadline} hurtel: {link}',
   remindEmail:
-    'Эрхэм {lastname} овогтой {firstname} танд {org} байгууллагаас илгээсэн {test} тестийг та хараахан бөглөж дуусгаагүй байна.\n\n' +
-    'Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй тул амжиж бөглөнө үү.',
+    '<p>Эрхэм <strong>{lastname}</strong> овогтой <strong>{firstname}</strong> танд <strong>{org}</strong> байгууллагаас илгээсэн <strong>{test}</strong> тестийг та хараахан бөглөж дуусгаагүй байна.</p>' +
+    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй тул амжиж бөглөнө үү.</p>',
   remindSms: 'Sanuulga: {test} testee {deadline}-s omno buglunu uu. {link}',
+};
+
+export const examLink = (code: string) =>
+  `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${code}`;
+
+export const DEFAULT_SUBJECTS = {
+  invite: 'Танд тестийн урилга ирлээ',
+  remind: 'Сануулга: тестээ бөглөнө үү',
 };
 
 export const fillTemplate = (tpl: string, vars: Record<string, string>) =>
   tpl.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+
+export const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/** HTML драфт: хувьсагчийн утгыг escape хийнэ (драфт өөрөө admin-ийн итгэмжлэгдсэн HTML), {link} → холбоос. */
+export const fillHtml = (tpl: string, vars: Record<string, string>) =>
+  tpl.replace(/\{(\w+)\}/g, (m, k) => {
+    if (vars[k] == null) return m;
+    const v = escapeHtml(vars[k]);
+    return k === 'link'
+      ? `<a href="${v}" style="color: #ff5000; word-break: break-all;">${v}</a>`
+      : v;
+  });
 
 const CYR: Record<string, string> = {
   а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo', ж: 'j', з: 'z',

@@ -39,7 +39,10 @@ import { EmailService } from '../email/email.service';
 import { AuthService } from 'src/auth/auth.service';
 import { effectiveShowResult } from './show-result';
 import {
+  DEFAULT_SUBJECTS,
   DEFAULT_TEMPLATES,
+  fillHtml,
+  examLink,
   fillTemplate,
   MessageTemplates,
   sendSkytelSms,
@@ -47,7 +50,8 @@ import {
   TEMPLATE_KEYS,
   renderSms,
 } from './message-template';
-import { MessageTemplateDao } from './message-template.dao';
+import { MessageDraftDao } from './message-draft.dao';
+import { MessageDraftEntity } from './entities/message-draft.entity';
 import { ExamEntity } from '../exam/entities/exam.entity';
 import {
   checkQrExpiry,
@@ -74,7 +78,7 @@ export class UserServiceService extends BaseService {
     private barimt: BarimtService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
-    private templates: MessageTemplateDao,
+    private drafts: MessageDraftDao,
   ) {
     super();
   }
@@ -543,10 +547,12 @@ export class UserServiceService extends BaseService {
     return exam;
   }
 
-  /** Admin-ийн хадгалсан драфт, хоосон бол default. */
-  private pickTemplate(saved: MessageTemplates, key: keyof MessageTemplates) {
-    const tpl = saved?.[key];
-    return typeof tpl === 'string' && tpl.trim() ? tpl : DEFAULT_TEMPLATES[key];
+  /** Идэвхтэй драфтын текст, байхгүй бол default. */
+  private draftBody(
+    active: Record<string, MessageDraftEntity>,
+    key: keyof MessageTemplates,
+  ) {
+    return active[key]?.body?.trim() ? active[key].body : DEFAULT_TEMPLATES[key];
   }
 
   /** Урилга / сануулгыг мэйл ба/эсвэл SMS-ээр (байгууллагын драфтаар) илгээнэ. */
@@ -562,7 +568,7 @@ export class UserServiceService extends BaseService {
     },
   ) {
     const org = exam.service?.user;
-    const saved = await this.templates.getAll();
+    const active = await this.drafts.getActive();
     // Контейнер UTC байж болно → Улаанбаатарын цагаар ("2026-10-30 18:00:00").
     const [year, month, day, hour, minute] = exam.endDate
       ? new Date(exam.endDate)
@@ -578,7 +584,7 @@ export class UserServiceService extends BaseService {
         [org?.lastname, org?.firstname].filter(Boolean).join(' '),
       test: exam.assessment?.name ?? exam.assessmentName ?? '',
       deadline: exam.endDate ? `${year}.${month}.${day} ${hour}:${minute}` : '',
-      link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${exam.code}`,
+      link: examLink(exam.code),
     };
 
     if (opts.email && exam.email) {
@@ -600,63 +606,125 @@ export class UserServiceService extends BaseService {
         visible: exam.visible,
         orgName: org?.organizationName,
         password: opts.password,
-        // Драфт засаагүй урилга → анхны HTML текст хэвээр.
+        // Идэвхтэй урилгын драфтгүй бол анхны HTML текст хэвээр.
         body:
-          remind || saved.inviteEmail?.trim()
-            ? fillTemplate(this.pickTemplate(saved, `${kind}Email`), vars)
+          remind || active.inviteEmail
+            ? fillHtml(this.draftBody(active, `${kind}Email`), vars)
             : undefined,
-        subject: remind ? 'Сануулга: тестээ бөглөнө үү' : undefined,
+        subject: fillTemplate(
+          active[`${kind}Email`]?.subject || DEFAULT_SUBJECTS[kind],
+          vars,
+        ),
         action: remind ? 'sent reminder' : undefined,
       });
     }
     if (opts.sms && exam.phone) {
       await sendSkytelSms(
         exam.phone,
-        renderSms(this.pickTemplate(saved, `${kind}Sms`), vars),
+        renderSms(this.draftBody(active, `${kind}Sms`), vars),
       );
     }
   }
 
-  public async getTemplates() {
+  // ── Admin "Мэйлийн загвар" ─────────────────────────────────────────────
+  public async listDrafts() {
     return {
-      templates: await this.templates.getAll(),
+      drafts: await this.drafts.findAll(),
       defaults: DEFAULT_TEMPLATES,
+      defaultSubjects: DEFAULT_SUBJECTS,
     };
   }
 
-  public async saveTemplates(dto: MessageTemplates) {
-    const clean: MessageTemplates = {};
-    for (const key of TEMPLATE_KEYS) {
-      const v = dto?.[key];
-      if (v == null || v === '') continue;
-      if (typeof v !== 'string' || v.length > 3000)
-        throw new HttpException(`${key} буруу байна.`, HttpStatus.BAD_REQUEST);
-      clean[key] = v;
-    }
-    // SMS-ийг ~30 тэмдэгт байгууллагын нэр, бодит урттай холбоосоор шалгана ({test} тайрагдана).
-    const sample = {
-      lastname: 'Bat',
-      firstname: 'Dorj',
-      org: 'x'.repeat(30),
-      test: 'x'.repeat(40),
-      deadline: '2026.01.01 18:00',
-      link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${'1'.repeat(17)}`,
+  /** Урьдчилан харах / шалгахад хэрэглэх жишээ утгууд. */
+  private sampleVars(org = 'Hire ХХК') {
+    return {
+      lastname: 'Бат',
+      firstname: 'Болд',
+      org,
+      test: 'DISC зан төлөвийн тест',
+      deadline: '2026.12.31 18:00',
+      link: examLink('1'.repeat(17)),
     };
-    for (const key of ['inviteSms', 'remindSms'] as const) {
-      if (clean[key] && !clean[key].includes('{link}'))
-        throw new HttpException(
-          'SMS драфтад тестийн холбоос {link} заавал байх ёстой.',
-          HttpStatus.BAD_REQUEST,
-        );
-      const len = renderSms(this.pickTemplate(clean, key), sample).length;
+  }
+
+  public async saveDraft(
+    dto: { name?: string; type?: string; subject?: string; body?: string; active?: boolean },
+    id?: number,
+  ) {
+    const bad = (m: string) => new HttpException(m, HttpStatus.BAD_REQUEST);
+    const type = dto?.type as keyof MessageTemplates;
+    if (!TEMPLATE_KEYS.includes(type)) throw bad('Загварын төрөл буруу байна.');
+    const name = String(dto?.name ?? '').trim();
+    if (!name || name.length > 120) throw bad('Загварын нэр оруулна уу (120 хүртэл тэмдэгт).');
+    const body = dto?.body;
+    if (typeof body !== 'string' || !body.replace(/<[^>]*>/g, '').trim() || body.length > 50000)
+      throw bad('Мессежийн текст оруулна уу.');
+    const isEmail = type.endsWith('Email');
+    const subject = isEmail ? String(dto?.subject ?? '').trim() : '';
+    if (subject.length > 255) throw bad('Гарчиг 255 тэмдэгтээс хэтэрч болохгүй.');
+    if (!isEmail) {
+      if (!body.includes('{link}'))
+        throw bad('SMS драфтад тестийн холбоос {link} заавал байх ёстой.');
+      // ~30 тэмдэгт байгууллагын нэрээр шалгана ({test} тайрагдана).
+      const len = renderSms(body, this.sampleVars('x'.repeat(30))).length;
       if (len > SMS_MAX)
-        throw new HttpException(
+        throw bad(
           `SMS драфт хувьсагч орлуулсны дараа ~${len} тэмдэгт болж байна (${SMS_MAX} хүртэл). Богиносгоно уу.`,
-          HttpStatus.BAD_REQUEST,
         );
     }
-    await this.templates.saveAll(clean);
-    return clean;
+    if (id && !(await this.drafts.findOne(id)))
+      throw new HttpException('Загвар олдсонгүй.', HttpStatus.NOT_FOUND);
+    return this.drafts.save({
+      ...(id ? { id } : {}),
+      name,
+      type,
+      subject: subject || null,
+      body,
+      active: !!dto.active,
+    });
+  }
+
+  public async deleteDraft(id: number) {
+    await this.drafts.delete(id);
+    return true;
+  }
+
+  /** Жишээ утгаар бөглөсөн мэйлийн HTML / SMS текст (илгээхгүй). */
+  public async previewDraft(dto: { type?: string; subject?: string; body?: string }) {
+    const type = TEMPLATE_KEYS.includes(dto?.type as any)
+      ? (dto.type as keyof MessageTemplates)
+      : 'inviteEmail';
+    const vars = this.sampleVars();
+    const body = typeof dto?.body === 'string' && dto.body.trim() ? dto.body : DEFAULT_TEMPLATES[type];
+    if (!type.endsWith('Email')) {
+      const text = renderSms(body, vars);
+      return { text, length: text.length, max: SMS_MAX };
+    }
+    const kind = type === 'remindEmail' ? 'remind' : 'invite';
+    return {
+      subject: fillTemplate(dto?.subject?.trim() || DEFAULT_SUBJECTS[kind], vars),
+      html: this.mailer.previewInvitation({
+        isNewUser: false,
+        email: 'bold@example.mn',
+        lastname: vars.lastname,
+        firstname: vars.firstname,
+        orgName: vars.org,
+        year: '2026',
+        month: '12',
+        day: '31',
+        hour: '18',
+        minute: '00',
+        code: '1'.repeat(17),
+        assessment: {
+          name: vars.test,
+          description: 'Тестийн товч тайлбар энд харагдана.',
+          usage: 'Тестийн хэрэглээ энд харагдана.',
+          measure: 'Хэмжих зүйлс энд харагдана.',
+          advice: '<p>Асуумжид хариулах заавар энд харагдана.</p>',
+        } as any,
+        body: fillHtml(body, vars),
+      }),
+    };
   }
 
   /** Тест бөглөж дуусгаагүй, хугацаа нь дуусаагүй шалгуулагчдад сануулга. */

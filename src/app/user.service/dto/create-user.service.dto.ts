@@ -48,6 +48,20 @@ export class SendLinkToEmails {
   sms?: boolean;
 }
 
+export class MessageDraftDto {
+  @ApiProperty({ required: false })
+  name?: string;
+  /** inviteEmail | inviteSms | remindEmail | remindSms */
+  @ApiProperty({ required: false })
+  type?: string;
+  @ApiProperty({ required: false })
+  subject?: string;
+  @ApiProperty({ required: false })
+  body?: string;
+  @ApiProperty({ required: false })
+  active?: boolean;
+}
+
 export class RemindDto {
   @ApiProperty({ isArray: true, type: String })
   codes: string[];

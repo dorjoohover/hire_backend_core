@@ -15,11 +15,11 @@ import { UserServiceService } from './user.service.service';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  MessageDraftDto,
   RemindDto,
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
-import { MessageTemplates } from './message-template';
 import {
   UpdateDateDto,
   UpdateUserServiceDto,
@@ -82,17 +82,37 @@ export class UserServiceController {
     );
   }
 
-  /** Хэрэглэгч рүү явах урилга / сануулгын ерөнхий драфт — зөвхөн admin. */
+  // ── Admin "Мэйлийн загвар": урилга / сануулгын мэйл, SMS драфт ──
   @Roles(...Admins)
   @Get('templates')
-  getTemplates() {
-    return this.userServiceService.getTemplates();
+  listDrafts() {
+    return this.userServiceService.listDrafts();
   }
 
   @Roles(...Admins)
-  @Patch('templates')
-  saveTemplates(@Body() dto: MessageTemplates) {
-    return this.userServiceService.saveTemplates(dto);
+  @Post('templates/preview')
+  previewDraft(@Body() dto: MessageDraftDto) {
+    return this.userServiceService.previewDraft(dto);
+  }
+
+  @Roles(...Admins)
+  @Post('templates')
+  createDraft(@Body() dto: MessageDraftDto) {
+    return this.userServiceService.saveDraft(dto);
+  }
+
+  @Roles(...Admins)
+  @Patch('templates/:id')
+  @ApiParam({ name: 'id' })
+  updateDraft(@Param('id') id: string, @Body() dto: MessageDraftDto) {
+    return this.userServiceService.saveDraft(dto, +id);
+  }
+
+  @Roles(...Admins)
+  @Delete('templates/:id')
+  @ApiParam({ name: 'id' })
+  deleteDraft(@Param('id') id: string) {
+    return this.userServiceService.deleteDraft(+id);
   }
 
   @Post('exam')

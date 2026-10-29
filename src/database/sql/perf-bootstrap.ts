@@ -350,12 +350,20 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE "userService"
    ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
 
-  // Хэрэглэгч рүү явах урилга / сануулгын мэйл, SMS-ийн ерөнхий драфт (admin засна).
-  `CREATE TABLE IF NOT EXISTS message_template (
-     key VARCHAR(32) PRIMARY KEY,
+  // Хэрэглэгч рүү явах урилга / сануулгын мэйл, SMS драфт (admin "Мэйлийн загвар").
+  `CREATE TABLE IF NOT EXISTS message_draft (
+     id SERIAL PRIMARY KEY,
+     name VARCHAR(120) NOT NULL,
+     type VARCHAR(16) NOT NULL,
+     subject VARCHAR(255),
      body TEXT NOT NULL,
+     active BOOLEAN NOT NULL DEFAULT false,
+     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  // Төрөл бүрт зөвхөн нэг идэвхтэй драфт.
+  `CREATE UNIQUE INDEX IF NOT EXISTS uq_message_draft_active
+   ON message_draft (type) WHERE active`,
 
   // NUMBER (90) / TIME (100) асуултын тохиргоо (min/max-аас бусад: бутархай, харуулах хэсэг,
   // нэгж). Nullable, default-гүй → агшин зуур. hire_report энэ баганыг уншдаггүй.

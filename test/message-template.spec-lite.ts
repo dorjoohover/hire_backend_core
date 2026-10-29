@@ -33,14 +33,26 @@ const exams: Record<string, any> = {
   C: { code: 'C', email: 'c@x.mn', endDate: new Date(Date.now() - 1000), service: { user: { id: 7 } } },
   D: { code: 'D', email: 'd@x.mn', endDate: future, service: { user: { id: 8 } } },
 };
-let store: any = {};
+// message_draft-ийг дуурайна (type бүрт нэг идэвхтэй).
+let drafts: any[] = [];
+let seq = 0;
+const draftDao: any = {
+  getActive: async () => Object.fromEntries(drafts.filter((d) => d.active).map((d) => [d.type, d])),
+  findOne: async (id: number) => drafts.find((d) => d.id === id) ?? null,
+  save: async (d: any) => {
+    if (d.active) drafts.filter((x) => x.type === d.type).forEach((x) => (x.active = false));
+    const row = d.id ? Object.assign(drafts.find((x) => x.id === d.id), d) : { ...d, id: ++seq };
+    if (!d.id) drafts.push(row);
+    return row;
+  },
+};
 const svc = new UserServiceService(
   {} as any, {} as any, {} as any, {} as any,
   { findByCode: async (c: string) => exams[c] ?? null } as any,
   {} as any, {} as any,
-  { sendInvitation: async (x: any) => mail.push(x) } as any,
+  { sendInvitation: async (x: any) => mail.push(x), previewInvitation: (x: any) => `<html>${x.body}</html>` } as any,
   {} as any, {} as any, {} as any, {} as any,
-  { getAll: async () => ({ ...store }), saveAll: async (t: any) => (store = { ...t }) } as any,
+  draftDao,
 );
 
 (async () => {
@@ -61,25 +73,27 @@ const svc = new UserServiceService(
   const r3 = await svc.remind({ codes: ['D'], email: true });
   check('R4 admin (owner байхгүй): бусдын кодыг ч илгээнэ', r3.processed, 1);
 
-  await svc.saveTemplates({ inviteSms: 'Sain uu {firstname}. {link}', remindEmail: 'Сануулга {test}' } as any);
-  check('S1 saveTemplates: хадгална', store, { inviteSms: 'Sain uu {firstname}. {link}', remindEmail: 'Сануулга {test}' });
+  const err = async (fn: () => Promise<any>) => fn().then(() => '', (e) => e.message);
+  const d1 = await svc.saveDraft({ name: 'Сануулга 1', type: 'remindEmail', subject: '{test} — сануулга', body: '<p>Сайн уу {firstname}, <b>{test}</b>: {link}</p>', active: true });
+  const d2 = await svc.saveDraft({ name: 'Сануулга 2', type: 'remindEmail', body: '<p>Хоёр дахь</p>', active: false });
+  exams.D.firstname = '<script>x</script>';
   await svc.remind({ codes: ['D'], email: true });
-  check('S5 admin-ийн драфт бүх илгээгчид (өөр байгууллага) үйлчилнэ', mail[mail.length - 1].body, 'Сануулга ');
-  await svc.saveTemplates({ inviteSms: 'Sain uu {firstname}. {link}', remindEmail: '' } as any);
-  check('S6 хоосон → default руу буцна', store, { inviteSms: 'Sain uu {firstname}. {link}' });
-  let err = '';
-  try {
-    await svc.saveTemplates({ remindSms: 'x'.repeat(150) + '{link}' });
-  } catch (e: any) {
-    err = e.message;
-  }
-  check('S2 saveTemplates: 160-аас урт SMS драфтыг хүлээж авахгүй', err.startsWith('SMS драфт'), true);
-  try {
-    await svc.saveTemplates({ inviteSms: 'Link-gui msg' });
-  } catch (e: any) {
-    err = e.message;
-  }
-  check('S4 saveTemplates: {link}-гүй SMS драфтыг хүлээж авахгүй', err.includes('{link}'), true);
+  const last = mail[mail.length - 1];
+  check('S1 идэвхтэй драфт бүх илгээгчид үйлчилнэ (гарчиг + HTML + {link} холбоос)', [last.subject, last.body.startsWith('<p>Сайн уу'), last.body.includes('<a href="http')], [' — сануулга', true, true]);
+  check('S2 хувьсагчийн утгыг HTML escape хийнэ', last.body.includes('&#60;script&#62;'), true);
+  await svc.saveDraft({ ...d2, active: true }, d2.id);
+  check('S3 өөрийг идэвхжүүлэхэд өмнөх идэвхтэй унтарна', [d1.active, drafts.find((d) => d.id === d2.id).active], [false, true]);
+  check('S4 SMS: 160-аас урт драфт', (await err(() => svc.saveDraft({ name: 'x', type: 'remindSms', body: 'x'.repeat(150) + '{link}' }))).startsWith('SMS драфт'), true);
+  check('S5 SMS: {link}-гүй драфт', (await err(() => svc.saveDraft({ name: 'x', type: 'inviteSms', body: 'Link-gui' }))).includes('{link}'), true);
+  check('S6 буруу төрөл / нэргүй / хоосон текст', [
+    await err(() => svc.saveDraft({ name: 'x', type: 'foo', body: 'a' })),
+    await err(() => svc.saveDraft({ name: ' ', type: 'inviteEmail', body: 'a' })),
+    await err(() => svc.saveDraft({ name: 'x', type: 'inviteEmail', body: '<p></p>' })),
+  ], ['Загварын төрөл буруу байна.', 'Загварын нэр оруулна уу (120 хүртэл тэмдэгт).', 'Мессежийн текст оруулна уу.']);
+  const pv: any = await svc.previewDraft({ type: 'inviteEmail', subject: 'Урилга: {test}', body: '<p>{firstname}</p>' });
+  check('S7 preview мэйл: жишээ утгаар бөглөнө', [pv.subject, pv.html], ['Урилга: DISC зан төлөвийн тест', '<html><p>Болд</p></html>']);
+  const ps: any = await svc.previewDraft({ type: 'inviteSms' });
+  check('S8 preview SMS: default + урт', [ps.text.startsWith('Hire HHK:'), ps.length <= 160], [true, true]);
   const sample = { lastname: 'Bat', firstname: 'Dorj', org: 'Хайр', test: 'x'.repeat(40), deadline: '2026.01.01 18:00', link: 'https://hire.mn/exam/' + '1'.repeat(17) };
   check('S3 default SMS драфтууд 160-д багтана', ['inviteSms', 'remindSms'].map((k) => toSmsText(fillTemplate(DEFAULT_TEMPLATES[k], sample)).length <= 160), [true, true]);
 
