@@ -33,7 +33,7 @@ const base = { id: 135, name: 'Сорил', answerCategories: [], questionCatego
   // findAll: зөвхөн жинхэнэ admin бүх тестийг (ONLY=40 орно) харна; байгууллага өөрийнхөө ONLY-г л.
   const seen: any[] = [];
   const listDao: any = {
-    findAll: async (_pg: any, showAll: boolean) => (seen.push(showAll), { data: [], count: 0, total: 0 }),
+    findAll: async (_pg: any, showAll: boolean) => (seen.push(showAll), { data: [{ id: 1 }], count: 1, total: 1 }),
     findOrg: async (owners: number[]) => owners.map((id) => ({ id: 100 + id, owner: { id } })),
   };
   const cache: any = { getOrSet: async () => [] };
@@ -42,7 +42,7 @@ const base = { id: 135, name: 'Сорил', answerCategories: [], questionCatego
   const asOrg = await list.findAll({} as any, { id: 9, role: 30 } as any);
   await list.findAll({} as any, { id: 5, role: 20 } as any);
   await list.findAll({} as any, { id: 1, role: 40 } as any);
-  check('F4 findAll: client/байгууллага showAll=false, admin true; байгууллага өөрийн ONLY тестээ авна', [seen, asOrg.data.map((d: any) => d.data.id)], [[false, false, true], [109]]);
+  check('F4 findAll: client/байгууллага showAll=false, admin true; байгууллагын ONLY тест жагсаалтын эхэнд', [seen, asOrg.data.map((d: any) => d.data.id)], [[false, false, true], [109, 1]]);
   console.log(failed ? `\n❌ ${failed} унасан` : '\n✅ БҮГД АМЖИЛТТАЙ');
   process.exit(failed ? 1 : 0);
 })().catch((e) => { console.error('FAIL', e); process.exit(1); });

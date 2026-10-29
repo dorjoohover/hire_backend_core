@@ -108,7 +108,8 @@ export class AssessmentService {
     // Өмнө нь `role <= 40` → client (20), байгууллага (30) ч admin болж БҮХ байгууллагын тестийг хардаг байв.
     const isAdmin = Admins.includes(+user?.role);
     const { data, count, total } = await this.dao.findAll(pg, isAdmin);
-    const assessments = [...data, ...orgAss];
+    // Байгууллагад оноогдсон тестүүд жагсаалтын эхэнд.
+    const assessments = [...orgAss, ...data];
 
     // Batch: нэг query-аар бүх userService тоог авна (N+1 арилгана)
     const assessmentIds = assessments.map((a) => a.id);
