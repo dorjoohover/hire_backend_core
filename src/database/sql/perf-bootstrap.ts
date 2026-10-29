@@ -350,8 +350,12 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   `ALTER TABLE "userService"
    ADD COLUMN IF NOT EXISTS "showResult" BOOLEAN`,
 
-  // Байгууллагын урилга / сануулгын мэйл, SMS драфт. Nullable → агшин зуур.
-  `ALTER TABLE users ADD COLUMN IF NOT EXISTS "messageTemplates" JSONB`,
+  // Хэрэглэгч рүү явах урилга / сануулгын мэйл, SMS-ийн ерөнхий драфт (admin засна).
+  `CREATE TABLE IF NOT EXISTS message_template (
+     key VARCHAR(32) PRIMARY KEY,
+     body TEXT NOT NULL,
+     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
 
   // NUMBER (90) / TIME (100) асуултын тохиргоо (min/max-аас бусад: бутархай, харуулах хэсэг,
   // нэгж). Nullable, default-гүй → агшин зуур. hire_report энэ баганыг уншдаггүй.

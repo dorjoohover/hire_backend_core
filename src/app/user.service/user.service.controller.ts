@@ -82,14 +82,17 @@ export class UserServiceController {
     );
   }
 
+  /** Хэрэглэгч рүү явах урилга / сануулгын ерөнхий драфт — зөвхөн admin. */
+  @Roles(...Admins)
   @Get('templates')
-  getTemplates(@Request() { user }) {
-    return this.userServiceService.getTemplates(+user.id);
+  getTemplates() {
+    return this.userServiceService.getTemplates();
   }
 
+  @Roles(...Admins)
   @Patch('templates')
-  saveTemplates(@Body() dto: MessageTemplates, @Request() { user }) {
-    return this.userServiceService.saveTemplates(+user.id, dto);
+  saveTemplates(@Body() dto: MessageTemplates) {
+    return this.userServiceService.saveTemplates(dto);
   }
 
   @Post('exam')

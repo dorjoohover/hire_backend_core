@@ -7,6 +7,7 @@ import { UserServiceService } from '../src/app/user.service/user.service.service
 import {
   DEFAULT_TEMPLATES,
   fillTemplate,
+  renderSms,
   toSmsText,
 } from '../src/app/user.service/message-template';
 
@@ -20,9 +21,11 @@ const check = (name: string, actual: any, expected: any) => {
 check('T1 fillTemplate: хувьсагч орлуулна, үл мэдэгдэхийг хэвээр', fillTemplate('{a}-{b}', { a: 'x' }), 'x-{b}');
 check('T2 toSmsText: кирилл → латин (том үсэг)', toSmsText('Өдрийн мэнд, Шинэ ЧАТ'), 'Odriin mend, Shine ChAT');
 check('T3 toSmsText: ASCII бус тэмдэгт хасна, мөр шилжилт → зай', toSmsText('№1 “тест”\nлинк'), '1 test link');
+const longTest = 'Хиймэл оюун ухаан(AI)-ыг ашиглах мэдлэг, чадварыг тодорхойлох тест';
+const sms = renderSms(DEFAULT_TEMPLATES.inviteSms, { org: 'Монгол Шуудан ХК', test: longTest, deadline: '2026.10.30 18:00', link: 'https://hire.mn/exam/12345678901234567' });
+check('T4 renderSms: урт тестийн нэрийг тайрч 160-д багтаана, холбоос бүтэн', [sms.length <= 160, sms.endsWith('https://hire.mn/exam/12345678901234567'), sms.includes('..')], [true, true, true]);
 
 const mail: any[] = [];
-const sms: any[] = [];
 const future = new Date(Date.now() + 86400000);
 const exams: Record<string, any> = {
   A: { code: 'A', email: 'a@x.mn', phone: '99112233', endDate: future, assessment: { name: 'DISC' }, service: { user: { id: 7, organizationName: 'Хайр' } } },
@@ -30,17 +33,14 @@ const exams: Record<string, any> = {
   C: { code: 'C', email: 'c@x.mn', endDate: new Date(Date.now() - 1000), service: { user: { id: 7 } } },
   D: { code: 'D', email: 'd@x.mn', endDate: future, service: { user: { id: 8 } } },
 };
-const users: Record<number, any> = { 7: { id: 7, organizationName: 'Хайр' } };
+let store: any = {};
 const svc = new UserServiceService(
   {} as any, {} as any, {} as any, {} as any,
   { findByCode: async (c: string) => exams[c] ?? null } as any,
-  {
-    get: async (id: number) => users[id],
-    setMessageTemplates: async (id: number, t: any) => (users[id].messageTemplates = t),
-  } as any,
-  {} as any,
+  {} as any, {} as any,
   { sendInvitation: async (x: any) => mail.push(x) } as any,
   {} as any, {} as any, {} as any, {} as any,
+  { getAll: async () => ({ ...store }), saveAll: async (t: any) => (store = { ...t }) } as any,
 );
 
 (async () => {
@@ -61,17 +61,21 @@ const svc = new UserServiceService(
   const r3 = await svc.remind({ codes: ['D'], email: true });
   check('R4 admin (owner байхгүй): бусдын кодыг ч илгээнэ', r3.processed, 1);
 
-  await svc.saveTemplates(7, { inviteSms: 'Sain uu {firstname}. {link}', remindEmail: '' } as any);
-  check('S1 saveTemplates: хоосныг хаяна', users[7].messageTemplates, { inviteSms: 'Sain uu {firstname}. {link}' });
+  await svc.saveTemplates({ inviteSms: 'Sain uu {firstname}. {link}', remindEmail: 'Сануулга {test}' } as any);
+  check('S1 saveTemplates: хадгална', store, { inviteSms: 'Sain uu {firstname}. {link}', remindEmail: 'Сануулга {test}' });
+  await svc.remind({ codes: ['D'], email: true });
+  check('S5 admin-ийн драфт бүх илгээгчид (өөр байгууллага) үйлчилнэ', mail[mail.length - 1].body, 'Сануулга ');
+  await svc.saveTemplates({ inviteSms: 'Sain uu {firstname}. {link}', remindEmail: '' } as any);
+  check('S6 хоосон → default руу буцна', store, { inviteSms: 'Sain uu {firstname}. {link}' });
   let err = '';
   try {
-    await svc.saveTemplates(7, { remindSms: 'x'.repeat(150) + '{link}' });
+    await svc.saveTemplates({ remindSms: 'x'.repeat(150) + '{link}' });
   } catch (e: any) {
     err = e.message;
   }
   check('S2 saveTemplates: 160-аас урт SMS драфтыг хүлээж авахгүй', err.startsWith('SMS драфт'), true);
   try {
-    await svc.saveTemplates(7, { inviteSms: 'Link-gui msg' });
+    await svc.saveTemplates({ inviteSms: 'Link-gui msg' });
   } catch (e: any) {
     err = e.message;
   }

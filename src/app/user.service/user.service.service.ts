@@ -45,8 +45,9 @@ import {
   sendSkytelSms,
   SMS_MAX,
   TEMPLATE_KEYS,
-  toSmsText,
+  renderSms,
 } from './message-template';
+import { MessageTemplateDao } from './message-template.dao';
 import { ExamEntity } from '../exam/entities/exam.entity';
 import {
   checkQrExpiry,
@@ -73,6 +74,7 @@ export class UserServiceService extends BaseService {
     private barimt: BarimtService,
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
+    private templates: MessageTemplateDao,
   ) {
     super();
   }
@@ -541,16 +543,10 @@ export class UserServiceService extends BaseService {
     return exam;
   }
 
-  private templateText(
-    saved: MessageTemplates | undefined,
-    key: keyof MessageTemplates,
-    vars: Record<string, string>,
-  ) {
+  /** Admin-ийн хадгалсан драфт, хоосон бол default. */
+  private pickTemplate(saved: MessageTemplates, key: keyof MessageTemplates) {
     const tpl = saved?.[key];
-    return fillTemplate(
-      typeof tpl === 'string' && tpl.trim() ? tpl : DEFAULT_TEMPLATES[key],
-      vars,
-    );
+    return typeof tpl === 'string' && tpl.trim() ? tpl : DEFAULT_TEMPLATES[key];
   }
 
   /** Урилга / сануулгыг мэйл ба/эсвэл SMS-ээр (байгууллагын драфтаар) илгээнэ. */
@@ -566,7 +562,7 @@ export class UserServiceService extends BaseService {
     },
   ) {
     const org = exam.service?.user;
-    const saved = org?.messageTemplates;
+    const saved = await this.templates.getAll();
     // Контейнер UTC байж болно → Улаанбаатарын цагаар ("2026-10-30 18:00:00").
     const [year, month, day, hour, minute] = exam.endDate
       ? new Date(exam.endDate)
@@ -576,7 +572,10 @@ export class UserServiceService extends BaseService {
     const vars = {
       lastname: exam.lastname ?? '',
       firstname: exam.firstname ?? '',
-      org: org?.organizationName ?? '',
+      // Хувь хэрэглэгч урьсан бол байгууллагын нэр байхгүй → нэрээр нь.
+      org:
+        org?.organizationName ||
+        [org?.lastname, org?.firstname].filter(Boolean).join(' '),
       test: exam.assessment?.name ?? exam.assessmentName ?? '',
       deadline: exam.endDate ? `${year}.${month}.${day} ${hour}:${minute}` : '',
       link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${exam.code}`,
@@ -603,8 +602,8 @@ export class UserServiceService extends BaseService {
         password: opts.password,
         // Драфт засаагүй урилга → анхны HTML текст хэвээр.
         body:
-          remind || saved?.inviteEmail?.trim()
-            ? this.templateText(saved, `${kind}Email`, vars)
+          remind || saved.inviteEmail?.trim()
+            ? fillTemplate(this.pickTemplate(saved, `${kind}Email`), vars)
             : undefined,
         subject: remind ? 'Сануулга: тестээ бөглөнө үү' : undefined,
         action: remind ? 'sent reminder' : undefined,
@@ -613,21 +612,19 @@ export class UserServiceService extends BaseService {
     if (opts.sms && exam.phone) {
       await sendSkytelSms(
         exam.phone,
-        toSmsText(this.templateText(saved, `${kind}Sms`, vars)),
+        renderSms(this.pickTemplate(saved, `${kind}Sms`), vars),
       );
     }
   }
 
-  public async getTemplates(userId: number) {
-    const user = await this.userDao.get(userId);
+  public async getTemplates() {
     return {
-      templates: user?.messageTemplates ?? {},
+      templates: await this.templates.getAll(),
       defaults: DEFAULT_TEMPLATES,
     };
   }
 
-  public async saveTemplates(userId: number, dto: MessageTemplates) {
-    const user = await this.userDao.get(userId);
+  public async saveTemplates(dto: MessageTemplates) {
     const clean: MessageTemplates = {};
     for (const key of TEMPLATE_KEYS) {
       const v = dto?.[key];
@@ -636,11 +633,11 @@ export class UserServiceService extends BaseService {
         throw new HttpException(`${key} буруу байна.`, HttpStatus.BAD_REQUEST);
       clean[key] = v;
     }
-    // SMS-ийг бодит байгууллагын нэр, ~40 тэмдэгт тестийн нэр, бодит урттай холбоосоор шалгана.
+    // SMS-ийг ~30 тэмдэгт байгууллагын нэр, бодит урттай холбоосоор шалгана ({test} тайрагдана).
     const sample = {
       lastname: 'Bat',
       firstname: 'Dorj',
-      org: user?.organizationName ?? '',
+      org: 'x'.repeat(30),
       test: 'x'.repeat(40),
       deadline: '2026.01.01 18:00',
       link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${'1'.repeat(17)}`,
@@ -651,14 +648,14 @@ export class UserServiceService extends BaseService {
           'SMS драфтад тестийн холбоос {link} заавал байх ёстой.',
           HttpStatus.BAD_REQUEST,
         );
-      const len = toSmsText(this.templateText(clean, key, sample)).length;
+      const len = renderSms(this.pickTemplate(clean, key), sample).length;
       if (len > SMS_MAX)
         throw new HttpException(
           `SMS драфт хувьсагч орлуулсны дараа ~${len} тэмдэгт болж байна (${SMS_MAX} хүртэл). Богиносгоно уу.`,
           HttpStatus.BAD_REQUEST,
         );
     }
-    await this.userDao.setMessageTemplates(userId, clean);
+    await this.templates.saveAll(clean);
     return clean;
   }
 

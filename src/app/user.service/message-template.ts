@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 /**
- * Байгууллагын урилга / сануулгын мессежийн драфт (users."messageTemplates" JSONB).
+ * Хэрэглэгч рүү явах урилга / сануулгын ерөнхий драфт (message_template хүснэгт, admin засна).
  * Хоосон талбар → DEFAULT_TEMPLATES. Хувьсагч: {lastname} {firstname} {org} {test} {deadline} {link}.
  */
 export type MessageTemplates = {
@@ -23,7 +23,7 @@ export const DEFAULT_TEMPLATES: Required<MessageTemplates> = {
     'Эрхэм {lastname} овогтой {firstname} танд {org} байгууллагаас {test} онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна.\n\n' +
     'Та "Тест өгөх" товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцана уу.\n\n' +
     'Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.',
-  inviteSms: '{org}-s tand {test} testiin urilga irlee. {deadline} hurtel: {link}',
+  inviteSms: '{org}: {test} testiin urilga. {deadline} hurtel: {link}',
   remindEmail:
     'Эрхэм {lastname} овогтой {firstname} танд {org} байгууллагаас илгээсэн {test} тестийг та хараахан бөглөж дуусгаагүй байна.\n\n' +
     'Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй тул амжиж бөглөнө үү.',
@@ -55,6 +55,20 @@ export const toSmsText = (text: string) =>
     .replace(/[^\x20-\x7E]+/g, ' ')
     .replace(/ {2,}/g, ' ')
     .trim();
+
+/**
+ * Драфтыг SMS болгоно. 160-аас хэтэрвэл {test}-ийг багтахуйц тайрна (тестийн нэр ихэвчлэн урт).
+ * shortcut: {test} драфтад нэг л удаа байна гэж тооцно; олон удаа бол урт хэтэрч sendSkytelSms алдаа шиднэ.
+ */
+export const renderSms = (tpl: string, vars: Record<string, string>) => {
+  const text = toSmsText(fillTemplate(tpl, vars));
+  if (text.length <= SMS_MAX || !tpl.includes('{test}')) return text;
+  // '..'-аар хэмждэг: хоосон утга давхар зайг нэгтгэж 1 тэмдэгт буруу тооцдог.
+  const room =
+    SMS_MAX - toSmsText(fillTemplate(tpl, { ...vars, test: '..' })).length;
+  const test = toSmsText(vars.test ?? '').slice(0, Math.max(0, room));
+  return toSmsText(fillTemplate(tpl, { ...vars, test: `${test}..` }));
+};
 
 /** https://websms.skytel.mn → API хэсэг. Токен: SKYTEL_SMS_TOKEN. */
 export async function sendSkytelSms(phone: string, text: string) {

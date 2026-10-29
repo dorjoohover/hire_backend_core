@@ -138,6 +138,7 @@ function makeHarness(
     {} as any, // result
     barimt,
     {} as any, // authService
+    {} as any, // templates
   );
   return { svc, calls, rows, wallet: () => wallet };
 }

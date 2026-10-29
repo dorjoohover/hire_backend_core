@@ -6,7 +6,6 @@ import { FeedbackEntity } from 'src/app/feedback/entities/feedback.entity';
 import { PaymentEntity } from 'src/app/payment/entities/payment.entity';
 import { TransactionEntity } from 'src/app/payment/entities/transaction.entity';
 import { UserServiceEntity } from 'src/app/user.service/entities/user.service.entity';
-import { MessageTemplates } from 'src/app/user.service/message-template';
 import {
   Entity,
   Column,
@@ -52,9 +51,6 @@ export class UserEntity {
   wallet: number;
   @Column({ default: false })
   emailVerified?: boolean;
-  /** Байгууллагын урилга / сануулгын мессежийн драфт (user.service/message-template.ts). */
-  @Column({ type: 'jsonb', nullable: true })
-  messageTemplates?: MessageTemplates;
   @OneToMany(() => PaymentEntity, (payment) => payment.user, {
     nullable: true,
   })
