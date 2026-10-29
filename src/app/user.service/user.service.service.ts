@@ -21,6 +21,7 @@ import { AssessmentDao } from '../assessment/dao/assessment.dao';
 import { QpayService } from '../payment/qpay.service';
 import {
   AssessmentAudience,
+  AssessmentStatus,
   generatePassword,
   PaymentStatus,
   PaymentType,
@@ -37,6 +38,16 @@ import { saltOrRounds } from '../user/user.service';
 import { EmailService } from '../email/email.service';
 import { AuthService } from 'src/auth/auth.service';
 import { effectiveShowResult } from './show-result';
+import {
+  DEFAULT_TEMPLATES,
+  fillTemplate,
+  MessageTemplates,
+  sendSkytelSms,
+  SMS_MAX,
+  TEMPLATE_KEYS,
+  toSmsText,
+} from './message-template';
+import { ExamEntity } from '../exam/entities/exam.entity';
 import {
   checkQrExpiry,
   parseQrExpiry,
@@ -68,7 +79,11 @@ export class UserServiceService extends BaseService {
   public async create(dto: CreateUserServiceDto, user: any) {
     const assessment = await this.assessmentDao.findOne(dto.assessment);
     const role = +user['role'];
-    if (assessment.audience == AssessmentAudience.ORGANIZATION) {
+    // Admin-ийн "зөвхөн энэ байгууллагад" toggle нь status=ONLY + owner тавьдаг (audience-д хүрдэггүй).
+    if (
+      assessment.audience == AssessmentAudience.ORGANIZATION ||
+      assessment.status == AssessmentStatus.ONLY
+    ) {
       if (role == Role.organization) {
         if (assessment?.owner?.id != user['id'])
           throw new HttpException(
@@ -517,7 +532,178 @@ export class UserServiceService extends BaseService {
     return code;
   }
 
-  public async sendLinkToMail(dto: SendLinkToEmails, id?: number) {
+  /** owner = дуудаж буй байгууллагын id; undefined = admin / дотоод дуудлага (шалгахгүй). */
+  private async ownedExam(code: string, owner?: number) {
+    const exam = await this.examDao.findByCode(code);
+    if (!exam) throw new Error(`Код олдсонгүй: ${code}`);
+    if (owner != null && exam.service?.user?.id !== owner)
+      throw new Error(`Код танд хамаарахгүй: ${code}`);
+    return exam;
+  }
+
+  private templateText(
+    saved: MessageTemplates | undefined,
+    key: keyof MessageTemplates,
+    vars: Record<string, string>,
+  ) {
+    const tpl = saved?.[key];
+    return fillTemplate(
+      typeof tpl === 'string' && tpl.trim() ? tpl : DEFAULT_TEMPLATES[key],
+      vars,
+    );
+  }
+
+  /** Урилга / сануулгыг мэйл ба/эсвэл SMS-ээр (байгууллагын драфтаар) илгээнэ. */
+  private async notifyExam(
+    exam: ExamEntity,
+    kind: 'invite' | 'remind',
+    opts: {
+      email: boolean;
+      sms: boolean;
+      isNewUser?: boolean;
+      password?: string;
+      id?: number;
+    },
+  ) {
+    const org = exam.service?.user;
+    const saved = org?.messageTemplates;
+    // Контейнер UTC байж болно → Улаанбаатарын цагаар ("2026-10-30 18:00:00").
+    const [year, month, day, hour, minute] = exam.endDate
+      ? new Date(exam.endDate)
+          .toLocaleString('sv-SE', { timeZone: 'Asia/Ulaanbaatar' })
+          .split(/[-\s:]/)
+      : ['', '', '', '', ''];
+    const vars = {
+      lastname: exam.lastname ?? '',
+      firstname: exam.firstname ?? '',
+      org: org?.organizationName ?? '',
+      test: exam.assessment?.name ?? exam.assessmentName ?? '',
+      deadline: exam.endDate ? `${year}.${month}.${day} ${hour}:${minute}` : '',
+      link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${exam.code}`,
+    };
+
+    if (opts.email && exam.email) {
+      const remind = kind === 'remind';
+      await this.mailer.sendInvitation({
+        assessment: exam.assessment,
+        code: `${exam.code}`,
+        day,
+        month,
+        year,
+        minute,
+        hour,
+        firstname: exam.firstname,
+        id: opts.id,
+        email: exam.email,
+        isNewUser: !!opts.isNewUser,
+        lastname: exam.lastname,
+        phone: exam.phone,
+        visible: exam.visible,
+        orgName: org?.organizationName,
+        password: opts.password,
+        // Драфт засаагүй урилга → анхны HTML текст хэвээр.
+        body:
+          remind || saved?.inviteEmail?.trim()
+            ? this.templateText(saved, `${kind}Email`, vars)
+            : undefined,
+        subject: remind ? 'Сануулга: тестээ бөглөнө үү' : undefined,
+        action: remind ? 'sent reminder' : undefined,
+      });
+    }
+    if (opts.sms && exam.phone) {
+      await sendSkytelSms(
+        exam.phone,
+        toSmsText(this.templateText(saved, `${kind}Sms`, vars)),
+      );
+    }
+  }
+
+  public async getTemplates(userId: number) {
+    const user = await this.userDao.get(userId);
+    return {
+      templates: user?.messageTemplates ?? {},
+      defaults: DEFAULT_TEMPLATES,
+    };
+  }
+
+  public async saveTemplates(userId: number, dto: MessageTemplates) {
+    const user = await this.userDao.get(userId);
+    const clean: MessageTemplates = {};
+    for (const key of TEMPLATE_KEYS) {
+      const v = dto?.[key];
+      if (v == null || v === '') continue;
+      if (typeof v !== 'string' || v.length > 3000)
+        throw new HttpException(`${key} буруу байна.`, HttpStatus.BAD_REQUEST);
+      clean[key] = v;
+    }
+    // SMS-ийг бодит байгууллагын нэр, ~40 тэмдэгт тестийн нэр, бодит урттай холбоосоор шалгана.
+    const sample = {
+      lastname: 'Bat',
+      firstname: 'Dorj',
+      org: user?.organizationName ?? '',
+      test: 'x'.repeat(40),
+      deadline: '2026.01.01 18:00',
+      link: `${(process.env.WEB || 'https://hire.mn').replace(/\/$/, '')}/exam/${'1'.repeat(17)}`,
+    };
+    for (const key of ['inviteSms', 'remindSms'] as const) {
+      if (clean[key] && !clean[key].includes('{link}'))
+        throw new HttpException(
+          'SMS драфтад тестийн холбоос {link} заавал байх ёстой.',
+          HttpStatus.BAD_REQUEST,
+        );
+      const len = toSmsText(this.templateText(clean, key, sample)).length;
+      if (len > SMS_MAX)
+        throw new HttpException(
+          `SMS драфт хувьсагч орлуулсны дараа ~${len} тэмдэгт болж байна (${SMS_MAX} хүртэл). Богиносгоно уу.`,
+          HttpStatus.BAD_REQUEST,
+        );
+    }
+    await this.userDao.setMessageTemplates(userId, clean);
+    return clean;
+  }
+
+  /** Тест бөглөж дуусгаагүй, хугацаа нь дуусаагүй шалгуулагчдад сануулга. */
+  public async remind(
+    dto: { codes: string[]; email?: boolean; sms?: boolean },
+    owner?: number,
+  ) {
+    const codes = [...new Set((dto.codes ?? []).map(String))].slice(0, 200);
+    let processed = 0;
+    let skipped = 0;
+    const failures: { code: string; error: string }[] = [];
+    for (const code of codes) {
+      try {
+        const exam = await this.ownedExam(code, owner);
+        if (
+          exam.userEndDate ||
+          (exam.endDate && new Date(exam.endDate).getTime() < Date.now())
+        ) {
+          skipped++;
+          continue;
+        }
+        await this.notifyExam(exam, 'remind', {
+          email: !!dto.email,
+          sms: !!dto.sms,
+        });
+        processed++;
+      } catch (err: any) {
+        failures.push({ code, error: err?.message?.slice(0, 500) || 'unknown' });
+      }
+    }
+    return {
+      success: failures.length === 0,
+      processed,
+      skipped,
+      failed: failures.length,
+      failures: failures.length ? failures : undefined,
+    };
+  }
+
+  public async sendLinkToMail(
+    dto: SendLinkToEmails,
+    id?: number,
+    owner?: number,
+  ) {
     const links = dto.links || [];
     if (links.length === 0) {
       return { success: true, processed: 0, failed: 0 };
@@ -528,6 +714,7 @@ export class UserServiceService extends BaseService {
     const CONCURRENCY = 3;
 
     const processOne = async (email: SendLinkToEmail) => {
+      const exam = await this.ownedExam(email.code, owner);
       await this.examService.updateExamByCode(email.code, {
         email: email.email,
         firstname: email.firstname,
@@ -561,35 +748,24 @@ export class UserServiceService extends BaseService {
         }
       }
 
-      if (dto.noEmail) return;
-
-      const exam = await this.examDao.findByCode(email.code);
-      const date = new Date(exam.endDate);
-      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-      const year = `${date.getFullYear()}`;
-      const month = pad(date.getMonth() + 1);
-      const day = pad(date.getDate());
-      const hour = pad(date.getHours());
-      const minute = pad(date.getMinutes());
-
-      await this.mailer.sendInvitation({
-        assessment: exam.assessment,
-        code: `${email.code}`,
-        day,
-        month,
-        year,
-        minute,
-        hour,
-        firstname: email.firstname,
-        id,
-        email: email.email,
-        isNewUser,
-        lastname: email.lastname,
-        phone: email.phone,
-        visible: email.visible,
-        orgName: exam.service.user?.organizationName,
-        password: generatedPassword,
-      });
+      await this.notifyExam(
+        {
+          ...exam,
+          email: email.email,
+          firstname: email.firstname,
+          lastname: email.lastname,
+          phone: email.phone,
+          visible: email.visible,
+        },
+        'invite',
+        {
+          email: !dto.noEmail,
+          sms: !!dto.sms,
+          isNewUser,
+          password: generatedPassword,
+          id,
+        },
+      );
     };
 
     let cursor = 0;

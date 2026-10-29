@@ -100,9 +100,9 @@ export class AssessmentService {
 
   public async findAll(pg: PaginationDto, user?: UserEntity) {
     let orgAss = [];
+    // Зөвхөн байгууллага өөрөө: урилгаар тест өгсөн шалгуулагчид тухайн байгууллагын тест харагдахгүй.
     if (user?.id) {
-      const owners = await this.exam.getOwners(user.email);
-      orgAss = await this.dao.findOrg([...owners, user.id]);
+      orgAss = await this.dao.findOrg([user.id]);
     }
     const isAdmin = user?.role <= 40; // SUPER_ADMIN=10, ADMIN=40
     const { data, count, total } = await this.dao.findAll(pg, isAdmin);

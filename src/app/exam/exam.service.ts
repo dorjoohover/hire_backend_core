@@ -273,10 +273,6 @@ export class ExamService extends BaseService {
     await this.dao.update(code, dto);
   }
 
-  public async getOwners(email: string) {
-    return await this.dao.findAllOwners(email);
-  }
-
   async getExamInfoByCode(code: string, user?: UserEntity) {
     const result = await this.resultDao.findOne(code);
 

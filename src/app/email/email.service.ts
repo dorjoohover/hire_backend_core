@@ -9,6 +9,9 @@ import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { signEmailToken } from 'src/utils/email-token';
 
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 @Injectable()
 export class EmailService {
   constructor(
@@ -116,16 +119,18 @@ export class EmailService {
     id?: number;
     assessmentName?: number;
     assessment: AssessmentEntity;
+    /** Байгууллагын драфтаас бөглөгдсөн текст (байхгүй бол анхны урилгын текст). */
+    body?: string;
+    subject?: string;
+    action?: string;
   }) {
-    if (input.id) {
-    }
     const { html } = this.sendInvitationTemplate({
       ...input,
     });
     await this.logAndQueue({
       type: EmailLogType.INVITATION,
       to: input.email,
-      subject: 'Танд тестийн урилга ирлээ',
+      subject: input.subject ?? 'Танд тестийн урилга ирлээ',
       html,
       meta: {
         url: UserServiceService.name,
@@ -136,7 +141,7 @@ export class EmailService {
         lastname: input.lastname,
         phone: input.phone,
         visible: input.visible,
-        action: 'sent invitation',
+        action: input.action ?? 'sent invitation',
       },
     });
   }
@@ -436,8 +441,10 @@ export class EmailService {
     minute: string;
     code: string;
     assessment: AssessmentEntity;
+    body?: string;
   }) {
     const {
+      body,
       password,
       email,
       isNewUser,
@@ -565,7 +572,16 @@ export class EmailService {
                           Өдрийн мэнд,
                         </td>
                       </tr>
-                      <tr>
+                      ${
+                      body
+                        ? `<tr>
+                        <td
+                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                        >
+                          <br />${escapeHtml(body).replace(/\n/g, '<br />')}
+                        </td>
+                      </tr>`
+                        : `<tr>
                         <td
                           style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
                         >
@@ -591,7 +607,8 @@ export class EmailService {
                           ${hour}:${minute} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт
                           хүсье.
                         </td>
-                      </tr>
+                      </tr>`
+                      }
                       <br />
                       <tr>
                         <td style="padding: 15px 0; text-align: center;">

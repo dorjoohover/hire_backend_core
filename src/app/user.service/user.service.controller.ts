@@ -15,16 +15,18 @@ import { UserServiceService } from './user.service.service';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  RemindDto,
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
+import { MessageTemplates } from './message-template';
 import {
   UpdateDateDto,
   UpdateUserServiceDto,
 } from './dto/update-user.service.dto';
 import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Roles } from 'src/auth/guards/role/role.decorator';
-import { Role } from 'src/auth/guards/role/role.enum';
+import { Admins, Role } from 'src/auth/guards/role/role.enum';
 import { Public } from 'src/auth/guards/jwt/jwt-auth-guard';
 import { PQ } from 'src/base/decorator/use-pagination-query.decorator';
 import { Pagination } from 'src/base/decorator/pagination.decorator';
@@ -51,12 +53,16 @@ export class UserServiceController {
     }
   }
 
+  // Өмнө нь @Public байсан — нэвтрэлтгүйгээр дурын кодоор урилга илгээх боломжтой байв.
+  // Одоо зөвхөн өөрийн худалдаж авсан кодоор (admin бол бүгд).
   @Post('send')
-  @Public()
-  // @Roles(Role.organization)
-  async sendCodeToEmail(@Body() dto: SendLinkToEmails) {
+  async sendCodeToEmail(@Body() dto: SendLinkToEmails, @Request() { user }) {
     try {
-      const result = await this.userServiceService.sendLinkToMail(dto);
+      const result = await this.userServiceService.sendLinkToMail(
+        dto,
+        undefined,
+        Admins.includes(+user?.role) ? undefined : +user?.id,
+      );
       return result;
     } catch (error) {
       return {
@@ -65,6 +71,25 @@ export class UserServiceController {
         status: error?.status,
       };
     }
+  }
+
+  /** Тест бөглөж дуусгаагүй шалгуулагчдад мэйл / SMS сануулга. */
+  @Post('remind')
+  remind(@Body() dto: RemindDto, @Request() { user }) {
+    return this.userServiceService.remind(
+      dto,
+      Admins.includes(+user?.role) ? undefined : +user?.id,
+    );
+  }
+
+  @Get('templates')
+  getTemplates(@Request() { user }) {
+    return this.userServiceService.getTemplates(+user.id);
+  }
+
+  @Patch('templates')
+  saveTemplates(@Body() dto: MessageTemplates, @Request() { user }) {
+    return this.userServiceService.saveTemplates(+user.id, dto);
   }
 
   @Post('exam')

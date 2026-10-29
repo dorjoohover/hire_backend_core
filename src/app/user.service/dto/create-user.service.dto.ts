@@ -42,4 +42,17 @@ export class SendLinkToEmails {
 
   @ApiProperty({ required: false })
   noEmail?: boolean;
+
+  /** Утас руу Skytel WebSMS-ээр давхар илгээх. */
+  @ApiProperty({ required: false })
+  sms?: boolean;
+}
+
+export class RemindDto {
+  @ApiProperty({ isArray: true, type: String })
+  codes: string[];
+  @ApiProperty({ required: false })
+  email?: boolean;
+  @ApiProperty({ required: false })
+  sms?: boolean;
 }

@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'src/auth/guards/role/role.enum';
 import { PaginationDto } from 'src/base/decorator/pagination';
+import { MessageTemplates } from '../user.service/message-template';
 
 @Injectable()
 export class UserDao {
@@ -169,6 +170,9 @@ export class UserDao {
       ],
     });
   };
+
+  setMessageTemplates = (id: number, messageTemplates: MessageTemplates) =>
+    this._db.update(id, { messageTemplates });
 
   /** Batch: нэг query-аар олон хэрэглэгч авна */
   findByIds = async (ids: number[]) => {

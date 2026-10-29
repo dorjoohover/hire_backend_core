@@ -16,7 +16,6 @@ import { UpdateDateDto } from 'src/app/user.service/dto/update-user.service.dto'
 import { AssessmentDao } from 'src/app/assessment/dao/assessment.dao';
 import { ReportService } from 'src/app/report/report.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
-import { Role } from 'src/auth/guards/role/role.enum';
 import { REPORT_VIEW_GRACE_MINUTES } from 'src/base/constants';
 import { decidePublicReuse, PUBLIC_OPEN_REUSE_DAYS } from '../exam-resume';
 
@@ -446,18 +445,6 @@ export class ExamDao {
       },
       relations: ['assessment', 'service'],
     });
-  };
-
-  findAllOwners = async (email: string) => {
-    const res = await this.db
-      .createQueryBuilder('owner')
-      .innerJoin('owner.service', 'service')
-      .innerJoin('service.user', 'user')
-      .select('DISTINCT user.id', 'userId')
-      .where('owner.email = :email', { email })
-      .andWhere('user.role = :role', { role: Role.organization })
-      .getRawMany();
-    return res.map((r) => r.userId);
   };
 
   findByUser = async (id: number[], user: string, assId: number) => {

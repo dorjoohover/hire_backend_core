@@ -101,6 +101,8 @@ export class AssessmentDao {
         owner: {
           id: In(owners),
         },
+        // ACTIVE/HIGHLIGHTED нь findAll-д аль хэдийн орсон (давхардахгүй), ARCHIVE нуугдана.
+        status: AssessmentStatus.ONLY,
       },
       relations: ['level', 'category'],
       order: {
