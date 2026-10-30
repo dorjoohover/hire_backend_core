@@ -49,6 +49,10 @@ import {
   SMS_MAX,
   TEMPLATE_KEYS,
   renderSms,
+  normalizePhone,
+  smsError,
+  toSmsText,
+  VAR_RE,
 } from './message-template';
 import { MessageDraftDao } from './message-draft.dao';
 import { MessageDraftEntity } from './entities/message-draft.entity';
@@ -762,6 +766,43 @@ export class UserServiceService extends BaseService {
         body: fillHtml(body, vars),
       }),
     };
+  }
+
+  /**
+   * Admin масс SMS: {багана}-г мөр бүрийн утгаар орлуулна (жишээ нь хүн бүрт өөр {link}).
+   * dryRun = зөвхөн шалгаж, илгээх текстийг буцаана. Хариу recipients-ийн дарааллаар.
+   */
+  public async bulkSms(dto: {
+    text?: string;
+    recipients?: Record<string, unknown>[];
+    dryRun?: boolean;
+  }) {
+    const tpl = String(dto?.text ?? '');
+    const rows = Array.isArray(dto?.recipients) ? dto.recipients.slice(0, 50) : [];
+    if (!tpl.trim() || !rows.length)
+      throw new HttpException('Мессеж болон хүлээн авагч оруулна уу.', HttpStatus.BAD_REQUEST);
+    const results: { phone: string; text: string; error?: string }[] = [];
+    for (const row of rows) {
+      // Хоосон нүдийг утгагүйд тооцно → "Утга байхгүй" (холбоосгүй SMS явуулахгүй).
+      const vars = Object.fromEntries(
+        Object.entries(row ?? {})
+          .map(([k, v]) => [k, String(v ?? '').trim()])
+          .filter(([, v]) => v),
+      );
+      const phone = normalizePhone(vars.phone);
+      const filled = fillTemplate(tpl, vars);
+      const text = toSmsText(filled);
+      const missing = filled.match(VAR_RE)?.[0];
+      let error = missing ? `Утга байхгүй: ${missing}` : smsError(phone, text);
+      if (!error && !dto.dryRun)
+        error = await sendSkytelSms(phone, text).then(
+          () => undefined,
+          (e) => e?.message?.slice(0, 300) || 'SMS илгээж чадсангүй',
+        );
+      results.push({ phone, text, ...(error ? { error } : {}) });
+    }
+    const failed = results.filter((r) => r.error).length;
+    return { sent: dto.dryRun ? 0 : results.length - failed, failed, results };
   }
 
   /** Тест бөглөж дуусгаагүй, хугацаа нь дуусаагүй шалгуулагчдад сануулга. */

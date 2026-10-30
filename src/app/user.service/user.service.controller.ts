@@ -17,6 +17,7 @@ import {
   CreateUserServiceDto,
   MessageDraftDto,
   RemindDto,
+  BulkSmsDto,
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
@@ -87,6 +88,13 @@ export class UserServiceController {
   @Get('templates')
   listDrafts() {
     return this.userServiceService.listDrafts();
+  }
+
+  /** Admin масс SMS (Skytel). dryRun: true = зөвхөн шалгана. */
+  @Roles(...Admins)
+  @Post('sms')
+  bulkSms(@Body() dto: BulkSmsDto) {
+    return this.userServiceService.bulkSms(dto);
   }
 
   // Байгууллага урилга / сануулга илгээхдээ загвар сонгож, харна (нэвтэрсэн бүх хэрэглэгч).

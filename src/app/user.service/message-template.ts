@@ -39,8 +39,11 @@ export const DEFAULT_SUBJECTS = {
   remind: 'Сануулга: тестээ бөглөнө үү',
 };
 
+/** {нэр} — кирилл нэртэй хувьсагч ч болно (масс SMS-ийн Excel багана). */
+export const VAR_RE = /\{([\p{L}\p{N}_]+)\}/gu;
+
 export const fillTemplate = (tpl: string, vars: Record<string, string>) =>
-  tpl.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m);
+  tpl.replace(VAR_RE, (m, k) => vars[k] ?? m);
 
 export const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -92,16 +95,29 @@ export const renderSms = (tpl: string, vars: Record<string, string>) => {
   return toSmsText(fillTemplate(tpl, { ...vars, test: `${test}..` }));
 };
 
+/** "+976 9911-2233" → "99112233". */
+export const normalizePhone = (p: unknown) =>
+  String(p ?? '')
+    .replace(/\D/g, '')
+    .replace(/^976(?=\d{8}$)/, '');
+
+/** Skytel-д явуулахын өмнөх шалгалт (масс SMS-ийн dryRun-д ч ашиглана). */
+export const smsError = (phone: string, text: string) => {
+  if (!/^\d{8}$/.test(phone)) return `Утасны дугаар буруу: ${phone}`;
+  if (!text) return 'Мессеж хоосон байна';
+  if (text.length > SMS_MAX) return `SMS ${text.length} тэмдэгт (${SMS_MAX}-аас их)`;
+};
+
 /** https://websms.skytel.mn → API хэсэг. Токен: SKYTEL_SMS_TOKEN. */
 export async function sendSkytelSms(phone: string, text: string) {
   const token = process.env.SKYTEL_SMS_TOKEN;
   if (!token) throw new Error('SKYTEL_SMS_TOKEN тохируулаагүй байна');
-  if (!/^\d{8}$/.test(phone)) throw new Error(`Утасны дугаар буруу: ${phone}`);
-  if (text.length > SMS_MAX)
-    throw new Error(`SMS ${text.length} тэмдэгт (${SMS_MAX}-аас их)`);
+  const invalid = smsError(phone, text);
+  if (invalid) throw new Error(invalid);
   const res = await axios.post(
     process.env.SKYTEL_SMS_URL || 'https://websms.skytel.mn/api/v1/sms/send',
-    { phone, text },
+    // Skytel-ийн жишээнд phone нь тоо.
+    { phone: Number(phone), text },
     {
       headers: { Authorization: `Bearer ${token}` },
       timeout: 15000,

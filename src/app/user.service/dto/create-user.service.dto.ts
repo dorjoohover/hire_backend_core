@@ -81,3 +81,13 @@ export class RemindDto {
   @ApiProperty({ required: false })
   smsDraft?: number;
 }
+
+export class BulkSmsDto {
+  @ApiProperty()
+  text: string;
+  /** [{ phone, ...бусад багана }] — нэг хүсэлтэд 50 хүртэл. */
+  @ApiProperty({ isArray: true, type: Object })
+  recipients: Record<string, unknown>[];
+  @ApiProperty({ required: false })
+  dryRun?: boolean;
+}

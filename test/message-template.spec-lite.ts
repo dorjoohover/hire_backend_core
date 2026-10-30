@@ -116,6 +116,36 @@ const svc = new UserServiceService(
   const sample = { lastname: 'Bat', firstname: 'Dorj', org: 'Хайр', test: 'x'.repeat(40), deadline: '2026.01.01 18:00', link: 'https://hire.mn/exam/' + '1'.repeat(17) };
   check('S3 default SMS драфтууд 160-д багтана', ['inviteSms', 'remindSms'].map((k) => toSmsText(fillTemplate(DEFAULT_TEMPLATES[k], sample)).length <= 160), [true, true]);
 
+  // Admin масс SMS
+  const b: any = await svc.bulkSms({
+    dryRun: true,
+    text: 'Sain uu {нэр}, {link}',
+    recipients: [
+      { phone: '+976 9911-2233', нэр: 'Болд', link: 'https://hire.mn/x/1' },
+      { phone: 88112233, нэр: 'Сараа', link: ' ' },
+      { phone: '1234', нэр: 'Б', link: 'l' },
+      { phone: '99001122', нэр: 'ө'.repeat(200), link: 'l' },
+    ],
+  });
+  check('B1 масс SMS dryRun: дугаар цэвэрлэх, кирилл хувьсагч, дутуу утга / буруу дугаар / урт', [
+    b.results[0],
+    b.results[1].error,
+    b.results[2].error,
+    b.results[3].error,
+    b.sent,
+    b.failed,
+  ], [
+    { phone: '99112233', text: 'Sain uu Bold, https://hire.mn/x/1' },
+    'Утга байхгүй: {link}',
+    'Утасны дугаар буруу: 1234',
+    'SMS 211 тэмдэгт (160-аас их)',
+    0,
+    3,
+  ]);
+  const b2: any = await svc.bulkSms({ text: 'x {phone}', recipients: [{ phone: '99112233' }] });
+  check('B2 масс SMS илгээх: токенгүй → мөрийн алдаа', [b2.sent, b2.results[0].error], [0, 'SKYTEL_SMS_TOKEN тохируулаагүй байна']);
+  check('B3 хоосон мессеж / хүлээн авагчгүй', await err(() => svc.bulkSms({ text: ' ', recipients: [{ phone: '1' }] })), 'Мессеж болон хүлээн авагч оруулна уу.');
+
   console.log(failed === 0 ? '\n✅ БҮГД АМЖИЛТТАЙ' : `\n❌ ${failed} тест унасан`);
   process.exit(failed === 0 ? 0 : 1);
 })();
