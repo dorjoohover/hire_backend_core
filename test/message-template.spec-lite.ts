@@ -4,8 +4,10 @@
  *   npx ts-node -P tsconfig.json -r tsconfig-paths/register test/message-template.spec-lite.ts
  */
 import { UserServiceService } from '../src/app/user.service/user.service.service';
+import { EmailService } from '../src/app/email/email.service';
 import {
   DEFAULT_TEMPLATES,
+  fillHtml,
   fillTemplate,
   renderSms,
   toSmsText,
@@ -66,9 +68,9 @@ const svc = new UserServiceService(
     [1, 2, 2, ['D', 'X']],
   );
   check('R2 remind мэйл: сануулгын гарчиг + драфт текст', [mail[0].subject, mail[0].body.includes('DISC'), mail[0].isNewUser], ['Сануулга: тестээ бөглөнө үү', true, false]);
-  exams.A.endDate = new Date('2026-10-30T10:00:00Z');
+  exams.A.endDate = new Date('2099-10-30T10:00:00Z');
   await svc.remind({ codes: ['A'], email: true }, 7);
-  check('R5 хугацааг Улаанбаатарын цагаар (UTC+8)', [mail[1]?.hour, mail[1]?.body.includes('2026.10.30 18:00')], ['18', true]);
+  check('R5 хугацааг Улаанбаатарын цагаар (UTC+8)', mail[1]?.body.includes('2099.10.30 18:00'), true);
   const r2 = await svc.remind({ codes: ['A'], sms: true }, 7);
   check('R3 remind SMS: токенгүй → тодорхой алдаа', r2.failures?.[0].error, 'SKYTEL_SMS_TOKEN тохируулаагүй байна');
   const r3 = await svc.remind({ codes: ['D'], email: true });
@@ -76,7 +78,7 @@ const svc = new UserServiceService(
 
   const err = async (fn: () => Promise<any>) => fn().then(() => '', (e) => e.message);
   const d1 = await svc.saveDraft({ name: 'Сануулга 1', type: 'remindEmail', subject: '{test} — сануулга', body: '<p>Сайн уу {firstname}, <b>{test}</b>: {link}</p>', active: true });
-  const d2 = await svc.saveDraft({ name: 'Сануулга 2', type: 'remindEmail', body: '<p>Хоёр дахь</p>', active: false });
+  const d2 = await svc.saveDraft({ name: 'Сануулга 2', type: 'remindEmail', body: '<p>Хоёр дахь</p><p>{button}</p>', active: false });
   exams.D.firstname = '<script>x</script>';
   await svc.remind({ codes: ['D'], email: true });
   const last = mail[mail.length - 1];
@@ -94,12 +96,31 @@ const svc = new UserServiceService(
   const pv: any = await svc.previewDraft({ type: 'inviteEmail', subject: 'Урилга: {test}', body: '<p>{firstname}</p>' });
   check('S7 preview мэйл: жишээ утгаар бөглөнө', [pv.subject, pv.html], ['Урилга: DISC зан төлөвийн тест', '<html><p>Болд</p></html>']);
   const ps: any = await svc.previewDraft({ type: 'inviteSms' });
+  check('S9 и-мэйл: {button}/{link}-гүй драфт', await err(() => svc.saveDraft({ name: 'x', type: 'inviteEmail', body: '<p>Сайн уу</p>' })), 'И-мэйлд тест өгөх товч {button} эсвэл холбоос {link} заавал байх ёстой.');
+  const d3: any = await svc.saveDraft({ name: 'x', type: 'inviteEmail', body: '{button}', button: ' Эхлэх ', logo: 'f.png' });
+  check('S10 товч / лого хадгалагдана (trim)', [d3.button, d3.logo, d1.button], ['Эхлэх', 'f.png', null]);
+
+  // Мэйлийн блок хувьсагч (EmailService) — header/footer-оос бусад нь драфт.
+  process.env.WEB = 'https://hire.mn';
+  const es = new EmailService({} as any, {} as any, {} as any, {} as any);
+  const asm: any = { name: 'DISC', description: '<b>Тайлбар</b>', usage: 'U', measure: 'M', advice: '<p>A</p>' };
+  const render = (body: string, x: any = {}) => es.previewInvitation({ isNewUser: false, email: 'e@x.mn', code: '123', assessment: asm, body, ...x });
+  const h1 = render('<p>{button}</p><p>Тест: {description}!</p><p>{foo} {constructor}</p>', { button: '<Эхлэх>', logo: 'a b.png' });
+  check('E1 {button}: <p>-г хасна, текстийг escape, тестийн холбоос', [h1.includes('<p><table'), h1.includes('&#60;Эхлэх&#62;'), h1.includes('href="https://hire.mn/exam/123"')], [false, true, true]);
+  check('E2 мөр доторх {description}: <p> хэвээр, HTML-ээр', h1.includes('<p>Тест: <b>Тайлбар</b>!</p>'), true);
+  check('E3 үл мэдэгдэх / prototype нэр хэвээр', h1.includes('<p>{foo} {constructor}</p>'), true);
+  check('E4 лого: web-ийн file proxy, default товчгүй', [h1.includes('src="https://hire.mn/api/file/a%20b.png"'), h1.includes('Тест өгөх')], [true, false]);
+  const h2 = render('<p>Сайн уу</p>', { isNewUser: true, password: 'P@ss' });
+  check('E5 {account}-гүй драфт → шинэ хэрэглэгчид эхэнд нь нэмнэ', [h2.indexOf('P@ss') > 0, h2.indexOf('P@ss') < h2.indexOf('Сайн уу'), render('{account}').includes('Нууц үг')], [true, true, false]);
+  check('E6 утга доторх {button} блок болохгүй', render(fillHtml('<p>{firstname}</p>', { firstname: '{button}' })).includes('<table cellspacing'), false);
+  const h3 = render(fillHtml(DEFAULT_TEMPLATES.inviteEmail, { lastname: 'a', firstname: 'b', org: 'o', test: 't', deadline: 'd', link: 'l' }));
+  check('E7 default урилга: товч + тестийн тухай + холбогдох', [h3.includes('Тест өгөх'), h3.includes('DISC тестийн тухай'), h3.includes('info@hire.mn'), /\{\w+\}/.test(h3)], [true, true, true, false]);
   check('S8 preview SMS: default + урт', [ps.text.startsWith('Hire HHK:'), ps.length <= 160], [true, true]);
   // Байгууллага илгээх үедээ загвар сонгоно (d1 идэвхгүй болсон, d2 идэвхтэй).
   await svc.remind({ codes: ['D'], email: true, emailDraft: d1.id });
   check('P1 сонгосон загвар идэвхтэйг давна', mail[mail.length - 1].body.startsWith('<p>Сайн уу'), true);
   await svc.remind({ codes: ['D'], email: true });
-  check('P2 сонгоогүй бол admin-ий идэвхтэй', mail[mail.length - 1].body, '<p>Хоёр дахь</p>');
+  check('P2 сонгоогүй бол admin-ий идэвхтэй', mail[mail.length - 1].body, '<p>Хоёр дахь</p><p>{button}</p>');
   const n = mail.length;
   check('P3 өөр төрлийн / байхгүй загвар → алдаа, юу ч илгээхгүй', [
     await err(() => svc.remind({ codes: ['D'], email: true, smsDraft: d1.id })),
@@ -107,7 +128,7 @@ const svc = new UserServiceService(
     mail.length,
   ], ['Сонгосон загвар олдсонгүй.', 'Сонгосон загвар олдсонгүй.', n]);
   const opts: any[] = await svc.draftOptions();
-  check('P4 сонголтын жагсаалтад текст орохгүй', [opts.length, 'body' in opts[0], opts.find((o) => o.active)?.id], [2, false, d2.id]);
+  check('P4 сонголтын жагсаалтад текст орохгүй', [opts.length, 'body' in opts[0], opts.find((o) => o.type === 'remindEmail' && o.active)?.id], [3, false, d2.id]);
   check('P5 хадгалсан загварыг харах / байхгүй id', [
     ((await svc.previewSaved('remindEmail', d1.id)) as any).subject,
     await err(() => svc.previewSaved('remindEmail', 999)),

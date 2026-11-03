@@ -613,14 +613,10 @@ export class UserServiceService extends BaseService {
 
     if (opts.email && exam.email) {
       const remind = kind === 'remind';
+      const draft = active[`${kind}Email`];
       await this.mailer.sendInvitation({
         assessment: exam.assessment,
         code: `${exam.code}`,
-        day,
-        month,
-        year,
-        minute,
-        hour,
         firstname: exam.firstname,
         id: opts.id,
         email: exam.email,
@@ -628,18 +624,11 @@ export class UserServiceService extends BaseService {
         lastname: exam.lastname,
         phone: exam.phone,
         visible: exam.visible,
-        orgName: org?.organizationName,
         password: opts.password,
-        // Идэвхтэй урилгын драфтгүй бол анхны HTML текст хэвээр.
-        body:
-          remind || active.inviteEmail
-            ? fillHtml(this.draftBody(active, `${kind}Email`), vars)
-            : undefined,
-        subject: fillTemplate(
-          active[`${kind}Email`]?.subject || DEFAULT_SUBJECTS[kind],
-          vars,
-        ),
-        button: active[`${kind}Email`]?.button,
+        body: fillHtml(this.draftBody(active, `${kind}Email`), vars),
+        subject: fillTemplate(draft?.subject || DEFAULT_SUBJECTS[kind], vars),
+        button: draft?.button,
+        logo: draft?.logo,
         action: remind ? 'sent reminder' : undefined,
       });
     }
@@ -695,6 +684,7 @@ export class UserServiceService extends BaseService {
       type?: string;
       subject?: string;
       button?: string;
+      logo?: string;
       body?: string;
       active?: boolean;
     },
@@ -713,6 +703,10 @@ export class UserServiceService extends BaseService {
     if (subject.length > 255) throw bad('Гарчиг 255 тэмдэгтээс хэтэрч болохгүй.');
     const button = isEmail ? String(dto?.button ?? '').trim() : '';
     if (button.length > 60) throw bad('Товчны текст 60 тэмдэгтээс хэтэрч болохгүй.');
+    const logo = isEmail ? String(dto?.logo ?? '').trim() : '';
+    if (logo.length > 255) throw bad('Логоны холбоос хэт урт байна.');
+    if (isEmail && !/\{(button|link)\}/.test(body))
+      throw bad('И-мэйлд тест өгөх товч {button} эсвэл холбоос {link} заавал байх ёстой.');
     if (!isEmail) {
       if (!body.includes('{link}'))
         throw bad('SMS драфтад тестийн холбоос {link} заавал байх ёстой.');
@@ -731,6 +725,7 @@ export class UserServiceService extends BaseService {
       type,
       subject: subject || null,
       button: button || null,
+      logo: logo || null,
       body,
       active: !!dto.active,
     });
@@ -746,6 +741,7 @@ export class UserServiceService extends BaseService {
     type?: string;
     subject?: string;
     button?: string;
+    logo?: string;
     body?: string;
   }) {
     const type = TEMPLATE_KEYS.includes(dto?.type as any)
@@ -761,16 +757,10 @@ export class UserServiceService extends BaseService {
     return {
       subject: fillTemplate(dto?.subject?.trim() || DEFAULT_SUBJECTS[kind], vars),
       html: this.mailer.previewInvitation({
-        isNewUser: false,
+        // Урилгад {account} хаана гарахыг харуулахын тулд шинэ хэрэглэгч гэж үзнэ.
+        isNewUser: kind === 'invite',
         email: 'bold@example.mn',
-        lastname: vars.lastname,
-        firstname: vars.firstname,
-        orgName: vars.org,
-        year: '2026',
-        month: '12',
-        day: '31',
-        hour: '18',
-        minute: '00',
+        password: 'Hire1234',
         code: '1'.repeat(17),
         assessment: {
           name: vars.test,
@@ -781,6 +771,7 @@ export class UserServiceService extends BaseService {
         } as any,
         body: fillHtml(body, vars),
         button: dto?.button?.trim(),
+        logo: dto?.logo?.trim(),
       }),
     };
   }

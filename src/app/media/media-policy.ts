@@ -41,6 +41,7 @@ export const MEDIA_PURPOSES: Record<string, MediaPurposeDef> = {
     visibility: 'public', kinds: ['image', 'video'],
     max: { image: 10 * MB, video: 1024 * MB }, label: 'Блог',
   },
+  email: { visibility: 'public', kinds: ['image'], max: { image: 5 * MB }, label: 'Мэйлийн лого' },
   avatar: { visibility: 'public', kinds: ['image'], max: { image: 5 * MB }, label: 'Профайл зураг' },
   'studio-icon': { visibility: 'public', kinds: ['image'], max: { image: 5 * MB }, label: 'Studio icon' },
   'studio-image': { visibility: 'public', kinds: ['image'], max: { image: 10 * MB }, label: 'Studio зураг' },

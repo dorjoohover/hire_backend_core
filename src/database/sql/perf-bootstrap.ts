@@ -366,6 +366,7 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
    ON message_draft (type) WHERE active`,
   // И-мэйл драфтын товчны текст (null = "Тест өгөх"). Nullable → агшин зуур.
   `ALTER TABLE message_draft ADD COLUMN IF NOT EXISTS button VARCHAR(60)`,
+  `ALTER TABLE message_draft ADD COLUMN IF NOT EXISTS logo VARCHAR(255)`,
   // Шалгалт дууссаны дараах feedback-ийг тест бүрд унтраах (PG11+: тогтмол default → дахин бичихгүй).
   `ALTER TABLE assessment
    ADD COLUMN IF NOT EXISTS "showFeedback" BOOLEAN NOT NULL DEFAULT true`,

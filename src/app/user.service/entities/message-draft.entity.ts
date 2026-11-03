@@ -29,6 +29,10 @@ export class MessageDraftEntity {
   @Column({ length: 60, nullable: true })
   button: string;
 
+  /** И-мэйлийн логоны file id (null = Hire.mn). */
+  @Column({ length: 255, nullable: true })
+  logo: string;
+
   /** И-мэйл: HTML, SMS: энгийн текст. */
   @Column({ type: 'text' })
   body: string;

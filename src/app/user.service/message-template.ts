@@ -3,7 +3,9 @@ import axios from 'axios';
 /**
  * Хэрэглэгч рүү явах урилга / сануулгын драфтын төрлүүд (message_draft.type, admin засна).
  * Идэвхтэй драфтгүй бол DEFAULT_TEMPLATES. Хувьсагч: {lastname} {firstname} {org} {test} {deadline} {link}.
- * И-мэйлийн body нь HTML, SMS нь энгийн текст.
+ * И-мэйлийн body нь HTML (header/footer-оос бусад бүх агуулга), SMS нь энгийн текст.
+ * И-мэйлд нэмэлт блок: {account} {button} {testInfo} {description} {usage} {measure} {advice}
+ * (EmailService.sendInvitationTemplate орлуулна).
  */
 export type MessageTemplates = {
   inviteEmail?: string;
@@ -19,15 +21,26 @@ export const TEMPLATE_KEYS: (keyof MessageTemplates)[] = [
   'remindSms',
 ];
 
+const EMAIL_FOOTER =
+  '<p>{button}</p>' +
+  '<p>{testInfo}</p>' +
+  '<p>Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын өдрүүдэд 09-18 цагийн хооронд <a href="mailto:info@hire.mn">info@hire.mn</a> мэйл хаягаар эсвэл <a href="tel:+97699099371">976-9909 9371</a> утсаар холбогдоно уу.</p>' +
+  '<p>Хүндэтгэсэн,<br>Hire.mn</p>';
+
 export const DEFAULT_TEMPLATES: Required<MessageTemplates> = {
   inviteEmail:
+    '<p>{account}</p>' +
+    '<p>Өдрийн мэнд,</p>' +
     '<p>Эрхэм <strong>{lastname}</strong> овогтой <strong>{firstname}</strong> танд <strong>{org}</strong> байгууллагаас <strong>{test}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна.</p>' +
     '<p>Та <strong>"Тест өгөх"</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцана уу.</p>' +
-    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>',
+    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт хүсье.</p>' +
+    EMAIL_FOOTER,
   inviteSms: '{org}: {test} testiin urilga. {deadline} hurtel: {link}',
   remindEmail:
+    '<p>Өдрийн мэнд,</p>' +
     '<p>Эрхэм <strong>{lastname}</strong> овогтой <strong>{firstname}</strong> танд <strong>{org}</strong> байгууллагаас илгээсэн <strong>{test}</strong> тестийг та хараахан бөглөж дуусгаагүй байна.</p>' +
-    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй тул амжиж бөглөнө үү.</p>',
+    '<p>Тест, үнэлгээний линк {deadline} хүртэл хүчинтэй тул амжиж бөглөнө үү.</p>' +
+    EMAIL_FOOTER,
   remindSms: 'Sanuulga: {test} testee {deadline}-s omno buglunu uu. {link}',
 };
 
@@ -45,8 +58,9 @@ export const VAR_RE = /\{([\p{L}\p{N}_]+)\}/gu;
 export const fillTemplate = (tpl: string, vars: Record<string, string>) =>
   tpl.replace(VAR_RE, (m, k) => vars[k] ?? m);
 
+/** {} ч escape → утга доторх "{button}" мэт текст 2-р шатанд (блок орлуулалт) хувьсагч болохгүй. */
 export const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  s.replace(/[&<>"'{}]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** HTML драфт: хувьсагчийн утгыг escape хийнэ (драфт өөрөө admin-ийн итгэмжлэгдсэн HTML), {link} → холбоос. */
 export const fillHtml = (tpl: string, vars: Record<string, string>) =>

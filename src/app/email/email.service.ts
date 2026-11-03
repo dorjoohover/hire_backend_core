@@ -105,28 +105,21 @@ export class EmailService {
     password?: string;
     lastname: string;
     firstname: string;
-    orgName?: string;
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-    minute: string;
     visible: boolean;
     phone: string;
     code: string;
     id?: number;
-    assessmentName?: number;
     assessment: AssessmentEntity;
-    /** Admin-ийн драфтаас бөглөгдсөн HTML (байхгүй бол анхны урилгын текст). */
-    body?: string;
+    /** Admin-ийн драфтаас бөглөгдсөн HTML. */
+    body: string;
     subject?: string;
     /** Драфтын товчны текст (байхгүй бол "🎯  Тест өгөх"). */
     button?: string;
+    /** Драфтын логоны file id. */
+    logo?: string;
     action?: string;
   }) {
-    const { html } = this.sendInvitationTemplate({
-      ...input,
-    });
+    const { html } = this.sendInvitationTemplate(input);
     await this.logAndQueue({
       type: EmailLogType.INVITATION,
       to: input.email,
@@ -432,70 +425,91 @@ export class EmailService {
     return this.sendInvitationTemplate(input).html;
   }
 
+  /**
+   * Урилга / сануулгын мэйл. Header (лого) ба footer-оос бусад бүх агуулга = драфтын body.
+   * Блок хувьсагчууд: {account} {button} {testInfo} {description} {usage} {measure} {advice}.
+   */
   private sendInvitationTemplate(input: {
     isNewUser: boolean;
     email: string;
     password?: string;
-    lastname: string;
-    firstname: string;
-    orgName?: string;
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-    minute: string;
     code: string;
     assessment: AssessmentEntity;
-    body?: string;
+    /** Драфтаас бөглөгдсөн HTML (текст хувьсагч орлуулсан). */
+    body: string;
+    /** Товчны текст (байхгүй бол "🎯  Тест өгөх"). */
     button?: string;
+    /** Логоны file id (байхгүй бол Hire.mn-ийн лого). */
+    logo?: string;
   }) {
-    const {
-      body,
-      button,
-      password,
-      email,
-      isNewUser,
-      lastname,
-      firstname,
-      orgName,
-      year,
-      month,
-      day,
-      code,
-      hour,
-      assessment,
-      minute,
-    } = input;
-    const newUserSection = isNewUser
-      ? `
-              <tr>
-                <td style="background-color: #e8f5e8; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50; font-family: 'Montserrat', sans-serif; text-align: justify;">
-                  <h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">
-                    Hire.mn-д тавтай морил!
-                  </h3>
+    const { body, button, logo, password, email, isNewUser, code, assessment } =
+      input;
+    const web = (process.env.WEB || 'https://hire.mn').replace(/\/$/, '');
+    const logoSrc = logo
+      ? `${web}/api/file/${encodeURIComponent(logo)}`
+      : 'https://raw.githubusercontent.com/usukhbaya12/images/refs/heads/main/hire-2-white.png';
+    const box = (style: string, inner: string) =>
+      `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 10px 0;"><tr><td style="${style} font-family: 'Montserrat', sans-serif; text-align: justify;">${inner}</td></tr></table>`;
 
-                  <p style="color: #333333; margin: 0 0 15px 0; font-size: 14px; line-height: 1.5;">
-                    Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа
-                    <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
-                  </p>
+    const blocks: Record<string, string> = {
+      account: isNewUser
+        ? box(
+            'background-color: #e8f5e8; padding: 15px; border-left: 4px solid #4CAF50;',
+            `<h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
+             <p style="color: #333333; margin: 0 0 15px 0; font-size: 14px; line-height: 1.5;">
+               Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа
+               <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
+             </p>
+             <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нэвтрэх и-мэйл хаяг: <strong>${email}</strong></p>
+             <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: <strong>${password}</strong></p>`,
+          )
+        : '',
+      button: `<table cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 15px auto;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
+              <a href="${web}/exam/${code}"
+                style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
+              >${button ? escapeHtml(button) : '🎯  Тест өгөх'}</a>
+            </td>
+          </tr>
+        </table>`,
+      testInfo: box(
+        'background-color: rgb(255, 249, 178); padding: 15px; border-left: 4px solid rgb(255, 213, 0);',
+        `<h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">${assessment.name} тестийн тухай</h3>
+         <p style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;">${assessment.description}</p>
+         <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;"><strong>Хэрэглээ</strong></p>
+         <p style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;">${assessment.usage}</p>
+         <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;"><strong>Хэмжих зүйлс</strong></p>
+         <p style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;">${assessment.measure}</p>
+         <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;"><strong>Асуумжид хариулах заавар</strong></p>
+         <div class="advice-content" style="color: #333333; font-size: 14px; line-height: 1.5;">${assessment.advice}</div>`,
+      ),
+      // Тестийн талбарууд admin-ий HTML тул escape хийхгүй (өмнөх загвартай ижил).
+      description: assessment.description ?? '',
+      usage: assessment.usage ?? '',
+      measure: assessment.measure ?? '',
+      advice: assessment.advice ?? '',
+    };
+    // shortcut: {account}-ийг хассан драфтад ч шинэ хэрэглэгч нууц үгээ авах ёстой → эхэнд нь нэмнэ.
+    const src = isNewUser && !body.includes('{account}') ? `{account}${body}` : body;
+    // Ганцаараа мөрөнд байгаа блокын <p>-г хасна (<p> дотор <table> буруу HTML).
+    const content = src.replace(
+      /(<p>\s*)?\{(\w+)\}(\s*<\/p>)?/g,
+      (m, open, k, close) =>
+        !Object.prototype.hasOwnProperty.call(blocks, k)
+          ? m
+          : open && close
+            ? blocks[k]
+            : `${open ?? ''}${blocks[k]}${close ?? ''}`,
+    );
 
-                  <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
-                    Нэвтрэх и-мэйл хаяг: <strong>${email}</strong>
-                  </p>
-                  <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">
-                    Нууц үг: <strong>${password}</strong>
-                  </p>
-                </td>
-              </tr>
-        `
-      : '';
     const html = `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Танд тестийн урилга ирлээ</title>
+    <title>Hire.mn</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -503,6 +517,12 @@ export class EmailService {
     <style>
       body, h1, h2, h3, p, a, div {
         font-family: 'Montserrat', sans-serif;
+      }
+      a { color: #ff5000; text-decoration: none; }
+      .advice-content p {
+        margin: 0 0 10px 0 !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
       }
     </style>
   </head>
@@ -527,8 +547,8 @@ export class EmailService {
                       <tr>
                         <td style="width: 80%; text-align: left; vertical-align: middle;">
                           <img
-                            src="https://raw.githubusercontent.com/usukhbaya12/images/refs/heads/main/hire-2-white.png"
-                            alt="Hire.mn Logo"
+                            src="${escapeHtml(logoSrc)}"
+                            alt="Logo"
                             width="120"
                             height="auto"
                             style="display: block; border: 0;"
@@ -569,146 +589,10 @@ export class EmailService {
                 </tr>
 
                 <tr>
-                  <td style="background-color:rgb(250, 250, 250); padding: 20px 40px 10px 40px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      ${newUserSection} ${isNewUser ? '<br />' : ''}
-                      <tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; color: #333333;"
-                        >
-                          Өдрийн мэнд,
-                        </td>
-                      </tr>
-                      ${
-                      body
-                        ? `<tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          ${body}
-                        </td>
-                      </tr>`
-                        : `<tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          <br />Эрхэм <strong>${lastname}</strong> овогтой
-                          <strong>${firstname}</strong> танд
-                          <strong>${orgName ?? ''}</strong> байгууллагаас
-                          <strong style="color: #ff5000;">${assessment?.name}</strong> онлайн тест,
-                          үнэлгээнд оролцох урилга илгээсэн байна. 
-                        </td>
-                      </tr>
-                       <tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          <br />Та <strong>тест өгөх</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцаарай.
-                        </td>
-                      </tr>
-                      <tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          <br />Тест, үнэлгээний линк ${year} оны ${month} сарын ${day} өдрийн
-                          ${hour}:${minute} цаг хүртэл хүчинтэй ажиллахыг анхаарна уу. Танд амжилт
-                          хүсье.
-                        </td>
-                      </tr>`
-                      }
-                      <br />
-                      <tr>
-                        <td style="padding: 15px 0; text-align: center;">
-                          <table cellspacing="0" cellpadding="0" border="0" align="center">
-                            <tr>
-                              <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
-                                <a
-                                  href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
-                                  style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
-                                >
-                                  ${button ? escapeHtml(button) : '🎯  Тест өгөх'}
-                                </a>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <br />
-                      <tr>
-                        <td
-                          style="background-color:rgb(255, 249, 178); padding: 15px; margin: 25px 0 10px 0; border-left: 4px solid rgb(255, 213, 0); font-family: 'Montserrat', sans-serif; text-align: justify;"
-                        >
-                          <h3 style="color: #ff5000; margin: 0 0 10px 0; font-size: 16px;">
-                            ${assessment.name} тестийн тухай
-                          </h3>
-                          <p
-                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
-                          >
-                            ${assessment.description}
-                          </p>
-                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                            <strong>Хэрэглээ</strong>
-                          </p>
-                          <p
-                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
-                          >
-                            ${assessment.usage}
-                          </p>
-                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                            <strong>Хэмжих зүйлс</strong>
-                          </p>
-                          <p
-                            style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;"
-                          >
-                            ${assessment.measure}
-                          </p>
-                          <p style="color: #ff5000; margin: 0; font-size: 14px; line-height: 1.5;">
-                            <strong>Асуумжид хариулах заавар</strong>
-                          </p>
-                          <div style="color: #333333; font-size: 14px; line-height: 1.5;">
-                            <style>
-                              .advice-content p {
-                                margin: 0 0 10px 0 !important;
-                                font-size: 14px !important;
-                                line-height: 1.5 !important;
-                              }
-                            </style>
-                            <div class="advice-content">
-                              ${assessment.advice}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                      <br />
-
-                      <tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          <p style="margin: 0 0 15px 0;">
-                            <br />Тест, үнэлгээтэй холбоотой асууж тодруулах зүйл гарвал ажлын
-                            өдрүүдэд 09-18 цагийн хооронд
-                            <a
-                              href="mailto:info@hire.mn"
-                              style="color: #ff5000; text-decoration: none;"
-                              >info@hire.mn</a>
-                            мэйл хаягаар эсвэл
-                            <a
-                              href="tel:976-9909 9371"
-                              style="color: #ff5000; text-decoration: none;"
-                              >976-9909 9371</a>
-                            утсаар холбогдоно уу.
-                          </p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td
-                          style="font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
-                        >
-                          <p style="margin: 0 0 15px 0;">Хүндэтгэсэн,<br />Hire.mn</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td
+                    style="background-color: rgb(250, 250, 250); padding: 20px 40px 10px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.6; color: #333333; text-align: justify;"
+                  >
+                    ${content}
                   </td>
                 </tr>
 
