@@ -364,6 +364,11 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   // Төрөл бүрт зөвхөн нэг идэвхтэй драфт.
   `CREATE UNIQUE INDEX IF NOT EXISTS uq_message_draft_active
    ON message_draft (type) WHERE active`,
+  // И-мэйл драфтын товчны текст (null = "Тест өгөх"). Nullable → агшин зуур.
+  `ALTER TABLE message_draft ADD COLUMN IF NOT EXISTS button VARCHAR(60)`,
+  // Шалгалт дууссаны дараах feedback-ийг тест бүрд унтраах (PG11+: тогтмол default → дахин бичихгүй).
+  `ALTER TABLE assessment
+   ADD COLUMN IF NOT EXISTS "showFeedback" BOOLEAN NOT NULL DEFAULT true`,
 
   // NUMBER (90) / TIME (100) асуултын тохиргоо (min/max-аас бусад: бутархай, харуулах хэсэг,
   // нэгж). Nullable, default-гүй → агшин зуур. hire_report энэ баганыг уншдаггүй.

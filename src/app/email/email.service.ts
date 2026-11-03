@@ -8,6 +8,7 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { signEmailToken } from 'src/utils/email-token';
+import { escapeHtml } from '../user.service/message-template';
 
 @Injectable()
 export class EmailService {
@@ -119,6 +120,8 @@ export class EmailService {
     /** Admin-ийн драфтаас бөглөгдсөн HTML (байхгүй бол анхны урилгын текст). */
     body?: string;
     subject?: string;
+    /** Драфтын товчны текст (байхгүй бол "🎯  Тест өгөх"). */
+    button?: string;
     action?: string;
   }) {
     const { html } = this.sendInvitationTemplate({
@@ -444,9 +447,11 @@ export class EmailService {
     code: string;
     assessment: AssessmentEntity;
     body?: string;
+    button?: string;
   }) {
     const {
       body,
+      button,
       password,
       email,
       isNewUser,
@@ -621,7 +626,7 @@ export class EmailService {
                                   href="${process.env.WEB || 'https://hire.mn'}/exam/${code}"
                                   style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
                                 >
-                                  🎯  Тест өгөх
+                                  ${button ? escapeHtml(button) : '🎯  Тест өгөх'}
                                 </a>
                               </td>
                             </tr>

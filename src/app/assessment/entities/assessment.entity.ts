@@ -65,6 +65,9 @@ export class AssessmentEntity {
   /** Шалгалт дуусмагц шалгуулагч өөрийн хариуг харж болох эсэх */
   @Column({ default: true })
   showResultOnComplete: boolean;
+  /** Шалгалт дууссаны дараа сэтгэл ханамжийн feedback асуух эсэх */
+  @Column({ default: true })
+  showFeedback: boolean;
   /** Шалгалтын блокуудын хооронд чөлөөтэй шилжих боломжтой эсэх */
   @Column({ default: false })
   blockNavigation: boolean;

@@ -639,6 +639,7 @@ export class UserServiceService extends BaseService {
           active[`${kind}Email`]?.subject || DEFAULT_SUBJECTS[kind],
           vars,
         ),
+        button: active[`${kind}Email`]?.button,
         action: remind ? 'sent reminder' : undefined,
       });
     }
@@ -689,7 +690,14 @@ export class UserServiceService extends BaseService {
   }
 
   public async saveDraft(
-    dto: { name?: string; type?: string; subject?: string; body?: string; active?: boolean },
+    dto: {
+      name?: string;
+      type?: string;
+      subject?: string;
+      button?: string;
+      body?: string;
+      active?: boolean;
+    },
     id?: number,
   ) {
     const bad = (m: string) => new HttpException(m, HttpStatus.BAD_REQUEST);
@@ -703,6 +711,8 @@ export class UserServiceService extends BaseService {
     const isEmail = type.endsWith('Email');
     const subject = isEmail ? String(dto?.subject ?? '').trim() : '';
     if (subject.length > 255) throw bad('Гарчиг 255 тэмдэгтээс хэтэрч болохгүй.');
+    const button = isEmail ? String(dto?.button ?? '').trim() : '';
+    if (button.length > 60) throw bad('Товчны текст 60 тэмдэгтээс хэтэрч болохгүй.');
     if (!isEmail) {
       if (!body.includes('{link}'))
         throw bad('SMS драфтад тестийн холбоос {link} заавал байх ёстой.');
@@ -720,6 +730,7 @@ export class UserServiceService extends BaseService {
       name,
       type,
       subject: subject || null,
+      button: button || null,
       body,
       active: !!dto.active,
     });
@@ -731,7 +742,12 @@ export class UserServiceService extends BaseService {
   }
 
   /** Жишээ утгаар бөглөсөн мэйлийн HTML / SMS текст (илгээхгүй). */
-  public async previewDraft(dto: { type?: string; subject?: string; body?: string }) {
+  public async previewDraft(dto: {
+    type?: string;
+    subject?: string;
+    button?: string;
+    body?: string;
+  }) {
     const type = TEMPLATE_KEYS.includes(dto?.type as any)
       ? (dto.type as keyof MessageTemplates)
       : 'inviteEmail';
@@ -764,6 +780,7 @@ export class UserServiceService extends BaseService {
           advice: '<p>Асуумжид хариулах заавар энд харагдана.</p>',
         } as any,
         body: fillHtml(body, vars),
+        button: dto?.button?.trim(),
       }),
     };
   }

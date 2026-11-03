@@ -52,6 +52,8 @@ export class CreateAssessmentDto {
   @ApiProperty()
   showResultOnComplete?: boolean;
   @ApiProperty()
+  showFeedback?: boolean;
+  @ApiProperty()
   blockNavigation?: boolean;
 
   // --- Тайлангийн monetization (paywall) ---

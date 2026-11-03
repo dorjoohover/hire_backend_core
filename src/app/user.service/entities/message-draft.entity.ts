@@ -25,6 +25,10 @@ export class MessageDraftEntity {
   @Column({ length: 255, nullable: true })
   subject: string;
 
+  /** И-мэйлийн товчны текст (null = "🎯  Тест өгөх"). */
+  @Column({ length: 60, nullable: true })
+  button: string;
+
   /** И-мэйл: HTML, SMS: энгийн текст. */
   @Column({ type: 'text' })
   body: string;

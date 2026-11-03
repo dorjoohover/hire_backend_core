@@ -63,6 +63,8 @@ export class MessageDraftDto {
   @ApiProperty({ required: false })
   subject?: string;
   @ApiProperty({ required: false })
+  button?: string;
+  @ApiProperty({ required: false })
   body?: string;
   @ApiProperty({ required: false })
   active?: boolean;
