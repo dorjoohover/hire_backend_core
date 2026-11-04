@@ -4,8 +4,8 @@ import axios from 'axios';
  * Хэрэглэгч рүү явах урилга / сануулгын драфтын төрлүүд (message_draft.type, admin засна).
  * Идэвхтэй драфтгүй бол DEFAULT_TEMPLATES. Хувьсагч: {lastname} {firstname} {org} {test} {deadline} {link}.
  * И-мэйлийн body нь HTML (header/footer-оос бусад бүх агуулга), SMS нь энгийн текст.
- * И-мэйлд нэмэлт блок: {account} {button} {testInfo} {description} {usage} {measure} {advice}
- * (EmailService.sendInvitationTemplate орлуулна).
+ * И-мэйлд нэмэлт: {button} {testInfo} {description} {usage} {measure} {advice}, {email} {password},
+ * {account}…{/account} = зөвхөн шинэ хэрэглэгчид харагдах ногоон хэсэг (EmailService.sendInvitationTemplate).
  */
 export type MessageTemplates = {
   inviteEmail?: string;
@@ -21,6 +21,12 @@ export const TEMPLATE_KEYS: (keyof MessageTemplates)[] = [
   'remindSms',
 ];
 
+/** Шинэ хэрэглэгчийн ногоон хэсгийн анхны текст ({account}…{/account} дотор). */
+export const ACCOUNT_SECTION =
+  '<h3>Hire.mn-д тавтай морил!</h3>' +
+  '<p>Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.</p>' +
+  '<p>Нэвтрэх и-мэйл хаяг: <strong>{email}</strong><br>Нууц үг: <strong>{password}</strong></p>';
+
 const EMAIL_FOOTER =
   '<p>{button}</p>' +
   '<p>{testInfo}</p>' +
@@ -30,6 +36,8 @@ const EMAIL_FOOTER =
 export const DEFAULT_TEMPLATES: Required<MessageTemplates> = {
   inviteEmail:
     '<p>{account}</p>' +
+    ACCOUNT_SECTION +
+    '<p>{/account}</p>' +
     '<p>Өдрийн мэнд,</p>' +
     '<p>Эрхэм <strong>{lastname}</strong> овогтой <strong>{firstname}</strong> танд <strong>{org}</strong> байгууллагаас <strong>{test}</strong> онлайн тест, үнэлгээнд оролцох урилга илгээсэн байна.</p>' +
     '<p>Та <strong>"Тест өгөх"</strong> товч дээр дарж тест, үнэлгээндээ оролцоно уу. Тус товч дээр дарснаар тест автоматаар эхлэх тул тестийн тухай мэдээлэл, асуумжид хариулах заавартай нухацтай танилцана уу.</p>' +
@@ -59,12 +67,16 @@ export const fillTemplate = (tpl: string, vars: Record<string, string>) =>
   tpl.replace(VAR_RE, (m, k) => vars[k] ?? m);
 
 /** {} ч escape → утга доторх "{button}" мэт текст 2-р шатанд (блок орлуулалт) хувьсагч болохгүй. */
+/** Admin засварлагчийн chip (<span|div data-var="x">…</span|div>) → {x}. */
+export const unwrapVars = (html: string) =>
+  html.replace(/<(span|div)\b[^>]*\bdata-var="([\w/]+)"[^>]*>[\s\S]*?<\/\1>/g, '{$2}');
+
 export const escapeHtml = (s: string) =>
   s.replace(/[&<>"'{}]/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /** HTML драфт: хувьсагчийн утгыг escape хийнэ (драфт өөрөө admin-ийн итгэмжлэгдсэн HTML), {link} → холбоос. */
 export const fillHtml = (tpl: string, vars: Record<string, string>) =>
-  tpl.replace(/\{(\w+)\}/g, (m, k) => {
+  unwrapVars(tpl).replace(/\{(\w+)\}/g, (m, k) => {
     if (vars[k] == null) return m;
     const v = escapeHtml(vars[k]);
     return k === 'link'

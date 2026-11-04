@@ -42,6 +42,7 @@ import {
   DEFAULT_SUBJECTS,
   DEFAULT_TEMPLATES,
   fillHtml,
+  unwrapVars,
   examLink,
   fillTemplate,
   MessageTemplates,
@@ -695,7 +696,7 @@ export class UserServiceService extends BaseService {
     if (!TEMPLATE_KEYS.includes(type)) throw bad('Загварын төрөл буруу байна.');
     const name = String(dto?.name ?? '').trim();
     if (!name || name.length > 120) throw bad('Загварын нэр оруулна уу (120 хүртэл тэмдэгт).');
-    const body = dto?.body;
+    const body = typeof dto?.body === 'string' ? unwrapVars(dto.body) : undefined;
     if (typeof body !== 'string' || !body.replace(/<[^>]*>/g, '').trim() || body.length > 50000)
       throw bad('Мессежийн текст оруулна уу.');
     const isEmail = type.endsWith('Email');
@@ -707,6 +708,8 @@ export class UserServiceService extends BaseService {
     if (logo.length > 255) throw bad('Логоны холбоос хэт урт байна.');
     if (isEmail && !/\{(button|link)\}/.test(body))
       throw bad('И-мэйлд тест өгөх товч {button} эсвэл холбоос {link} заавал байх ёстой.');
+    if (body.includes('{/account}') && !/\{account\}[\s\S]*\{\/account\}/.test(body))
+      throw bad('Шинэ хэрэглэгчийн хэсэг {account} … {/account} дарааллаар байх ёстой.');
     if (!isEmail) {
       if (!body.includes('{link}'))
         throw bad('SMS драфтад тестийн холбоос {link} заавал байх ёстой.');

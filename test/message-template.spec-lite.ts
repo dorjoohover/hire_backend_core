@@ -11,6 +11,7 @@ import {
   fillTemplate,
   renderSms,
   toSmsText,
+  unwrapVars,
 } from '../src/app/user.service/message-template';
 
 let failed = 0;
@@ -105,16 +106,26 @@ const svc = new UserServiceService(
   const es = new EmailService({} as any, {} as any, {} as any, {} as any);
   const asm: any = { name: 'DISC', description: '<b>Тайлбар</b>', usage: 'U', measure: 'M', advice: '<p>A</p>' };
   const render = (body: string, x: any = {}) => es.previewInvitation({ isNewUser: false, email: 'e@x.mn', code: '123', assessment: asm, body, ...x });
-  const h1 = render('<p>{button}</p><p>Тест: {description}!</p><p>{foo} {constructor}</p>', { button: '<Эхлэх>', logo: 'a b.png' });
+  const h1 = render('<p>{button}</p><p>{description}</p><p>{foo} {constructor}</p>', { button: '<Эхлэх>', logo: 'a b.png' });
   check('E1 {button}: <p>-г хасна, текстийг escape, тестийн холбоос', [h1.includes('<p><table'), h1.includes('&#60;Эхлэх&#62;'), h1.includes('href="https://hire.mn/exam/123"')], [false, true, true]);
-  check('E2 мөр доторх {description}: <p> хэвээр, HTML-ээр', h1.includes('<p>Тест: <b>Тайлбар</b>!</p>'), true);
+  check('E2 {description}: HTML-ээр, блок болно', h1.includes('<div style="margin: 0 0 12px 0;"><b>Тайлбар</b></div>'), true);
   check('E3 үл мэдэгдэх / prototype нэр хэвээр', h1.includes('<p>{foo} {constructor}</p>'), true);
   check('E4 лого: web-ийн file proxy, default товчгүй', [h1.includes('src="https://hire.mn/api/file/a%20b.png"'), h1.includes('Тест өгөх')], [true, false]);
   const h2 = render('<p>Сайн уу</p>', { isNewUser: true, password: 'P@ss' });
   check('E5 {account}-гүй драфт → шинэ хэрэглэгчид эхэнд нь нэмнэ', [h2.indexOf('P@ss') > 0, h2.indexOf('P@ss') < h2.indexOf('Сайн уу'), render('{account}').includes('Нууц үг')], [true, true, false]);
   check('E6 утга доторх {button} блок болохгүй', render(fillHtml('<p>{firstname}</p>', { firstname: '{button}' })).includes('<table cellspacing'), false);
+  const sec = '<p>Сайн уу</p><p>{account}</p><h3>Тавтай морил</h3><p>Нууц: {password}</p><p>{/account}</p><p>{button}</p>';
+  const h4 = render(sec, { isNewUser: true, password: 'P{1}<' });
+  check('E8 {account}…{/account}: admin-ий текст ногоон хайрцагт, нууц үг escape', [h4.includes('Тавтай морил'), h4.includes('#e8f5e8'), h4.includes('Нууц: P&#123;1&#125;&#60;'), h4.indexOf('Сайн уу') < h4.indexOf('Тавтай'), /\{\/?\w+\}/.test(h4)], [true, true, true, true, false]);
+  check('E9 хуучин хэрэглэгчид ногоон хэсэг бүхэлдээ алга', [render(sec).includes('Тавтай морил'), /\{\/?\w+\}/.test(render(sec))], [false, false]);
+  const chips = '<p>Сайн уу <span data-var="firstname" class="x">{firstname}</span></p><div data-var="button" class="y">{button} · Тест өгөх товч</div>';
+  check('E10 unwrapVars: засварлагчийн chip → {x}', unwrapVars(chips), '<p>Сайн уу {firstname}</p>{button}');
+  const d4: any = await svc.saveDraft({ name: 'chip', type: 'inviteEmail', body: chips });
+  check('E11 хадгалахдаа chip-ийг задална, {account} дараалал шалгана', [d4.body, await err(() => svc.saveDraft({ name: 'x', type: 'inviteEmail', body: '{button}{/account}{account}' }))], ['<p>Сайн уу {firstname}</p>{button}', 'Шинэ хэрэглэгчийн хэсэг {account} … {/account} дарааллаар байх ёстой.']);
   const h3 = render(fillHtml(DEFAULT_TEMPLATES.inviteEmail, { lastname: 'a', firstname: 'b', org: 'o', test: 't', deadline: 'd', link: 'l' }));
-  check('E7 default урилга: товч + тестийн тухай + холбогдох', [h3.includes('Тест өгөх'), h3.includes('DISC тестийн тухай'), h3.includes('info@hire.mn'), /\{\w+\}/.test(h3)], [true, true, true, false]);
+  check('E7 default урилга: товч + тестийн тухай + холбогдох', [h3.includes('Тест өгөх'), h3.includes('DISC тестийн тухай'), h3.includes('info@hire.mn'), /\{\/?\w+\}/.test(h3), h3.includes('Hire.mn-д тавтай морил')], [true, true, true, false, false]);
+  const h5 = render(fillHtml(DEFAULT_TEMPLATES.inviteEmail, {}), { isNewUser: true, password: 'Pw1' });
+  check('E12 default урилга шинэ хэрэглэгчид: ногоон хэсэг, и-мэйл, нууц үг', [h5.includes('Hire.mn-д тавтай морил'), h5.includes('<strong>e@x.mn</strong>'), h5.includes('<strong>Pw1</strong>')], [true, true, true]);
   check('S8 preview SMS: default + урт', [ps.text.startsWith('Hire HHK:'), ps.length <= 160], [true, true]);
   // Байгууллага илгээх үедээ загвар сонгоно (d1 идэвхгүй болсон, d2 идэвхтэй).
   await svc.remind({ codes: ['D'], email: true, emailDraft: d1.id });
@@ -128,7 +139,7 @@ const svc = new UserServiceService(
     mail.length,
   ], ['Сонгосон загвар олдсонгүй.', 'Сонгосон загвар олдсонгүй.', n]);
   const opts: any[] = await svc.draftOptions();
-  check('P4 сонголтын жагсаалтад текст орохгүй', [opts.length, 'body' in opts[0], opts.find((o) => o.type === 'remindEmail' && o.active)?.id], [3, false, d2.id]);
+  check('P4 сонголтын жагсаалтад текст орохгүй', [opts.length, 'body' in opts[0], opts.find((o) => o.type === 'remindEmail' && o.active)?.id], [4, false, d2.id]);
   check('P5 хадгалсан загварыг харах / байхгүй id', [
     ((await svc.previewSaved('remindEmail', d1.id)) as any).subject,
     await err(() => svc.previewSaved('remindEmail', 999)),

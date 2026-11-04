@@ -8,7 +8,7 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { signEmailToken } from 'src/utils/email-token';
-import { escapeHtml } from '../user.service/message-template';
+import { ACCOUNT_SECTION, escapeHtml } from '../user.service/message-template';
 
 @Injectable()
 export class EmailService {
@@ -427,7 +427,7 @@ export class EmailService {
 
   /**
    * Урилга / сануулгын мэйл. Header (лого) ба footer-оос бусад бүх агуулга = драфтын body.
-   * Блок хувьсагчууд: {account} {button} {testInfo} {description} {usage} {measure} {advice}.
+   * Блок: {button} {testInfo} {description} {usage} {measure} {advice}; {account}…{/account} ногоон хэсэг.
    */
   private sendInvitationTemplate(input: {
     isNewUser: boolean;
@@ -451,19 +451,26 @@ export class EmailService {
     const box = (style: string, inner: string) =>
       `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 10px 0;"><tr><td style="${style} font-family: 'Montserrat', sans-serif; text-align: justify;">${inner}</td></tr></table>`;
 
-    const blocks: Record<string, string> = {
-      account: isNewUser
+    // Мөр доторх утга (<p>-г хасахгүй).
+    const inline: Record<string, string> = {
+      email: escapeHtml(email ?? ''),
+      password: escapeHtml(password ?? ''),
+    };
+    // Ногоон хэсэг: admin-ий h3 / p-д загвар өгнө (имэйл клиент <style>-ыг найдваргүй уншдаг).
+    const account = (inner: string) =>
+      isNewUser
         ? box(
             'background-color: #e8f5e8; padding: 15px; border-left: 4px solid #4CAF50;',
-            `<h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">Hire.mn-д тавтай морил!</h3>
-             <p style="color: #333333; margin: 0 0 15px 0; font-size: 14px; line-height: 1.5;">
-               Таны и-мэйл хаяг манай сайтад автоматаар бүртгэгдэж байгаа бөгөөд тестээ өгч дууссаны дараа
-               <strong>Миний бүртгэл</strong> цэс рүү орж нууц үгээ солино уу.
-             </p>
-             <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нэвтрэх и-мэйл хаяг: <strong>${email}</strong></p>
-             <p style="color: #333333; margin: 0; font-size: 14px; line-height: 1.5;">Нууц үг: <strong>${password}</strong></p>`,
+            inner
+              .replace(/\{(email|password)\}/g, (_, k) => inline[k])
+              .replace(/<h3>/g, '<h3 style="color: #2E7D32; margin: 0 0 10px 0; font-size: 16px;">')
+              .replace(/<p>/g, '<p style="color: #333333; margin: 0 0 10px 0; font-size: 14px; line-height: 1.5;">'),
           )
-        : '',
+        : '';
+    const field = (v?: string) => `<div style="margin: 0 0 12px 0;">${v ?? ''}</div>`;
+    const blocks: Record<string, string> = {
+      // Хуучин ганц {account} (төгсгөлгүй) → анхны текст.
+      account: account(ACCOUNT_SECTION),
       button: `<table cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 15px auto;">
           <tr>
             <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
@@ -485,22 +492,30 @@ export class EmailService {
          <div class="advice-content" style="color: #333333; font-size: 14px; line-height: 1.5;">${assessment.advice}</div>`,
       ),
       // Тестийн талбарууд admin-ий HTML тул escape хийхгүй (өмнөх загвартай ижил).
-      description: assessment.description ?? '',
-      usage: assessment.usage ?? '',
-      measure: assessment.measure ?? '',
-      advice: assessment.advice ?? '',
+      description: field(assessment.description),
+      usage: field(assessment.usage),
+      measure: field(assessment.measure),
+      advice: field(assessment.advice),
     };
-    // shortcut: {account}-ийг хассан драфтад ч шинэ хэрэглэгч нууц үгээ авах ёстой → эхэнд нь нэмнэ.
-    const src = isNewUser && !body.includes('{account}') ? `{account}${body}` : body;
+    const hasSection = body.includes('{/account}');
+    let src = body.replace(
+      /(?:<p>\s*)?\{account\}(?:\s*<\/p>)?([\s\S]*?)(?:<p>\s*)?\{\/account\}(?:\s*<\/p>)?/,
+      (_, inner) => account(inner),
+    );
+    // shortcut: ногоон хэсгийг хассан драфтад ч шинэ хэрэглэгч нууц үгээ авах ёстой → эхэнд нь нэмнэ.
+    if (isNewUser && !hasSection && !src.includes('{account}')) src = `{account}${src}`;
+    const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
     // Ганцаараа мөрөнд байгаа блокын <p>-г хасна (<p> дотор <table> буруу HTML).
     const content = src.replace(
       /(<p>\s*)?\{(\w+)\}(\s*<\/p>)?/g,
       (m, open, k, close) =>
-        !Object.prototype.hasOwnProperty.call(blocks, k)
-          ? m
-          : open && close
-            ? blocks[k]
-            : `${open ?? ''}${blocks[k]}${close ?? ''}`,
+        own(inline, k)
+          ? `${open ?? ''}${inline[k]}${close ?? ''}`
+          : !own(blocks, k)
+            ? m
+            : open && close
+              ? blocks[k]
+              : `${open ?? ''}${blocks[k]}${close ?? ''}`,
     );
 
     const html = `
