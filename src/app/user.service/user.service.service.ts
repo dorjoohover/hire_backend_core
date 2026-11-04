@@ -9,6 +9,7 @@ import { generateQrWithLogo } from 'src/utils/qr.util';
 import {
   CreateExamServiceDto,
   CreateUserServiceDto,
+  ScheduleDto,
   SendLinkToEmail,
   SendLinkToEmails,
 } from './dto/create-user.service.dto';
@@ -56,13 +57,19 @@ import {
   VAR_RE,
 } from './message-template';
 import { MessageDraftDao } from './message-draft.dao';
+import { MessageScheduleDao } from './message-schedule.dao';
 import { MessageDraftEntity } from './entities/message-draft.entity';
+import { MessageScheduleEntity } from './entities/message-schedule.entity';
 import { ExamEntity } from '../exam/entities/exam.entity';
 import {
   checkQrExpiry,
   parseQrExpiry,
   signQrExpiry,
 } from 'src/utils/qr-expiry';
+/** Сануулгын нөхцөл: дуусгаагүй бүх хүн | огт эхлээгүй хүн. */
+const REMIND_CONDITIONS = ['notFinished', 'notStarted'];
+const DAY_MS = 24 * 3600_000;
+
 /** №8: нэг удаагийн "Эрх нэмэх"-ийн дээд хэмжээ (буруу оруулалт / хэтрэлтээс сэргийлнэ). */
 export const MAX_TOPUP_COUNT = 1000;
 
@@ -84,6 +91,7 @@ export class UserServiceService extends BaseService {
     @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
     private drafts: MessageDraftDao,
+    private schedules?: MessageScheduleDao,
   ) {
     super();
   }
@@ -824,10 +832,12 @@ export class UserServiceService extends BaseService {
       sms?: boolean;
       emailDraft?: number;
       smsDraft?: number;
+      /** notFinished (default) | notStarted — илгээх мөчид шалгана. */
+      condition?: string;
     },
     owner?: number,
   ) {
-    const codes = [...new Set((dto.codes ?? []).map(String))].slice(0, 200);
+    const codes = [...new Set((dto.codes ?? []).map(String))].slice(0, 1000);
     const drafts = await this.chooseDrafts('remind', dto);
     let processed = 0;
     let skipped = 0;
@@ -837,6 +847,7 @@ export class UserServiceService extends BaseService {
         const exam = await this.ownedExam(code, owner);
         if (
           exam.userEndDate ||
+          (dto.condition === 'notStarted' && exam.userStartDate) ||
           (exam.endDate && new Date(exam.endDate).getTime() < Date.now())
         ) {
           skipped++;
@@ -969,6 +980,196 @@ export class UserServiceService extends BaseService {
       failures: failures.length ? failures : undefined,
     };
   }
+  // ── Товлосон илгээлт ──────────────────────────────────────────────────
+  /** Урилга / сануулгыг sendAt цагт илгээхээр хадгална. Урилгын суудал илгээх мөчид захиалагдана. */
+  public async schedule(dto: ScheduleDto, user: { id: number; role: number }) {
+    const bad = (m: string) => new HttpException(m, HttpStatus.BAD_REQUEST);
+    const date = (v: unknown) => {
+      const d = v ? new Date(v as string) : null;
+      return d && !isNaN(d.getTime()) ? d : null;
+    };
+    const sendAt = date(dto?.sendAt);
+    if (!sendAt || sendAt.getTime() < Date.now() - 60_000)
+      throw bad('Илгээх цагийг ирээдүйд сонгоно уу.');
+    if (sendAt.getTime() > Date.now() + 90 * DAY_MS)
+      throw bad('90 хоногоос хол товлох боломжгүй.');
+    const kind = dto?.kind;
+    if (kind !== 'invite' && kind !== 'remind') throw bad('Төрөл буруу.');
+    const email = kind === 'invite' ? !dto.noEmail : !!dto.email;
+    if (!email && !dto.sms) throw bad('И-мэйл эсвэл SMS сонгоно уу.');
+    await this.chooseDrafts(kind, dto); // буруу загварыг одоо л мэдэгдэнэ
+    const owner = Admins.includes(+user.role) ? undefined : +user.id;
+    const base = { email, sms: !!dto.sms, emailDraft: dto.emailDraft, smsDraft: dto.smsDraft };
+
+    let payload: Record<string, unknown>;
+    let service: number | undefined;
+    if (kind === 'remind') {
+      const codes = [...new Set((dto.codes ?? []).map(String))];
+      if (!codes.length || codes.length > 1000) throw bad('1–1000 шалгуулагч сонгоно уу.');
+      const condition = dto.condition ?? 'notFinished';
+      if (!REMIND_CONDITIONS.includes(condition)) throw bad('Нөхцөл буруу.');
+      const exam = await this.ownedExam(codes[0], owner).catch((e) => {
+        throw bad(e.message);
+      });
+      service = exam.service?.id;
+      payload = { ...base, codes, condition };
+    } else {
+      const links = Array.isArray(dto.links) ? dto.links : [];
+      if (!links.length || links.length > 500) throw bad('1–500 шалгуулагч оруулна уу.');
+      if (links.some((l) => !/^\S+@\S+\.\S+$/.test(String(l?.email ?? '').trim())))
+        throw bad('И-мэйл хаяг буруу байна.');
+      const startDate = date(dto.startDate);
+      const endDate = date(dto.endDate);
+      if (!startDate || !endDate || endDate <= sendAt)
+        throw bad('Тест дуусах хугацаа илгээх цагаас хойш байх ёстой.');
+      const services = [...new Set((dto.services ?? []).map(Number))].filter((n) => n > 0);
+      let left = 0;
+      for (const id of services) {
+        const svc = await this.dao.findOne(id);
+        if (!svc || (owner != null && svc.user?.id !== owner)) throw bad('Тест олдсонгүй.');
+        left += svc.count - svc.usedUserCount;
+      }
+      if (left < links.length)
+        throw new HttpException('Үлдэгдэл хүрэлцэхгүй байна.', HttpStatus.PAYMENT_REQUIRED);
+      let remind: { sendAt: Date; condition: string } | undefined;
+      if (dto.remind) {
+        const at = date(dto.remind.sendAt);
+        const condition = dto.remind.condition ?? 'notFinished';
+        if (!at || at <= sendAt || at >= endDate || !REMIND_CONDITIONS.includes(condition))
+          throw bad('Сануулгын цаг урилга илгээх болон тест дуусах хугацааны хооронд байх ёстой.');
+        remind = { sendAt: at, condition };
+      }
+      payload = {
+        ...base,
+        services,
+        startDate,
+        endDate,
+        links: links.map((l) => ({
+          email: String(l.email).toLowerCase().trim(),
+          firstname: l.firstname,
+          lastname: l.lastname,
+          phone: l.phone,
+          visible: l.visible,
+        })),
+        remind,
+      };
+      service = services[0];
+    }
+    const row = await this.schedules.add({
+      owner: +user.id,
+      role: +user.role,
+      service,
+      kind,
+      payload,
+      sendAt,
+    });
+    return { id: row.id, sendAt: row.sendAt };
+  }
+
+  /** services: тестийн хуудасны service id-ууд (хоосон = бүгд). Хүлээн авагчийн жагсаалтыг буцаахгүй. */
+  public async listSchedules(user: { id: number }, services?: string) {
+    const ids = String(services ?? '')
+      .split(',')
+      .map(Number)
+      .filter((n) => Number.isInteger(n) && n > 0);
+    return (await this.schedules.list(+user.id, ids)).map((s) => {
+      const p = s.payload ?? {};
+      const r = s.result ?? {};
+      return {
+        id: s.id,
+        kind: s.kind,
+        sendAt: s.sendAt,
+        status: s.status,
+        count: (p.links ?? p.codes)?.length ?? 0,
+        email: !!p.email,
+        sms: !!p.sms,
+        condition: p.condition,
+        remindAt: p.remind?.sendAt,
+        remindCondition: p.remind?.condition,
+        processed: r.processed,
+        skipped: r.skipped,
+        failed: r.failed,
+        error: r.error ?? r.failures?.[0]?.error,
+      };
+    });
+  }
+
+  public async cancelSchedule(id: number, user: { id: number; role: number }) {
+    const owner = Admins.includes(+user.role) ? undefined : +user.id;
+    if (!Number.isInteger(id) || !(await this.schedules.cancel(id, owner)))
+      throw new HttpException(
+        'Цуцлах боломжгүй — аль хэдийн илгээгдсэн эсвэл олдсонгүй.',
+        HttpStatus.BAD_REQUEST,
+      );
+    return { id };
+  }
+
+  /** Processor минут тутам дуудна. claimDue атомар тул replica бүр өөр мөр авна. */
+  public async runDueSchedules() {
+    for (const s of await this.schedules.claimDue()) {
+      const owner = Admins.includes(+s.role) ? undefined : +s.owner;
+      try {
+        const result =
+          s.kind === 'invite'
+            ? await this.runScheduledInvite(s, owner)
+            : await this.remind(s.payload, owner);
+        await this.schedules.finish(s.id, 'done', result);
+      } catch (e: any) {
+        await this.schedules.finish(s.id, 'failed', {
+          error: e?.message?.slice(0, 500) || 'unknown',
+        });
+      }
+    }
+  }
+
+  /** Суудлыг одоо захиалж код үүсгээд ердийн урилгаар илгээнэ; хүсвэл нөхцөлт сануулгыг товлоно. */
+  private async runScheduledInvite(s: MessageScheduleEntity, owner?: number) {
+    const p = s.payload;
+    const codes: string[] = [];
+    let seatError = '';
+    for (const id of p.services) {
+      const need = p.links.length - codes.length;
+      if (need <= 0) break;
+      const svc = await this.dao.findOne(id);
+      const n = Math.min(need, (svc?.count ?? 0) - (svc?.usedUserCount ?? 0));
+      if (n <= 0) continue;
+      try {
+        const dto = { service: id, count: n, startDate: p.startDate, endDate: p.endDate };
+        codes.push(...(await this.createExam(dto, s.owner, s.role)));
+      } catch (e: any) {
+        seatError ||= e?.message ?? '';
+      }
+    }
+    const links = p.links
+      .slice(0, codes.length)
+      .map((l: Omit<SendLinkToEmail, 'code'>, i: number) => ({ ...l, code: codes[i] }));
+    const res = links.length
+      ? await this.sendLinkToMail(
+          { links, noEmail: !p.email, sms: p.sms, emailDraft: p.emailDraft, smsDraft: p.smsDraft },
+          undefined,
+          owner,
+        )
+      : { success: false, processed: 0, failed: 0 };
+    if (p.remind && codes.length)
+      await this.schedules.add({
+        owner: s.owner,
+        role: s.role,
+        service: s.service,
+        kind: 'remind',
+        sendAt: p.remind.sendAt,
+        payload: {
+          codes,
+          email: p.email,
+          sms: p.sms,
+          condition: p.remind.condition,
+        },
+      });
+    const missing = p.links.length - codes.length;
+    return missing
+      ? { ...res, error: `${missing} шалгуулагчид суудал хүрэлцсэнгүй. ${seatError}`.trim() }
+      : res;
+  }
+
   public async updateCount(
     service: number,
     count: number,

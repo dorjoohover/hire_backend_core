@@ -1,5 +1,10 @@
 import { ReportPipelineModule } from '../report/report-pipeline.module';
 import { MessageDraftDao } from './message-draft.dao';
+import { MessageScheduleDao } from './message-schedule.dao';
+import {
+  MessageScheduleProcessor,
+  SCHEDULE_QUEUE,
+} from './message-schedule.processor';
 import { forwardRef, Module } from '@nestjs/common';
 import { UserServiceService } from './user.service.service';
 import { UserServiceController } from './user.service.controller';
@@ -50,11 +55,14 @@ import { QuestionAnswerViewService } from '../question/question-answer-view.serv
 
     forwardRef(() => UserAnswerModule),
     forwardRef(() => EmailModule),
+    BullModule.registerQueue({ name: SCHEDULE_QUEUE }),
   ],
   controllers: [UserServiceController],
   providers: [
     UserServiceService,
     MessageDraftDao,
+    MessageScheduleDao,
+    MessageScheduleProcessor,
     ReportService,
     UserServiceDao,
     FileService,

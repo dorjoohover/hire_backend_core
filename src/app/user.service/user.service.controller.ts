@@ -17,6 +17,7 @@ import {
   CreateUserServiceDto,
   MessageDraftDto,
   RemindDto,
+  ScheduleDto,
   BulkSmsDto,
   SendLinkToEmail,
   SendLinkToEmails,
@@ -81,6 +82,23 @@ export class UserServiceController {
       dto,
       Admins.includes(+user?.role) ? undefined : +user?.id,
     );
+  }
+
+  /** Урилга / сануулгыг товлосон цагт (сануулгыг нөхцөлөөр) илгээх. */
+  @Post('schedule')
+  schedule(@Body() dto: ScheduleDto, @Request() { user }) {
+    return this.userServiceService.schedule(dto, user);
+  }
+
+  /** services=1,2 — тухайн тестийн товлолтууд. */
+  @Get('schedule')
+  listSchedules(@Query('services') services: string, @Request() { user }) {
+    return this.userServiceService.listSchedules(user, services);
+  }
+
+  @Delete('schedule/:id')
+  cancelSchedule(@Param('id') id: string, @Request() { user }) {
+    return this.userServiceService.cancelSchedule(+id, user);
   }
 
   // ── Admin "Мэйлийн загвар": урилга / сануулгын мэйл, SMS драфт ──

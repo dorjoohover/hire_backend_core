@@ -367,6 +367,23 @@ LEFT JOIN "questionAnswerCategory" mcat ON mcat.id = m."categoryId"`,
   // И-мэйл драфтын товчны текст (null = "Тест өгөх"). Nullable → агшин зуур.
   `ALTER TABLE message_draft ADD COLUMN IF NOT EXISTS button VARCHAR(60)`,
   `ALTER TABLE message_draft ADD COLUMN IF NOT EXISTS logo VARCHAR(255)`,
+  // Товлосон урилга / сануулга (минут тутам sendAt болсныг илгээнэ).
+  `CREATE TABLE IF NOT EXISTS message_schedule (
+     id SERIAL PRIMARY KEY,
+     owner INT NOT NULL,
+     role INT NOT NULL,
+     service INT,
+     kind VARCHAR(10) NOT NULL,
+     payload JSONB NOT NULL,
+     "sendAt" TIMESTAMPTZ NOT NULL,
+     status VARCHAR(10) NOT NULL DEFAULT 'pending',
+     result JSONB,
+     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE INDEX IF NOT EXISTS idx_message_schedule_due
+   ON message_schedule ("sendAt") WHERE status = 'pending'`,
+  `CREATE INDEX IF NOT EXISTS idx_message_schedule_owner
+   ON message_schedule (owner, "sendAt" DESC)`,
   // Шалгалт дууссаны дараах feedback-ийг тест бүрд унтраах (PG11+: тогтмол default → дахин бичихгүй).
   `ALTER TABLE assessment
    ADD COLUMN IF NOT EXISTS "showFeedback" BOOLEAN NOT NULL DEFAULT true`,

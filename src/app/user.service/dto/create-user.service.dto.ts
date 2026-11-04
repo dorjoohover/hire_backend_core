@@ -86,6 +86,41 @@ export class RemindDto {
   smsDraft?: number;
 }
 
+/** Товлосон илгээлт. invite: links (кодгүй) + services/startDate/endDate; remind: codes. */
+export class ScheduleDto {
+  @ApiProperty({ enum: ['invite', 'remind'] })
+  kind: 'invite' | 'remind';
+  @ApiProperty()
+  sendAt: string;
+  @ApiProperty({ required: false })
+  email?: boolean;
+  @ApiProperty({ required: false })
+  noEmail?: boolean;
+  @ApiProperty({ required: false })
+  sms?: boolean;
+  @ApiProperty({ required: false })
+  emailDraft?: number;
+  @ApiProperty({ required: false })
+  smsDraft?: number;
+  /** remind: notFinished (default) | notStarted */
+  @ApiProperty({ required: false })
+  condition?: string;
+  @ApiProperty({ required: false, isArray: true, type: String })
+  codes?: string[];
+  /** invite: үлдэгдэлтэй эхнийхээс нь суудал авна. */
+  @ApiProperty({ required: false, isArray: true, type: Number })
+  services?: number[];
+  @ApiProperty({ required: false })
+  startDate?: string;
+  @ApiProperty({ required: false })
+  endDate?: string;
+  @ApiProperty({ required: false, isArray: true, type: SendLinkToEmail })
+  links?: Omit<SendLinkToEmail, 'code'>[];
+  /** invite: урилгын дараа нөхцөлт сануулга { sendAt, condition }. */
+  @ApiProperty({ required: false })
+  remind?: { sendAt: string; condition?: string };
+}
+
 export class BulkSmsDto {
   @ApiProperty()
   text: string;
