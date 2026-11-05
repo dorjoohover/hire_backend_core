@@ -337,7 +337,7 @@ export class EmailService {
                   
                   <table align="center" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;">
                     <tr>
-                      <td style="background: linear-gradient(135deg, #ff5000 0%, #ed1c45 100%); padding: 20px 40px; text-align: left;">
+                      <td bgcolor="#ff5000" style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
                       <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td style="width: 80%; text-align: left; vertical-align: middle;">
@@ -346,7 +346,7 @@ export class EmailService {
         <td style="width: 20%; text-align: right; vertical-align: middle;">
                 <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                   <tr>
-                    <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
+                    <td bgcolor="#ffffff" style="border-radius: 99px; background-color: #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
                       <a href="${process.env.WEB || 'https://hire.mn'}" 
                         style="padding: 10px 16px; border-radius: 4px; 
                                 color: #ff5000 !important; 
@@ -471,11 +471,12 @@ export class EmailService {
     const blocks: Record<string, string> = {
       // Хуучин ганц {account} (төгсгөлгүй) → анхны текст.
       account: account(ACCOUNT_SECTION),
+      // Gradient-ийг Gmail/Outlook хаядаг → цагаан дээр цагаан текст болдог; bgcolor + цул өнгө л найдвартай.
       button: `<table cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 15px auto;">
           <tr>
-            <td style="background: linear-gradient(135deg, #ff5000 0%, #ff7a3d 100%); box-shadow: 0 4px 15px rgba(255, 80, 0, 0.3);">
+            <td bgcolor="#ff5000" style="background-color: #ff5000; border-radius: 8px;">
               <a href="${web}/exam/${code}"
-                style="display: inline-block; padding: 16px 40px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
+                style="display: inline-block; padding: 16px 40px; background-color: #ff5000; border: 1px solid #ff5000; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
               >${button ? escapeHtml(button) : '🎯  Тест өгөх'}</a>
             </td>
           </tr>
@@ -557,7 +558,7 @@ export class EmailService {
                 style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;"
               >
                 <tr>
-                  <td style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
+                  <td bgcolor="#ff5000" style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
                         <td style="width: 80%; text-align: left; vertical-align: middle;">
@@ -579,7 +580,7 @@ export class EmailService {
                           >
                             <tr>
                               <td
-                                style="border-radius: 99px; background-color:  #ffffff; mso-padding-alt: 10px 16px; text-align: center;"
+                                bgcolor="#ffffff" style="border-radius: 99px; background-color: #ffffff; mso-padding-alt: 10px 16px; text-align: center;"
                               >
                                 <a
                                   style="padding: 10px 16px; border-radius: 4px; 
@@ -664,7 +665,7 @@ export class EmailService {
                 
                 <table align="center" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;">
                   <tr>
-                    <td style="background: linear-gradient(135deg, #ff5000 0%, #ed1c45 100%); padding: 20px 40px; text-align: left;">
+                    <td bgcolor="#ff5000" style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td style="width: 80%; text-align: left; vertical-align: middle;">
@@ -673,7 +674,7 @@ export class EmailService {
       <td style="width: 20%; text-align: right; vertical-align: middle;">
               <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
                 <tr>
-                  <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
+                  <td bgcolor="#ffffff" style="border-radius: 99px; background-color: #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
                     <a href="${process.env.WEB || 'https://hire.mn'}" 
                       style="padding: 10px 16px; border-radius: 4px; 
                               color: #ff5000 !important; 
@@ -776,7 +777,7 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
           
           <table align="center" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; background-color: #ffffff; margin: 0 auto; border-spacing: 0; border-collapse: collapse;">
             <tr>
-              <td style="background: linear-gradient(135deg, #ff5000 0%, #ed1c45 100%); padding: 20px 40px; text-align: left;">
+              <td bgcolor="#ff5000" style="background-color: #ff5000; padding: 20px 40px; text-align: left;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td style="width: 80%; text-align: left; vertical-align: middle;">
@@ -785,7 +786,7 @@ ${code} / Таны Hire.mn дээрх бүртгэлтэй хаягийн нуу
 <td style="width: 20%; text-align: right; vertical-align: middle;">
         <table cellspacing="0" cellpadding="0" border="0" align="right" style="display: inline-block;">
           <tr>
-            <td style="border-radius: 99px; background: linear-gradient(135deg, #ffffff 20%, #ffffff 21%); mso-padding-alt: 10px 16px; text-align: center;">
+            <td bgcolor="#ffffff" style="border-radius: 99px; background-color: #ffffff; mso-padding-alt: 10px 16px; text-align: center;">
               <a href="${process.env.WEB || 'https://hire.mn'}" 
                 style="padding: 10px 16px; border-radius: 4px; 
                         color: #ff5000 !important; 

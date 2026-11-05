@@ -118,6 +118,7 @@ const svc = new UserServiceService(
   const h4 = render(sec, { isNewUser: true, password: 'P{1}<' });
   check('E8 {account}…{/account}: admin-ий текст ногоон хайрцагт, нууц үг escape', [h4.includes('Тавтай морил'), h4.includes('#e8f5e8'), h4.includes('Нууц: P&#123;1&#125;&#60;'), h4.indexOf('Сайн уу') < h4.indexOf('Тавтай'), /\{\/?\w+\}/.test(h4)], [true, true, true, true, false]);
   check('E9 хуучин хэрэглэгчид ногоон хэсэг бүхэлдээ алга', [render(sec).includes('Тавтай морил'), /\{\/?\w+\}/.test(render(sec))], [false, false]);
+  check('E10 өнгө gradient-гүй, bgcolor-той (Gmail/Outlook цагаан дээр цагаан болгохгүй)', [/gradient/.test(h1), h1.includes('<td bgcolor="#ff5000" style="background-color: #ff5000; border-radius: 8px;">'), h1.includes('<td bgcolor="#ff5000" style="background-color: #ff5000; padding')], [false, true, true]);
   const chips = '<p>Сайн уу <span data-var="firstname" class="x">{firstname}</span></p><div data-var="button" class="y">{button} · Тест өгөх товч</div>';
   check('E10 unwrapVars: засварлагчийн chip → {x}', unwrapVars(chips), '<p>Сайн уу {firstname}</p>{button}');
   const d4: any = await svc.saveDraft({ name: 'chip', type: 'inviteEmail', body: chips });
