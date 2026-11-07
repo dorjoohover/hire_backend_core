@@ -20,6 +20,10 @@ import { CacheService } from 'src/base/cache.service';
 // TTL тогтмолууд (ms)
 const TTL_LEVELS = 5 * 60_000;      // 5 минут
 const TTL_CATEGORIES = 5 * 60_000;  // 5 минут
+// web/app/utils/providers.js бүх хуудсанд дууддаг: ~18 query + users / exam / userService-ийн бүтэн count.
+// In-process cache (replica тус бүр) — өөр replica дээр засвар 1 мин хүртэл хоцорч харагдана.
+const TTL_HOME = 60_000;
+const HOME_KEY = 'home_page';
 
 @Injectable()
 export class AssessmentService {
@@ -54,6 +58,7 @@ export class AssessmentService {
         return cate;
       }),
     );
+    this.cache.del(HOME_KEY);
     return {
       id: res,
       categories: answer,
@@ -63,7 +68,11 @@ export class AssessmentService {
     return await this.levelDao.create(dto);
   }
 
-  public async findHomePage() {
+  public findHomePage() {
+    return this.cache.getOrSet(HOME_KEY, () => this.loadHomePage(), TTL_HOME);
+  }
+
+  private async loadHomePage() {
     const newAss = await Promise.all(
       (await this.dao.find(1, 3, true, -20)).items.map((a) => {
         return {
@@ -313,11 +322,15 @@ export class AssessmentService {
   }
 
   public async update(id: number, dto: CreateAssessmentDto, user: number) {
-    return await this.dao.update(id, dto, user);
+    const res = await this.dao.update(id, dto, user);
+    this.cache.del(HOME_KEY);
+    return res;
   }
 
   public async remove(id: number) {
-    return await this.dao.deleteOne(id);
+    const res = await this.dao.deleteOne(id);
+    this.cache.del(HOME_KEY);
+    return res;
   }
 
   public async clear() {
