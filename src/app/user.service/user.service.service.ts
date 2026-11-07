@@ -509,7 +509,8 @@ export class UserServiceService extends BaseService {
 
   public async createExam(dto: CreateExamServiceDto, id: number, role: number) {
     const service = await this.dao.findOne(dto.service);
-    if (!service)
+    // Бусдын үйлчилгээнээс код гаргаж суудлыг нь зарцуулахаас сэргийлнэ (admin-аас бусад).
+    if (!service || (!Admins.includes(+role as Role) && service.user?.id !== id))
       throw new HttpException(
         'Худалдан авалт олдсонгүй',
         HttpStatus.BAD_REQUEST,

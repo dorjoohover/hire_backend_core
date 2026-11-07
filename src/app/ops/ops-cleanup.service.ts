@@ -451,8 +451,9 @@ export class OpsCleanupService {
         );
       }
       if (plan.loadtestUsers) {
-        // loadtest/cleanup.sql-тэй ижил: k6-ийн loadtest_%@example.invalid client-ууд, өөр мөрд холбоогүй бол.
-        const ltUsers = `SELECT id FROM users WHERE email LIKE '${LOADTEST_LIKE}@example.invalid' AND role = 20`;
+        // loadtest/cleanup.sql-тэй ижил: k6-ийн loadtest_%@example.invalid, prod-ын и-мэйлгүй бүртгэлийн loadtest_%@hire.mn
+        // client-ууд, өөр мөрд холбоогүй бол.
+        const ltUsers = `SELECT id FROM users WHERE (email LIKE '${LOADTEST_LIKE}@example.invalid' OR email LIKE '${LOADTEST_LIKE}@hire.mn') AND role = 20`;
         await del('emailLogs', `DELETE FROM email_logs WHERE "userId" IN (${ltUsers})`, []);
         await del(
           'users',

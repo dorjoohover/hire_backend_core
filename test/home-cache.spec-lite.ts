@@ -15,8 +15,8 @@ const check = (name: string, actual: any, expected: any) => {
 
 let loads = 0;
 const dao: any = {
-  find: async () => ({ items: [{ id: 1 }] }),
-  findOne: async (id: number) => ({ id }),
+  find: async () => ({ items: [{ id: 1, description: 'D', advice: 'A', usage: 'U', measure: 'M' }] }),
+  findOne: async (id: number) => ({ id, description: 'D', advice: 'A' }),
   count: async () => ++loads, // нэг ачаалалт = нэг count
   create: async () => 9,
   update: async () => true,
@@ -37,6 +37,7 @@ const svc = new AssessmentService(
   const b = await svc.findHomePage();
   check('H1 давтан дуудалт cache-ээс (DB 1 удаа), хариу бүтэн', [loads, b.count, b.users, b.exams, b.demand.length], [1, 1, 5, 7, 1]);
   check('H1b ижил объект', a === b, true);
+  check('H1c картууд урт HTML-гүй (description үлдэнэ)', [Object.keys(a.new[0].data), Object.keys(a.highlight[0].data), Object.keys(a.demand[0].data)], [['id', 'description'], ['id', 'description'], ['id', 'description']]);
 
   await svc.update(1, {} as any, 1);
   check('H2 update → дараагийн дуудалт шинээр ачаална', (await svc.findHomePage()).count, 2);

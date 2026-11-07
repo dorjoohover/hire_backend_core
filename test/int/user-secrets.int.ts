@@ -58,6 +58,24 @@ const leaks = (o: any) => /"(password|forget)"/.test(JSON.stringify(o ?? null));
   const otp = await dao.getByEmail('org@t.mn', true);
   check('U10 sendOtp кодыг хадгална (select:false ч бичигдэнэ), энгийн уншилтад харагдахгүй', [/^\d{6}$/.test(`${otp?.forget}`), leaks(await dao.get(u.id))], [true, false]);
 
+  // OTP таах: 4 буруу → код хүчинтэй хэвээр; 5 дахь буруу → шатна; шинэ код илгээхэд тоолуур тэглэгдэнэ.
+  const mailer = new UserService(dao, { sendOtp: async () => undefined } as any);
+  const code = `${(await dao.getByEmail('org@t.mn', true)).forget}`;
+  const wrong = code === '000000' ? '111111' : '000000';
+  for (let i = 0; i < 4; i++) await mailer.verifyOtp('ORG@t.mn', wrong);
+  check('U11 4 буруу оролдлогын дараа зөв код ажиллана', await mailer.verifyOtp('org@t.mn', code), true);
+  for (let i = 0; i < 5; i++) await mailer.verifyOtp('org@t.mn', wrong);
+  check('U12 5 буруу → код шатсан (зөв код ч ажиллахгүй, reset татгалзана)', [
+    await mailer.verifyOtp('org@t.mn', code), (await dao.getByEmail('org@t.mn', true)).forget,
+    await err(mailer.resetPasswordWithOtp('org@t.mn', 'X-pass3', code)),
+  ], [false, null, 'Баталгаажуулах код буруу байна.']);
+  for (let i = 0; i < 3; i++) await mailer.verifyOtp('org@t.mn', wrong); // код байхгүй үед тоологдохгүй
+  await mailer.sendOtp('org@t.mn');
+  const code2 = `${(await dao.getByEmail('org@t.mn', true)).forget}`;
+  const wrong2 = code2 === '000000' ? '111111' : '000000';
+  for (let i = 0; i < 4; i++) await mailer.verifyOtp('org@t.mn', wrong2);
+  check('U13 шинэ код → тоолуур тэглэгдсэн (4 буруугийн дараа зөв нь ажиллана)', await mailer.verifyOtp('org@t.mn', code2), true);
+
   return finish(ds)();
 })().catch((e) => {
   console.error('❌ user-secrets алдаа:', e);

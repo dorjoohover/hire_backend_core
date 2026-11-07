@@ -14,6 +14,8 @@ import { EmailService } from '../email/email.service';
 import { verifyEmailToken } from 'src/utils/email-token';
 export const saltOrRounds = 1;
 
+const OTP_MAX_FAILS = 5;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -98,7 +100,29 @@ export class UserService {
     return await this.dao.getAll(pg);
   }
 
+  // OTP таахаас: нэг кодонд OTP_MAX_FAILS буруу оролдлого → код хүчингүй.
+  // shortcut: in-memory, replica тус бүр (нийт ≤ 5 × replica оролдлого / код) — Redis-д шилжүүлэх бол олон replica болоход.
+  private otpFails = new Map<string, number>();
+
+  /** Код зөв эсэх; буруу бол тоолж, хязгаарт хүрвэл кодыг шатаана. */
+  public async verifyOtp(email: string, code: string): Promise<boolean> {
+    const key = email?.toLowerCase();
+    const user = key ? await this.dao.getByEmail(key, true) : null;
+    if (!user?.forget) return false;
+    if (`${user.forget}` === `${code}`) {
+      this.otpFails.delete(key);
+      return true;
+    }
+    const n = (this.otpFails.get(key) ?? 0) + 1;
+    if (n >= OTP_MAX_FAILS) {
+      this.otpFails.delete(key);
+      await this.dao.updateByEmail({ email: user.email, clearForget: true });
+    } else this.otpFails.set(key, n);
+    return false;
+  }
+
   public async sendOtp(email: string) {
+    this.otpFails.delete(email?.toLowerCase());
     let generated = Math.floor(Math.random() * 1000000);
     const code = generated.toString().padStart(6, '0');
 
@@ -138,8 +162,7 @@ export class UserService {
       );
     }
 
-    const user = await this.dao.getByEmail(normalized, true);
-    if (!user || !user.forget || `${user.forget}` !== `${code}`) {
+    if (!(await this.verifyOtp(normalized, code))) {
       throw new HttpException(
         'Баталгаажуулах код буруу байна.',
         HttpStatus.BAD_REQUEST,

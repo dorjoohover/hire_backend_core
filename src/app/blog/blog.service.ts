@@ -1,3 +1,4 @@
+import { publicUser } from '../user/public-user';
 import { Injectable } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -53,19 +54,20 @@ export class BlogService {
       },
     });
     return {
-      data,
+      data: data.map((b) => ({ ...b, user: publicUser(b.user) })),
       count,
       total,
     };
   }
 
   public async findOne(id: number) {
-    return await this.db.findOne({
+    const b = await this.db.findOne({
       where: {
         id,
       },
       relations: ['user'],
     });
+    return b && { ...b, user: publicUser(b.user) };
   }
 
   public async update(id: number, dto: CreateBlogDto) {

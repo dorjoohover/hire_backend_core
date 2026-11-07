@@ -16,6 +16,7 @@ import { ExamService } from '../exam/exam.service';
 import { PaginationDto } from 'src/base/decorator/pagination';
 import { UserEntity } from '../user/entities/user.entity';
 import { CacheService } from 'src/base/cache.service';
+import { publicUser } from '../user/public-user';
 
 // TTL тогтмолууд (ms)
 const TTL_LEVELS = 5 * 60_000;      // 5 минут
@@ -24,6 +25,11 @@ const TTL_CATEGORIES = 5 * 60_000;  // 5 минут
 // In-process cache (replica тус бүр) — өөр replica дээр засвар 1 мин хүртэл хоцорч харагдана.
 const TTL_HOME = 60_000;
 const HOME_KEY = 'home_page';
+// Нийтийн жагсаалт / нүүр хуудасны картад урт HTML хэрэггүй (web зөвхөн description) — дэлгэрэнгүйг assessment/:id өгнө.
+const listItem = <T extends object>(a: T) => {
+  const { usage, measure, advice, ...rest } = a as any;
+  return rest as Omit<T, 'usage' | 'measure' | 'advice'>;
+};
 
 @Injectable()
 export class AssessmentService {
@@ -76,21 +82,21 @@ export class AssessmentService {
     const newAss = await Promise.all(
       (await this.dao.find(1, 3, true, -20)).items.map((a) => {
         return {
-          data: a,
+          data: listItem(a),
         };
       }),
     );
     const highlight = (
       await this.dao.find(1, 3, true, AssessmentStatus.HIGHLIGHTED)
     ).items.map((a) => {
-      return { data: a };
+      return { data: listItem(a) };
     });
     const demand = await this.userServiceDao.countDemand(3);
     const demandItems = await Promise.all(
       demand.map(async (d) => {
         const res = await this.dao.findOne(d.assessmentId);
         return {
-          data: res,
+          data: res && listItem(res),
         };
       }),
     );
@@ -134,13 +140,13 @@ export class AssessmentService {
     const creators = creatorIds.length
       ? await this.userDao.findByIds(creatorIds)
       : [];
-    const creatorMap = new Map(creators.map((u) => [u.id, u]));
+    const creatorMap = new Map(creators.map((u) => [u.id, publicUser(u)]));
 
     const res = assessments.map((as) => {
       const createdUser = creatorMap.get(as.createdUser) ?? null;
       const updatedUser = creatorMap.get(as.updatedUser) ?? createdUser;
       return {
-        data: { ...as, count: countMap.get(as.id) ?? 0 },
+        data: { ...(isAdmin ? as : listItem(as)), count: countMap.get(as.id) ?? 0 },
         user: { createdUser, updatedUser },
         category: categoryMap.get(as.category?.id) ?? as.category,
       };
@@ -315,9 +321,10 @@ export class AssessmentService {
         : createdUser?.id == dto.updatedUser
           ? createdUser
           : await this.userDao.get(dto.updatedUser);
+    const created = publicUser(createdUser);
     return {
-      createdUser: createdUser,
-      updatedUser: updatedUser,
+      createdUser: created,
+      updatedUser: updatedUser === createdUser ? created : publicUser(updatedUser),
     };
   }
 
