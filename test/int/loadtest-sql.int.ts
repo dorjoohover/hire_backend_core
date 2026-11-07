@@ -43,8 +43,8 @@ const block = (file: string, tag: string) => {
 
   // ---- k6-ийн үүсгэх өгөгдлийг бүх хүснэгтэд seed хийнэ
   const LT_MAIL = 'loadtest_run1_100001@example.invalid';
-  await ds.query(`INSERT INTO users (id, email, role, wallet, "emailVerified") VALUES (100, $1, 20, 0, true), (101, 'loadtest_run1_2@example.invalid', 20, 0, true), (102, 'real@t.mn', 20, 0, true)`, [LT_MAIL]);
-  await ds.query(`INSERT INTO exam (id, code, "assessmentName", "serviceId", "userId") VALUES (1,'LT1','DISC',$1,100), (2,'LT2','DISC',$1,NULL)`, [svc]);
+  await ds.query(`INSERT INTO users (id, email, role, wallet, "emailVerified") VALUES (100, $1, 20, 0, true), (101, 'loadtest_run1_2@example.invalid', 20, 0, true), (102, 'real@t.mn', 20, 0, true), (103, 'loadtest_run1_3@hire.mn', 20, 0, true), (104, '99112233@hire.mn', 20, 0, true)`, [LT_MAIL]);
+  await ds.query(`INSERT INTO exam (id, code, "assessmentName", "serviceId", "userId") VALUES (1,'LT1','DISC',$1,100), (2,'LT2','DISC',$1,103)`, [svc]);
   await ds.query(`INSERT INTO "examDetail" ("examId","questionId","questionCategoryId","serviceId") VALUES (1,1,1,$1),(1,2,1,$1),(2,1,1,$1)`, [svc]);
   await ds.query(`INSERT INTO "userAnswer" ("examId", code) VALUES (1,'LT1'),(2,'LT2')`);
   await ds.query(`INSERT INTO result (id, code, "assessmentName", lastname, firstname, type, assessment, "limit", duration) VALUES (1,'LT1','DISC','x','y',10,1,0,0)`);
@@ -86,19 +86,19 @@ const block = (file: string, tag: string) => {
   ], [0, 1, 0, 0]);
   check('L7 жинхэнэ service-ийн examDetail үлдсэн', await n(`SELECT count(*)::int n FROM "examDetail" WHERE "examId"=3`), 1);
   const users = (await ds.query(`SELECT id FROM users ORDER BY id`)).map((x: any) => Number(x.id));
-  check('L8 хэрэглэгч: loadtest_ и-мэйлтэй хэрэглэгч (100) устсан; жинхэнэ exam-д холбогдсон loadtest_ и-мэйлтэй (101), жинхэнэ (102), байгууллага (9) үлдсэн', users, [9, 101, 102]);
+  check('L8 хэрэглэгч: loadtest_ (100, prod-ын и-мэйлгүй 103 @hire.mn) устсан; жинхэнэ exam-тай loadtest_ (101), жинхэнэ (102), утсаар бүртгэлтэй жинхэнэ (104), байгууллага (9) үлдсэн', users, [9, 101, 102, 104]);
 
   await ds.query('BEGIN');
   await run();
   await ds.query('COMMIT');
-  check('L9 давтан ажиллуулахад алдаагүй, өөрчлөлтгүй (идемпотент)', [await n(`SELECT count(*)::int n FROM exam`), (await ds.query(`SELECT id FROM users ORDER BY id`)).length], [2, 3]);
+  check('L9 давтан ажиллуулахад алдаагүй, өөрчлөлтгүй (идемпотент)', [await n(`SELECT count(*)::int n FROM exam`), (await ds.query(`SELECT id FROM users ORDER BY id`)).length], [2, 4]);
 
   // Өөр exam-д холбоогүй болсны дараа тэр loadtest хэрэглэгч (101) дараагийн цэвэрлэгээнд устдаг
   await ds.query(`DELETE FROM exam WHERE id=4`);
   await ds.query('BEGIN');
   await run();
   await ds.query('COMMIT');
-  check('L10 холбоогүй болсон loadtest хэрэглэгч (101) дараагийн цэвэрлэгээнд устна; 102, 9 хэвээр', (await ds.query(`SELECT id FROM users ORDER BY id`)).map((x: any) => Number(x.id)), [9, 102]);
+  check('L10 холбоогүй болсон loadtest хэрэглэгч (101) дараагийн цэвэрлэгээнд устна; 102, 104, 9 хэвээр', (await ds.query(`SELECT id FROM users ORDER BY id`)).map((x: any) => Number(x.id)), [9, 102, 104]);
 
   return finish(ds)();
 })().catch((e) => {
