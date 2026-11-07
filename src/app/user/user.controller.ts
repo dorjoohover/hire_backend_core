@@ -113,11 +113,8 @@ export class UserController {
   @ApiParam({ name: 'code' })
   @ApiParam({ name: 'email' })
   async verifyCode(@Param('code') code: string, @Param('email') email: string) {
-    const user = await this.userService.getUser(email);
-    if (user.forget == code) {
-      return true;
-    }
-    return false;
+    const user = await this.userService.getUser(email, true);
+    return !!user?.forget && `${user.forget}` === `${code}`;
   }
   // 🔐 Нууц үг сэргээх. Серверийн талд OTP-г ЗААВАЛ шалгана —
   // өмнө нь код шалгалтгүй байсан тул дурын бүртгэл дээр нууц үг солих

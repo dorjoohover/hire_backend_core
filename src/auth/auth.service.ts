@@ -22,7 +22,7 @@ export class AuthService {
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
-    const user = await this.usersService.getUser(username);
+    const user = await this.usersService.getUser(username, true);
     if (user == null || !user) return -1;
     if (!pass || pass == '')
       throw new HttpException('Нууц үг оруулаагүй байна.', 500);
@@ -30,7 +30,7 @@ export class AuthService {
       throw new HttpException('Google хаягаар нэвтэрнэ үү', 500);
     const isMatch = await bcrypt.compare(pass, user.password);
     if (user && isMatch == true) {
-      const { password, ...result } = user;
+      const { password, forget, ...result } = user;
       return result;
     }
     return 0;

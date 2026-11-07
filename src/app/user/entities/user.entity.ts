@@ -26,7 +26,9 @@ export class UserEntity {
   @Column({ nullable: true })
   firstname: string;
 
-  @Column({ nullable: true })
+  // select:false — find / relations / join-д ХЭЗЭЭ Ч орохгүй (өмнө нь нийтийн API-аар hash гадагш гардаг байв).
+  // Зөвхөн UserDao.getByEmail(email, true) (нэвтрэх, OTP шалгах) тодорхой авна.
+  @Column({ nullable: true, select: false })
   password?: string;
   @Column({ nullable: true })
   profile?: string;
@@ -42,7 +44,8 @@ export class UserEntity {
   organizationRegisterNumber?: string;
   @Column({ nullable: true })
   position?: string;
-  @Column({ nullable: true })
+  // Нууц үг сэргээх OTP — password-тэй адил select:false.
+  @Column({ nullable: true, select: false })
   forget?: string;
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt?: Date;

@@ -138,7 +138,7 @@ export class UserService {
       );
     }
 
-    const user = await this.dao.getByEmail(normalized);
+    const user = await this.dao.getByEmail(normalized, true);
     if (!user || !user.forget || `${user.forget}` !== `${code}`) {
       throw new HttpException(
         'Баталгаажуулах код буруу байна.',
@@ -170,8 +170,9 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async getUser(dto: string) {
-    return await this.dao.getByEmail(dto?.toLowerCase());
+  /** withSecrets: password / forget-ийг нэмнэ (нэвтрэх, OTP шалгах) — хариунд бүү буцаа. */
+  async getUser(dto: string, withSecrets = false) {
+    return await this.dao.getByEmail(dto?.toLowerCase(), withSecrets);
   }
   public async update(id: number, dto: CreateUserDto) {
     const { email, ...body } = dto;

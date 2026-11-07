@@ -176,27 +176,15 @@ export class UserDao {
     return this._db.find({ where: { id: In(ids) } });
   };
 
-  getByEmail = async (email: string) => {
+  /** withSecrets: password / forget (select:false)-ийг нэмж авна — ЗӨВХӨН нэвтрэх / OTP шалгахад, хариунд бүү буцаа. */
+  getByEmail = async (email: string, withSecrets = false) => {
     if (!email) return null;
-    let where;
-    where = {
-      email: email,
-    };
-    if (!isNaN(+email)) {
-      where = {
-        id: +email,
-      };
-    }
-    // {
-    //       organizationRegisterNumber: email,
-    //     },
-    const res = await this._db.findOne({
-      where: [
-        where,
-        
-      ],
-    });
-    return res;
+    const where = isNaN(+email) ? { email } : { id: +email };
+    if (!withSecrets) return this._db.findOne({ where });
+    const qb = this._db.createQueryBuilder('u').addSelect(['u.password', 'u.forget']);
+    return 'id' in where
+      ? qb.where('u.id = :id', where).getOne()
+      : qb.where('u.email = :email', where).getOne();
   };
 
   findByEmail = async (email: string): Promise<UserEntity | null> => {
