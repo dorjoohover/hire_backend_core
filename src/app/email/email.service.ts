@@ -472,12 +472,14 @@ export class EmailService {
       // Хуучин ганц {account} (төгсгөлгүй) → анхны текст.
       account: account(ACCOUNT_SECTION),
       // Gradient-ийг Gmail/Outlook хаядаг → цагаан дээр цагаан текст болдог; bgcolor + цул өнгө л найдвартай.
+      // Inline `!important`-ийг зарим клиент хаяж <style>-ийн `a { color: #ff5000 }` үйлчилдэг → улбар шар дээр улбар шар
+      // (emoji-тэй анхдагч текст л харагддаг байв). Тиймээс !important-гүй + span дээр давхар цагаан өнгө.
       button: `<table cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 15px auto;">
           <tr>
             <td bgcolor="#ff5000" style="background-color: #ff5000; border-radius: 8px;">
               <a href="${web}/exam/${code}"
-                style="display: inline-block; padding: 16px 40px; background-color: #ff5000; border: 1px solid #ff5000; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff !important; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
-              >${button ? escapeHtml(button) : '🎯  Тест өгөх'}</a>
+                style="display: inline-block; padding: 16px 40px; background-color: #ff5000; border: 1px solid #ff5000; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 800; color: #ffffff; text-decoration: none; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;"
+              ><span style="color: #ffffff;">${button ? escapeHtml(button) : '🎯  Тест өгөх'}</span></a>
             </td>
           </tr>
         </table>`,

@@ -108,6 +108,9 @@ const svc = new UserServiceService(
   const render = (body: string, x: any = {}) => es.previewInvitation({ isNewUser: false, email: 'e@x.mn', code: '123', assessment: asm, body, ...x });
   const h1 = render('<p>{button}</p><p>{description}</p><p>{foo} {constructor}</p>', { button: '<Эхлэх>', logo: 'a b.png' });
   check('E1 {button}: <p>-г хасна, текстийг escape, тестийн холбоос', [h1.includes('<p><table'), h1.includes('&#60;Эхлэх&#62;'), h1.includes('href="https://hire.mn/exam/123"')], [false, true, true]);
+  // Inline !important-ийг хаядаг клиентэд <style> a{color:#ff5000} үйлчилж товчны текст улбар шар дээр улбар шар болдог байв.
+  const btn = h1.slice(h1.indexOf('href="https://hire.mn/exam/123"'), h1.indexOf('</a>', h1.indexOf('href="https://hire.mn/exam/123"')));
+  check('E1b товчны текст: !important-гүй, span дээр цагаан өнгө', [/!important/.test(btn), btn.includes('<span style="color: #ffffff;">&#60;Эхлэх&#62;</span>')], [false, true]);
   check('E2 {description}: HTML-ээр, блок болно', h1.includes('<div style="margin: 0 0 12px 0;"><b>Тайлбар</b></div>'), true);
   check('E3 үл мэдэгдэх / prototype нэр хэвээр', h1.includes('<p>{foo} {constructor}</p>'), true);
   check('E4 лого: web-ийн file proxy, default товчгүй', [h1.includes('src="https://hire.mn/api/file/a%20b.png"'), h1.includes('Тест өгөх')], [true, false]);
