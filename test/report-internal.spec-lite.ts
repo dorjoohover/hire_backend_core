@@ -143,6 +143,9 @@ const guards = (h: any): string[] =>
         }
         return hit;
       },
+      updateByCode: async (code: string, dto: any) => {
+        for (const r of rows) if (r.code === code) Object.assign(r, dto);
+      },
     };
     const svc: any = new (ReportService as any)({} as any, dao);
     svc.userAnswer = { sendEmail: async (c: string) => void emails.push(c) };
@@ -187,6 +190,22 @@ const guards = (h: any): string[] =>
     );
     await h.svc.sendMail('NOPE');
     check('M5 олдохгүй код → юу ч болохгүй', h.emails, []);
+  }
+  {
+    // Мэйл queue-д орж чадаагүй (Redis / DB унасан) → SENT-ийг буцааж, дараагийн дуудлага дахин илгээнэ.
+    const h = makeSvc([{ code: 'F', status: REPORT_STATUS.COMPLETED }]);
+    let down = true;
+    h.svc.userAnswer = {
+      sendEmail: async (c: string) => {
+        if (down) throw new Error('redis down');
+        h.emails.push(c);
+      },
+    };
+    const e = await h.svc.sendMail('F').then(() => 'OK', (x: any) => x.message);
+    check('M6 илгээлт унавал алдаа дээш, төлөв COMPLETED руу буцна', [e, h.rows[0].status, h.emails], ['redis down', REPORT_STATUS.COMPLETED, []]);
+    down = false;
+    await h.svc.sendMail('F');
+    check('M7 дараагийн дуудлага мэйлийг илгээж SENT болгоно', [h.rows[0].status, h.emails], [REPORT_STATUS.SENT, ['F']]);
   }
 
   console.log('\n— QpayController (0.4 c)');

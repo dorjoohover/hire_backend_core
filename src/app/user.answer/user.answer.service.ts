@@ -450,7 +450,8 @@ export class UserAnswerService extends BaseService {
   }
   public async sendEmail(code: string, logId?: number) {
     const res = await this.examDao.findByCode(+code);
-    if (!res?.visible) return;
+    // visible=false → байгууллага үр дүнг шалгуулагчаас нуусан; preview → admin / studio-ийн туршилт.
+    if (!res?.visible || res.isPreview) return;
     const { user, assessment } = res;
     // ⚠️ Public/QR урсгалаар өгсөн тест дээр exam.user null байж болно
     // (хэрэглэгч lazy үүсдэг). Өмнө нь энд шууд destructure хийдэг байсан
@@ -463,14 +464,14 @@ export class UserAnswerService extends BaseService {
     const name = assessment?.name ?? assessment[0]?.name;
     if (!email) return;
 
-    // await this.mailService.sendReportMail({
-    //   code: code,
-    //   email: email,
-    //   assessmentName: res.assessmentName,
-    //   id: id,
-    //   logId,
-    //   name: name,
-    // });
+    await this.mailService.sendReportMail({
+      code: code,
+      email: email,
+      assessmentName: res.assessmentName,
+      id: id,
+      logId,
+      name: name,
+    });
   }
 
   public async findAll() {

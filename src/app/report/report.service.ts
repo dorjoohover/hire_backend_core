@@ -233,6 +233,12 @@ export class ReportService {
     // ганц дуудлага илгээнэ.
     const claimed = await this.dao.claimSent(code);
     if (!claimed) return;
-    await this.userAnswer.sendEmail(code);
+    try {
+      await this.userAnswer.sendEmail(code);
+    } catch (e) {
+      // Мэйл queue-д ороогүй (DB / Redis алдаа) → SENT-ийг буцаана, дараагийн дуудлага дахин оролдоно.
+      await this.dao.updateByCode(code, { status: REPORT_STATUS.COMPLETED }).catch(() => undefined);
+      throw e;
+    }
   }
 }
