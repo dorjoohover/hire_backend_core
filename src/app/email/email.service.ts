@@ -500,13 +500,11 @@ export class EmailService {
       measure: field(assessment.measure),
       advice: field(assessment.advice),
     };
-    const hasSection = body.includes('{/account}');
-    let src = body.replace(
+    // Ногоон хэсэг зөвхөн драфтад {account} байвал гарна. Хассан бол шинэ хэрэглэгч нууц үгээ "Нууц үг сэргээх"-ээр авна.
+    const src = body.replace(
       /(?:<p>\s*)?\{account\}(?:\s*<\/p>)?([\s\S]*?)(?:<p>\s*)?\{\/account\}(?:\s*<\/p>)?/,
       (_, inner) => account(inner),
     );
-    // shortcut: ногоон хэсгийг хассан драфтад ч шинэ хэрэглэгч нууц үгээ авах ёстой → эхэнд нь нэмнэ.
-    if (isNewUser && !hasSection && !src.includes('{account}')) src = `{account}${src}`;
     const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k);
     // Ганцаараа мөрөнд байгаа блокын <p>-г хасна (<p> дотор <table> буруу HTML).
     const content = src.replace(

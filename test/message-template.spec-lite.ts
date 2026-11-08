@@ -115,7 +115,7 @@ const svc = new UserServiceService(
   check('E3 үл мэдэгдэх / prototype нэр хэвээр', h1.includes('<p>{foo} {constructor}</p>'), true);
   check('E4 лого: web-ийн file proxy, default товчгүй', [h1.includes('src="https://hire.mn/api/file/a%20b.png"'), h1.includes('Тест өгөх')], [true, false]);
   const h2 = render('<p>Сайн уу</p>', { isNewUser: true, password: 'P@ss' });
-  check('E5 {account}-гүй драфт → шинэ хэрэглэгчид эхэнд нь нэмнэ', [h2.indexOf('P@ss') > 0, h2.indexOf('P@ss') < h2.indexOf('Сайн уу'), render('{account}').includes('Нууц үг')], [true, true, false]);
+  check('E5 {account}-гүй драфт → шинэ хэрэглэгчид ч ногоон хэсэг нэмэгдэхгүй; ганц {account} хуучин драфтад ажиллана', [h2.includes('P@ss'), h2.includes('тавтай морил'), render('{account}', { isNewUser: true, password: 'P@ss' }).includes('P@ss'), render('{account}').includes('Нууц үг')], [false, false, true, false]);
   check('E6 утга доторх {button} блок болохгүй', render(fillHtml('<p>{firstname}</p>', { firstname: '{button}' })).includes('<table cellspacing'), false);
   const sec = '<p>Сайн уу</p><p>{account}</p><h3>Тавтай морил</h3><p>Нууц: {password}</p><p>{/account}</p><p>{button}</p>';
   const h4 = render(sec, { isNewUser: true, password: 'P{1}<' });
