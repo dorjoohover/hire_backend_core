@@ -90,8 +90,9 @@ export class RemindDto {
 export class ScheduleDto {
   @ApiProperty({ enum: ['invite', 'remind'] })
   kind: 'invite' | 'remind';
-  @ApiProperty()
-  sendAt: string;
+  /** Хоосон = одоо. */
+  @ApiProperty({ required: false })
+  sendAt?: string;
   @ApiProperty({ required: false })
   email?: boolean;
   @ApiProperty({ required: false })

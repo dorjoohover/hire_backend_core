@@ -4,6 +4,7 @@
  *   npx ts-node -P tsconfig.json -r tsconfig-paths/register test/message-schedule.spec-lite.ts
  */
 import { UserServiceService } from '../src/app/user.service/user.service.service';
+import { Role } from '../src/auth/guards/role/role.enum';
 
 let failed = 0;
 const check = (name: string, actual: any, expected: any) => {
@@ -26,6 +27,7 @@ const mail: any[] = [];
 
 const dao: any = {
   findOne: async (id: number) => services[id] ?? null,
+  findForPayment: async (id: number) => services[id] ?? null,
   reserveSeats: async (id: number, n: number) => {
     const s = services[id];
     if (s.usedUserCount + n > s.count) return false;
@@ -65,7 +67,7 @@ const schedules: any = {
 
 const svc = new UserServiceService(
   dao, {} as any, {} as any, examService,
-  { findByCode: async (c: string) => exams[c] ?? null } as any,
+  { findByCode: async (c: string) => exams[c] ?? null, extendByService: async (id: number) => (id === 1 ? 2 : 0) } as any,
   { findByEmail: async () => null, add: async () => undefined } as any,
   {} as any,
   { sendInvitation: async (x: any) => mail.push(x) } as any,
@@ -136,6 +138,14 @@ const invite = (over: any = {}) => ({
 
   const list = await svc.listSchedules(org);
   check('S18 жагсаалт: тоо гарна, хүлээн авагчийн мэдээлэл гарахгүй', [list.length, list[0].count, list[0].email, 'links' in list[0], JSON.stringify(list).includes('u1@x.mn')], [5, 3, true, false, false]);
+
+  const now = await svc.schedule({ kind: 'remind', codes: ['E1'], email: true }, org);
+  check('S19 sendAt хоосон = одоо (хөтөчөөр биш серверээр илгээнэ)', Math.abs(new Date(now.sendAt).getTime() - Date.now()) < 5000, true);
+
+  const ext = (id: number, endDate: any, actor: any = org) => err(() => svc.extendExams(id, endDate, actor));
+  const PAST = 'Сунгах огноог ирээдүйд сонгоно уу.';
+  check('S20 сунгах: өнгөрсөн / буруу огноо, бусдын service, байхгүй service', [await ext(1, iso(-H)), await ext(1, 'x'), await ext(1, undefined), await ext(3, iso(H)), await ext(99, iso(H))], [PAST, PAST, PAST, 'Энэ үйлчилгээг өөрчлөх эрхгүй байна.', 'Үйлчилгээ олдсонгүй.']);
+  check('S21 сунгах: өөрийн service; admin бусдынхыг (сунгах хүн алга бол алдаа)', [await svc.extendExams(1, iso(H), org), await ext(3, iso(H), { id: 1, role: Role.admin })], [{ updated: 2 }, 'Сунгах шалгуулагч алга: бүгд тестээ дуусгасан эсвэл хугацаа нь сонгосон огнооноос хойш байна.']);
 
   console.log(failed === 0 ? '\n✅ БҮГД АМЖИЛТТАЙ' : `\n❌ ${failed} тест унасан`);
   process.exit(failed === 0 ? 0 : 1);

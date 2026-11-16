@@ -989,7 +989,8 @@ export class UserServiceService extends BaseService {
       const d = v ? new Date(v as string) : null;
       return d && !isNaN(d.getTime()) ? d : null;
     };
-    const sendAt = date(dto?.sendAt);
+    // sendAt хоосон = одоо (их хэмжээний урилгыг хөтөчөөр биш серверээр илгээх).
+    const sendAt = dto?.sendAt == null ? new Date() : date(dto.sendAt);
     if (!sendAt || sendAt.getTime() < Date.now() - 60_000)
       throw bad('Илгээх цагийг ирээдүйд сонгоно уу.');
     if (sendAt.getTime() > Date.now() + 90 * DAY_MS)
@@ -1286,6 +1287,33 @@ export class UserServiceService extends BaseService {
         service.assessment,
       ),
     };
+  }
+
+  /** Service-ийн дуусгаагүй бүх шалгуулагчийн хугацааг нэг дор сунгана. Байгууллага зөвхөн өөрийн service-д. */
+  public async extendExams(
+    serviceId: number,
+    endDate: unknown,
+    actor: { id: number; role: number },
+  ) {
+    const date = new Date(String(endDate ?? ''));
+    if (isNaN(date.getTime()) || date.getTime() <= Date.now()) {
+      throw new HttpException('Сунгах огноог ирээдүйд сонгоно уу.', HttpStatus.BAD_REQUEST);
+    }
+    const service = await this.dao.findForPayment(serviceId);
+    if (!service) {
+      throw new HttpException('Үйлчилгээ олдсонгүй.', HttpStatus.NOT_FOUND);
+    }
+    if (+actor.role === Role.organization && service.user?.id !== +actor.id) {
+      throw new HttpException('Энэ үйлчилгээг өөрчлөх эрхгүй байна.', HttpStatus.FORBIDDEN);
+    }
+    const updated = await this.examDao.extendByService(serviceId, date);
+    if (!updated) {
+      throw new HttpException(
+        'Сунгах шалгуулагч алга: бүгд тестээ дуусгасан эсвэл хугацаа нь сонгосон огнооноос хойш байна.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return { updated };
   }
 
   /**

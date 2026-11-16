@@ -8,7 +8,7 @@ import { AssessmentEntity } from '../assessment/entities/assessment.entity';
 import { UserServiceService } from '../user.service/user.service.service';
 import { UserAnswerService } from '../user.answer/user.answer.service';
 import { signEmailToken } from 'src/utils/email-token';
-import { ACCOUNT_SECTION, escapeHtml } from '../user.service/message-template';
+import { ACCOUNT_SECTION, escapeHtml, isPhoneEmail } from '../user.service/message-template';
 
 @Injectable()
 export class EmailService {
@@ -23,6 +23,8 @@ export class EmailService {
     private readonly emailQueue: Queue,
   ) {}
   private async logAndQueue(payload: EmailJobPayload) {
+    // Утсаар орсон хэрэглэгчийн орлуулга хаяг (`${phone}@hire.mn`, exam.service) — шуудан биш, илгээхгүй.
+    if (isPhoneEmail(payload.to)) return;
     let log = payload.logId;
     console.log(log);
     if (payload.logId == undefined) {

@@ -121,6 +121,10 @@ export const renderSms = (tpl: string, vars: Record<string, string>) => {
   return toSmsText(fillTemplate(tpl, { ...vars, test: `${test}..` }));
 };
 
+/** Утсаар орсон хэрэглэгчид өгдөг орлуулга хаяг ("99112233@hire.mn") эсэх. */
+export const isPhoneEmail = (email: unknown) =>
+  /^[\d+\-\s()]+@hire\.mn$/i.test(String(email ?? '').trim());
+
 /** "+976 9911-2233" → "99112233". */
 export const normalizePhone = (p: unknown) =>
   String(p ?? '')

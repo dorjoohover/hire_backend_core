@@ -736,8 +736,11 @@ export class ExamService extends BaseService {
   public async findExamByService(service: number) {
     return await this.dao.findByService(service);
   }
-  public async updateDate(id: number, dto: UpdateDateDto) {
-    await this.dao.updateDate(id, dto);
+  public async updateDate(code: string, dto: UpdateDateDto, owner?: number) {
+    if (isNaN(new Date(dto?.endDate).getTime()))
+      throw new HttpException('Сунгах огноо буруу байна.', HttpStatus.BAD_REQUEST);
+    if (!(await this.dao.updateDate(code, dto, owner)))
+      throw new HttpException('Шалгалт олдсонгүй эсвэл танд хамаарахгүй.', HttpStatus.NOT_FOUND);
   }
   public async findByUser(serviceId: number[], email: string) {
     let res = await this.dao.findByUser(serviceId, email, 0);
@@ -751,6 +754,12 @@ export class ExamService extends BaseService {
   public async findByCode(code: string | string) {
     return await this.dao.findByCode(code);
   }
+  public async rawAnswersCsv(assessment: number) {
+    const csv = await this.dao.rawAnswersCsv(assessment);
+    if (!csv) throw new HttpException('Энэ тестэд хариулт олдсонгүй.', HttpStatus.NOT_FOUND);
+    return csv;
+  }
+
   public async findByAdmin(pg: PaginationDto) {
     let [res, count] = await this.dao.findByAdmin(pg);
     res = await Promise.all(

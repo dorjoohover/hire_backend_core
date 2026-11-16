@@ -9,6 +9,7 @@ import {
   DEFAULT_TEMPLATES,
   fillHtml,
   fillTemplate,
+  isPhoneEmail,
   renderSms,
   toSmsText,
   unwrapVars,
@@ -24,6 +25,7 @@ const check = (name: string, actual: any, expected: any) => {
 check('T1 fillTemplate: хувьсагч орлуулна, үл мэдэгдэхийг хэвээр', fillTemplate('{a}-{b}', { a: 'x' }), 'x-{b}');
 check('T2 toSmsText: кирилл → латин (том үсэг)', toSmsText('Өдрийн мэнд, Шинэ ЧАТ'), 'Odriin mend, Shine ChAT');
 check('T3 toSmsText: ASCII бус тэмдэгт хасна, мөр шилжилт → зай', toSmsText('№1 “тест”\nлинк'), '1 test link');
+check('T3b isPhoneEmail: утасны орлуулга хаягийг л таньна', ['12341234@hire.mn', ' 99112233@HIRE.MN ', 'info@hire.mn', '12341234@gmail.com', 'loadtest_1@hire.mn', null].map(isPhoneEmail), [true, true, false, false, false, false]);
 const longTest = 'Хиймэл оюун ухаан(AI)-ыг ашиглах мэдлэг, чадварыг тодорхойлох тест';
 const sms = renderSms(DEFAULT_TEMPLATES.inviteSms, { org: 'Монгол Шуудан ХК', test: longTest, deadline: '2026.10.30 18:00', link: 'https://hire.mn/exam/12345678901234567' });
 check('T4 renderSms: урт тестийн нэрийг тайрч 160-д багтаана, холбоос бүтэн', [sms.length <= 160, sms.endsWith('https://hire.mn/exam/12345678901234567'), sms.includes('..')], [true, true, true]);

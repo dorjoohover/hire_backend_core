@@ -14,6 +14,7 @@ import {
   HttpStatus,
   Response as NestResponse,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import * as mime from 'mime-types';
 import { ExamService } from './exam.service';
@@ -326,8 +327,17 @@ export class ExamController {
 
   @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
   @Patch('date/:code')
-  updateDate(@Param('code') code: string, @Body() dto: UpdateDateDto) {
-    return this.examService.updateDate(+code, dto);
+  updateDate(@Param('code') code: string, @Body() dto: UpdateDateDto, @Request() { user }) {
+    // Байгууллага зөвхөн өөрийн шалгуулагчийг; admin / tester / super_admin бүгдийг.
+    return this.examService.updateDate(code, dto, +user['role'] === Role.organization ? +user['id'] : undefined);
+  }
+
+  /** Assessment-ийн бүх хариулт CSV текстээр (raw data). */
+  // shortcut: одоохондоо admin эрхтэй л; client-д гаргахдаа байгууллага зөвхөн өөрийн тестийг авах шалгалт нэмнэ.
+  @Roles(Role.admin, Role.tester, Role.super_admin)
+  @Get('raw/:assessment')
+  rawAnswers(@Param('assessment', ParseIntPipe) assessment: number) {
+    return this.examService.rawAnswersCsv(assessment);
   }
 
   @Roles(Role.admin, Role.tester, Role.super_admin)

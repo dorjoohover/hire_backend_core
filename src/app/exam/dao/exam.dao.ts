@@ -19,6 +19,64 @@ import { PaginationDto } from 'src/base/decorator/pagination';
 import { REPORT_VIEW_GRACE_MINUTES } from 'src/base/constants';
 import { decidePublicReuse, PUBLIC_OPEN_REUSE_DAYS } from '../exam-resume';
 
+const RAW_ANSWERS_SQL = `
+WITH sa AS (SELECT "questionId" AS qid, count(DISTINCT point) > 1 AS scored, count(*) AS n_opts FROM "questionAnswer" GROUP BY 1),
+sm AS (SELECT "questionId" AS qid, count(DISTINCT point) > 1 AS scored FROM "questionAnswerMatrix" GROUP BY 1),
+a AS (
+  SELECT e.id AS exam_id, qc."orderNumber" AS c_ord, q."orderNumber" AS q_ord, q.id AS q_id,
+         (qm.id IS NOT NULL OR (q.type IN (50, 70) AND qa.id IS NOT NULL AND sa.n_opts > 1)) AS split,
+         qa.id AS qa_id, qa."orderNumber" AS qa_ord, q.name AS q_name, qa.value AS qa_value,
+         CASE
+           WHEN qm.id IS NOT NULL THEN CASE WHEN sm.scored THEN trim_scale(qm.point)::text ELSE pg_temp.clean(qm.value) END
+           WHEN q.type IN (50, 70, 80) THEN COALESCE(trim_scale(
+                  CASE WHEN qa.reverse AND COALESCE(qc.is_calculated, true)
+                       THEN COALESCE(q."maxValue", 0) + COALESCE(q."minValue", 0) - CASE WHEN qa.negative THEN -ua.point ELSE ua.point END
+                       ELSE CASE WHEN qa.negative THEN -ua.point ELSE ua.point END END)::text, NULLIF(pg_temp.clean(ua.value), ''))
+           WHEN qa.id IS NOT NULL THEN CASE WHEN sa.scored THEN trim_scale(qa.point)::text ELSE pg_temp.clean(qa.value) END
+           ELSE COALESCE(NULLIF(pg_temp.clean(ua.value), ''), trim_scale(ua.point)::text)
+         END AS v,
+         ua.id AS ua_id,
+         COALESCE(NULLIF(e.email, ''), u.email) AS email,
+         COALESCE(NULLIF(e.firstname, ''), u.firstname) AS ner,
+         COALESCE(NULLIF(e.lastname, ''), u.lastname) AS ovog,
+         COALESCE(NULLIF(e.phone, ''), u.phone) AS utas
+  FROM exam e
+  JOIN "userAnswer" ua ON ua."examId" = e.id
+  JOIN question q ON q.id = ua."questionId"
+  LEFT JOIN "questionCategory" qc ON qc.id = q."categoryId"
+  LEFT JOIN "questionAnswer" qa ON qa.id = ua."answerId"
+  LEFT JOIN "questionAnswerMatrix" qm ON qm.id = ua."matrixId"
+  LEFT JOIN sa ON sa.qid = q.id
+  LEFT JOIN sm ON sm.qid = q.id
+  LEFT JOIN users u ON u.id = e."userId"
+  WHERE e."assessmentId" = $1 AND NOT COALESCE(e."isPreview", false)
+),
+k AS (
+  SELECT *, CASE WHEN split THEN qa_id END AS row_id, CASE WHEN split THEN qa_ord END AS row_ord,
+         CASE WHEN split THEN COALESCE(NULLIF(pg_temp.clean(qa_value), ''), pg_temp.clean(q_name)) ELSE pg_temp.clean(q_name) END AS asuult
+  FROM a
+),
+cols AS (
+  SELECT q_id, row_id,
+         dense_rank() OVER (ORDER BY c_ord NULLS LAST, q_ord, q_id)
+           || COALESCE('.' || CASE WHEN row_id IS NOT NULL THEN row_number() OVER (PARTITION BY q_id, row_id IS NULL ORDER BY row_ord NULLS FIRST, row_id) END, '')
+           || '. ' || asuult AS asuult,
+         row_number() OVER (ORDER BY c_ord NULLS LAST, q_ord, q_id, row_ord NULLS FIRST, row_id) AS n
+  FROM (SELECT DISTINCT ON (q_id, row_id) c_ord, q_ord, q_id, row_id, row_ord, asuult FROM k ORDER BY q_id, row_id) d
+),
+ans AS (SELECT exam_id, q_id, row_id, string_agg(v, '; ' ORDER BY qa_ord NULLS FIRST, ua_id) AS v FROM k GROUP BY 1, 2, 3),
+people AS (SELECT exam_id, max(email) AS email, max(ner) AS ner, max(ovog) AS ovog, max(utas) AS utas FROM k GROUP BY 1)
+SELECT line FROM (
+  SELECT 0 AS o, 0 AS exam_id, 'email,ner,ovog,dugaar,' || string_agg(pg_temp.c(asuult), ',' ORDER BY n) AS line FROM cols
+  UNION ALL
+  SELECT 1, p.exam_id,
+         concat_ws(',', pg_temp.c(p.email), pg_temp.c(p.ner), pg_temp.c(p.ovog), pg_temp.c(p.utas)) || ',' ||
+         string_agg(pg_temp.c(ans.v), ',' ORDER BY c.n)
+  FROM people p CROSS JOIN cols c
+  LEFT JOIN ans ON ans.exam_id = p.exam_id AND ans.q_id = c.q_id AND ans.row_id IS NOT DISTINCT FROM c.row_id
+  GROUP BY p.exam_id, p.email, p.ner, p.ovog, p.utas
+) t ORDER BY o, exam_id`;
+
 @Injectable()
 export class ExamDao {
   private db: Repository<ExamEntity>;
@@ -70,19 +128,27 @@ export class ExamDao {
     return await this.db.count();
   };
 
-  updateDate = async (code: string | number, dto: UpdateDateDto) => {
+  /** owner = байгууллагын id (зөвхөн өөрийн service-ийн exam); undefined = admin / систем. → өөрчлөгдсөн мөрийн тоо. */
+  updateDate = async (code: string, dto: UpdateDateDto, owner?: number) => {
     const date = new Date(dto.endDate);
     // 8 tsagiin
-
     date.setHours(date.getHours() - 8);
-    await this.db.update(
-      { code: `${code}` },
-      {
-        // startDate: dto.startDate,
-        endDate: date,
-      },
-    );
+    const qb = this.db.createQueryBuilder().update().set({ endDate: date }).where('code = :code', { code });
+    if (owner != null)
+      qb.andWhere('"serviceId" IN (SELECT id FROM "userService" WHERE "userId" = :owner)', { owner });
+    return (await qb.execute()).affected ?? 0;
   };
+
+  /** Service-ийн дуусгаагүй exam-уудыг date хүртэл сунгана (хугацаагүй, эсвэл илүү урт хугацаатайг хөндөхгүй). */
+  extendByService = async (service: number, date: Date) =>
+    (
+      await this.db
+        .createQueryBuilder()
+        .update()
+        .set({ endDate: date })
+        .where('"serviceId" = :service AND "userEndDate" IS NULL AND "endDate" < :date', { service, date })
+        .execute()
+    ).affected ?? 0;
 
   updateByCode = async (
     code: string,
@@ -770,4 +836,21 @@ export class ExamDao {
 
   //   return res.map((r) => parseFloat(r.result));
   // };
+
+  /**
+   * Raw data: assessment-ийн бүх хариулт — хүн бүр нэг мөр, асуулт (матриц/олон мөртийн мөр) бүр нэг багана, CSV.
+   * pg_temp функц session-д үлддэг (pool) тул OR REPLACE; transaction = нэг холболт.
+   */
+  rawAnswersCsv = (assessment: number): Promise<string> =>
+    this.dataSource.transaction(async (m) => {
+      await m.query(
+        `CREATE OR REPLACE FUNCTION pg_temp.c(t text) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT '"' || replace(coalesce(t, ''), '"', '""') || '"' $$`,
+      );
+      await m.query(
+        `CREATE OR REPLACE FUNCTION pg_temp.clean(t text) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT trim(regexp_replace(replace(t, '&nbsp;', ' '), '<[^>]*>', '', 'g')) $$`,
+      );
+      const rows: { line: string | null }[] = await m.query(RAW_ANSWERS_SQL, [assessment]);
+      // Хариултгүй бол толгой мөр NULL (string_agg хоосон) → хоосон мөр.
+      return rows.map((r) => r.line).filter((l) => l != null).join('\n');
+    });
 }

@@ -301,6 +301,21 @@ export class UserServiceController {
     );
   }
 
+  /** Service-ийн дуусгаагүй бүх шалгуулагчийн хугацааг сунгана. Body: { endDate: ISO }. */
+  @Roles(Role.organization, Role.admin, Role.super_admin, Role.tester)
+  @Patch(':id/extend')
+  @ApiParam({ name: 'id' })
+  extend(
+    @Param('id') id: string,
+    @Body() body: { endDate?: string },
+    @Request() { user },
+  ) {
+    return this.userServiceService.extendExams(+id, body?.endDate, {
+      id: +user['id'],
+      role: +user['role'],
+    });
+  }
+
   /**
    * №8: "Эрх нэмэх". Байгууллага (эзэмшигч) — wallet-аас атомар хасна; admin / super_admin — үнэгүй (гараар, аудиттай).
    * Body: { count: number }.
